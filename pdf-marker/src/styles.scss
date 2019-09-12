@@ -1,4 +1,45 @@
 /* You can add global styles to this file, and also import other style files */
+@font-face {
+  font-family: 'opensans-light';
+  src: url(../fonts/OpenSans-Light.ttf) format("truetype");
+  font-weight:300;
+}
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+@font-face {
+  font-family: 'opensans-light-italic';
+  font-style: italic;
+  src: url(../fonts/OpenSans-LightItalic.ttf) format("truetype");
+  font-weight:300;
+}
+
+@font-face {
+  font-family: 'opensans-regular';
+  src: url(../fonts/OpenSans-Regular.ttf) format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'opensans-regular-italic';
+  font-style: italic;
+  src: url(../fonts/OpenSans-RegularItalic.ttf) format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'opensans-semi-bold';
+  src: url(../fonts/OpenSans-SemiBold.ttf) format("truetype");
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: 'opensans-semi-bold-italic';
+  font-style: italic;
+  src: url(../fonts/OpenSans-SemiBoldItalic.ttf) format("truetype");
+  font-weight: 600;
+}
+
+html, body { height: 100%; font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important; }
+* { font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important; }
+body { margin: 0; }
+
+
