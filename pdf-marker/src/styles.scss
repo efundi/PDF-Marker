@@ -1,4 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
+/*Fonts*/
 @font-face {
   font-family: 'opensans-light';
   src: url(../fonts/OpenSans-Light.ttf) format("truetype");
@@ -38,8 +39,21 @@
   font-weight: 600;
 }
 
-html, body { height: 100%; font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important; }
-* { font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important; }
+/*Colors*/
+$pdf-marker-primary: #6c3d91;
+
+html, body { height: 100%; font-family: Roboto, "Helvetica Neue", sans-serif !important; }
 body { margin: 0; }
 
+.pdf-marker-fill-space {
+  flex: 1;
+}
+
+button {
+  font-family: 'opensans-regular', Roboto, "Helvetica Neue", sans-serif !important;
+}
+
+.mat-icon {
+  color: $pdf-marker-primary !important;
+}
 

@@ -4,10 +4,18 @@ import { CommonModule } from '@angular/common';
 // Angular Material Modules
 import { MatToolbarModule } from '@angular/material/toolbar';
 import {MatDividerModule} from "@angular/material/divider";
+import {MatIconModule} from "@angular/material/icon";
+import {MatButtonModule} from "@angular/material/button";
+import {MatMenuModule} from "@angular/material/menu";
+import {MatTooltipModule} from "@angular/material";
 
 const SHARED_MODULES = [
   MatToolbarModule,
-  MatDividerModule
+  MatDividerModule,
+  MatIconModule,
+  MatButtonModule,
+  MatMenuModule,
+  MatTooltipModule
 ];
 
 const SHARED_COMPONENTS = [];

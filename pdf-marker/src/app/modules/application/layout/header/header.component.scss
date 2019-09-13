@@ -1,8 +1,13 @@
+$pdf-marker-primary: #6c3d91;
 mat-toolbar {
-
+  background: transparent;
   .pdf-marker-brand {
     display: flex;
     align-items: center;
+
+    .pdf-marker-title {
+      font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif;
+    }
 
     img {
       width: 140px;
