@@ -6,10 +6,10 @@ import { SharedModule } from '@sharedModule/shared.module';
 import { MenuComponent } from './menu/menu.component';
 
 @NgModule({
-  declarations: [HeaderComponent, MenuComponent],
+  declarations: [HeaderComponent, MenuComponent ],
   imports: [
     CommonModule,
-    SharedModule
+    SharedModule,
   ],
   exports: [ HeaderComponent ]
 })

@@ -39,7 +39,7 @@
   font-weight: 600;
 }
 
-/*Colors*/
+/*Variables*/
 $pdf-marker-primary: #6c3d91;
 
 html, body { height: 100%; font-family: Roboto, "Helvetica Neue", sans-serif !important; }
@@ -57,3 +57,18 @@ button {
   color: $pdf-marker-primary !important;
 }
 
+.pdf-marker-container {
+  height: 100%;
+}
+
+.mat-drawer-container {
+  height: 100%;
+
+  .pdf-marker-content-container {
+    padding-left: 27px;
+  }
+
+  mat-toolbar {
+    font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
+  }
+}

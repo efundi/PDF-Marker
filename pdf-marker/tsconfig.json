@@ -16,7 +16,8 @@
     ],
     "paths": {
       "@sharedModule/*": ["./src/app/modules/application/shared/*"],
-      "@layoutModule/*": ["./src/app/modules/application/layout/*"]
+      "@layoutModule/*": ["./src/app/modules/application/layout/*"],
+      "@pdfMarkerModule/*": ["./src/app/modules/pdf-marker/*"]
     },
     "lib": [
       "es2018",
