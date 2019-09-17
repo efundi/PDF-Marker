@@ -1,4 +1,4 @@
-$pdf-marker-primary: #6c3d91;
+$pdf-marker-primary: #6f327a;
 mat-toolbar {
   background: transparent;
   .pdf-marker-brand {
@@ -6,7 +6,8 @@ mat-toolbar {
     align-items: center;
 
     .pdf-marker-title {
-      font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif;
+      /*font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif;*/
+      font-weight: 800;
     }
 
     img {
@@ -14,4 +15,8 @@ mat-toolbar {
       margin-left: -3px;
     }
   }
+}
+
+mat-divider {
+  background: $pdf-marker-primary;
 }
