@@ -14,8 +14,8 @@ export class MenuComponent implements OnInit {
   }
 
   readonly toolbarMenu = [
-    { title: "Import", toolTip: "Import Zip from default LMS", icon: "archive" },
-    { title: "Upload", toolTip: "Upload PDF file(s)", icon: "picture_as_pdf" },
+    { title: "Import", toolTip: "Import Zip from default LMS", icon: "archive", href: "/marker/import" },
+    { title: "Upload", toolTip: "Upload PDF file(s)", icon: "picture_as_pdf", href:"/marker" },
     { title: this.settings, toolTip: "App Settings", icon: "settings" },
   ];
 

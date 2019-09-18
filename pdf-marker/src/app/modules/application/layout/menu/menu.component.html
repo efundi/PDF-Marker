@@ -1,12 +1,12 @@
 <span class="pdf-marker-menu">
   <mat-menu #menu="matMenu">
     <ng-template matMenuContent>
-      <button *ngFor="let menuItem of menuItems" mat-menu-item><mat-icon>{{ menuItem.icon }}</mat-icon>{{ menuItem.title }}</button>
+      <a *ngFor="let menuItem of menuItems" mat-menu-item><mat-icon>{{ menuItem.icon }}</mat-icon>{{ menuItem.title }}</a>
     </ng-template>
   </mat-menu>
 
   <ng-container *ngFor="let tmenu of toolbarMenu">
-    <button *ngIf="tmenu.title !== settings" mat-button matTooltip="{{ tmenu.toolTip }}"><mat-icon>{{ tmenu.icon }}</mat-icon></button>
+    <a [routerLink]="[tmenu.href]" *ngIf="tmenu.title !== settings" mat-button matTooltip="{{ tmenu.toolTip }}"><mat-icon>{{ tmenu.icon }}</mat-icon></a>
     <button *ngIf="tmenu.title === settings" mat-button matTooltip="{{ tmenu.toolTip }}" [matMenuTriggerFor]="menu"><mat-icon>{{ tmenu.icon }}</mat-icon></button>
   </ng-container>
 

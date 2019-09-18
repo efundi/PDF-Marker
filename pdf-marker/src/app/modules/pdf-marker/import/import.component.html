@@ -1,0 +1,37 @@
+<ng-container>
+  <form>
+    <h1>Import Assignment</h1>
+    <mat-divider></mat-divider><br>
+    <div class="pdf-marker-file-upload">
+      <input #pdfMarkerUploadDisplay type="text" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
+      <button mat-raised-button color="primary">
+        Browse
+        <input type="file" class="pdf-marker-upload" [accept]="acceptMimeType">
+      </button>
+    </div>
+    <br>
+    <mat-form-field>
+      <mat-label>Assignment Name</mat-label>
+      <input type="text" matInput>
+    </mat-form-field><br>
+    <mat-label>Rubric</mat-label>
+    <div class="pdf-marker-rubric-container">
+      <mat-checkbox>No Rubric</mat-checkbox>
+      <ng-container>
+        <mat-form-field>
+          <mat-label>Select Rubric</mat-label>
+          <mat-select>
+            <mat-option *ngFor="" [value]="">
+
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button type="button" mat-raised-button color="primary">Add a Rubric</button>
+      </ng-container>
+    </div>
+    <br>
+    <div class="pdf-marker-submit">
+      <button type="button" mat-raised-button color="accent">Submit</button>
+    </div>
+  </form>
+</ng-container>
