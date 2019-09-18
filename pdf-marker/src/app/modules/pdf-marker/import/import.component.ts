@@ -9,10 +9,13 @@ export class ImportComponent implements OnInit {
 
   readonly acceptMimeType = "application/zip";
 
-  readonly floatLabelType = "always";
+  file: File;
 
   constructor() { }
 
   ngOnInit() {
+  }
+
+  onFileChange(event) {
   }
 }

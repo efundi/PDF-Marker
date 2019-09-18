@@ -3,12 +3,13 @@
     <h1>Import Assignment</h1>
     <mat-divider></mat-divider><br>
     <div class="pdf-marker-file-upload">
-      <input #pdfMarkerUploadDisplay type="text" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
+      <button *ngIf="file" type="button" mat-icon-button><mat-icon>visibility</mat-icon></button><input #pdfMarkerUploadDisplay type="text" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
       <button mat-raised-button color="primary">
         Browse
-        <input type="file" class="pdf-marker-upload" [accept]="acceptMimeType">
+        <input type="file" class="pdf-marker-upload" [accept]="acceptMimeType" (change)="onFileChange($event)">
       </button>
     </div>
+
     <br>
     <mat-form-field>
       <mat-label>Assignment Name</mat-label>
