@@ -1,6 +1,8 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {RouterModule} from "@angular/router";
+import { FormsModule } from "@angular/forms";
+import { ReactiveFormsModule } from "@angular/forms";
 
 // Angular Material Modules
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -28,7 +30,9 @@ const SHARED_MODULES = [
   MatInputModule,
   MatCheckboxModule,
   MatSelectModule,
-  RouterModule
+  RouterModule,
+  FormsModule,
+  ReactiveFormsModule
 ];
 
 const SHARED_COMPONENTS = [];
