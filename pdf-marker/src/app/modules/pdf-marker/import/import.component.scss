@@ -39,5 +39,10 @@ form {
     align-items: center;
     flex: 1 1 auto;
     justify-content: space-between;
+
+    .mat-form-field {
+      flex: 1;
+      flex-grow: unset;
+    }
   }
 }

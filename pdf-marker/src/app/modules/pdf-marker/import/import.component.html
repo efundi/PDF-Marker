@@ -1,7 +1,8 @@
 <ng-container>
   <form [formGroup]="importForm">
     <h1><mat-icon>archive</mat-icon>&nbsp;Import from a zip file</h1>
-    <mat-divider></mat-divider><br>
+    <mat-divider></mat-divider>
+    <div class="pdf-spacer"></div>
     <div class="pdf-marker-file-upload">
       <button mat-raised-button>
         Browse
@@ -11,8 +12,7 @@
       <input #pdfMarkerUploadDisplay type="text" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
       <button type="button" mat-raised-button *ngIf="isFilePresent()" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
     </div>
-
-    <br>
+    <div class="pdf-spacer"></div>
     <mat-form-field>
       <mat-label>Assignment Name</mat-label>
       <input formControlName="assignmentName" type="text" matInput required>
@@ -32,7 +32,7 @@
         <button type="button" mat-raised-button>Add a Rubric</button>
       </ng-container>
     </div>
-    <br>
+    <div class="pdf-spacer"></div>
     <div class="pdf-marker-submit">
       <button type="button" mat-raised-button color="accent" [disabled]="!importForm.valid">Submit</button>
     </div>
