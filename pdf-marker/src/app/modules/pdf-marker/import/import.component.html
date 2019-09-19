@@ -9,7 +9,7 @@
       </button>
       &nbsp;&nbsp;
       <input #pdfMarkerUploadDisplay type="text" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
-      <button type="button" mat-raised-button *ngIf="file">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
+      <button type="button" mat-raised-button *ngIf="isFilePresent()" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
     </div>
 
     <br>

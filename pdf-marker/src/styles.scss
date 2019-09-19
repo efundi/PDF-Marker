@@ -65,10 +65,19 @@ button {
   height: 100%;
 
   .pdf-marker-content-container {
-    padding-left: 27px;
+    padding-left: 23px;
+    padding-right: 23px;
   }
 
   mat-toolbar {
     font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
+  }
+
+  .mat-expansion-indicator {
+    display: none !important;
+  }
+
+  .mat-expansion-panel-body {
+    padding: 0 24px !important;
   }
 }

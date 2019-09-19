@@ -7,7 +7,8 @@ import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 
 import {SharedModule} from '@sharedModule/shared.module';
 import {LayoutModule} from '@layoutModule/layout.module';
-import {PdfMarkerModule} from "@pdfMarkerModule/pdf-marker.module";
+import {PdfMarkerModule} from '@pdfMarkerModule/pdf-marker.module';
+import {CoreModule} from '@coreModule/core.module';
 
 @NgModule({
   declarations: [
@@ -17,6 +18,7 @@ import {PdfMarkerModule} from "@pdfMarkerModule/pdf-marker.module";
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
+    CoreModule,
     SharedModule,
     LayoutModule,
     PdfMarkerModule

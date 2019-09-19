@@ -1,5 +1,6 @@
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
+import {ZipService} from "@coreModule/services/zip.service";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -21,7 +22,7 @@ export class ImportComponent implements OnInit {
 
   isRubric: boolean = true;
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder, private zipService: ZipService) { }
 
   ngOnInit() {
     this.initForm();
@@ -51,8 +52,9 @@ export class ImportComponent implements OnInit {
   }
 
   private getAssignmentNameFromFilename(filename: string): string {
+    console.log(filename);
     const filenameSplit = filename.split("_");
-    if(filenameSplit[0] !== undefined)
+    if(filenameSplit.length > 1)
       return filenameSplit[0];
     else
       return '';
@@ -69,5 +71,13 @@ export class ImportComponent implements OnInit {
     }
 
     this.importForm.updateValueAndValidity();
+  }
+
+  isFilePresent(): boolean {
+    return !!(this.file);
+  }
+
+  onPreview() {
+    this.zipService.getEntries(this.file).subscribe();
   }
 }

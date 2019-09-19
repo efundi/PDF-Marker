@@ -1,10 +1,14 @@
-<mat-sidenav-container class="sidenav-container">
+<mat-sidenav-container class="sidenav-container" autosize>
   <mat-sidenav #drawer class="sidenav" mode="side" opened>
     <mat-toolbar>
       <mat-list>
         <mat-list-item>Home</mat-list-item>
       </mat-list>
     </mat-toolbar>
+    <mat-divider></mat-divider>
+    <div style="padding: 4px;">
+      <pdf-marker-file-explorer></pdf-marker-file-explorer>
+    </div>
     <!-- Assignment List Component Here -->
   </mat-sidenav>
   <mat-sidenav-content>

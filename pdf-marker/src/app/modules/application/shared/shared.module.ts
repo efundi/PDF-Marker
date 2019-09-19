@@ -1,8 +1,11 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {RouterModule} from "@angular/router";
-import { FormsModule } from "@angular/forms";
-import { ReactiveFormsModule } from "@angular/forms";
+import {FormsModule} from "@angular/forms";
+import {ReactiveFormsModule} from "@angular/forms";
+
+// Shared Components
+import { FileExplorerComponent } from './components/file-explorer/file-explorer.component';
 
 // Angular Material Modules
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -16,6 +19,7 @@ import {MatSidenavModule} from "@angular/material/sidenav";
 import {MatInputModule} from "@angular/material/input";
 import {MatCheckboxModule} from "@angular/material/checkbox";
 import {MatSelectModule} from "@angular/material/select";
+import {MatExpansionModule} from '@angular/material/expansion';
 
 
 const SHARED_MODULES = [
@@ -30,17 +34,20 @@ const SHARED_MODULES = [
   MatInputModule,
   MatCheckboxModule,
   MatSelectModule,
+  MatExpansionModule,
   RouterModule,
   FormsModule,
   ReactiveFormsModule
 ];
 
-const SHARED_COMPONENTS = [];
+const SHARED_COMPONENTS = [FileExplorerComponent];
 
 @NgModule({
-  declarations: [],
+  declarations: [FileExplorerComponent],
   imports: [
-    CommonModule
+    CommonModule,
+    MatIconModule,
+    MatExpansionModule
   ],
   exports: [ ...SHARED_MODULES, ...SHARED_COMPONENTS ]
 })
