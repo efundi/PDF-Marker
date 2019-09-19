@@ -1,0 +1,19 @@
+<ng-container>
+  <ul *ngFor="let object of hierarchyModelKeys" [class]="!isFile(object) ? 'folder-list':'file-list'">
+    <li *ngIf="isFile(object)"><span class="file-name"><mat-icon class="file">insert_drive_file</mat-icon> {{ object }}</span></li>
+    <li #element *ngIf="!isFile(object)">
+      <mat-accordion>
+        <mat-expansion-panel (opened)="element.value = true" (closed)="element.value = false">
+          <mat-expansion-panel-header>
+            <span class="folder-name"><mat-icon class="folder">{{ (element.value) ? 'folder_open':'folder' }}</mat-icon> {{ object }}</span>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+          <div class="folder-content" [class.hide]="!element.value">
+            <pdf-marker-file-explorer [hierarchyModel]="getModel(object)" [hierarchyModelKeys]="getModelKeys(object)"></pdf-marker-file-explorer>
+          </div>
+          </ng-template>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </li>
+  </ul>
+</ng-container>

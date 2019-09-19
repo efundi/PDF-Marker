@@ -1,0 +1,51 @@
+ul {
+  list-style-type: none;
+  padding: 0px;
+}
+
+/*.folder-list li app-folder {
+    display: none;
+}*/
+
+.folder {
+  color: #F7D775 !important;
+  vertical-align: bottom;
+}
+
+.file {
+  color: #888 !important;
+  vertical-align: bottom;
+}
+
+mat-expansion-panel {
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 5px 0;
+
+  mat-expansion-panel-header {
+    padding: 0;
+    height: fit-content !important;
+
+    &:hover {
+      background: transparent !important;
+    }
+
+    .mat-content {
+      background: red !important;
+    }
+
+    & > .mat-expansion-indicator {
+      &::after {
+        display: none !important;
+      }
+    }
+  }
+
+  .folder-content {
+    padding: 5px 0 !important;
+  }
+
+  .hide {
+    display: none !important;
+  }
+}
