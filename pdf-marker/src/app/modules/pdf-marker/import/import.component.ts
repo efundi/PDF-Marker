@@ -27,6 +27,8 @@ export class ImportComponent implements OnInit {
 
   isModalOpened: boolean = false;
 
+  readonly isAssignmentName: boolean = true;
+
   private hierarchyModel$ = this.zipService.hierarchyModel$;
 
   private hierarchyModel;
@@ -65,10 +67,10 @@ export class ImportComponent implements OnInit {
 
   private initForm() {
     this.importForm = this.fb.group({
-      assignmentName: [null, Validators.required],
+      assignmentName: [null],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required]
-    })
+    });
   }
 
   onFileChange(event) {
@@ -87,12 +89,7 @@ export class ImportComponent implements OnInit {
   }
 
   private getAssignmentNameFromFilename(filename: string): string {
-    console.log(filename);
-    const filenameSplit = filename.split("_");
-    if(filenameSplit.length > 1)
-      return filenameSplit[0];
-    else
-      return '';
+    return filename.replace(/\.[^/.]+$/, "");
   }
 
   onRubricChange(event) {
@@ -115,5 +112,14 @@ export class ImportComponent implements OnInit {
   onPreview() {
     this.zipService.getEntries(this.file).subscribe();
     this.isModalOpened = !this.isModalOpened;
+  }
+
+  onSubmit(event) {
+    if(this.importForm.invalid) {
+      event.target.disabled = true;
+      return;
+    }
+
+    console.log(this.importForm.value);
   }
 }
