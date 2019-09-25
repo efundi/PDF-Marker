@@ -49,10 +49,6 @@ body { margin: 0; }
   flex: 1;
 }
 
-button {
-  font-family: 'opensans-regular', Roboto, "Helvetica Neue", sans-serif !important;
-}
-
 .mat-icon {
   color: $pdf-marker-primary !important;
 }
@@ -85,3 +81,8 @@ button {
 .pdf-spacer {
   margin: 10px 0 10px 0
 }
+
+.mat-expansion-indicator {
+  display: none !important;
+}
+

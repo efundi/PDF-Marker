@@ -1,5 +1,5 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {ZipService} from "../../../core/services/zip.service";
+import {ZipService} from "@coreModule/services/zip.service";
 
 @Component({
   selector: 'pdf-marker-file-explorer',
@@ -23,7 +23,6 @@ export class FileExplorerComponent implements OnInit {
       if(value !== null && value !== undefined) {
         this.hierarchyModel = value;
         this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
-        this.zipService.setModel(null);
       }
     });
   }

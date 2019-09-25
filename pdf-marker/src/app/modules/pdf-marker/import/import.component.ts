@@ -1,6 +1,9 @@
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {ZipService} from "@coreModule/services/zip.service";
+import {MatDialog, MatDialogConfig} from "@angular/material";
+import {FileExplorerModalComponent} from "@sharedModule/components/file-explorer-modal/file-explorer-modal.component";
+import {MatDialogRef} from "@angular/material/dialog/typings/dialog-ref";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -22,9 +25,41 @@ export class ImportComponent implements OnInit {
 
   isRubric: boolean = true;
 
-  constructor(private fb: FormBuilder, private zipService: ZipService) { }
+  isModalOpened: boolean = false;
+
+  private hierarchyModel$ = this.zipService.hierarchyModel$;
+
+  private hierarchyModel;
+
+  private hierarchyModelKeys;
+
+  constructor(private fb: FormBuilder, private zipService: ZipService, private dialog: MatDialog) { }
 
   ngOnInit() {
+    this.hierarchyModel$.subscribe(value => {
+      if(value !== null && value !== undefined) {
+        this.hierarchyModel = value;
+        this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
+
+        const dialogConfig = new MatDialogConfig();
+        dialogConfig.disableClose = false;
+        dialogConfig.autoFocus = true;
+        dialogConfig.height = '400px';
+        dialogConfig.width = '600px';
+
+        dialogConfig.data = {
+          hierarchyModel: this.hierarchyModel,
+          hierarchyModelKeys : this.hierarchyModelKeys,
+          filename: this.file.name
+        };
+
+        this.dialog.open(FileExplorerModalComponent, dialogConfig).afterClosed()
+          .subscribe(() => {
+          this.isModalOpened = !this.isModalOpened;
+        });
+      }
+    });
+
     this.initForm();
   }
 
@@ -79,5 +114,6 @@ export class ImportComponent implements OnInit {
 
   onPreview() {
     this.zipService.getEntries(this.file).subscribe();
+    this.isModalOpened = !this.isModalOpened;
   }
 }

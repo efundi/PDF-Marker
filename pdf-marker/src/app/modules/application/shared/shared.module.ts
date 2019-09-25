@@ -6,6 +6,7 @@ import {ReactiveFormsModule} from "@angular/forms";
 
 // Shared Components
 import { FileExplorerComponent } from './components/file-explorer/file-explorer.component';
+import { FileExplorerModalComponent } from './components/file-explorer-modal/file-explorer-modal.component';
 
 // Angular Material Modules
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -20,7 +21,7 @@ import {MatInputModule} from "@angular/material/input";
 import {MatCheckboxModule} from "@angular/material/checkbox";
 import {MatSelectModule} from "@angular/material/select";
 import {MatExpansionModule} from '@angular/material/expansion';
-
+import {MatDialogModule} from "@angular/material";
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -35,20 +36,24 @@ const SHARED_MODULES = [
   MatCheckboxModule,
   MatSelectModule,
   MatExpansionModule,
+  MatDialogModule,
   RouterModule,
   FormsModule,
   ReactiveFormsModule
 ];
 
-const SHARED_COMPONENTS = [FileExplorerComponent];
+const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent],
   imports: [
     CommonModule,
     MatIconModule,
+    MatButtonModule,
+    MatTooltipModule,
     MatExpansionModule
   ],
-  exports: [ ...SHARED_MODULES, ...SHARED_COMPONENTS ]
+  exports: [ ...SHARED_MODULES, ...SHARED_COMPONENTS ],
+  entryComponents: [ FileExplorerModalComponent ]
 })
 export class SharedModule { }

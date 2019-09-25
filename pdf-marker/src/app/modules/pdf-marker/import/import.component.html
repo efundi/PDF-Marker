@@ -4,19 +4,20 @@
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
     <div class="pdf-marker-file-upload">
-      <button mat-raised-button>
+      <button type="button" mat-raised-button>
         Browse
         <input type="file" class="pdf-marker-upload" [accept]="acceptMimeType" (change)="onFileChange($event)" required>
       </button>
       &nbsp;&nbsp;
       <input #pdfMarkerUploadDisplay type="text" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
-      <button type="button" mat-raised-button *ngIf="isFilePresent()" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
+      <button type="button" mat-raised-button *ngIf="isFilePresent() && importForm.get('assignmentName').valid" (click)="onPreview()" [disabled]="isModalOpened">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
     </div>
     <div class="pdf-spacer"></div>
     <mat-form-field>
       <mat-label>Assignment Name</mat-label>
       <input formControlName="assignmentName" type="text" matInput required>
-    </mat-form-field><br>
+    </mat-form-field>
+    <div class="pdf-spacer"></div>
     <mat-label>Rubric</mat-label>
     <div class="pdf-marker-rubric-container">
       <mat-checkbox formControlName="noRubric" (change)="onRubricChange($event)">No Rubric</mat-checkbox>

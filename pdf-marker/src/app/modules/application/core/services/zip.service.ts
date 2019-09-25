@@ -37,6 +37,8 @@ export class ZipService {
   }
 
   setModel(hierarchyModel) {
+    if(this.hierarchyModelSource$.observers.length > 1)
+      this.hierarchyModelSource$.observers.pop();
     this.hierarchyModelSource$.next(hierarchyModel);
   }
 
