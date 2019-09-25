@@ -57,6 +57,10 @@ body { margin: 0; }
   height: 100%;
 }
 
+button {
+  min-width: auto !important;
+}
+
 .mat-drawer-container {
   height: 100%;
 
@@ -86,3 +90,8 @@ body { margin: 0; }
   display: none !important;
 }
 
+.mat-checkbox-checked, .mat-checkbox-indeterminate {
+  .mat-checkbox-background, .mat-checkbox-background {
+    background: $pdf-marker-primary !important;
+  }
+}

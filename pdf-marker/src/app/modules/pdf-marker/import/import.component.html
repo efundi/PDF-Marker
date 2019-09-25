@@ -17,7 +17,7 @@
 
     <mat-label>Rubric</mat-label>
     <div class="pdf-marker-rubric-container">
-      <mat-checkbox formControlName="noRubric" (change)="onRubricChange($event)">No Rubric</mat-checkbox>
+      <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange($event)">No Rubric</mat-checkbox>
       <ng-container>
         <mat-form-field [hideRequiredMarker]="importForm.get('noRubric').value">
           <mat-label>Select Rubric</mat-label>
@@ -32,7 +32,7 @@
     </div>
     <div class="pdf-spacer"></div>
     <div class="pdf-marker-submit">
-      <button type="button" mat-raised-button color="accent" [disabled]="!importForm.valid" (click)="onSubmit($event)">Submit</button>
+      <button type="button" mat-raised-button [disabled]="!importForm.valid" (click)="onSubmit($event)">Submit</button>
     </div>
   </form>
 </ng-container>
