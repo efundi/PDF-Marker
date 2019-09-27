@@ -1,0 +1,25 @@
+<ng-container>
+  <form [formGroup]="settingsForm" >
+    <h1><mat-icon>cog</mat-icon>&nbsp;Settings</h1>
+    <mat-divider></mat-divider>
+    <div class="pdf-spacer"></div>
+    <mat-form-field class="settings-halfWidth">
+      <mat-label>LMS Selection:</mat-label>
+      <mat-select formControlName="lmsSelection" #lmsSelection id="lmsSelection" required>
+        <mat-option *ngFor="let lmsChoice of lmsChoices" [value]="lmsChoice">
+          {{lmsChoice}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field><br>
+    <div class="pdf-spacer"></div>
+    <mat-form-field class="settings-halfWidth">
+      <mat-label>Default Path:</mat-label>
+      <input matInput type="text" formControlName="defaultPath" #lmsSelection id="defaultPath" required>
+
+    </mat-form-field>
+    <div class="pdf-spacer"></div>
+    <div>
+      <button type="button" mat-raised-button color="">Submit</button>
+    </div>
+  </form>
+</ng-container>

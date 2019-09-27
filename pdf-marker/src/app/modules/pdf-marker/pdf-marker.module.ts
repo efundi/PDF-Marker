@@ -7,10 +7,11 @@ import {SharedModule} from "@sharedModule/shared.module";
 import {LayoutModule} from "@layoutModule/layout.module";
 import { WelcomeComponent } from './welcome/welcome.component';
 import { ImportComponent } from './import/import.component';
+import {SettingsComponent} from '@pdfMarkerModule/settings/settings.component';
 
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent ],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent ],
   imports: [
     CommonModule,
     SharedModule,
