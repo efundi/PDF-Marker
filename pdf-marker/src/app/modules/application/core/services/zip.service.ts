@@ -54,8 +54,7 @@ export class ZipService {
 
       pathObject.path = zipInfo.name;
       if(!zipInfo.dir) {
-        let basename = zipInfo.name.split("/").pop();
-        pathObject.basename = basename;
+        pathObject.basename = zipInfo.name.split("/").pop();
       }
 
       return hier;
