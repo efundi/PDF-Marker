@@ -1,16 +1,21 @@
 <ng-container>
+  <pdf-marker-alert></pdf-marker-alert>
   <form [formGroup]="importForm">
-    <h1><mat-icon>archive</mat-icon>&nbsp;Import from a zip file</h1>
+    <h1 class="pdf-page-title"><mat-icon>archive</mat-icon>&nbsp;Import from a zip file</h1>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
+    <mat-error class="errorMessages" *ngIf="!validMime">
+      {{ errorMessage }}
+      <div class="pdf-spacer"></div>
+    </mat-error>
     <div class="pdf-marker-file-upload">
-      <button type="button" mat-raised-button>Browse<input type="file" class="pdf-marker-upload" [accept]="acceptMimeType" (change)="onFileChange($event)" required></button>
+      <button type="button" mat-raised-button>Browse<input formControlName="assignmentZipFile" type="file" class="pdf-marker-upload" [accept]="acceptTypes()" (change)="onFileChange($event)" required></button>
       &nbsp;&nbsp;
       <input #pdfMarkerUploadDisplay type="text" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
-      <button type="button" mat-raised-button *ngIf="isFilePresent()" (click)="onPreview()" [disabled]="isModalOpened">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
+      <button type="button" mat-raised-button *ngIf="isFilePresent() && validMime" (click)="onPreview()" [disabled]="isModalOpened">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
     </div>
     <div class="pdf-spacer"></div>
-    <mat-form-field *ngIf="isFilePresent()">
+    <mat-form-field *ngIf="isFilePresent() && validMime">
       <mat-label>Assignment Name</mat-label>
       <input formControlName="assignmentName" type="text" [readonly]="isAssignmentName" matInput required>
     </mat-form-field>
@@ -32,7 +37,7 @@
     </div>
     <div class="pdf-spacer"></div>
     <div class="pdf-marker-submit">
-      <button type="button" mat-raised-button [disabled]="!importForm.valid" (click)="onSubmit($event)">Submit</button>
+      <button type="button" mat-raised-button [disabled]="!importForm.valid || !validMime" (click)="onSubmit($event)">Submit</button>
     </div>
   </form>
 </ng-container>

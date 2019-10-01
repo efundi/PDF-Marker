@@ -4,6 +4,7 @@ import {ZipService} from "@coreModule/services/zip.service";
 import {MatDialog, MatDialogConfig} from "@angular/material";
 import {FileExplorerModalComponent} from "@sharedModule/components/file-explorer-modal/file-explorer-modal.component";
 import {MatDialogRef} from "@angular/material/dialog/typings/dialog-ref";
+import {AlertService} from "@coreModule/services/alert.service";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -15,7 +16,7 @@ export class ImportComponent implements OnInit {
   @ViewChild("pdfMarkerUploadDisplay", { static: false })
   pdfMarkerUploadDisplay: ElementRef;
 
-  readonly acceptMimeType = "application/zip";
+  readonly acceptMimeType = ["application/zip", "application/x-zip-compressed"];
 
   private file: File;
 
@@ -35,7 +36,14 @@ export class ImportComponent implements OnInit {
 
   private hierarchyModelKeys;
 
-  constructor(private fb: FormBuilder, private zipService: ZipService, private dialog: MatDialog) { }
+  errorMessage: string;
+
+  validMime: boolean;
+
+  constructor(private fb: FormBuilder,
+              private zipService: ZipService,
+              private dialog: MatDialog,
+              private alertService: AlertService) { }
 
   ngOnInit() {
     this.hierarchyModel$.subscribe(value => {
@@ -67,6 +75,7 @@ export class ImportComponent implements OnInit {
 
   private initForm() {
     this.importForm = this.fb.group({
+      assignmentZipFile: [null, Validators.required],
       assignmentName: [null],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required]
@@ -76,6 +85,7 @@ export class ImportComponent implements OnInit {
   onFileChange(event) {
     if(event.target.files[0] !== undefined) {
       this.file = event.target.files[0];
+      this.validMime = this.isValidMimeType(this.file.type);
       this.setFileDetailsAndAssignmentName(event.target.files[0]);
     } else {
       this.setFileDetailsAndAssignmentName(undefined);
@@ -85,21 +95,34 @@ export class ImportComponent implements OnInit {
   private setFileDetailsAndAssignmentName(file: File) {
     this.file = file;
     this.pdfMarkerUploadDisplay.nativeElement.value = (file) ? file.name:'';
-    this.importForm.controls.assignmentName.setValue(file ? this.getAssignmentNameFromFilename(file.name):'');
+    this.fc.assignmentName.setValue(file ? this.getAssignmentNameFromFilename(file.name):'');
   }
 
   private getAssignmentNameFromFilename(filename: string): string {
     return filename.replace(/\.[^/.]+$/, "");
   }
 
+  private isValidMimeType(type: string): boolean {
+    let isValid = this.acceptMimeType.indexOf(type) !== -1;
+    if(!isValid)
+      this.alertService.error("Not a valid zip file. Please select a file with a .zip extension!");
+    else
+      this.alertService.clear();
+    return isValid;
+  }
+
+  get fc() {
+    return this.importForm.controls;
+  }
+
   onRubricChange(event) {
-    if(this.importForm.controls.noRubric.value) {
-      this.importForm.controls.rubric.setValidators(null);
-      this.importForm.controls.rubric.updateValueAndValidity();
+    if(this.fc.noRubric.value) {
+      this.fc.rubric.setValidators(null);
+      this.fc.rubric.updateValueAndValidity();
       this.isRubric = false;
     } else {
-      this.importForm.controls.rubric.setValidators(Validators.required);
-      this.importForm.controls.rubric.updateValueAndValidity();
+      this.fc.rubric.setValidators(Validators.required);
+      this.fc.rubric.updateValueAndValidity();
     }
 
     this.importForm.updateValueAndValidity();
@@ -114,8 +137,12 @@ export class ImportComponent implements OnInit {
     this.isModalOpened = !this.isModalOpened;
   }
 
+  acceptTypes(): string {
+    return this.acceptMimeType.join(",");
+  }
+
   onSubmit(event) {
-    if(this.importForm.invalid) {
+    if(this.importForm.invalid || !this.validMime) {
       event.target.disabled = true;
       return;
     }

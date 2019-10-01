@@ -7,6 +7,7 @@ import {ReactiveFormsModule} from "@angular/forms";
 // Shared Components
 import { FileExplorerComponent } from './components/file-explorer/file-explorer.component';
 import { FileExplorerModalComponent } from './components/file-explorer-modal/file-explorer-modal.component';
+import { AlertComponent } from "./components/alert/alert.component";
 
 // Angular Material Modules
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -42,10 +43,10 @@ const SHARED_MODULES = [
   ReactiveFormsModule
 ];
 
-const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent];
+const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent],
   imports: [
     CommonModule,
     MatIconModule,
