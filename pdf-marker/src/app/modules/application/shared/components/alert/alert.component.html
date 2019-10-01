@@ -1,0 +1,5 @@
+<div *ngFor="let alert of alerts" class="{{cssClass(alert)}} alert-dismissable">
+  {{alert.message}}
+  <span class="pdf-marker-fill-space"></span>
+  <mat-icon class="close" (click)="removeAlert(alert)">close</mat-icon>
+</div>
