@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {Observable, Subject} from "rxjs";
 import * as JSZip from 'jszip';
 import {ZipInfo} from "@coreModule/info-objects/zip.info";
+import {SakaiService} from "@coreModule/services/sakai.service";
 
 @Injectable({
   providedIn: 'root'
@@ -13,25 +14,27 @@ export class ZipService {
 
   private jszip: JSZip;
 
-  constructor() {
+  constructor(private sakaiService: SakaiService) {
     this.jszip = new JSZip();
   }
 
-  getEntries(file: File): Observable<ZipInfo[]> {
+  getEntries(file: File, loadModel: boolean = false): Observable<ZipInfo[]> {
 
     this.jszip = new JSZip();
 
     return new Observable(subscriber => this.jszip.loadAsync(file)
       .then((zip) => {
-        let zipEntries: ZipInfo[] = new Array();
+        let zipEntries: ZipInfo[] = [];
         zip.forEach((relativePath, zipEntry) => {
           if(!zipEntry.dir)
             zipEntries.push({ ...zipEntry });
         });
+
+        zipEntries.sort((a, b) => (a.name > b.name) ? 1:-1);
+        if(loadModel)
+          this.getZipModel(zipEntries);
         subscriber.next(zipEntries);
         subscriber.complete();
-        zipEntries.sort((a, b) => (a.name > b.name) ? 1:-1);
-        this.getZipModel(zipEntries);
       })
       .catch((e) => subscriber.error({e})));
   }
@@ -61,5 +64,32 @@ export class ZipService {
     }, {});
 
     this.setModel(hierarchyModel);
+  }
+
+  isValidZip(assignmentName: string, file: File): Observable<boolean> {
+    let found = false;
+    this.jszip = new JSZip();
+
+    return new Observable(subscription => {
+        this.jszip.loadAsync(file)
+        .then((zip) => {
+          const filePaths = Object.keys(zip.files).sort((a, b) => (a > b) ? 1:-1);
+          for(let filename of this.sakaiService.getassignmentRootFiles()) {
+
+            if(filePaths[filePaths.length - 1].endsWith(filename)) {
+              found = true;
+              break;
+            }
+          }
+
+          subscription.next(found);
+          subscription.complete();
+        })
+        .catch(error => {
+          subscription.error("Error trying to decipher zip file format validity!");
+          subscription.complete();
+        })
+    });
+
   }
 }

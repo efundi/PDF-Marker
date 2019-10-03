@@ -1,6 +1,6 @@
 <div class="pdf-marker-container">
   <pdf-marker-header [appName]="title"></pdf-marker-header>
-  <mat-divider></mat-divider>
+  <mat-progress-bar *ngIf="isLoading$ | async" mode="indeterminate"></mat-progress-bar>
   <pdf-marker-home></pdf-marker-home>
 </div>
 

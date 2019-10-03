@@ -5,6 +5,9 @@ import {MatDialog, MatDialogConfig} from "@angular/material";
 import {FileExplorerModalComponent} from "@sharedModule/components/file-explorer-modal/file-explorer-modal.component";
 import {MatDialogRef} from "@angular/material/dialog/typings/dialog-ref";
 import {AlertService} from "@coreModule/services/alert.service";
+import {ZipInfo} from "@coreModule/info-objects/zip.info";
+import {SakaiService} from "@coreModule/services/sakai.service";
+import {AppService} from "@coreModule/services/app.service";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -18,32 +21,38 @@ export class ImportComponent implements OnInit {
 
   readonly acceptMimeType = ["application/zip", "application/x-zip-compressed"];
 
-  private file: File;
-
-  importForm: FormGroup;
+  readonly isAssignmentName: boolean = true;
 
   readonly noRubricDefaultValue: boolean = false;
 
-  isRubric: boolean = true;
-
-  isModalOpened: boolean = false;
-
-  readonly isAssignmentName: boolean = true;
-
   private hierarchyModel$ = this.zipService.hierarchyModel$;
+
+  private isLoading$ = this.appService.isLoading$;
 
   private hierarchyModel;
 
   private hierarchyModelKeys;
 
-  errorMessage: string;
+  private file: File;
+
+  isFileLoaded: boolean = false;
+
+  importForm: FormGroup;
+
+  isRubric: boolean = true;
+
+  isModalOpened: boolean = false;
 
   validMime: boolean;
+
+  isValidFormat: boolean;
 
   constructor(private fb: FormBuilder,
               private zipService: ZipService,
               private dialog: MatDialog,
-              private alertService: AlertService) { }
+              private alertService: AlertService,
+              private sakaiService: SakaiService,
+              private appService: AppService) { }
 
   ngOnInit() {
     this.hierarchyModel$.subscribe(value => {
@@ -63,14 +72,18 @@ export class ImportComponent implements OnInit {
           filename: this.file.name
         };
 
-        this.dialog.open(FileExplorerModalComponent, dialogConfig).afterClosed()
+        const dialog = this.dialog.open(FileExplorerModalComponent, dialogConfig);
+        dialog.afterOpened().subscribe(() => this.isLoading$.next(false))
+        dialog.afterClosed()
           .subscribe(() => {
           this.isModalOpened = !this.isModalOpened;
+
         });
       }
     });
 
     this.initForm();
+    this.isLoading$.next(false);
   }
 
   private initForm() {
@@ -84,11 +97,28 @@ export class ImportComponent implements OnInit {
 
   onFileChange(event) {
     if(event.target.files[0] !== undefined) {
-      this.file = event.target.files[0];
+      this.isLoading$.next(true);
+      this.file = <File> event.target.files[0];
       this.validMime = this.isValidMimeType(this.file.type);
-      this.setFileDetailsAndAssignmentName(event.target.files[0]);
+      this.setFileDetailsAndAssignmentName(this.file);
     } else {
+      this.validMime = false;
       this.setFileDetailsAndAssignmentName(undefined);
+    }
+
+    if(this.validMime) {
+      this.zipService.isValidZip(this.fc.assignmentName.value, this.file).subscribe((isValidFormat: boolean) => {
+        this.isValidFormat = isValidFormat;
+        if(!this.isValidFormat)
+          this.alertService.error(this.sakaiService.formatErrorMessage);
+        else
+          this.alertService.clear();
+        this.isLoading$.next(false);
+        this.isFileLoaded = true;
+      }, error => {
+        this.alertService.error(error);
+        this.isLoading$.next(false);
+      })
     }
   }
 
@@ -104,8 +134,10 @@ export class ImportComponent implements OnInit {
 
   private isValidMimeType(type: string): boolean {
     let isValid = this.acceptMimeType.indexOf(type) !== -1;
-    if(!isValid)
+    if(!isValid) {
       this.alertService.error("Not a valid zip file. Please select a file with a .zip extension!");
+      this.isLoading$.next(false);
+    }
     else
       this.alertService.clear();
     return isValid;
@@ -128,21 +160,16 @@ export class ImportComponent implements OnInit {
     this.importForm.updateValueAndValidity();
   }
 
-  isFilePresent(): boolean {
-    return !!(this.file);
-  }
-
   onPreview() {
-    this.zipService.getEntries(this.file).subscribe();
+    this.isLoading$.next(true);
+    this.zipService.getEntries(this.file, true).subscribe();
     this.isModalOpened = !this.isModalOpened;
   }
 
-  acceptTypes(): string {
-    return this.acceptMimeType.join(",");
-  }
-
   onSubmit(event) {
-    if(this.importForm.invalid || !this.validMime) {
+    console.log("hello");
+
+    if(this.importForm.invalid || !this.validMime || !this.isValidFormat) {
       event.target.disabled = true;
       return;
     }

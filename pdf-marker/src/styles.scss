@@ -78,7 +78,15 @@ button {
   }
 
   .mat-expansion-panel-body {
-    padding: 0 24px !important;
+    padding: 0 24px 0!important;
+  }
+}
+
+pdf-marker-file-explorer-modal {
+  pdf-marker-file-explorer {
+    .mat-expansion-panel-body {
+      padding: 0 24px 0!important;
+    }
   }
 }
 

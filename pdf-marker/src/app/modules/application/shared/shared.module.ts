@@ -22,7 +22,8 @@ import {MatInputModule} from "@angular/material/input";
 import {MatCheckboxModule} from "@angular/material/checkbox";
 import {MatSelectModule} from "@angular/material/select";
 import {MatExpansionModule} from '@angular/material/expansion';
-import {MatDialogModule} from "@angular/material";
+import {MatDialogModule} from "@angular/material/dialog";
+import {MatProgressBarModule} from "@angular/material/progress-bar";
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -38,6 +39,7 @@ const SHARED_MODULES = [
   MatSelectModule,
   MatExpansionModule,
   MatDialogModule,
+  MatProgressBarModule,
   RouterModule,
   FormsModule,
   ReactiveFormsModule

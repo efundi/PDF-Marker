@@ -1,4 +1,4 @@
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {Component, Input, OnChanges, OnDestroy, OnInit} from '@angular/core';
 import {ZipService} from "@coreModule/services/zip.service";
 import {Subscription} from "rxjs";
 
@@ -7,7 +7,7 @@ import {Subscription} from "rxjs";
   templateUrl: './file-explorer.component.html',
   styleUrls: ['./file-explorer.component.scss']
 })
-export class FileExplorerComponent implements OnInit, OnDestroy {
+export class FileExplorerComponent implements OnInit, OnDestroy, OnChanges  {
 
   hierarchyModel$ = this.zipService.hierarchyModel$;
 
@@ -47,4 +47,7 @@ export class FileExplorerComponent implements OnInit, OnDestroy {
     this.subscription.unsubscribe();
   }
 
+  ngOnChanges() {
+    this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
+  }
 }
