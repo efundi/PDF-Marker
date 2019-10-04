@@ -73,13 +73,17 @@ export class ZipService {
     return new Observable(subscription => {
         this.jszip.loadAsync(file)
         .then((zip) => {
-          const filePaths = Object.keys(zip.files).sort((a, b) => (a > b) ? 1:-1);
-          for(let filename of this.sakaiService.getassignmentRootFiles()) {
-
-            if(filePaths[filePaths.length - 1].endsWith(filename)) {
+          const filePaths = Object.keys(zip.files);
+          const fileNames = this.sakaiService.getassignmentRootFiles();
+          let count = 0;
+          for(let filePath of filePaths) {
+            let path = filePath.split("/");
+            if(path[1] !== undefined && fileNames.indexOf(path[1]) !== -1) {
               found = true;
               break;
             }
+
+            count++;
           }
 
           subscription.next(found);
