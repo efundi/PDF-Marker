@@ -15,7 +15,7 @@ import {CoreModule} from '@coreModule/core.module';
     AppComponent
   ],
   imports: [
-    BrowserModule,
+    BrowserModule.withServerTransition({ appId: 'serverApp' }),
     AppRoutingModule,
     BrowserAnimationsModule,
     CoreModule,
