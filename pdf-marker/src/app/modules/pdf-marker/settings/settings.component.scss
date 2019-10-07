@@ -3,7 +3,18 @@ form {
   flex-direction: column;
   /*width: 50%;
   margin: 0 auto;*/
-      button {
+
+  .pdf-marker-file-upload {
+    display: flex;
+
+    #pdf-marker-upload-display {
+      display: flex;
+      width: 100%;
+      border: 0;
+      background: transparent;
+    }
+
+    button {
       position: relative;
       .pdf-marker-upload {
         width: 100%;
@@ -23,15 +34,15 @@ form {
     }
   }
 
-  .settings-halfWidth {
+  .pdf-marker-rubric-container {
     display: flex;
+    align-items: center;
     flex: 1 1 auto;
     justify-content: space-between;
-    max-width: 50%;
 
     .mat-form-field {
       flex: 1;
       flex-grow: unset;
     }
   }
-
+}

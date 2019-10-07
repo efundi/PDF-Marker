@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {FormGroup} from "@angular/forms";
+import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 
 @Component({
   selector: 'pdf-marker-settings',
@@ -9,10 +9,20 @@ import {FormGroup} from "@angular/forms";
 export class SettingsComponent implements OnInit {
 
   settingsForm: FormGroup;
+  settingsLMSSelected = "Sakai";
   lmsChoices: string[] = ['Sakai'];
-  constructor() { }
 
-  ngOnInit() {
+  constructor(private fb: FormBuilder,) {
   }
 
+  ngOnInit() {
+    this.initForm();
+  }
+
+  private initForm() {
+    this.settingsForm = this.fb.group({
+      lmsSelection: ["Sakai", Validators.required],
+      defaultPath: [null]
+    });
+  }
 }

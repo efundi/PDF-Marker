@@ -5,18 +5,20 @@
     <div class="pdf-spacer"></div>
     <mat-form-field class="settings-halfWidth">
       <mat-label>LMS Selection:</mat-label>
-      <mat-select formControlName="lmsSelection" #lmsSelection id="lmsSelection" required>
+      <mat-select [(value)]="selected" placeholder="Sakai" formControlName="lmsSelection" #lmsSelection id="lmsSelection" required>
         <mat-option *ngFor="let lmsChoice of lmsChoices" [value]="lmsChoice">
           {{lmsChoice}}
         </mat-option>
       </mat-select>
     </mat-form-field><br>
-    <div class="pdf-spacer"></div>
-    <mat-form-field class="settings-halfWidth">
-      <mat-label>Default Path:</mat-label>
-      <input matInput type="text" formControlName="defaultPath" #lmsSelection id="defaultPath" required>
+ <div class="pdf-spacer"></div>
+    <!--  <mat-form-field class="settings-halfWidth"> -->
+      <div class="pdf-marker-file-upload">
+        <button type="button" mat-raised-button>Choose Path:<input formControlName="defaultPath" type="folder" class="pdf-marker-upload" [accept]="acceptMimeType" (change)="onFileChange($event)" required></button>
+        <input #defaultPath type="text" id="defaultPathDisplay" readonly placeholder="...">
+      </div>
 
-    </mat-form-field>
+    <!--   </mat-form-field> -->
     <div class="pdf-spacer"></div>
     <div>
       <button type="button" mat-raised-button color="">Submit</button>
