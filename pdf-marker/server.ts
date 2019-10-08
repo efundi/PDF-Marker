@@ -58,7 +58,6 @@ app.post('/api/settings', [
     check('lmsSelection').not().isEmpty().withMessage('LMS type not provided!'),
     check('defaultPath').not().isEmpty().withMessage('Default path not provided!')
   ], (req, res) => {
-  console.log(process.env.HOME)
   const errors = validationResult(req);
   if(!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
