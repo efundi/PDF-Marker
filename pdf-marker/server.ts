@@ -26,7 +26,7 @@ const fs = require('fs');
 const { check, validationResult } = require('express-validator');
 app.use(express.json());
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4200;
 const DIST_FOLDER = join(process.cwd(), 'dist/browser');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
