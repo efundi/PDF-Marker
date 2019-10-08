@@ -2,12 +2,12 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { PdfMarkerRoutingModule } from './pdf-marker-routing.module';
-import { HomeComponent } from './home/home.component';
 import {SharedModule} from "@sharedModule/shared.module";
 import {LayoutModule} from "@layoutModule/layout.module";
-import { WelcomeComponent } from './welcome/welcome.component';
-import { ImportComponent } from './import/import.component';
-import {SettingsComponent} from '@pdfMarkerModule/settings/settings.component';
+import { HomeComponent } from '@pdfMarkerModule/components/home/home.component';
+import { WelcomeComponent } from '@pdfMarkerModule/components/welcome/welcome.component';
+import { ImportComponent } from '@pdfMarkerModule/components/import/import.component';
+import {SettingsComponent} from '@pdfMarkerModule/components/settings/settings.component';
 
 
 @NgModule({

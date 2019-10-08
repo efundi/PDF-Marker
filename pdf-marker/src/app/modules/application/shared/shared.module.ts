@@ -24,6 +24,8 @@ import {MatSelectModule} from "@angular/material/select";
 import {MatExpansionModule} from '@angular/material/expansion';
 import {MatDialogModule} from "@angular/material/dialog";
 import {MatProgressBarModule} from "@angular/material/progress-bar";
+import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
+import {PdfMarkerErrorInterceptorService} from "@sharedModule/services/pdf-marker-error-interceptor.service";
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -42,7 +44,8 @@ const SHARED_MODULES = [
   MatProgressBarModule,
   RouterModule,
   FormsModule,
-  ReactiveFormsModule
+  ReactiveFormsModule,
+  HttpClientModule
 ];
 
 const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent];
@@ -56,6 +59,7 @@ const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, Al
     MatTooltipModule,
     MatExpansionModule
   ],
+  providers: [{provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true}],
   exports: [ ...SHARED_MODULES, ...SHARED_COMPONENTS ],
   entryComponents: [ FileExplorerModalComponent ]
 })

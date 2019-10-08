@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import {WelcomeComponent} from "@pdfMarkerModule/welcome/welcome.component";
-import {ImportComponent} from "@pdfMarkerModule/import/import.component";
-import {SettingsComponent} from '@pdfMarkerModule/settings/settings.component';
+import {WelcomeComponent} from "@pdfMarkerModule/components/welcome/welcome.component";
+import {ImportComponent} from "@pdfMarkerModule/components/import/import.component";
+import {SettingsComponent} from '@pdfMarkerModule/components/settings/settings.component';
 
 
 const routes: Routes = [

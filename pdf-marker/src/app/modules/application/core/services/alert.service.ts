@@ -50,7 +50,7 @@ export class AlertService {
 
   // main alert method
   alert(alert: AlertInfo) {
-    this.clear();
+    //this.clear();
     this.keepAfterRouteChange = alert.keepAfterRouteChange;
     this.subject.next(alert);
   }

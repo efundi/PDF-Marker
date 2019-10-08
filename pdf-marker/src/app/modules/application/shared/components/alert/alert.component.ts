@@ -12,6 +12,7 @@ export class AlertComponent implements OnInit, OnDestroy {
 
   @Input() id: string;
 
+  readonly alertInfoTypes = AlertInfoType;
   alerts: AlertInfo[] = [];
   subscription: Subscription;
 

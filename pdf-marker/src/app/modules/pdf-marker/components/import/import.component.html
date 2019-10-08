@@ -1,13 +1,13 @@
 <ng-container>
   <pdf-marker-alert></pdf-marker-alert>
   <form [formGroup]="importForm">
-    <h1 class="pdf-page-title"><mat-icon>archive</mat-icon>&nbsp;Import from a zip file</h1>
+    <h1><mat-icon>archive</mat-icon>&nbsp;Import from a zip file</h1>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
     <div class="pdf-marker-file-upload">
       <button type="button" mat-raised-button>Browse<input formControlName="assignmentZipFile" type="file" class="pdf-marker-upload" [accept]="acceptMimeType" (change)="onFileChange($event)" required></button>
       &nbsp;&nbsp;
-      <input #pdfMarkerUploadDisplay type="text" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
+      <input type="text" formControlName="assignmentZipFileText" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
       <button type="button" mat-raised-button *ngIf="isFileLoaded && validMime && isValidFormat" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
     </div>
     <div class="pdf-spacer"></div>

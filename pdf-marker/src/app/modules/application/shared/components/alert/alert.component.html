@@ -1,5 +1,9 @@
 <div *ngFor="let alert of alerts" class="{{cssClass(alert)}} alert-dismissable">
-  {{alert.message}}
+  <mat-icon *ngIf="alert.type === alertInfoTypes.Error">report_problem</mat-icon>
+  <mat-icon *ngIf="alert.type === alertInfoTypes.Warning">warning</mat-icon>
+  <mat-icon *ngIf="alert.type === alertInfoTypes.Info">info</mat-icon>
+  <mat-icon *ngIf="alert.type === alertInfoTypes.Success">check_circle</mat-icon>
+  &nbsp;&nbsp;{{alert.message}}
   <span class="pdf-marker-fill-space"></span>
   <mat-icon class="close" (click)="removeAlert(alert)">close</mat-icon>
 </div>

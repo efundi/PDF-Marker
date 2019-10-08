@@ -1,13 +1,11 @@
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {ZipService} from "@coreModule/services/zip.service";
+import {ZipService} from "../../../application/core/services/zip.service";
 import {MatDialog, MatDialogConfig} from "@angular/material";
-import {FileExplorerModalComponent} from "@sharedModule/components/file-explorer-modal/file-explorer-modal.component";
-import {MatDialogRef} from "@angular/material/dialog/typings/dialog-ref";
-import {AlertService} from "@coreModule/services/alert.service";
-import {ZipInfo} from "@coreModule/info-objects/zip.info";
-import {SakaiService} from "@coreModule/services/sakai.service";
-import {AppService} from "@coreModule/services/app.service";
+import {FileExplorerModalComponent} from "../../../application/shared/components/file-explorer-modal/file-explorer-modal.component";
+import {AlertService} from "../../../application/core/services/alert.service";
+import {SakaiService} from "../../../application/core/services/sakai.service";
+import {AppService} from "../../../application/core/services/app.service";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -15,9 +13,6 @@ import {AppService} from "@coreModule/services/app.service";
   styleUrls: ['./import.component.scss']
 })
 export class ImportComponent implements OnInit {
-
-  @ViewChild("pdfMarkerUploadDisplay", { static: false })
-  pdfMarkerUploadDisplay: ElementRef;
 
   readonly acceptMimeType = ["application/zip", "application/x-zip-compressed"];
 
@@ -69,7 +64,7 @@ export class ImportComponent implements OnInit {
         dialogConfig.data = {
           hierarchyModel: this.hierarchyModel,
           hierarchyModelKeys : this.hierarchyModelKeys,
-          filename: this.file.name
+          filename: this.hierarchyModelKeys[0]
         };
 
         const dialog = this.dialog.open(FileExplorerModalComponent, dialogConfig);
@@ -89,6 +84,7 @@ export class ImportComponent implements OnInit {
   private initForm() {
     this.importForm = this.fb.group({
       assignmentZipFile: [null, Validators.required],
+      assignmentZipFileText: [null],
       assignmentName: [null],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required]
@@ -98,7 +94,7 @@ export class ImportComponent implements OnInit {
   onFileChange(event) {
     if(event.target.files[0] !== undefined) {
       this.isLoading$.next(true);
-      this.file = <File> event.target.files[0];
+      this.file = event.target.files[0];
       this.validMime = this.isValidMimeType(this.file.type);
       this.setFileDetailsAndAssignmentName(this.file);
     } else {
@@ -124,7 +120,7 @@ export class ImportComponent implements OnInit {
 
   private setFileDetailsAndAssignmentName(file: File) {
     this.file = file;
-    this.pdfMarkerUploadDisplay.nativeElement.value = (file) ? file.name:'';
+    this.fc.assignmentZipFileText.setValue((file) ? file.name:'');
     this.fc.assignmentName.setValue(file ? this.getAssignmentNameFromFilename(file.name):'');
   }
 
