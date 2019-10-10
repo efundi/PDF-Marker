@@ -8,6 +8,8 @@ import { HomeComponent } from '@pdfMarkerModule/components/home/home.component';
 import { WelcomeComponent } from '@pdfMarkerModule/components/welcome/welcome.component';
 import { ImportComponent } from '@pdfMarkerModule/components/import/import.component';
 import {SettingsComponent} from '@pdfMarkerModule/components/settings/settings.component';
+import {SettingsService} from "@pdfMarkerModule/services/settings.service";
+import {ImportService} from "@pdfMarkerModule/services/import.service";
 
 
 @NgModule({
@@ -18,6 +20,7 @@ import {SettingsComponent} from '@pdfMarkerModule/components/settings/settings.c
     LayoutModule,
     PdfMarkerRoutingModule
   ],
+  providers: [SettingsService, ImportService],
   exports: [HomeComponent]
 })
 export class PdfMarkerModule { }

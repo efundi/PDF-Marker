@@ -18,12 +18,17 @@
 import 'zone.js/dist/zone-node';
 
 import * as express from 'express';
-import {join} from 'path';
+import {join, extname} from 'path';
+import { writeFile, access, constants, readFile, unlinkSync, statSync, readdirSync} from 'fs';
+import {throwError} from "rxjs";
+
+const { check, validationResult } = require('express-validator');
+const multer = require('multer');
+const extract = require('extract-zip');
+
 
 // Express server
 const app = express();
-const fs = require('fs');
-const { check, validationResult } = require('express-validator');
 app.use(express.json());
 
 const PORT = process.env.PORT || 4200;
@@ -51,24 +56,33 @@ app.get('*.*', express.static(DIST_FOLDER, {
 }));
 
 
-const CONFIG_FILE = "config.json";
-const CONFIG_DIR = "./pdf-config/";
+const CONFIG_FILE = 'config.json';
+const CONFIG_DIR = './pdf-config/';
+const UPLOADS_DIR = './uploads/';
 
-app.post('/api/settings', [
-    check('lmsSelection').not().isEmpty().withMessage('LMS type not provided!'),
-    check('defaultPath').not().isEmpty().withMessage('Default path not provided!')
-  ], (req, res) => {
+const store = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOADS_DIR)
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+
+const upload = multer({storage: store}).single('file');
+
+const settingsPost = (req, res) => {
   const errors = validationResult(req);
   if(!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  return fs.access(req.body.defaultPath, fs.constants.F_OK, (err) => {
+  return access(req.body.defaultPath, constants.F_OK, (err) => {
     if(err)
       return res.status(404).send({ message: `Path '${req.body.defaultPath}' not found!`});
     else {
       const data = new Uint8Array(Buffer.from(JSON.stringify(req.body)));
-      fs.writeFile(CONFIG_DIR + CONFIG_FILE, data, (err) => {
+      writeFile(CONFIG_DIR + CONFIG_FILE, data, (err) => {
         if(err)
           return res.status(500).send({ message: 'Failed to save configurations!'});
         else
@@ -76,19 +90,59 @@ app.post('/api/settings', [
       });
     }
   });
-});
+};
 
-app.get('/api/settings', (req, res) => {
-  return fs.readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+app.post('/api/settings', [
+    check('lmsSelection').not().isEmpty().withMessage('LMS type not provided!'),
+    check('defaultPath').not().isEmpty().withMessage('Default path not provided!')
+  ], settingsPost);
+
+const settingsGet = (req, res) => {
+  return readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if(err)
       return res.status(500).send({ message: 'Failed to read configurations!'});
 
     if(!isJson(data))
       return res.status(200).send({});
     else
-      return res.status(200).send(JSON.parse(data));
+      return res.status(200).send(JSON.parse(data.toString()));
   })
-});
+};
+
+app.get('/api/settings', settingsGet);
+
+/*IMPORT API*/
+const uploadFn = (req, res, next) => {
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    upload(req, res, (err) => {
+      if(err) {
+        return res.status(501).json({error: err});
+      }
+      // Make file type validations
+      console.log(req.file);
+      const config = JSON.parse(data.toString());
+      const mimeTypes = ["application/zip", "application/x-zip-compressed"];
+
+      if(mimeTypes.indexOf(req.file.mimetype) == -1)
+        return res.status(404).send({message: 'Not a valid zip file. Please select a file with a .zip extension!'});
+
+      extractZip(UPLOADS_DIR + req.file.originalname, config.defaultPath + '\\', true, res).then(() => {
+        return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
+      }).catch((error) => {
+        return res.status(501).send({message: error.message});
+      });
+
+    });
+  });
+};
+
+app.post('/api/import', uploadFn);
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
@@ -100,11 +154,40 @@ app.listen(PORT, () => {
   console.log(`Node Express server listening on http://localhost:${PORT}`);
 });
 
-function isJson(str) {
+const isJson = (str) => {
   try {
     JSON.parse(str);
   } catch (e) {
     return false;
   }
   return true;
-}
+};
+
+const extractZip = (file, destination, deleteSource, res = null) => {
+  return new Promise((resolve, reject) => extract(file, {dir: destination}, (err) => {
+    if (!err) {
+      if (deleteSource) unlinkSync(file);
+      nestedExtract(destination, extractZip);
+      if(res)
+        resolve(true);
+    } else {
+      console.log(err);
+      console.log("no");
+      reject(new Error('Error occurred while extracting file to disk!'));
+      //return res.status(501).send({message: 'Error occurred while extracting file to disk!'});
+    }
+  }));
+};
+
+const nestedExtract = (dir, zipExtractor) => {
+  readdirSync(dir).forEach((file) => {
+    if (statSync(join(dir, file)).isFile()) {
+      if (extname(file) === '.zip') {
+        // deleteSource = true to avoid infinite loops caused by extracting same file
+        zipExtractor(join(dir, file), dir, true);
+      }
+    } else {
+      nestedExtract(join(dir, file), zipExtractor);
+    }
+  });
+};

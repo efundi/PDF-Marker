@@ -15,7 +15,7 @@
  <div class="pdf-spacer"></div>
     <mat-form-field class="settings-halfWidth">
       <mat-label>Default Path</mat-label>
-      <input formControlName="defaultPath" type="text" placeholder="C:\documents" matInput required>
+      <input formControlName="defaultPath" type="text" placeholder="C:\documents" matInput required [autocomplete]="false">
     </mat-form-field>
     <div class="pdf-spacer"></div>
     <div>

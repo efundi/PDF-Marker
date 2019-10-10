@@ -6,6 +6,8 @@ import {FileExplorerModalComponent} from "../../../application/shared/components
 import {AlertService} from "../../../application/core/services/alert.service";
 import {SakaiService} from "../../../application/core/services/sakai.service";
 import {AppService} from "../../../application/core/services/app.service";
+import {ImportService} from "@pdfMarkerModule/services/import.service";
+import {HttpEventType} from '@angular/common/http';
 
 @Component({
   selector: 'pdf-marker-import',
@@ -47,7 +49,8 @@ export class ImportComponent implements OnInit {
               private dialog: MatDialog,
               private alertService: AlertService,
               private sakaiService: SakaiService,
-              private appService: AppService) { }
+              private appService: AppService,
+              private importService: ImportService) { }
 
   ngOnInit() {
     this.hierarchyModel$.subscribe(value => {
@@ -163,13 +166,43 @@ export class ImportComponent implements OnInit {
   }
 
   onSubmit(event) {
-    console.log("hello");
 
     if(this.importForm.invalid || !this.validMime || !this.isValidFormat) {
       event.target.disabled = true;
       return;
     }
 
-    console.log(this.importForm.value);
+    const {
+      noRubric,
+      rubric
+    } = this.importForm.value;
+
+    const formData: FormData = new FormData();
+    formData.append('file', this.file);
+    formData.append('noRubric', noRubric);
+    formData.append('rubric', rubric);
+    this.isLoading$.next(true);
+    this.importService.importFile(formData).subscribe((events) => {
+
+      if(events.type === HttpEventType.UploadProgress) {
+
+      } else if(events.type === HttpEventType.Response) {
+        this.isLoading$.next(false);
+        let response: any = events.body;
+        this.alertService.success(response.message);
+        this.resetForm();
+      }
+    }, error => this.isLoading$.next(false));
+  }
+
+  private resetForm() {
+    this.importForm.reset();
+    this.file = undefined;
+    this.isFileLoaded= false;
+    this.isRubric= true;
+    this.isModalOpened = false;
+    this.validMime = false;
+    this.isValidFormat = false;
+    this.fc.noRubric.setValue(this.noRubricDefaultValue);
   }
 }
