@@ -8,6 +8,7 @@ import {SakaiService} from "../../../application/core/services/sakai.service";
 import {AppService} from "../../../application/core/services/app.service";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {HttpEventType} from '@angular/common/http';
+import {AssignmentService} from "@sharedModule/services/assignment.service";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -50,7 +51,8 @@ export class ImportComponent implements OnInit {
               private alertService: AlertService,
               private sakaiService: SakaiService,
               private appService: AppService,
-              private importService: ImportService) { }
+              private importService: ImportService,
+              private assignmentService: AssignmentService) { }
 
   ngOnInit() {
     this.hierarchyModel$.subscribe(value => {
@@ -204,5 +206,7 @@ export class ImportComponent implements OnInit {
     this.validMime = false;
     this.isValidFormat = false;
     this.fc.noRubric.setValue(this.noRubricDefaultValue);
+    this.initForm();
+    this.assignmentService.getAssignments();
   }
 }

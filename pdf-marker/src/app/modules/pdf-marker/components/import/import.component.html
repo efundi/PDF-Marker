@@ -1,39 +1,56 @@
-<ng-container>
-  <pdf-marker-alert></pdf-marker-alert>
-  <form [formGroup]="importForm">
-    <h1><mat-icon>archive</mat-icon>&nbsp;Import from a zip file</h1>
-    <mat-divider></mat-divider>
-    <div class="pdf-spacer"></div>
-    <div class="pdf-marker-file-upload">
-      <button type="button" mat-raised-button>Browse<input formControlName="assignmentZipFile" type="file" class="pdf-marker-upload" [accept]="acceptMimeType" (change)="onFileChange($event)" required></button>
-      &nbsp;&nbsp;
-      <input type="text" formControlName="assignmentZipFileText" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
-      <button type="button" mat-raised-button *ngIf="isFileLoaded && validMime && isValidFormat" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
-    </div>
-    <div class="pdf-spacer"></div>
-    <mat-form-field *ngIf="isFileLoaded && validMime && isValidFormat">
-      <mat-label>Assignment Name</mat-label>
-      <input formControlName="assignmentName" type="text" [readonly]="isAssignmentName" matInput required>
-    </mat-form-field>
-
-    <mat-label>Rubric</mat-label>
-    <div class="pdf-marker-rubric-container">
-      <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange($event)">No Rubric</mat-checkbox>
+<mat-sidenav-container class="sidenav-container" autosize>
+  <mat-sidenav #drawer class="sidenav" mode="side" opened>
+    <pdf-marker-side-navigation></pdf-marker-side-navigation>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <mat-toolbar>
+      <button
+        type="button"
+        aria-label="Toggle sidenav"
+        mat-icon-button (click)="drawer.toggle()">
+        <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+      </button>
+    </mat-toolbar>
+    <div class="pdf-marker-content-container">
       <ng-container>
-        <mat-form-field [hideRequiredMarker]="importForm.get('noRubric').value">
-          <mat-label>Select Rubric</mat-label>
-          <mat-select formControlName="rubric" required="importForm.get('noRubric').value">
-            <mat-option *ngFor="" [value]="">
+        <pdf-marker-alert></pdf-marker-alert>
+        <form [formGroup]="importForm">
+          <h1><mat-icon>archive</mat-icon>&nbsp;Import from a zip file</h1>
+          <mat-divider></mat-divider>
+          <div class="pdf-spacer"></div>
+          <div class="pdf-marker-file-upload">
+            <button type="button" mat-raised-button>Browse<input formControlName="assignmentZipFile" type="file" class="pdf-marker-upload" [accept]="acceptMimeType" (change)="onFileChange($event)" required></button>
+            &nbsp;&nbsp;
+            <input type="text" formControlName="assignmentZipFileText" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
+            <button type="button" mat-raised-button *ngIf="isFileLoaded && validMime && isValidFormat" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
+          </div>
+          <div class="pdf-spacer"></div>
+          <mat-form-field *ngIf="isFileLoaded && validMime && isValidFormat">
+            <mat-label>Assignment Name</mat-label>
+            <input formControlName="assignmentName" type="text" [readonly]="isAssignmentName" matInput required>
+          </mat-form-field>
 
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <button type="button" mat-raised-button>Add a Rubric</button>
+          <mat-label>Rubric</mat-label>
+          <div class="pdf-marker-rubric-container">
+            <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange($event)">No Rubric</mat-checkbox>
+            <ng-container>
+              <mat-form-field [hideRequiredMarker]="importForm.get('noRubric').value">
+                <mat-label>Select Rubric</mat-label>
+                <mat-select formControlName="rubric" required="importForm.get('noRubric').value">
+                  <mat-option *ngFor="" [value]="">
+
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <button type="button" mat-raised-button>Add a Rubric</button>
+            </ng-container>
+          </div>
+          <div class="pdf-spacer"></div>
+          <div class="pdf-marker-submit">
+            <button type="button" mat-raised-button [disabled]="!importForm.valid || !validMime || !isValidFormat" (click)="onSubmit($event)">Submit</button>
+          </div>
+        </form>
       </ng-container>
     </div>
-    <div class="pdf-spacer"></div>
-    <div class="pdf-marker-submit">
-      <button type="button" mat-raised-button [disabled]="!importForm.valid || !validMime || !isValidFormat" (click)="onSubmit($event)">Submit</button>
-    </div>
-  </form>
-</ng-container>
+  </mat-sidenav-content>
+</mat-sidenav-container>

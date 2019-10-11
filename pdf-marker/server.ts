@@ -18,14 +18,39 @@
 import 'zone.js/dist/zone-node';
 
 import * as express from 'express';
-import {join, extname} from 'path';
-import { writeFile, access, constants, readFile, unlinkSync, statSync, readdirSync} from 'fs';
-import {throwError} from "rxjs";
+import {extname, join} from 'path';
+import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync, writeFile} from 'fs';
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
 const extract = require('extract-zip');
+const dirTree = require("directory-tree");
+const glob = require('glob');
 
+const assignmentList = (callback) => {
+  const folderModels = []
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return [];
+
+    if (!isJson(data))
+      return [];
+
+
+    const config = JSON.parse(data.toString());
+    //console.log(dirTree(config.defaultPath));
+    readdir(config.defaultPath, (err, folders) => {
+      folders.forEach(folder => {
+        glob(config.defaultPath + '/' + folder + '/**', (err, files) => {
+          folderModels.push(hierarchyModel(files, config.defaultPath));
+        });
+      });
+
+      callback(null, folderModels);
+    });
+
+  });
+};
 
 // Express server
 const app = express();
@@ -41,7 +66,8 @@ const {AppServerModuleNgFactory, LAZY_MODULE_MAP, ngExpressEngine, provideModule
 app.engine('html', ngExpressEngine({
   bootstrap: AppServerModuleNgFactory,
   providers: [
-    provideModuleMap(LAZY_MODULE_MAP)
+    provideModuleMap(LAZY_MODULE_MAP),
+    {provide: 'ASSIGNMENT_LIST', useValue: assignmentList}
   ]
 }));
 
@@ -144,6 +170,39 @@ const uploadFn = (req, res, next) => {
 
 app.post('/api/import', uploadFn);
 
+const getAssignments = (req, res) => {
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const config = JSON.parse(data.toString());
+
+    const folderModels = [];
+    readdir(config.defaultPath, (err, folders) => {
+      if(err)
+        return res.status(501).send({message: 'Error retrieving assignments'});
+
+      const folderCount = folders.length;
+      folders.forEach(folder => {
+        glob(config.defaultPath + '/' + folder + '/**', (err, files) => {
+          folderModels.push(hierarchyModel(files, config.defaultPath));
+
+          if(folderModels.length == folderCount)
+            return res.status(200).send(folderModels);
+        });
+      });
+
+      console.log("response");
+
+    });
+  });
+};
+
+app.use('/api/assignments', getAssignments);
+
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
   res.render('index', { req });
@@ -190,4 +249,28 @@ const nestedExtract = (dir, zipExtractor) => {
       nestedExtract(join(dir, file), zipExtractor);
     }
   });
+};
+
+const hierarchyModel = (pathInfos, configFolder) => {
+  const pattern = /\\/g;
+  configFolder = configFolder.replace(pattern, '/');
+  let model = pathInfos.reduce((hier, pathInfo) => {
+    let stat = statSync(pathInfo);
+    if(stat.isFile()) {
+      let path = pathInfo.replace(configFolder + '/', '');
+      let pathObject: any = hier;
+      path.split("/").forEach((item) => {
+        if (!pathObject[item]) {
+          pathObject[item] = {};
+        }
+        pathObject = pathObject[item];
+      });
+
+      pathObject.path = path;
+      pathObject.basename = path.split("/").pop();
+    }
+    return hier;
+  }, {});
+
+  return model;
 };

@@ -1,1 +1,20 @@
-<p>welcome works!</p>
+<mat-sidenav-container class="sidenav-container" autosize>
+  <mat-sidenav #drawer class="sidenav" mode="side" opened>
+    <pdf-marker-side-navigation></pdf-marker-side-navigation>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <mat-toolbar>
+      <button
+        type="button"
+        aria-label="Toggle sidenav"
+        mat-icon-button (click)="drawer.toggle()">
+        <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+      </button>
+    </mat-toolbar>
+    <div class="pdf-marker-content-container">
+      <ng-container>
+        <p>welcome works!</p>
+      </ng-container>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

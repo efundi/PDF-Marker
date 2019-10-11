@@ -1,14 +1,12 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {RouterModule} from "@angular/router";
-import {FormsModule} from "@angular/forms";
-import {ReactiveFormsModule} from "@angular/forms";
-
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 // Shared Components
-import { FileExplorerComponent } from './components/file-explorer/file-explorer.component';
-import { FileExplorerModalComponent } from './components/file-explorer-modal/file-explorer-modal.component';
-import { AlertComponent } from "./components/alert/alert.component";
-
+import {FileExplorerComponent} from './components/file-explorer/file-explorer.component';
+import {FileExplorerModalComponent} from './components/file-explorer-modal/file-explorer-modal.component';
+import { SideNavigationComponent } from './components/side-navigation/side-navigation.component';
+import {AlertComponent} from "./components/alert/alert.component";
 // Angular Material Modules
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatDividerModule} from "@angular/material/divider";
@@ -26,6 +24,8 @@ import {MatDialogModule} from "@angular/material/dialog";
 import {MatProgressBarModule} from "@angular/material/progress-bar";
 import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
 import {PdfMarkerErrorInterceptorService} from "@sharedModule/services/pdf-marker-error-interceptor.service";
+import {AssignmentListComponent} from "@sharedModule/components/assignment-list/assignment-list.component";
+import {AssignmentService} from "@sharedModule/services/assignment.service";
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -48,18 +48,21 @@ const SHARED_MODULES = [
   HttpClientModule
 ];
 
-const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent];
+const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent],
   imports: [
     CommonModule,
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    MatExpansionModule
+    MatExpansionModule,
+    MatListModule,
+    MatDividerModule,
+    MatToolbarModule
   ],
-  providers: [{provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true}],
+  providers: [{provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true}, AssignmentService],
   exports: [ ...SHARED_MODULES, ...SHARED_COMPONENTS ],
   entryComponents: [ FileExplorerModalComponent ]
 })

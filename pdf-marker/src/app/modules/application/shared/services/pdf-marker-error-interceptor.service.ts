@@ -12,7 +12,6 @@ export class PdfMarkerErrorInterceptorService implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const alert = this.injector.get(AlertService);
-    alert.clear();
     return next.handle(req).pipe(
       catchError((response: any) => {
         if(response.error.errors !== undefined) {
