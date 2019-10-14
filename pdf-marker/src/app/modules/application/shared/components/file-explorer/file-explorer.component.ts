@@ -1,15 +1,11 @@
-import {Component, Input, OnChanges, OnDestroy, OnInit} from '@angular/core';
-import {ZipService} from "@coreModule/services/zip.service";
-import {Subscription} from "rxjs";
+import {Component, Input, OnChanges, OnInit} from '@angular/core';
 
 @Component({
   selector: 'pdf-marker-file-explorer',
   templateUrl: './file-explorer.component.html',
   styleUrls: ['./file-explorer.component.scss']
 })
-export class FileExplorerComponent implements OnInit, OnDestroy, OnChanges  {
-
-  hierarchyModel$ = this.zipService.hierarchyModel$;
+export class FileExplorerComponent implements OnInit, OnChanges  {
 
   @Input()
   hierarchyModel;
@@ -17,17 +13,9 @@ export class FileExplorerComponent implements OnInit, OnDestroy, OnChanges  {
   @Input()
   hierarchyModelKeys;
 
-  private subscription: Subscription;
-
-  constructor(private zipService: ZipService) { }
+  constructor() { }
 
   ngOnInit() {
-    this.subscription = this.hierarchyModel$.subscribe(value => {
-      if(value !== null && value !== undefined) {
-        this.hierarchyModel = value;
-        this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
-      }
-    });
   }
 
   getModelKeys(folder) {
@@ -40,11 +28,6 @@ export class FileExplorerComponent implements OnInit, OnDestroy, OnChanges  {
 
   isFile(object): boolean {
     return (this.hierarchyModel[object]) ? !!(this.hierarchyModel[object].path):false;
-  }
-
-  ngOnDestroy() {
-    // unsubscribe to avoid memory leaks
-    this.subscription.unsubscribe();
   }
 
   ngOnChanges() {

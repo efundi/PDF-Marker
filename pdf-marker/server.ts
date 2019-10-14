@@ -19,7 +19,7 @@ import 'zone.js/dist/zone-node';
 
 import * as express from 'express';
 import {extname, join, sep} from 'path';
-import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync, writeFile, mkdir} from 'fs';
+import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync, writeFile, mkdir, existsSync} from 'fs';
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
@@ -86,11 +86,15 @@ app.get('*.*', express.static(DIST_FOLDER, {
 
 const CONFIG_FILE = 'config.json';
 const CONFIG_DIR = './pdf-config/';
-const UPLOADS_DIR = './uploads/';
+const UPLOADS_DIR = './uploads';
 
 const store = multer.diskStorage({
   destination: (req, file, cb) => {
-    mkdir(UPLOADS_DIR, err => cb(err, UPLOADS_DIR));
+    if(!existsSync(UPLOADS_DIR)) {
+      mkdir(UPLOADS_DIR, err => cb(err, UPLOADS_DIR));
+    } else {
+      cb(null, UPLOADS_DIR)
+    }
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
@@ -160,7 +164,7 @@ const uploadFn = (req, res, next) => {
       if(mimeTypes.indexOf(req.file.mimetype) == -1)
         return res.status(404).send({message: 'Not a valid zip file. Please select a file with a .zip extension!'});
 
-      extractZip(UPLOADS_DIR + req.file.originalname, config.defaultPath + sep, true, res).then(() => {
+      extractZip(UPLOADS_DIR + sep + req.file.originalname, config.defaultPath + sep, true, res).then(() => {
         return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
       }).catch((error) => {
         return res.status(501).send({message: error.message});
