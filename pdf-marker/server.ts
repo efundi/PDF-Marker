@@ -19,7 +19,7 @@ import 'zone.js/dist/zone-node';
 
 import * as express from 'express';
 import {extname, join, sep} from 'path';
-import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync, writeFile} from 'fs';
+import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync, writeFile, mkdir} from 'fs';
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
@@ -90,7 +90,7 @@ const UPLOADS_DIR = './uploads/';
 
 const store = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, UPLOADS_DIR)
+    mkdir(UPLOADS_DIR, err => cb(err, UPLOADS_DIR));
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
