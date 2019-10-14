@@ -24,11 +24,10 @@ import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync,
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
 const extract = require('extract-zip');
-const dirTree = require("directory-tree");
 const glob = require('glob');
 
 const assignmentList = (callback) => {
-  const folderModels = []
+  const folderModels = [];
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
       return [];
@@ -38,8 +37,11 @@ const assignmentList = (callback) => {
 
 
     const config = JSON.parse(data.toString());
-    //console.log(dirTree(config.defaultPath));
     readdir(config.defaultPath, (err, folders) => {
+      // Handle error
+      if(err)
+        return new Error('Failed to read configurations!');
+
       folders.forEach(folder => {
         glob(config.defaultPath + '/' + folder + '/**', (err, files) => {
           folderModels.push(hierarchyModel(files, config.defaultPath));

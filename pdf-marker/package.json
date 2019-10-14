@@ -28,7 +28,6 @@
     "@angular/router": "~8.2.4",
     "@nguniversal/express-engine": "^8.1.1",
     "@nguniversal/module-map-ngfactory-loader": "8.1.1",
-    "directory-tree": "^2.2.4",
     "express": "^4.15.2",
     "express-validator": "^6.2.0",
     "extract-zip": "^1.6.7",

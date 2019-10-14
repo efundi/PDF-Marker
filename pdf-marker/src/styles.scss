@@ -73,19 +73,28 @@ button {
     font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
   }
 
+  .mat-expansion-panel-header {
+    height: auto !important;
+  }
+
   .mat-expansion-indicator {
     display: none !important;
   }
 
   .mat-expansion-panel-body {
     padding: 0 24px 0!important;
+    padding-right: 0 !important;
   }
 }
 
 pdf-marker-file-explorer-modal {
   pdf-marker-file-explorer {
+    .mat-expansion-panel-header {
+      height: auto !important;
+    }
     .mat-expansion-panel-body {
       padding: 0 24px 0!important;
+      padding-right: 0 !important;
     }
   }
 }

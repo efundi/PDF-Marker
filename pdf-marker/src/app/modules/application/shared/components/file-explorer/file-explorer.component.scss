@@ -17,6 +17,10 @@ ul {
   vertical-align: bottom;
 }
 
+.folder-name {
+  white-space: nowrap !important;
+}
+
 mat-expansion-panel {
   border: 0 !important;
   box-shadow: none !important;
