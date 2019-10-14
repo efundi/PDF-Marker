@@ -18,7 +18,7 @@
 import 'zone.js/dist/zone-node';
 
 import * as express from 'express';
-import {extname, join} from 'path';
+import {extname, join, sep} from 'path';
 import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync, writeFile} from 'fs';
 
 const { check, validationResult } = require('express-validator');
@@ -160,7 +160,7 @@ const uploadFn = (req, res, next) => {
       if(mimeTypes.indexOf(req.file.mimetype) == -1)
         return res.status(404).send({message: 'Not a valid zip file. Please select a file with a .zip extension!'});
 
-      extractZip(UPLOADS_DIR + req.file.originalname, config.defaultPath + '\\', true, res).then(() => {
+      extractZip(UPLOADS_DIR + req.file.originalname, config.defaultPath + sep, true, res).then(() => {
         return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
       }).catch((error) => {
         return res.status(501).send({message: error.message});
