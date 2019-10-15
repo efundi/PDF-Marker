@@ -10,10 +10,11 @@ import { ImportComponent } from '@pdfMarkerModule/components/import/import.compo
 import {SettingsComponent} from '@pdfMarkerModule/components/settings/settings.component';
 import {SettingsService} from "@pdfMarkerModule/services/settings.service";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
+import { AssignmentMarkingComponent } from '../application/shared/components/assignment-marking/assignment-marking.component';
 
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent ],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentMarkingComponent ],
   imports: [
     CommonModule,
     SharedModule,
