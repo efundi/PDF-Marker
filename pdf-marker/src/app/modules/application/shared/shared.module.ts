@@ -26,7 +26,6 @@ import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
 import {PdfMarkerErrorInterceptorService} from "@sharedModule/services/pdf-marker-error-interceptor.service";
 import {AssignmentListComponent} from "@sharedModule/components/assignment-list/assignment-list.component";
 import {AssignmentService} from "@sharedModule/services/assignment.service";
-import { AssignmentMarkingComponent } from './components/assignment-marking/assignment-marking.component';
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -52,7 +51,7 @@ const SHARED_MODULES = [
 const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, AssignmentMarkingComponent],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent],
   imports: [
     CommonModule,
     MatIconModule,
