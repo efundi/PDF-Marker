@@ -14,10 +14,10 @@ export class MenuComponent implements OnInit {
   }
 
   readonly toolbarMenu = [
-    { title: "Import", toolTip: "Import Zip from default LMS", icon: "archive", href: "/marker/import" },
-    { title: "Upload", toolTip: "Upload PDF file(s)", icon: "picture_as_pdf", href:"/marker" },
+    { title: "Import", toolTip: "Import Zip from default LMS", icon: "archive", href: "/marker/assignment/import" },
+    { title: "Upload", toolTip: "Upload PDF file(s)", icon: "picture_as_pdf", href:"/marker/assignment/upload" },
     //{ title: this.settings, toolTip: "App Settings", icon: "settings" },
-    { title: "Settings", toolTip: "App Settings", icon: "settings", href:"/settings"},
+    { title: "Settings", toolTip: "App Settings", icon: "settings", href:"/marker/assignment/settings"},
   ];
 
  // readonly menuItems = [

@@ -8,13 +8,13 @@ import { HomeComponent } from '@pdfMarkerModule/components/home/home.component';
 import { WelcomeComponent } from '@pdfMarkerModule/components/welcome/welcome.component';
 import { ImportComponent } from '@pdfMarkerModule/components/import/import.component';
 import {SettingsComponent} from '@pdfMarkerModule/components/settings/settings.component';
+import { AssignmentOverviewComponent } from '@pdfMarkerModule/components/assignment-overview/assignment-overview.component';
 import {SettingsService} from "@pdfMarkerModule/services/settings.service";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
-import { AssignmentMarkingComponent } from '../application/shared/components/assignment-marking/assignment-marking.component';
 
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentMarkingComponent ],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent],
   imports: [
     CommonModule,
     SharedModule,

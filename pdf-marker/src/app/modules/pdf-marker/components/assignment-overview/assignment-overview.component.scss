@@ -1,0 +1,51 @@
+.pdf-marker-assignment-overview-assignment-name {
+  margin: 0;
+  padding: 20px 0;
+  text-align: center;
+  background: #fff !important;
+}
+
+table {
+  width: 100%;
+  .mat-cell {
+    color: #888 !important;
+  }
+
+  .pdf-marker-assignment-overview-student-name {
+    font-weight: 500;
+    color: #2B72A1 !important;
+  }
+
+  .pdf-marker-assignment-overview-student-number {
+    font-weight: 500;
+  }
+
+  .pdf-marker-assignment-overview-assignment-grade {
+    border: 1px solid #888;
+    padding: 4px 10px;
+    border-radius: 8px;
+    text-align: center;
+    display: inline-block;
+  }
+
+  .mat-icon.assignment-edit {
+    vertical-align: middle;
+    color: #888 !important;
+    font-size: 18px;
+  }
+
+  .pdf-marker-assignment-overview-edit{
+    width: 80%;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .mat-icon.assignment {
+    vertical-align: middle;
+    color: #f8f8f8 !important;
+    border: 1px solid;
+    border-radius: 50%;
+    padding: 4px;
+    background: #626391;
+  }
+}

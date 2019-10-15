@@ -26,6 +26,11 @@ const multer = require('multer');
 const extract = require('extract-zip');
 const glob = require('glob');
 
+
+const CONFIG_FILE = 'config.json';
+const CONFIG_DIR = './pdf-config/';
+const UPLOADS_DIR = './uploads';
+
 const assignmentList = (callback) => {
   const folderModels = [];
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
@@ -40,10 +45,11 @@ const assignmentList = (callback) => {
     readdir(config.defaultPath, (err, folders) => {
       // Handle error
       if(err)
-        return new Error('Failed to read configurations!');
+        return new Error('Failed to read workspace contents!');
 
       folders.forEach(folder => {
         glob(config.defaultPath + '/' + folder + '/**', (err, files) => {
+          files.sort((a, b) => (a > b) ? 1:-1);
           folderModels.push(hierarchyModel(files, config.defaultPath));
         });
       });
@@ -83,10 +89,6 @@ app.get('*.*', express.static(DIST_FOLDER, {
   maxAge: '1y'
 }));
 
-
-const CONFIG_FILE = 'config.json';
-const CONFIG_DIR = './pdf-config/';
-const UPLOADS_DIR = './uploads';
 
 const store = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -158,6 +160,9 @@ const uploadFn = (req, res, next) => {
       }
       // Make file type validations
       console.log(req.file);
+      if(!req.file)
+        return res.status(404).send({message: 'No file uploaded!'});
+
       const config = JSON.parse(data.toString());
       const mimeTypes = ["application/zip", "application/x-zip-compressed"];
 
@@ -209,6 +214,37 @@ const getAssignments = (req, res) => {
 
 app.use('/api/assignments', getAssignments);
 
+const assignmentDetails = (req, res) => {
+  const assignmentName = req.assignmentName;
+  const tableModel = [];
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if(err)
+      return res.status(400).send({ message: 'Failed to read configurations!'});
+
+    if(!isJson(data))
+      return res.status(400).send({message: 'No configurations defined'});
+
+    const config = JSON.parse(data.toString());
+    readdir(config.defaultPath + sep + assignmentName, (err, folders) => {
+      // Handle error
+      if(err)
+        return new Error('Failed to read assignment contents!');
+
+      glob(config.defaultPath + '/' + assignmentName + '/**', (err, files) => {
+        files.sort((a, b) => (a > b) ? 1 : -1);
+        files.forEach(path => {
+          let pathSplit = path.split('/');
+          if(pathSplit.length == 4) {
+
+          }
+        })
+      });
+    });
+  });
+};
+
+app.post('/api/assignment', check('assignmentName').not().isEmpty().withMessage('Assignment name not provided!'),
+  assignmentDetails);
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
   res.render('index', { req });
