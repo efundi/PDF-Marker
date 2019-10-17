@@ -26,13 +26,13 @@
           <!-- Assignment Column -->
           <ng-container matColumnDef="assignment">
             <th mat-header-cell *matHeaderCellDef> Assignment </th>
-            <td mat-cell *matCellDef="let element"><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;{{element.assignment}} </td>
+            <td mat-cell *matCellDef="let element"><span *ngIf="element?.assignment"><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;{{element.assignment}}</span></td>
           </ng-container>
 
           <!-- Feedback Column -->
           <ng-container matColumnDef="feedback">
             <th mat-header-cell *matHeaderCellDef> Feedback </th>
-            <td mat-cell *matCellDef="let element"><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<span class="pdf-marker-assignment-overview-edit">{{element.feedback}}</span><mat-icon class="assignment-edit">create</mat-icon></td>
+            <td mat-cell *matCellDef="let element"><span *ngIf="element?.feedback"><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<span class="pdf-marker-assignment-overview-edit">{{element.feedback}}</span><mat-icon class="assignment-edit">create</mat-icon></span></td>
           </ng-container>
 
           <!-- Grade Column -->
@@ -44,6 +44,7 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
+        <mat-paginator [length]="assignmentsLength" [pageSize]="5" [pageSizeOptions]="assignmentPageSizeOptions" showFirstLastButtons></mat-paginator>
       </ng-container>
     </div>
   </mat-sidenav-content>

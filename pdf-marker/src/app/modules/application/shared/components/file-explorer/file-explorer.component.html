@@ -1,9 +1,7 @@
 <ng-container>
-  <!--<ul *ngFor="let object of hierarchyModelKeys" [class]="!isFile(object) ? 'folder-list':'file-list'">-->
-  <ul *ngFor="let object of hierarchyModelKeys" [class]="!(hierarchyModel[object].path ? 'folder-list':'file-list')">
-    <li *ngIf="hierarchyModel[object].path"><span class="file-name"><mat-icon class="file">insert_drive_file</mat-icon> {{ object }}</span></li>
-    <!--<li #element *ngIf="!isFile(object)">-->
-    <li #element *ngIf="!hierarchyModel[object].path">
+  <ul *ngFor="let object of hierarchyModelKeys$ | async" [class]="!(hierarchyModel[object].path ? 'folder-list':'file-list')">
+    <li *ngIf="hierarchyModel[object].path"><span class="file-name"><mat-icon class="file">insert_drive_file</mat-icon><span class="file-name-text">{{ object }}</span></span></li>
+    <li #element *ngIf="!hierarchyModel[object].path" [class.first-li]="first">
       <mat-accordion>
         <mat-expansion-panel (opened)="element.value = true;" (closed)="element.value = false;">
           <mat-expansion-panel-header>
@@ -11,11 +9,11 @@
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <div class="folder-content" [class.hide]="!element.value">
-              <!--<pdf-marker-file-explorer [hierarchyModel]="getModel(object)" [hierarchyModelKeys]="getModelKeys(object)"></pdf-marker-file-explorer>-->
               <pdf-marker-file-explorer [hierarchyModel]="hierarchyModel[object]" [hierarchyModelKeys]="hierarchyModel[object]"></pdf-marker-file-explorer>
             </div>
           </ng-template>
         </mat-expansion-panel>
+        <button mat-button *ngIf="first" class="pdf-marker-overview" (click)="onAssignment(hierarchyModel)">Overview</button>
       </mat-accordion>
     </li>
   </ul>

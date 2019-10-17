@@ -10,7 +10,9 @@ import {isPlatformServer} from "@angular/common";
 export class AssignmentService {
 
   private assignmentListSource$: Subject<object[]> = new ReplaySubject<object[]>(1);
+  private selectedAssignmentSource$: Subject<object> = new Subject<object>();
   private assignments: object[] = new Array<object>();
+  private selectedAssignment: object;
 
   constructor(private http: HttpClient,
               @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
@@ -39,7 +41,20 @@ export class AssignmentService {
     });
   }
 
+  setSelectedAssignment(selectedAssignment: object) {
+    this.selectedAssignment = selectedAssignment;
+    this.selectedAssignmentSource$.next(this.selectedAssignment);
+  }
+
+  getSelectedAssignment(): object {
+    return this.selectedAssignment;
+  }
+
   dataChanged(): Observable<object[]> {
     return this.assignmentListSource$.asObservable();
+  }
+
+  selectedAssignmentChanged(): Observable<object> {
+    return this.selectedAssignmentSource$.asObservable();
   }
 }

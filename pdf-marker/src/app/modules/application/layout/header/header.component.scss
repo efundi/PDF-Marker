@@ -1,6 +1,8 @@
 $pdf-marker-primary: #6f327a;
 mat-toolbar {
   background: transparent;
+  height: 7%;
+  min-height: 64px;
   .pdf-marker-brand {
     display: flex;
     align-items: center;

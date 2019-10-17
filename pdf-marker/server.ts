@@ -199,6 +199,7 @@ const getAssignments = (req, res) => {
       const folderCount = folders.length;
       folders.forEach(folder => {
         glob(config.defaultPath + '/' + folder + '/**', (err, files) => {
+          files.sort((a, b) => (a > b) ? 1:-1);
           folderModels.push(hierarchyModel(files, config.defaultPath));
 
           if(folderModels.length == folderCount)
@@ -212,39 +213,8 @@ const getAssignments = (req, res) => {
   });
 };
 
-app.use('/api/assignments', getAssignments);
+app.get('/api/assignments', getAssignments);
 
-const assignmentDetails = (req, res) => {
-  const assignmentName = req.assignmentName;
-  const tableModel = [];
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if(err)
-      return res.status(400).send({ message: 'Failed to read configurations!'});
-
-    if(!isJson(data))
-      return res.status(400).send({message: 'No configurations defined'});
-
-    const config = JSON.parse(data.toString());
-    readdir(config.defaultPath + sep + assignmentName, (err, folders) => {
-      // Handle error
-      if(err)
-        return new Error('Failed to read assignment contents!');
-
-      glob(config.defaultPath + '/' + assignmentName + '/**', (err, files) => {
-        files.sort((a, b) => (a > b) ? 1 : -1);
-        files.forEach(path => {
-          let pathSplit = path.split('/');
-          if(pathSplit.length == 4) {
-
-          }
-        })
-      });
-    });
-  });
-};
-
-app.post('/api/assignment', check('assignmentName').not().isEmpty().withMessage('Assignment name not provided!'),
-  assignmentDetails);
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
   res.render('index', { req });

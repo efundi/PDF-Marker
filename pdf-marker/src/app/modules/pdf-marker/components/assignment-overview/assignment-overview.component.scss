@@ -1,7 +1,6 @@
 .pdf-marker-assignment-overview-assignment-name {
   margin: 0;
-  padding: 20px 0;
-  text-align: center;
+  padding: 20px 24px;
   background: #fff !important;
 }
 
@@ -11,13 +10,17 @@ table {
     color: #888 !important;
   }
 
+  .mat-header-cell {
+    width: calc(100% / 3);
+  }
+
   .pdf-marker-assignment-overview-student-name {
     font-weight: 500;
     color: #2B72A1 !important;
   }
 
   .pdf-marker-assignment-overview-student-number {
-    font-weight: 500;
+    font-weight: 400;
   }
 
   .pdf-marker-assignment-overview-assignment-grade {

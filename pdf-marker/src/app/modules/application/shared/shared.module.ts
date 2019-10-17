@@ -29,6 +29,7 @@ import {AssignmentListComponent} from "@sharedModule/components/assignment-list/
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {MatTableModule} from "@angular/material/table";
 import {MatBadgeModule} from "@angular/material/badge";
+import {MatPaginatorModule} from "@angular/material/paginator";
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -47,6 +48,7 @@ const SHARED_MODULES = [
   MatDialogModule,
   MatProgressBarModule,
   MatTableModule,
+  MatPaginatorModule,
   RouterModule,
   FormsModule,
   ReactiveFormsModule,

@@ -42,8 +42,21 @@
 /*Variables*/
 $pdf-marker-primary: #6f327a;
 
-html, body { height: 100%; font-family: Roboto, "Helvetica Neue", sans-serif !important; }
+html, body { height: 100%; font-family: Roboto, "Helvetica Neue", sans-serif !important; min-height: 695px}
 body { margin: 0; }
+
+body {
+
+  .mat-drawer-content::-webkit-scrollbar {
+    width: 6px;
+    background: #F5F5F5;
+  }
+
+  .mat-drawer-content::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: $pdf-marker-primary;
+  }
+}
 
 .pdf-marker-fill-space {
   flex: 1;
@@ -62,15 +75,36 @@ button {
 }
 
 .mat-drawer-container {
-  height: 100%;
+  height: 92%;
+  background: #F5F5F5 !important;
+
+  .mat-drawer {
+    width: 400px;
+  }
+
+  .mat-drawer-inner-container::-webkit-scrollbar {
+    width: 2px;
+    height: 6px;
+    background: #F5F5F5;
+  }
+
+  .mat-drawer-inner-container::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: $pdf-marker-primary;
+  }
 
   .pdf-marker-content-container {
     padding-left: 23px;
     padding-right: 23px;
+    background: #F5F5F5;
   }
 
   mat-toolbar {
     font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
+  }
+
+  .mat-expansion-panel {
+    background: transparent !important;
   }
 
   .mat-expansion-panel-header {
