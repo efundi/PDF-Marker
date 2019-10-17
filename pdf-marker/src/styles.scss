@@ -79,7 +79,8 @@ button {
   background: #F5F5F5 !important;
 
   .mat-drawer {
-    width: 400px;
+    width: 25%;
+    min-width: 380px;
   }
 
   .mat-drawer-inner-container::-webkit-scrollbar {
@@ -105,6 +106,8 @@ button {
 
   .mat-expansion-panel {
     background: transparent !important;
+    padding: 0;
+    margin: 0;
   }
 
   .mat-expansion-panel-header {
@@ -212,3 +215,7 @@ pdf-marker-file-explorer-modal {
   margin-top: 0;
 }
 
+
+.mat-paginator-container {
+  justify-content: flex-start !important;
+}
