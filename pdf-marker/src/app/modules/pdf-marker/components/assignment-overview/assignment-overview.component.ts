@@ -32,7 +32,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
 
-  readonly regEx = /(.*)\(([0-9]+)\)/;
+  //readonly regEx = /(.*)\(([0-9]+)\)/;
+  readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
