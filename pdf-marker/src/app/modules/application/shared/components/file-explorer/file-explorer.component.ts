@@ -43,11 +43,10 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   }
 
   onAssignment(hierarchyModel) {
-    if(JSON.stringify(hierarchyModel) !== JSON.stringify(this.assignmentService.getSelectedAssignment())) {
-      this.appService.isLoading$.next(true);
-      this.assignmentService.setSelectedAssignment(hierarchyModel);
+    this.appService.isLoading$.next(true);
+    this.assignmentService.setSelectedAssignment(hierarchyModel);
+    if(this.router.url !== "/marker/assignment/overview")
       this.router.navigate(["/marker/assignment/overview"]);
-    }
   }
 
   ngOnChanges() {
