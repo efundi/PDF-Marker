@@ -49,6 +49,10 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
       this.router.navigate(["/marker/assignment/overview"]);
   }
 
+  isSelected() {
+    return ((JSON.stringify(this.hierarchyModel) === JSON.stringify(this.assignmentService.getSelectedAssignment())) && this.router.url === "/marker/assignment/overview");
+  }
+
   ngOnChanges() {
     this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
     this.hierarchyModelKeys$ = of(Object.keys(this.hierarchyModel));

@@ -13,7 +13,7 @@
             </div>
           </ng-template>
         </mat-expansion-panel>
-        <button mat-button *ngIf="first" class="pdf-marker-overview" (click)="onAssignment(hierarchyModel)">Overview</button>
+        <button mat-button *ngIf="first" [class.selected-assignment]="isSelected()" class="pdf-marker-overview" (click)="onAssignment(hierarchyModel)">Assignment List</button>
       </mat-accordion>
     </li>
   </ul>

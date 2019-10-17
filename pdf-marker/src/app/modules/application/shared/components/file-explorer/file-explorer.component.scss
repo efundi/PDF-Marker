@@ -1,6 +1,14 @@
 ul {
   list-style-type: none;
   padding: 0;
+
+  * {
+    webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: -moz-none;
+    -o-user-select: none;
+    user-select: none;
+  }
 }
 
 /*.folder-list li app-folder {
@@ -26,23 +34,28 @@ ul {
   color: #444;
 }
 
+.selected-assignment {
+  background: #2b72a1 !important;
+  color: #fff !important;
+}
+
 .first-li {
   position: relative;
 }
 
 .pdf-marker-overview {
-  background: #2b72a1;
   font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif;
   display: inline-block;
   vertical-align: super;
   float: right;
-  border: 1px solid;
   border-radius: 16px;
+  border: 1px solid;
   padding: 4px !important;
-  font-size: 11px;
-  color: #fff;
-  top: 0;
+  font-size: 12px;
+  color: #444;
+  top: -9px;
   left: 100%;
+  height: 32px;
   transform: translate(-100%, 6px);
   position: absolute;
   cursor: pointer;

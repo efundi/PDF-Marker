@@ -106,12 +106,17 @@ button {
 
   .mat-expansion-panel {
     background: transparent !important;
+    width: 98%;
     padding: 0;
     margin: 0;
   }
 
   .mat-expansion-panel-header {
     height: auto !important;
+    display: unset !important;
+    margin: 0;
+    padding: 0 !important;
+    animation-name: none !important;
   }
 
   .mat-expansion-indicator {
