@@ -34,11 +34,14 @@ export class AssignmentService {
     this.assignmentListSource$.next(this.assignments);
   }
 
-  getAssignments() {
-    this.http.get<object[]>('/api/assignments').subscribe((assignmentList) => {
-      this.assignments = assignmentList;
-      this.assignmentListSource$.next(this.assignments);
-    });
+  getAssignments(): Observable<object[]> {
+    return this.http.get<object[]>('/api/assignments');
+  }
+
+  update(assignments: object[]) {
+    console.log("Update", assignments);
+    this.assignments = assignments;
+    this.assignmentListSource$.next(this.assignments);
   }
 
   setSelectedAssignment(selectedAssignment: object) {

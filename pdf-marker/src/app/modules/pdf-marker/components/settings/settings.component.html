@@ -1,4 +1,4 @@
-<!--<ng-container>
+<ng-container>
   <pdf-marker-alert></pdf-marker-alert>
   <form [formGroup]="settingsForm" >
     <h1><mat-icon>settings</mat-icon>&nbsp;Settings</h1>
@@ -12,7 +12,7 @@
         </mat-option>
       </mat-select>
     </mat-form-field><br>
- <div class="pdf-spacer"></div>
+    <div class="pdf-spacer"></div>
     <mat-form-field class="settings-halfWidth">
       <mat-label>Default Path</mat-label>
       <input formControlName="defaultPath" type="text" placeholder="C:\documents" matInput required [autocomplete]="false">
@@ -22,47 +22,5 @@
       <button type="button" mat-raised-button color="" [disabled]="settingsForm.invalid" (click)="onSubmit($event)">Save</button>
     </div>
   </form>
-</ng-container>-->
-<mat-sidenav-container class="sidenav-container" autosize>
-  <mat-sidenav #drawer class="sidenav" mode="side" opened>
-    <pdf-marker-side-navigation></pdf-marker-side-navigation>
-  </mat-sidenav>
-  <mat-sidenav-content>
-    <mat-toolbar>
-      <button
-        type="button"
-        aria-label="Toggle sidenav"
-        mat-icon-button (click)="drawer.toggle()">
-        <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
-      </button>
-    </mat-toolbar>
-    <div class="pdf-marker-content-container">
-      <ng-container>
-        <pdf-marker-alert></pdf-marker-alert>
-        <form [formGroup]="settingsForm" >
-          <h1><mat-icon>settings</mat-icon>&nbsp;Settings</h1>
-          <mat-divider></mat-divider>
-          <div class="pdf-spacer"></div>
-          <mat-form-field class="settings-halfWidth">
-            <mat-label>LMS Selection:</mat-label>
-            <mat-select placeholder="Sakai" formControlName="lmsSelection" #lmsSelection id="lmsSelection" required>
-              <mat-option *ngFor="let lmsChoice of lmsChoices" [value]="lmsChoice">
-                {{lmsChoice}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field><br>
-          <div class="pdf-spacer"></div>
-          <mat-form-field class="settings-halfWidth">
-            <mat-label>Default Path</mat-label>
-            <input formControlName="defaultPath" type="text" placeholder="C:\documents" matInput required [autocomplete]="false">
-          </mat-form-field>
-          <div class="pdf-spacer"></div>
-          <div>
-            <button type="button" mat-raised-button color="" [disabled]="settingsForm.invalid" (click)="onSubmit($event)">Save</button>
-          </div>
-        </form>
-      </ng-container>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+</ng-container>
 

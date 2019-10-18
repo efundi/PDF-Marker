@@ -207,6 +207,8 @@ export class ImportComponent implements OnInit {
     this.isValidFormat = false;
     this.fc.noRubric.setValue(this.noRubricDefaultValue);
     this.initForm();
-    this.assignmentService.getAssignments();
+    this.assignmentService.getAssignments().subscribe(assignments => {
+      this.assignmentService.update(assignments);
+    });
   }
 }
