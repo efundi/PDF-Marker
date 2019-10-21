@@ -1,7 +1,10 @@
-.pdf-marker-assignment-overview-assignment-name {
-  margin: 0;
+.pdf-marker-assignment-overview-assignment-header {
+  display: flex;
   padding: 20px 24px;
   background: #fff !important;
+  .pdf-marker-assignment-overview-assignment-name {
+    margin: 0;
+  }
 }
 
 table {

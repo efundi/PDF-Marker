@@ -1,3 +1,14 @@
 mat-toolbar {
   background: transparent !important;
+
+  .pdf-marker-breadcrumbs {
+    margin-left: 15px;
+    .pdf-marker-route {
+      font-size: 12px;
+
+      .mat-icon {
+        vertical-align: middle;
+      }
+    }
+  }
 }
