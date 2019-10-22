@@ -1,16 +1,16 @@
 import {Component, ComponentFactoryResolver, ComponentRef, Input, OnInit} from '@angular/core';
 
 @Component({
-  selector: 'pdf-marker-icon-type',
-  templateUrl: './icon-type.component.html',
-  styleUrls: ['./icon-type.component.scss']
+  selector: 'pdf-marker-mark-type-icon',
+  templateUrl: './mark-type-icon.component.html',
+  styleUrls: ['./mark-type-icon.component.scss']
 })
-export class IconTypeComponent implements OnInit {
+export class MarkTypeIconComponent implements OnInit {
 
   @Input()
   iconName: string;
 
-  private componentReferene: ComponentRef<IconTypeComponent>;
+  private componentReferene: ComponentRef<MarkTypeIconComponent>;
 
   showOptions: boolean;
 
@@ -43,7 +43,7 @@ export class IconTypeComponent implements OnInit {
     event.stopPropagation();
   }
 
-  setComponentRef(componentReference: ComponentRef<IconTypeComponent>) {
+  setComponentRef(componentReference: ComponentRef<MarkTypeIconComponent>) {
     this.componentReferene = componentReference;
   }
 }

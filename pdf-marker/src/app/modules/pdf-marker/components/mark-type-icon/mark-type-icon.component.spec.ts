@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { IconTypeComponent } from './icon-type.component';
+import { MarkTypeIconComponent } from './mark-type-icon.component';
 
-describe('IconTypeComponent', () => {
-  let component: IconTypeComponent;
-  let fixture: ComponentFixture<IconTypeComponent>;
+describe('MarkTypeIconComponent', () => {
+  let component: MarkTypeIconComponent;
+  let fixture: ComponentFixture<MarkTypeIconComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ IconTypeComponent ]
+      declarations: [ MarkTypeIconComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(IconTypeComponent);
+    fixture = TestBed.createComponent(MarkTypeIconComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

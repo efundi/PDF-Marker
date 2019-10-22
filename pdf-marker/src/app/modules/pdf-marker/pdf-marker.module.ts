@@ -12,11 +12,11 @@ import {AssignmentOverviewComponent} from '@pdfMarkerModule/components/assignmen
 import {SettingsService} from "@pdfMarkerModule/services/settings.service";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {IconsComponent} from './components/icons/icons.component';
-import {IconTypeComponent} from "@pdfMarkerModule/components/icon-type/icon-type.component";
+import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component";
 
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, IconTypeComponent],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, MarkTypeIconComponent],
   imports: [
     CommonModule,
     SharedModule,

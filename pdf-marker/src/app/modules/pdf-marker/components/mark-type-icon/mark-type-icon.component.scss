@@ -1,8 +1,8 @@
-.pdf-marker-icon-type-container {
+.pdf-marker-mark-type-icon-container {
   display: inline-block;
   position: relative;
 
-  .pdf-marker-icon-type-options {
+  .pdf-marker-mark-type-icon-options {
     display: inline-block;
     position: absolute;
     top: 100%;
@@ -15,16 +15,16 @@
       cursor: pointer;
     }
 
-    .pdf-marker-icon-type-delete {
+    .pdf-marker-mark-type-icon-delete {
       background: #a94442;
     }
 
-    .pdf-marker-icon-type-edit {
+    .pdf-marker-mark-type-icon-edit {
       background: #3c763d;
     }
   }
 
-  .pdf-marker-icon-type-icon {
+  .pdf-marker-mark-type-icon-icon {
     position: relative;
     width: 34px;
     height: 34px;
@@ -39,7 +39,7 @@
     }
   }
 
-  .pdf-marker-icon-type-hovered {
+  .pdf-marker-mark-type-icon-hovered {
     border: 1px dotted #888;
   }
 }

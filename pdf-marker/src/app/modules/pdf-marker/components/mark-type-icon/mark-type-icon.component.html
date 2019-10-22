@@ -1,0 +1,9 @@
+<div cdkDrag class="pdf-marker-mark-type-icon-container" (click)="onClicked($event)" (mouseover)="onMouseOver($event)" (mouseleave)="onMouseLeave($event)">
+  <div class="pdf-marker-mark-type-icon-options" *ngIf="showOptions">
+    <mat-icon class="pdf-marker-mark-type-icon-edit" matTooltip="Edit">edit</mat-icon>
+    <mat-icon class="pdf-marker-mark-type-icon-delete" matTooltip="Remove" (click)="onRemove($event)">delete_forever</mat-icon>
+  </div>
+  <div class="pdf-marker-mark-type-icon-icon" [class.pdf-marker-mark-type-icon-hovered]="showOptions">
+    <mat-icon>{{ iconName }}</mat-icon>
+  </div>
+</div>
