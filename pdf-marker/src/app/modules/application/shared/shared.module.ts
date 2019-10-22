@@ -30,6 +30,7 @@ import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {MatTableModule} from "@angular/material/table";
 import {MatBadgeModule} from "@angular/material/badge";
 import {MatPaginatorModule} from "@angular/material/paginator";
+import {DragDropModule} from "@angular/cdk/drag-drop";
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -49,6 +50,7 @@ const SHARED_MODULES = [
   MatProgressBarModule,
   MatTableModule,
   MatPaginatorModule,
+  DragDropModule,
   RouterModule,
   FormsModule,
   ReactiveFormsModule,

@@ -31,7 +31,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         let url = snapshot.url;
         let routeData = route.snapshot.data;
 
-        console.log(routeData);
         let label = routeData['breadcrumb'];
         let params = snapshot.root.params;
 

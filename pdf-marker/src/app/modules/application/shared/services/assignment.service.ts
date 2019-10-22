@@ -24,7 +24,6 @@ export class AssignmentService {
       this.assignmentList((err, assignmentList) => {
         if(err)
           console.log(err);
-        console.log(assignmentList);
         this.assignments = assignmentList;
         this.transferState.set(transferKey, this.assignments);
       });

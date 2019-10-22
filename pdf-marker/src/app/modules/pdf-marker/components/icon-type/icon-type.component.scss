@@ -1,0 +1,45 @@
+.pdf-marker-icon-type-container {
+  display: inline-block;
+  position: relative;
+
+  .pdf-marker-icon-type-options {
+    display: inline-block;
+    position: absolute;
+    top: 100%;
+    .mat-icon {
+      font-size: 14px;
+      height: fit-content;
+      color: #fff !important;
+      padding: 2px;
+      display: inline;
+      cursor: pointer;
+    }
+
+    .pdf-marker-icon-type-delete {
+      background: #a94442;
+    }
+
+    .pdf-marker-icon-type-edit {
+      background: #3c763d;
+    }
+  }
+
+  .pdf-marker-icon-type-icon {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    cursor: move;
+    border: 1px dotted transparent;
+    .mat-icon {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+    }
+  }
+
+  .pdf-marker-icon-type-hovered {
+    border: 1px dotted #888;
+  }
+}
