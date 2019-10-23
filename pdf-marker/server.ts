@@ -19,7 +19,7 @@ import 'zone.js/dist/zone-node';
 
 import * as express from 'express';
 import {extname, join, sep} from 'path';
-import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync, writeFile, mkdir, existsSync} from 'fs';
+import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync, writeFile, mkdir, existsSync, createReadStream} from 'fs';
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
@@ -215,6 +215,35 @@ const getAssignments = (req, res) => {
 
 app.get('/api/assignments', getAssignments);
 
+const getPdfFile = (req, res) => {
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const config = JSON.parse(data.toString());
+
+    const location = req.body.location.replace(/\//g, sep);
+    const actualPath = config.defaultPath + sep + location;
+
+    return access(actualPath, constants.F_OK, (err) => {
+      if(err)
+        return res.status(404).send({ message: `pdf file not found!`});
+      else {
+        const file = createReadStream(actualPath);
+        file.pipe(res);
+      }
+    });
+
+  });
+};
+
+app.post('/api/pdf/file', [
+  check('location').not().isEmpty().withMessage('File location not provided!')
+], getPdfFile);
+
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
   res.render('index', { req });
@@ -271,6 +300,7 @@ const hierarchyModel = (pathInfos, configFolder) => {
     if(stat.isFile()) {
       let path = pathInfo.replace(configFolder + '/', '');
       let pathObject: any = hier;
+      let pathSplit = path.split("/");
       path.split("/").forEach((item) => {
         if (!pathObject[item]) {
           pathObject[item] = {};
@@ -280,6 +310,8 @@ const hierarchyModel = (pathInfos, configFolder) => {
 
       pathObject.path = path;
       pathObject.basename = path.split("/").pop();
+      if(pathSplit.indexOf('Submission attachment(s)') > -1)
+        pathObject.isPdf = true;
     }
     return hier;
   }, {});

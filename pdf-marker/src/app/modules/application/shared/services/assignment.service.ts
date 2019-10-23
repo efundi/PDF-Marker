@@ -1,5 +1,5 @@
 import {Inject, Injectable, Optional, PLATFORM_ID} from '@angular/core';
-import {HttpClient} from "@angular/common/http";
+import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {Observable, ReplaySubject, Subject} from "rxjs";
 import {makeStateKey, StateKey, TransferState} from "@angular/platform-browser";
 import {isPlatformServer} from "@angular/common";
@@ -35,6 +35,15 @@ export class AssignmentService {
 
   getAssignments(): Observable<object[]> {
     return this.http.get<object[]>('/api/assignments');
+  }
+
+  getFile(pdfFileLocation: string) {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+    const body = { location: pdfFileLocation };
+    return this.http.post<Blob>("/api/pdf/file", body, {headers, responseType: 'blob' as 'json'});
   }
 
   update(assignments: object[]) {

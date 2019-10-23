@@ -53,6 +53,15 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
     return ((JSON.stringify(this.hierarchyModel) === JSON.stringify(this.assignmentService.getSelectedAssignment())) && this.router.url === "/marker/assignment/overview");
   }
 
+  onSelectedPdf(pdfFileLocation: string) {
+    console.log(pdfFileLocation);
+    this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
+      const blob = new Blob([blobData], { type: "application/pdf"});
+      const fileUrl = URL.createObjectURL(blob);
+      window.open(fileUrl);
+    })
+  }
+
   ngOnChanges() {
     this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
     this.hierarchyModelKeys$ = of(Object.keys(this.hierarchyModel));

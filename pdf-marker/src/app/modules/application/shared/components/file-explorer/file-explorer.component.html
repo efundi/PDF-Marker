@@ -1,6 +1,7 @@
 <ng-container>
   <ul *ngFor="let object of hierarchyModelKeys$ | async" [class]="!(hierarchyModel[object].path ? 'folder-list':'file-list')">
-    <li *ngIf="hierarchyModel[object].path"><span class="file-name"><mat-icon class="file">insert_drive_file</mat-icon><span class="file-name-text">{{ object }}</span></span></li>
+    <li *ngIf="hierarchyModel[object].path && hierarchyModel[object].isPdf" class="pdf-marker-file-explorer-pdf" (click)="onSelectedPdf(hierarchyModel[object].path)"><span class="file-name"><mat-icon class="file">insert_drive_file</mat-icon><span class="file-name-text">{{ object }}</span></span></li>
+    <li *ngIf="hierarchyModel[object].path && !hierarchyModel[object].isPdf"><span class="file-name"><mat-icon class="file">insert_drive_file</mat-icon><span class="file-name-text">{{ object }}</span></span></li>
     <li #element *ngIf="!hierarchyModel[object].path" [class.first-li]="first">
       <mat-accordion>
         <mat-expansion-panel (opened)="element.value = true;" (closed)="element.value = false;">
