@@ -54,6 +54,7 @@ const SHARED_MODULES = [
   RouterModule,
   FormsModule,
   ReactiveFormsModule,
+  DragDropModule,
   HttpClientModule
 ];
 

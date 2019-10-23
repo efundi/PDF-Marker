@@ -1,3 +1,11 @@
 <ng-container>
-  <p>welcome works!</p>
+  <div style="height: 10%; min-width: 64px">
+    <pdf-marker-icons (selection)="onSelectedIcon($event)"></pdf-marker-icons>
+  </div>
+  <div #container class="boundary" (click)="onDropClick($event)">
+    <template style="height: 100%" #containerRef>
+
+    </template>
+    <div style="height: 2048px"></div>
+  </div>
 </ng-container>

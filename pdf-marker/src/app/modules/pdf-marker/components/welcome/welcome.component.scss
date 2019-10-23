@@ -1,0 +1,19 @@
+.pdf-marker-dropzone {
+  cursor: copy;
+}
+
+.boundary {
+  height: 90%;
+  border: 1px solid;
+  position: relative;
+  overflow: auto
+}
+
+.boundary::-webkit-scrollbar {
+  width: 7px;
+  background: transparent;
+}
+
+.boundary::-webkit-scrollbar-thumb {
+  background: #888;
+}

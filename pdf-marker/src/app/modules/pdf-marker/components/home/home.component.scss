@@ -1,4 +1,6 @@
 mat-toolbar {
+  height: 10%;
+  min-width: 64px;
   background: transparent !important;
 
   .pdf-marker-breadcrumbs {
@@ -11,4 +13,8 @@ mat-toolbar {
       }
     }
   }
+}
+
+.pdf-marker-content-container {
+  height: 90%;
 }

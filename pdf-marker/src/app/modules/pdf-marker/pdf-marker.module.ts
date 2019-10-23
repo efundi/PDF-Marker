@@ -24,6 +24,7 @@ import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/
     PdfMarkerRoutingModule
   ],
   providers: [SettingsService, ImportService],
-  exports: [HomeComponent]
+  exports: [HomeComponent],
+  entryComponents: [MarkTypeIconComponent]
 })
 export class PdfMarkerModule { }
