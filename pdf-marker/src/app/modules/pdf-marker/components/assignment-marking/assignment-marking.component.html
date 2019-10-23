@@ -1,0 +1,8 @@
+<mat-toolbar style="background-color: #9FA8DA;">
+ <pdf-marker-icons></pdf-marker-icons>
+</mat-toolbar>
+
+<div style="height: 750px;" class="dropzone container">
+  <ng2-pdfjs-viewer #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
+                   [viewBookmark]="false" [showSpinner]="false" zoom="page-width" pagemode="none"  *ngIf='pdfPath' [pdfSrc]="pdfPath" ></ng2-pdfjs-viewer>
+</div>
