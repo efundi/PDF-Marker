@@ -5225,6 +5225,11 @@ neo-async@^2.5.0, neo-async@^2.6.0, neo-async@^2.6.1:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.1.tgz#ac27ada66167fa8849a6addd837f6b189ad2081c"
   integrity sha512-iyam8fBuCUpWeKPGpaNMetEocMt364qkCsfL9JuhjXX6dRnguRVOfk2GZaDpPjcOKiiXCPINZC1GczQ7iTq3Zw==
 
+ng2-pdfjs-viewer@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/ng2-pdfjs-viewer/-/ng2-pdfjs-viewer-5.0.1.tgz#5eaf0ae7b2589db9eeac5db3c8520caf775a9ed9"
+  integrity sha512-Yt2uX4Gl9RDWuEsK4/YIJF/umJNevDNWeeXwYRfgicQQzU+sL15tFhaQiU49shN6H4ByFikRSR0+YWcniPC2Ww==
+
 nice-try@^1.0.4:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"

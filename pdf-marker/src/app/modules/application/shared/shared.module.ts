@@ -7,7 +7,6 @@ import {FileExplorerComponent} from './components/file-explorer/file-explorer.co
 import {FileExplorerModalComponent} from './components/file-explorer-modal/file-explorer-modal.component';
 import { SideNavigationComponent } from './components/side-navigation/side-navigation.component';
 import {AlertComponent} from "./components/alert/alert.component";
-import { AssignmentMarkingComponent} from "@sharedModule/components/assignment-marking/assignment-marking.component";
 // Angular Material Modules
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatDividerModule} from "@angular/material/divider";
@@ -58,10 +57,10 @@ const SHARED_MODULES = [
   HttpClientModule
 ];
 
-const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent, AssignmentMarkingComponent];
+const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, AssignmentMarkingComponent],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent],
   imports: [
     CommonModule,
     MatIconModule,

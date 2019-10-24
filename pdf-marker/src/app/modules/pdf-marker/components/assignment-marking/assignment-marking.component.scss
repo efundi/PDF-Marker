@@ -1,15 +1,18 @@
-p {
-  font-family: Lato;
+.pdf-marker-dropzone {
+  cursor: copy;
 }
 
-.main {
-  margin: 8px;
+.boundary {
+  height: 90%;
+  position: relative;
+  overflow: auto;
 }
 
-.example-icon {
-  padding: 0 14px;
+.boundary::-webkit-scrollbar {
+  width: 7px;
+  background: transparent;
 }
 
-.example-spacer {
-  flex: 1 1 auto;
+.boundary::-webkit-scrollbar-thumb {
+  background: #888;
 }

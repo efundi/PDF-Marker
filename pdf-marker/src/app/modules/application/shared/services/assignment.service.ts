@@ -13,6 +13,8 @@ export class AssignmentService {
   private selectedAssignmentSource$: Subject<object> = new Subject<object>();
   private assignments: object[] = new Array<object>();
   private selectedAssignment: object;
+  private selectedPdfURL: string;
+  private selectedPdfURLSource$: Subject<string> = new Subject<string>();
 
   constructor(private http: HttpClient,
               @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
@@ -67,5 +69,18 @@ export class AssignmentService {
 
   selectedAssignmentChanged(): Observable<object> {
     return this.selectedAssignmentSource$.asObservable();
+  }
+
+  setSelectedPdfURL(selectedPdfURL: string) {
+    this.selectedPdfURL = selectedPdfURL;
+    this.selectedPdfURLSource$.next(this.selectedPdfURL);
+  }
+
+  getSelectedPdfURL(): string {
+    return this.selectedPdfURL;
+  }
+
+  selectedPdfURLChanged(): Observable<string> {
+    return this.selectedPdfURLSource$.asObservable();
   }
 }

@@ -1,8 +1,11 @@
-<mat-toolbar style="background-color: #9FA8DA;">
- <pdf-marker-icons></pdf-marker-icons>
-</mat-toolbar>
+<ng-container>
+  <div style="height: 10%; min-width: 64px">
+    <pdf-marker-icons (selection)="onSelectedIcon($event)"></pdf-marker-icons>
+  </div>
+  <div #container class="boundary">
+    <template style="height: 100%" #containerRef></template>
+    <ng2-pdfjs-viewer (click)="onDropClick($event)" *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
+                      [viewBookmark]="false" [showSpinner]="false" zoom="page-width" pagemode="none" [pdfSrc]="pdfPath" ></ng2-pdfjs-viewer>
+  </div>
+</ng-container>
 
-<div style="height: 750px;" class="dropzone container">
-  <ng2-pdfjs-viewer #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
-                   [viewBookmark]="false" [showSpinner]="false" zoom="page-width" pagemode="none"  *ngIf='pdfPath' [pdfSrc]="pdfPath" ></ng2-pdfjs-viewer>
-</div>

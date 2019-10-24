@@ -13,10 +13,7 @@ export class IconsComponent implements OnInit {
 
   readonly icons = [
     { icon: 'check'},
-    { icon: 'done_all'},
-    { icon: 'done_outline'},
-    { icon: 'check_circle'},
-    { icon: 'check_circle_outline'},
+    { icon: 'done_all'}
   ];
 
   constructor() { }

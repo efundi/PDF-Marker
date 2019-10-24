@@ -40,10 +40,8 @@ const assignmentList = (callback) => {
     if (!isJson(data))
       return [];
 
-
     const config = JSON.parse(data.toString());
     readdir(config.defaultPath, (err, folders) => {
-      // Handle error
       if(err)
         return new Error('Failed to read workspace contents!');
 
@@ -107,9 +105,8 @@ const upload = multer({storage: store}).single('file');
 
 const settingsPost = (req, res) => {
   const errors = validationResult(req);
-  if(!errors.isEmpty()) {
+  if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
-  }
 
   return access(req.body.defaultPath, constants.F_OK, (err) => {
     if(err)
@@ -155,11 +152,9 @@ const uploadFn = (req, res, next) => {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
     upload(req, res, (err) => {
-      if(err) {
+      if(err)
         return res.status(501).json({error: err});
-      }
-      // Make file type validations
-      console.log(req.file);
+
       if(!req.file)
         return res.status(404).send({message: 'No file uploaded!'});
 
@@ -174,7 +169,6 @@ const uploadFn = (req, res, next) => {
       }).catch((error) => {
         return res.status(501).send({message: error.message});
       });
-
     });
   });
 };
@@ -206,9 +200,6 @@ const getAssignments = (req, res) => {
             return res.status(200).send(folderModels);
         });
       });
-
-      console.log("response");
-
     });
   });
 };
@@ -224,19 +215,16 @@ const getPdfFile = (req, res) => {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
     const config = JSON.parse(data.toString());
-
     const location = req.body.location.replace(/\//g, sep);
     const actualPath = config.defaultPath + sep + location;
 
     return access(actualPath, constants.F_OK, (err) => {
       if(err)
         return res.status(404).send({ message: `pdf file not found!`});
-      else {
-        const file = createReadStream(actualPath);
-        file.pipe(res);
-      }
-    });
 
+      const file = createReadStream(actualPath);
+      file.pipe(res);
+    });
   });
 };
 
