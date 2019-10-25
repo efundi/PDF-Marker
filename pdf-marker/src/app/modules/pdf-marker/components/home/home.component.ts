@@ -11,9 +11,11 @@ import {filter, map} from "rxjs/operators";
 })
 export class HomeComponent implements OnInit, OnDestroy {
   breadcrumbs: any;
+  isMarkingPage: boolean;
   routeList: string[];
   constructor(private router: Router,
-              private activatedRoute: ActivatedRoute) { }
+              private activatedRoute: ActivatedRoute) {
+  }
 
   ngOnInit() {
     this.router.events
@@ -41,6 +43,10 @@ export class HomeComponent implements OnInit, OnDestroy {
         };
 
         this.routeList = this.breadcrumbs.url.split("/");
+        if(this.router.url === "/marker/assignment/marking")
+          this.isMarkingPage = true;
+        else
+          this.isMarkingPage = false;
       });
   }
 

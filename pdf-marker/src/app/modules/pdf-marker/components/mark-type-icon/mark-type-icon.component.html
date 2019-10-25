@@ -1,4 +1,4 @@
-<div cdkDrag class="pdf-marker-mark-type-icon-container" cdkDragBoundary=".boundary" (click)="onClicked($event)" (mouseover)="onMouseOver($event)" (mouseleave)="onMouseLeave($event)">
+<div cdkDrag class="pdf-marker-mark-type-icon-container" cdkDragBoundary=".boundary" (click)="onClicked($event)" (mouseover)="onMouseOver($event)" (mouseleave)="onMouseLeave($event)" (cdkDragEnded)="onDrageEnded($event)">
   <div class="pdf-marker-mark-type-icon-options" *ngIf="showOptions">
     <mat-icon class="pdf-marker-mark-type-icon-edit" matTooltip="Edit">edit</mat-icon>
     <mat-icon class="pdf-marker-mark-type-icon-delete" matTooltip="Remove" (click)="onRemove($event)">delete_forever</mat-icon>

@@ -45,6 +45,12 @@ $pdf-marker-primary: #6f327a;
 html, body { height: 100%; font-family: Roboto, "Helvetica Neue", sans-serif !important; min-height: 695px}
 body { margin: 0; }
 
+ng2-pdfjs-viewer {
+  iframe {
+    border: none !important;
+  }
+}
+
 body {
 
   .mat-drawer-content::-webkit-scrollbar {
