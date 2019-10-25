@@ -4,7 +4,7 @@
   </div>
   <!--<span *ngIf="(currentPage + 1) !== 1">previous</span><span *ngIf="(currentPage + 1) !== pdfPages">next</span>-->
   <div #container class="boundary">
-    <div #markerContainer class="boundary-drop-zone" style="position:absolute; left: 0;top: 0; height: 100%; width: 100%; opacity: 0;" (click)="onDropClick($event)"></div>
+    <div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)"></div>
     <template style="height: 100%" #containerRef></template>
     <ng2-pdfjs-viewer *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
                       [viewBookmark]="false" zoom="100" pagemode="none" [pdfSrc]="pdfPath" viewerId="pdfMarker" (onDocumentLoad)="pagesLoaded($event)"></ng2-pdfjs-viewer>

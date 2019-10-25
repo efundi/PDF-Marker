@@ -103,7 +103,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].clientHeight + 'px';
     this.markerContainer.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.container.scrollHeight + 'px';
     this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.container.scrollHeight + 'px';
-    this.markerContainer.nativeElement.style.width = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].clientWidth + 'px';
+    //this.markerContainer.nativeElement.style.width = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].clientWidth + 'px';
     this.renderer.listen(window, 'resize-end', (event) => {
       this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].clientHeight + 'px';
       console.log(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].height);
