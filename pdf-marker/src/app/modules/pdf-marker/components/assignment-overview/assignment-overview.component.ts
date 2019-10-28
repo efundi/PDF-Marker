@@ -15,6 +15,8 @@ export interface AssignmentDetails {
   assignment: string
 
   grade: number;
+
+  path: string;
 };
 
 @Component({
@@ -29,6 +31,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   assignmentName: string = 'Assignment Name';
   assignmentsLength;
   assignmentPageSizeOptions: number[];
+  private readonly submissionFolder = "Submission attachment(s)";
 
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
 
@@ -66,13 +69,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
           studentName: '',
           studentNumber: '',
           assignment: '',
-          grade: 0
+          grade: 0,
+          path: null
         };
         const matches = this.regEx.exec(key);
         value.studentName = matches[1];
         value.studentNumber = matches[2];
-        value.assignment = this.hierarchyModel[this.assignmentName][key]["Submission attachment(s)"] ? Object.keys(this.hierarchyModel[this.assignmentName][key]["Submission attachment(s)"])[0]:'';
+        value.assignment = this.hierarchyModel[this.assignmentName][key][this.submissionFolder] ? Object.keys(this.hierarchyModel[this.assignmentName][key][this.submissionFolder])[0]:'';
         value.grade = 0;
+        value.path = (value.assignment) ? this.assignmentName + '/' + key + "/" + this.submissionFolder + "/" + value.assignment:'';
         values.push(value);
       }
     });
@@ -90,6 +95,17 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     }
     this.assignmentPageSizeOptions = range;
     this.appService.isLoading$.next(false);
+  }
+
+  onSelectedPdf(pdfFileLocation: string) {
+    this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
+      const blob = new Blob([blobData], { type: "application/pdf"});
+      const fileUrl = URL.createObjectURL(blob);
+
+      this.assignmentService.setSelectedPdfURL(fileUrl);
+      if(this.router.url !== "/marker/assignment/marking")
+        this.router.navigate(["/marker/assignment/marking"]);
+    })
   }
 
   ngOnDestroy(): void {

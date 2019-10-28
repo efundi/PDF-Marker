@@ -100,21 +100,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     console.log(this.pdfViewerAutoLoad);
     this.currentPage = this.pdfViewerAutoLoad.PDFViewerApplication.page;
-    this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].clientHeight + 'px';
+    this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage - 1].clientHeight + 'px';
     this.markerContainer.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.container.scrollHeight + 'px';
     this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.container.scrollHeight + 'px';
-    //this.markerContainer.nativeElement.style.width = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].clientWidth + 'px';
-    this.renderer.listen(window, 'resize-end', (event) => {
-      this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].clientHeight + 'px';
-      console.log(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].height);
-      console.log(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].clientHeight);
-      console.log(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].offsetHeight);
-      console.log(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage].style.height);
-    });
-
-    this.pdfViewerAutoLoad.receiveMessage(viewerEvent => {
-      console.log(viewerEvent);
-    });
     this.show = true;
   }
 
