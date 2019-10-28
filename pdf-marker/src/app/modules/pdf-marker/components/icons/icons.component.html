@@ -1,6 +1,6 @@
 <mat-toolbar>
   <button class="pdf-marker-icon-first" mat-button mat-icon-button><mat-icon>apps</mat-icon></button>
-  <button [class.pdf-marker-icons-selected]="iconData.icon === selecetedIcon" *ngFor="let iconData of icons" (click)="onIconClick($event, iconData.icon)" mat-button mat-icon-button><mat-icon>{{ iconData.icon }}</mat-icon></button>
+  <button [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false" *ngFor="let iconData of icons" (click)="onIconClick($event, iconData)" mat-button mat-icon-button><mat-icon>{{ iconData.icon }}</mat-icon></button>
   <button mat-button mat-icon-button><mat-icon>close</mat-icon></button>
   <button mat-button mat-icon-button><mat-icon>spellcheck</mat-icon></button>
   <button mat-button mat-icon-button><mat-icon>format_list_numbered</mat-icon></button>
@@ -10,6 +10,6 @@
   <button mat-button mat-icon-button><mat-icon>delete_sweep</mat-icon></button>
   <button mat-button mat-icon-button><mat-icon>settings</mat-icon></button>
   <span class="pdf-marker-fill-space"></span>
-  <button mat-button mat-icon-button><mat-icon>save</mat-icon></button>
+  <button mat-button mat-icon-button (click)="onSave($event)"><mat-icon>save</mat-icon></button>
   <button mat-button mat-icon-button><mat-icon>swap_vert</mat-icon></button>
 </mat-toolbar>

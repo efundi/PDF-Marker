@@ -1,6 +1,6 @@
 <ng-container>
   <div style="height: 10%; min-width: 64px" *ngIf="show">
-    <pdf-marker-icons (selection)="onSelectedIcon($event)"></pdf-marker-icons>
+    <pdf-marker-icons (selection)="onSelectedIcon($event)" (control)="onControl($event)"></pdf-marker-icons>
   </div>
   <!--<span *ngIf="(currentPage + 1) !== 1">previous</span><span *ngIf="(currentPage + 1) !== pdfPages">next</span>-->
   <div #container class="boundary">

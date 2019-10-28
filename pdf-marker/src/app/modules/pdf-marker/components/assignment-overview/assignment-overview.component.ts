@@ -102,7 +102,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       const blob = new Blob([blobData], { type: "application/pdf"});
       const fileUrl = URL.createObjectURL(blob);
 
-      this.assignmentService.setSelectedPdfURL(fileUrl);
+      this.assignmentService.setSelectedPdfURL(fileUrl, pdfFileLocation);
       if(this.router.url !== "/marker/assignment/marking")
         this.router.navigate(["/marker/assignment/marking"]);
     })

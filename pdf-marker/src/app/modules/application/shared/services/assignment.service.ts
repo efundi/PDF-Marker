@@ -13,6 +13,7 @@ export class AssignmentService {
   private selectedAssignmentSource$: Subject<object> = new Subject<object>();
   private assignments: object[] = new Array<object>();
   private selectedAssignment: object;
+  private selectedPdfLocation: string;
   private selectedPdfURL: string;
   private selectedPdfURLSource$: Subject<string> = new Subject<string>();
 
@@ -71,8 +72,9 @@ export class AssignmentService {
     return this.selectedAssignmentSource$.asObservable();
   }
 
-  setSelectedPdfURL(selectedPdfURL: string) {
+  setSelectedPdfURL(selectedPdfURL: string, selectedPdfLocation: string) {
     this.selectedPdfURL = selectedPdfURL;
+    this.selectedPdfLocation = selectedPdfLocation;
     this.selectedPdfURLSource$.next(this.selectedPdfURL);
   }
 

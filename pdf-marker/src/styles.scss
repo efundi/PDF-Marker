@@ -42,13 +42,23 @@
 /*Variables*/
 $pdf-marker-primary: #6f327a;
 
-html, body { height: 100%; font-family: Roboto, "Helvetica Neue", sans-serif !important; min-height: 695px}
+html, body { height: 100%; font-family: Roboto, "Helvetica Neue", sans-serif !important; min-height: 695px; min-height: 650px;}
 body { margin: 0; }
 
 ng2-pdfjs-viewer {
   iframe {
     border: none !important;
   }
+}
+
+pdf-marker-header {
+  height: 10% !important;
+  display: block;
+}
+
+pdf-marker-home {
+  height: 90% !important;
+  display: block;
 }
 
 body {
@@ -81,7 +91,7 @@ button {
 }
 
 .mat-drawer-container {
-  height: 92%;
+  height: 100%;
   background: #F5F5F5 !important;
 
   .mat-drawer {

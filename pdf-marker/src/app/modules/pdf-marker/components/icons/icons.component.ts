@@ -1,4 +1,6 @@
 import {Component, EventEmitter, OnInit, Output} from '@angular/core';
+import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
+import {IconInfo} from "@pdfMarkerModule/info-objects/icon.info";
 
 @Component({
   selector: 'pdf-marker-icons',
@@ -9,11 +11,15 @@ export class IconsComponent implements OnInit {
 
   @Output()
   selection: EventEmitter<string> = new EventEmitter<string>();
-  selecetedIcon: string;
 
-  readonly icons = [
-    { icon: 'check'},
-    { icon: 'done_all'}
+  @Output()
+  control: EventEmitter<string> = new EventEmitter<string>();
+
+  selecetedIcon: IconInfo;
+
+  readonly icons: IconInfo[] = [
+    { icon: 'check', type: IconTypeEnum.FULL_MARK },
+    { icon: 'done_all', type: IconTypeEnum.HALF_MARK }
   ];
 
   constructor() { }
@@ -21,16 +27,21 @@ export class IconsComponent implements OnInit {
   ngOnInit() {
   }
 
-  onIconClick(event, selectedIcon) {
-    if(this.selecetedIcon === selectedIcon) {
+  onIconClick(event, selectedIcon: IconInfo) {
+    if(JSON.stringify(this.selecetedIcon) === JSON.stringify(selectedIcon)) {
       this.selecetedIcon = undefined;
       this.selection.emit(undefined);
     }
     else {
       // emit selectedIcon to marking component
       this.selecetedIcon = selectedIcon;
-      this.selection.emit(selectedIcon);
+      this.selection.emit(JSON.stringify(selectedIcon));
     }
+  }
+
+  onSave(event) {
+    console.log("IconsComponent");
+    this.control.emit('save');
   }
 
 }
