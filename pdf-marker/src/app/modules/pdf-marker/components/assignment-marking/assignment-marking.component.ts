@@ -179,7 +179,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const minHeight = this.markerContainer.nativeElement.scrollHeight - componentRef.instance.dimensions;
 
     const top = event.offsetY - (componentRef.instance.dimensions / 2);
-    const left = event.offsetX -  - (componentRef.instance.dimensions / 2);
+    const left = event.offsetX -  (componentRef.instance.dimensions / 2);
 
     this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0:((top > minHeight) ? minHeight:top)) + 'px');
     this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:((left > minWidth) ? minWidth:left)) + 'px');
