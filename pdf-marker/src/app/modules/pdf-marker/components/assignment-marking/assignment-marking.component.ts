@@ -26,18 +26,11 @@ import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
   providers: []
 })
 export class AssignmentMarkingComponent implements OnInit, OnDestroy {
-  @ViewChild('container', {static: false})
-  container: ElementRef;
+  // @ts-ignore
+  @ViewChild('container') container: ElementRef;
 
-  @ViewChild('markerContainer', {static: false})
-  markerContainer: ElementRef;
-
-  private minWidth: number;
-  private minHeight: number;
-
-  show: boolean;
-
-  pdfPath :string;
+  // @ts-ignore
+  @ViewChild('markerContainer') markerContainer: ElementRef;
 
   // @ts-ignore
   @ViewChild('pdfViewerAutoLoad') pdfViewerAutoLoad;
@@ -45,21 +38,14 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   @ViewChild('containerRef', {read: ViewContainerRef, static: false})
   actualContainer: ViewContainerRef;
 
+  show: boolean;
+  pdfPath :string;
   private selectedIcon: IconInfo;
   private pdfPages: number = 0;
   private currentPage: number = 0;
-  private pageElements: any[] = [];
   private subscription: Subscription;
-  private markDetails: ComponentRef<MarkTypeIconComponent>[] = [];
-  private viewerContainer;
-
-  private data = [
-    { coordinates: {x: 346, y: 1230}, iconName: "check", iconType: IconTypeEnum.FULL_MARK},
-    { coordinates: {x: 300, y: 1261}, iconName: "check", iconType: IconTypeEnum.FULL_MARK},
-    { coordinates: {x: 347, y: 1289}, iconName: "check", iconType: IconTypeEnum.FULL_MARK},
-    { coordinates: {x: 685, y: 1317}, iconName: "check", iconType: IconTypeEnum.FULL_MARK},
-    { coordinates: {x: 688, y: 1377}, iconName: "check", iconType: IconTypeEnum.FULL_MARK},
-  ];
+  private markDetailsComponents: ComponentRef<MarkTypeIconComponent>[] = [];
+  private markDetailsRawData: any[] = [];
 
   constructor(private renderer: Renderer2,
               private assignmentService: AssignmentService,
@@ -70,25 +56,39 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
               private appService: AppService) { }
 
   ngOnInit() {
-    if(!this.assignmentService.getSelectedPdfURL()){
+    if(this.assignmentService.getSelectedPdfURL() === undefined || this.assignmentService.getSelectedPdfURL() === null){
       this.router.navigate(["/marker"]);
+    } else {
+      this.getAssignmentProgress();
     }
-    this.openPDF();
+
     this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
-      if(pdfPath) {
-        this.pdfPath = pdfPath;
-        this.pdfViewerAutoLoad.pdfSrc = this.pdfPath; // pdfSrc can be Blob or Uint8Array
-        this.pdfViewerAutoLoad.refresh(); // Ask pdf viewer to load/refresh pdf
-        console.log(this.pdfPath);
-        console.log("refreshed");
-        //console.log(this.pdfViewerAutoLoad.iframe.nativeElement.height);
+      if (pdfPath) {
+        this.markDetailsComponents.forEach(componentRef => {
+          componentRef.destroy();
+        });
+        this.getAssignmentProgress(true);
       }
     });
   }
 
   private openPDF() {
     this.pdfPath = this.assignmentService.getSelectedPdfURL();
-    //console.log(this.pdfViewerAutoLoad.PDFViewerApplicationOptions);
+  }
+
+  private getAssignmentProgress(isSubscription: boolean = false) {
+    this.appService.isLoading$.next(true);
+    this.assignmentService.getSavedMarks().subscribe((marks: any[]) => {
+      this.markDetailsRawData = marks;
+      this.openPDF();
+      if(isSubscription) {
+        this.pdfViewerAutoLoad.pdfSrc = this.pdfPath; // pdfSrc can be Blob or Uint8Array
+        this.pdfViewerAutoLoad.refresh();
+      }
+    }, error => {
+      console.log("Error fetching marks");
+      this.appService.isLoading$.next(false);
+    });
   }
 
   onSelectedIcon(selectedIcon: string) {
@@ -104,28 +104,20 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   pagesLoaded(pageNumber) {
     this.pdfPages = pageNumber;
-    this.pageElements = [];
-    this.markDetails = [];
-    /*for(let i = 0; i < this.pdfPages; i++) {
-      this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[i].style.border = "none";
-      this.pageElements.push(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[i]);
-    }*/
-
-    console.log(this.pdfViewerAutoLoad);
+    this.markDetailsComponents = [];
     this.currentPage = this.pdfViewerAutoLoad.PDFViewerApplication.page;
     this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage - 1].clientHeight + 'px';
     this.markerContainer.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.container.scrollHeight + 'px';
     this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.container.scrollHeight + 'px';
 
-    // Set Data
-
-    for(let i = 0; i < this.data.length; i++) {
+    // Set Marks if exists
+    for(let i = 0; i < this.markDetailsRawData.length; i++) {
 
       const factory: ComponentFactory<MarkTypeIconComponent> = this.resolver.resolveComponentFactory(MarkTypeIconComponent);
       const componentRef = this.actualContainer.createComponent(factory);
 
-      const top = this.data[i].coordinates.y;
-      const left = this.data[i].coordinates.x;
+      const top = this.markDetailsRawData[i].coordinates.y;
+      const left = this.markDetailsRawData[i].coordinates.x;
 
       this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
       this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0:top) + 'px');
@@ -133,15 +125,15 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
       componentRef.instance.setComponentRef(componentRef);
       componentRef.instance.setIndex(i);
-      componentRef.instance.iconName = this.data[i].iconName;
-      componentRef.instance.setMarkType(this.data[i].iconType)
-      this.markDetails.push(componentRef);
+      componentRef.instance.iconName = this.markDetailsRawData[i].iconName;
+      componentRef.instance.setMarkType(this.markDetailsRawData[i].iconType);
+      this.markDetailsComponents.push(componentRef);
     }
     this.show = true;
+    this.appService.isLoading$.next(false);
   }
 
   onDropClick(event) {
-    console.log(event);
     if(this.selectedIcon) {
       switch (this.selectedIcon.type) {
         case IconTypeEnum.FULL_MARK:
@@ -150,12 +142,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         default:  console.log("No icon type found!");
                   break;
       }
-
     }
   }
 
   onControl(control: string) {
-    console.log(control);
     switch (control) {
       case 'save':  this.saveMarks();
                     break;
@@ -166,11 +156,18 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   private saveMarks() {
     const markDetails = [];
-    for(let i = 0; i < this.markDetails.length; i++) {
-      const markType = this.markDetails[i].instance;
-      markDetails[i] = { coordinates: markType.getCoordinates(), iconName: markType.iconName, iconType: markType.getMarkType() }
+    for(let i = 0; i < this.markDetailsComponents.length; i++) {
+      const markType = this.markDetailsComponents[i].instance;
+      if(!markType.deleted) {
+        markDetails[i] = { coordinates: markType.getCoordinates(), iconName: markType.iconName, iconType: markType.getMarkType() }
+      }
     }
-    console.log(markDetails);
+    this.appService.isLoading$.next(true);
+    this.assignmentService.saveMarks(markDetails).subscribe((response: any) => {
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.isLoading$.next(false);
+    });
   }
 
   private createMarkIcon(event) {
@@ -178,16 +175,16 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const componentRef = this.actualContainer.createComponent(factory);
 
     this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
-    const minWidth = this.markerContainer.nativeElement.scrollWidth - 36;
-    const minHeight = this.markerContainer.nativeElement.scrollHeight - 36;
+    const minWidth = this.markerContainer.nativeElement.scrollWidth - componentRef.instance.dimensions;
+    const minHeight = this.markerContainer.nativeElement.scrollHeight - componentRef.instance.dimensions;
 
-    const top = event.offsetY - 18;
-    const left = event.offsetX - 18;
+    const top = event.offsetY - (componentRef.instance.dimensions / 2);
+    const left = event.offsetX -  - (componentRef.instance.dimensions / 2);
 
     this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0:((top > minHeight) ? minHeight:top)) + 'px');
     this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:((left > minWidth) ? minWidth:left)) + 'px');
 
-    const newIndex = this.markDetails.push(componentRef) - 1;
+    const newIndex = this.markDetailsComponents.push(componentRef) - 1;
     componentRef.instance.setComponentRef(componentRef);
     componentRef.instance.iconName = this.selectedIcon.icon;
     componentRef.instance.setIndex(newIndex);

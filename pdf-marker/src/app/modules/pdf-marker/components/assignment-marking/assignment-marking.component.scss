@@ -1,3 +1,13 @@
+.pdf-marker-assignment-marking-controls {
+  height: 10%;
+  min-width: 64px;
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: inherit;
+  z-index: 1000;
+}
+
 .pdf-marker-dropzone {
   cursor: copy;
 }

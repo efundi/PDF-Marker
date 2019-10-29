@@ -85,4 +85,24 @@ export class AssignmentService {
   selectedPdfURLChanged(): Observable<string> {
     return this.selectedPdfURLSource$.asObservable();
   }
+
+  saveMarks(marks: any[]) {
+    const body = {
+      marks: marks,
+      location: this.selectedPdfLocation
+    };
+
+    return this.http.post("/api/assignment/marks/save", body);
+  }
+
+  getSavedMarks() {
+    const body = {
+      location: this.selectedPdfLocation
+    };
+    return this.http.post("/api/assignment/marks/fetch", body);
+  }
+
+  getSelectedPdfLocation(): string {
+    return this.selectedPdfLocation;
+  }
 }

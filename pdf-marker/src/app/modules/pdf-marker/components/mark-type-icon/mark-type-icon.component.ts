@@ -1,4 +1,4 @@
-import {Component, ComponentFactoryResolver, ComponentRef, Input, OnInit} from '@angular/core';
+import {Component, ComponentRef, Input, OnInit} from '@angular/core';
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
 
 @Component({
@@ -11,6 +11,8 @@ export class MarkTypeIconComponent implements OnInit {
   @Input()
   iconName: string;
 
+  private readonly widthAndHeight: number = 36;
+
   private coordinates = {
     x: 0,
     y: 0
@@ -21,6 +23,8 @@ export class MarkTypeIconComponent implements OnInit {
   private markType: IconTypeEnum;
 
   private componentReferene: ComponentRef<MarkTypeIconComponent>;
+
+  private isDeleted: boolean;
 
   showOptions: boolean;
 
@@ -36,8 +40,8 @@ export class MarkTypeIconComponent implements OnInit {
   onRemove(event) {
     if(this.componentReferene)
       this.componentReferene.destroy();
+    this.isDeleted = true;
     event.stopPropagation();
-    // emit change event here
   }
 
   onClicked(event) {
@@ -83,5 +87,13 @@ export class MarkTypeIconComponent implements OnInit {
 
   getMarkType(): IconTypeEnum {
     return this.markType;
+  }
+
+  get deleted() {
+    return this.isDeleted;
+  }
+
+  get dimensions() {
+    return this.widthAndHeight;
   }
 }

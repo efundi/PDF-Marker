@@ -18,7 +18,7 @@
 import 'zone.js/dist/zone-node';
 
 import * as express from 'express';
-import {extname, join, sep} from 'path';
+import {extname, join, sep, dirname} from 'path';
 import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync, writeFile, mkdir, existsSync, createReadStream} from 'fs';
 
 const { check, validationResult } = require('express-validator');
@@ -231,6 +231,86 @@ const getPdfFile = (req, res) => {
 app.post('/api/pdf/file', [
   check('location').not().isEmpty().withMessage('File location not provided!')
 ], getPdfFile);
+
+const savingMarks = (req, res) => {
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const config = JSON.parse(data.toString());
+    const location = req.body.location.replace(/\//g, sep);
+    const pathSplit = location.split(sep);
+    if(pathSplit.length !== 4) {
+        return res.status(404).send({message: 'Invalid path provided'});
+    }
+
+    const regEx = /(.*)\((.+)\)/;
+    if(!regEx.test(pathSplit[1])) {
+      return res.status(404).send({message: 'Invalid student folder'});
+    }
+
+    const studentFolder = dirname(dirname(config.defaultPath + sep + location));
+
+    return access(studentFolder, constants.F_OK, (err) => {
+      if(err)
+        return res.status(404).send({ message: `Student folder not found!`});
+
+      const data = new Uint8Array(Buffer.from(JSON.stringify(req.body.marks)));
+      writeFile(studentFolder + sep + '.marks.json', data, (err) => {
+        if(err)
+          return res.status(500).send({ message: 'Failed to save student marks!'});
+        else
+          return res.status(200).send({message: 'Successfully saved!'});
+      });
+    });
+  });
+};
+
+app.post("/api/assignment/marks/save", [
+  check('location').not().isEmpty().withMessage('Assignment location not provided!'),
+  check('marks').not().isEmpty().withMessage('Marks not provided!')
+], savingMarks);
+
+const getMarks = (req, res) => {
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const config = JSON.parse(data.toString());
+    const location = req.body.location.replace(/\//g, sep);
+    const pathSplit = location.split(sep);
+    if(pathSplit.length !== 4) {
+      return res.status(404).send({message: 'Invalid path provided'});
+    }
+
+    const regEx = /(.*)\((.+)\)/;
+    if(!regEx.test(pathSplit[1])) {
+      return res.status(404).send({message: 'Invalid student folder'});
+    }
+
+    const studentFolder = dirname(dirname(config.defaultPath + sep + location));
+
+    return readFile(studentFolder + sep + ".marks.json",(err, data) => {
+      if(err)
+        return res.status(200).send([]);
+
+      if(!isJson(data))
+        return res.status(200).send([]);
+      else
+        return res.status(200).send(JSON.parse(data.toString()));
+    });
+  });
+};
+
+app.post("/api/assignment/marks/fetch", [
+  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+], getMarks);
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
