@@ -424,8 +424,8 @@ body {
   height: 100%;
   width: 100%;
   background-color: #404040;
-  background: none;
   background-image: url(images/texture.png);
+  background: none;
 }
 
 body,

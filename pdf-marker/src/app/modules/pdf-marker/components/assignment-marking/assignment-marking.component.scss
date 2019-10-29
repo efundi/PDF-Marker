@@ -36,6 +36,10 @@
   background: #888;
 }
 
+.pdf-marker-assignment-marking-visible-pdf {
+  visibility: hidden;
+}
+
 ng2-pdfjs-viewer {
   iframe {
     border: none !important;
