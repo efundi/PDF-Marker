@@ -151,9 +151,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   onDropClick(event) {
     if(this.selectedIcon) {
       switch (this.selectedIcon.type) {
-        case IconTypeEnum.FULL_MARK:
-        case IconTypeEnum.HALF_MARK:
-        case IconTypeEnum.CROSS: this.createMarkIcon(event);
+        case IconTypeEnum.FULL_MARK :
+        case IconTypeEnum.HALF_MARK :
+        case IconTypeEnum.ACK_MARK  :
+        case IconTypeEnum.CROSS     : this.createMarkIcon(event);
                                       break;
         default:  console.log("No icon type found!");
                   break;
@@ -173,9 +174,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private saveMarks() {
     const markDetails = [];
     for(let i = 0; i < this.markDetailsComponents.length; i++) {
-      const markType = this.markDetailsComponents[i].instance;
-      if(!markType.deleted) {
-        markDetails[i] = { coordinates: markType.getCoordinates(), iconName: markType.iconName, iconType: markType.getMarkType() }
+      if(this.markDetailsComponents[i] !== null && this.markDetailsComponents[i] !== undefined) {
+        const markType = this.markDetailsComponents[i].instance;
+        if(markType.deleted === false) {
+          markDetails.push({ coordinates: markType.getCoordinates(), iconName: markType.iconName, iconType: markType.getMarkType() });
+        }
       }
     }
     this.appService.isLoading$.next(true);

@@ -1,7 +1,8 @@
 export enum IconTypeEnum {
-  FULL_MARK = "fullMark",
-  HALF_MARK = "halfMark",
-  NUMBER = "number",
-  COMMENT = "comment",
-  CROSS ="cross"
+  FULL_MARK = "FULL_MARK",
+  HALF_MARK = "HALF_MARK",
+  ACK_MARK  = "ACK_MARK",
+  CROSS     = "CROSS",
+  NUMBER    = "NUMBER",
+  COMMENT   = "COMMENT"
 }

@@ -23,9 +23,10 @@ export class IconsComponent implements OnInit {
 
   selecetedIcon: IconInfo;
 
-  readonly icons: IconInfo[] = [
+  readonly markIcons: IconInfo[] = [
     { icon: 'check', type: IconTypeEnum.FULL_MARK },
     { icon: 'done_all', type: IconTypeEnum.HALF_MARK },
+    { icon: 'spellcheck', type: IconTypeEnum.ACK_MARK },
     { icon: 'close', type: IconTypeEnum.CROSS}
   ];
 

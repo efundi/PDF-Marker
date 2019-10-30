@@ -24,7 +24,7 @@ export class MarkTypeIconComponent implements OnInit {
 
   private componentReferene: ComponentRef<MarkTypeIconComponent>;
 
-  private isDeleted: boolean;
+  private isDeleted: boolean = false;
 
   showOptions: boolean;
 
@@ -89,7 +89,7 @@ export class MarkTypeIconComponent implements OnInit {
     return this.markType;
   }
 
-  get deleted() {
+  get deleted(): boolean {
     return this.isDeleted;
   }
 
