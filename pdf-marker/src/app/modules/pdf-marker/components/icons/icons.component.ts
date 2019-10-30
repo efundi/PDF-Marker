@@ -27,7 +27,9 @@ export class IconsComponent implements OnInit {
     { icon: 'check', type: IconTypeEnum.FULL_MARK },
     { icon: 'done_all', type: IconTypeEnum.HALF_MARK },
     { icon: 'spellcheck', type: IconTypeEnum.ACK_MARK },
-    { icon: 'close', type: IconTypeEnum.CROSS}
+    { icon: 'close', type: IconTypeEnum.CROSS},
+    { icon: 'iso', type: IconTypeEnum.NUMBER},
+    { icon: 'comment', type: IconTypeEnum.COMMENT}
   ];
 
   constructor() { }
