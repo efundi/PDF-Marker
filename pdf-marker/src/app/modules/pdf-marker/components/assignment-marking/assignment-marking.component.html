@@ -1,12 +1,12 @@
 <ng-container>
   <div class="pdf-marker-assignment-marking-controls" *ngIf="show">
-    <pdf-marker-icons (selection)="onSelectedIcon($event)" (control)="onControl($event)"></pdf-marker-icons>
+    <pdf-marker-icons [currentPage]="currentPage" [pages]="pdfPages" (selection)="onSelectedIcon($event)" (control)="onControl($event)"></pdf-marker-icons>
   </div>
   <div #container class="boundary">
     <div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)"></div>
     <template style="height: 100%" #containerRef></template>
     <ng2-pdfjs-viewer [class.pdf-marker-assignment-marking-visible-pdf]="!show" *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
-                      [viewBookmark]="false" zoom="100" pagemode="none" [pdfSrc]="pdfPath" viewerId="pdfMarker" (onDocumentLoad)="pagesLoaded($event)"></ng2-pdfjs-viewer>
+                      [viewBookmark]="false" zoom="100" pagemode="none" [pdfSrc]="pdfPath" viewerId="pdfMarker" (onDocumentLoad)="pagesLoaded($event)" (onPageChange)="onPageChanged($event)"></ng2-pdfjs-viewer>
   </div>
 </ng-container>
 

@@ -40,9 +40,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   show: boolean;
   pdfPath :string;
+  pdfPages: number = 0;
+  currentPage: number = 0;
   private selectedIcon: IconInfo;
-  private pdfPages: number = 0;
-  private currentPage: number = 0;
   private subscription: Subscription;
   private markDetailsComponents: ComponentRef<MarkTypeIconComponent>[] = [];
   private markDetailsRawData: any[] = [];
@@ -105,7 +105,17 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   pagesLoaded(pageNumber) {
     this.pdfPages = pageNumber;
     this.markDetailsComponents = [];
+    const intersections = [];
     this.currentPage = this.pdfViewerAutoLoad.PDFViewerApplication.page;
+    const observe = new IntersectionObserver((entries) => {
+      if(entries[0].isIntersecting === true) {
+        console.log(entries[0].target);
+        this.currentPage = parseInt(entries[0].target.attributes[1].value);
+      }
+    }, {threshold:[0.5]});
+    for(let i = this.currentPage; i <= this.pdfPages; i++) {
+      observe.observe(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[i - 1]);
+    }
     this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage - 1].clientHeight + 'px';
     this.markerContainer.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.container.scrollHeight + 'px';
     this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.container.scrollHeight + 'px';
@@ -131,6 +141,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     }
     this.show = true;
     this.appService.isLoading$.next(false);
+  }
+
+  onPageChanged(pageNumber) {
+    console.log(pageNumber);
+    this.currentPage = pageNumber;
   }
 
   onDropClick(event) {

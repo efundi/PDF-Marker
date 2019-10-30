@@ -1,4 +1,4 @@
-import {Component, EventEmitter, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
 import {IconInfo} from "@pdfMarkerModule/info-objects/icon.info";
 
@@ -14,6 +14,12 @@ export class IconsComponent implements OnInit {
 
   @Output()
   control: EventEmitter<string> = new EventEmitter<string>();
+
+  @Input()
+  currentPage: number;
+
+  @Input()
+  pages: number;
 
   selecetedIcon: IconInfo;
 
