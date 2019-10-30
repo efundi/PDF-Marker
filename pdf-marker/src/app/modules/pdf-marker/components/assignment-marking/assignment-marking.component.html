@@ -5,7 +5,7 @@
   <div #container class="boundary">
     <div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)"></div>
     <template style="height: 100%" #containerRef></template>
-    <ng2-pdfjs-viewer [class.pdf-marker-assignment-marking-visible-pdf]="!show" *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
+    <ng2-pdfjs-viewer autoscroll="true" [class.pdf-marker-assignment-marking-visible-pdf]="!show" *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
                       [viewBookmark]="false" zoom="100" pagemode="none" [pdfSrc]="pdfPath" viewerId="pdfMarker" (onDocumentLoad)="pagesLoaded($event)" (onPageChange)="onPageChanged($event)"></ng2-pdfjs-viewer>
   </div>
 </ng-container>
