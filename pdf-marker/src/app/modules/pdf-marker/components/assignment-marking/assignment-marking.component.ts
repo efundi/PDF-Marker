@@ -152,7 +152,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     if(this.selectedIcon) {
       switch (this.selectedIcon.type) {
         case IconTypeEnum.FULL_MARK:
-        case IconTypeEnum.HALF_MARK:  this.createMarkIcon(event);
+        case IconTypeEnum.HALF_MARK:
+        case IconTypeEnum.CROSS: this.createMarkIcon(event);
                                       break;
         default:  console.log("No icon type found!");
                   break;

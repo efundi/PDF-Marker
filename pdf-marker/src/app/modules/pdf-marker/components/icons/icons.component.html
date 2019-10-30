@@ -1,7 +1,6 @@
 <mat-toolbar>
   <button class="pdf-marker-icon-first" mat-button mat-icon-button><mat-icon>apps</mat-icon></button>
   <button [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false" *ngFor="let iconData of icons" (click)="onIconClick($event, iconData)" mat-button mat-icon-button><mat-icon>{{ iconData.icon }}</mat-icon></button>
-  <button mat-button mat-icon-button><mat-icon>close</mat-icon></button>
   <button mat-button mat-icon-button><mat-icon>spellcheck</mat-icon></button>
   <button mat-button mat-icon-button><mat-icon>format_list_numbered</mat-icon></button>
   <button mat-button mat-icon-button><mat-icon>comment</mat-icon></button>
