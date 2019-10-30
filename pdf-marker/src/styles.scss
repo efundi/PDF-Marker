@@ -66,10 +66,24 @@ pdf-marker-assignment-marking {
   position: relative;
 }
 
+.mat-dialog-container {
+  padding-top: 0 !important;
+}
+
 body {
 
   .mat-drawer-content::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
+    background: #F5F5F5;
+  }
+
+  .mat-dialog-container::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: $pdf-marker-primary;
+  }
+
+  .mat-dialog-container::-webkit-scrollbar {
+    width: 8px;
     background: #F5F5F5;
   }
 
@@ -105,7 +119,7 @@ button {
   }
 
   .mat-drawer-inner-container::-webkit-scrollbar {
-    width: 2px;
+    width: 4px;
     height: 6px;
     background: #F5F5F5;
   }
@@ -125,29 +139,31 @@ button {
     font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
   }
 
-  .mat-expansion-panel {
-    background: transparent !important;
-    width: 98%;
-    padding: 0;
-    margin: 0;
-  }
 
-  .mat-expansion-panel-header {
-    height: auto !important;
-    display: unset !important;
-    margin: 0;
-    padding: 0 !important;
-    animation-name: none !important;
-  }
+}
 
-  .mat-expansion-indicator {
-    display: none !important;
-  }
+.mat-expansion-panel {
+  background: transparent !important;
+  width: 98%;
+  padding: 0!important;
+  margin: 0;
+}
 
-  .mat-expansion-panel-body {
-    padding: 0 24px 0!important;
-    padding-right: 0 !important;
-  }
+.mat-expansion-panel-header {
+  height: auto !important;
+  display: unset !important;
+  margin: 0;
+  padding: 0 !important;
+  animation-name: none !important;
+}
+
+.mat-expansion-indicator {
+  display: none !important;
+}
+
+.mat-expansion-panel-body {
+  padding: 0 24px 0!important;
+  padding-right: 0 !important;
 }
 
 pdf-marker-file-explorer-modal {

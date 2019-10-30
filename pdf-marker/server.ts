@@ -19,7 +19,7 @@ import 'zone.js/dist/zone-node';
 
 import * as express from 'express';
 import {extname, join, sep, dirname} from 'path';
-import {access, constants, readdir, readdirSync, readFile, statSync, unlinkSync, writeFile, mkdir, existsSync, createReadStream} from 'fs';
+import {access, constants, readdir, readdirSync, readFile, statSync, stat, unlinkSync, unlink, writeFile, mkdir, existsSync, createReadStream} from 'fs';
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
@@ -345,6 +345,20 @@ const extractZip = (file, destination, deleteSource, res = null) => {
       //return res.status(501).send({message: 'Error occurred while extracting file to disk!'});
     }
   }));
+
+  /*return new Promise((resolve, reject) => extract(file, {dir: destination}, (err) => {
+    if (!err) {
+      if (deleteSource) unlink(file, (err) => {});
+      nestedExtract(destination, extractZip);
+      if(res)
+        resolve(true);
+    } else {
+      console.log(err);
+      console.log("no");
+      reject(new Error('Error occurred while extracting file to disk!'));
+      //return res.status(501).send({message: 'Error occurred while extracting file to disk!'});
+    }
+  }));*/
 };
 
 const nestedExtract = (dir, zipExtractor) => {
@@ -358,6 +372,22 @@ const nestedExtract = (dir, zipExtractor) => {
       nestedExtract(join(dir, file), zipExtractor);
     }
   });
+
+  // Maybe we should test speed of the above code and this one
+  /*readdir(dir, (err, files) => {
+    files.forEach(file => {
+      stat(join(dir, file), (err, stats) => {
+        if(stats.isFile()) {
+          if (extname(file) === '.zip') {
+            // deleteSource = true to avoid infinite loops caused by extracting same file
+            zipExtractor(join(dir, file), dir, true);
+          }
+        } else {
+          nestedExtract(join(dir, file), zipExtractor);
+        }
+      })
+    });
+  });*/
 };
 
 const hierarchyModel = (pathInfos, configFolder) => {
