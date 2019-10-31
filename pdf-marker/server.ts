@@ -207,6 +207,10 @@ const getAssignments = (req, res) => {
 app.get('/api/assignments', getAssignments);
 
 const getPdfFile = (req, res) => {
+  const errors = validationResult(req);
+  if(!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
+
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
       return res.status(500).send({message: 'Failed to read configurations!'});
@@ -233,6 +237,12 @@ app.post('/api/pdf/file', [
 ], getPdfFile);
 
 const savingMarks = (req, res) => {
+
+  if(req.body.location === null || req.body.location === undefined)
+    return res.status(400).send({message: 'File location not provided'});
+
+  const marks = Array.isArray(req.body.marks) ? req.body.marks:[];
+
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
       return res.status(500).send({message: 'Failed to read configurations!'});
@@ -258,7 +268,7 @@ const savingMarks = (req, res) => {
       if(err)
         return res.status(404).send({ message: `Student folder not found!`});
 
-      const data = new Uint8Array(Buffer.from(JSON.stringify(req.body.marks)));
+      const data = new Uint8Array(Buffer.from(JSON.stringify(marks)));
       writeFile(studentFolder + sep + '.marks.json', data, (err) => {
         if(err)
           return res.status(500).send({ message: 'Failed to save student marks!'});
@@ -269,12 +279,13 @@ const savingMarks = (req, res) => {
   });
 };
 
-app.post("/api/assignment/marks/save", [
-  check('location').not().isEmpty().withMessage('Assignment location not provided!'),
-  check('marks').not().isEmpty().withMessage('Marks not provided!')
-], savingMarks);
+app.post("/api/assignment/marks/save", savingMarks);
 
 const getMarks = (req, res) => {
+  const errors = validationResult(req);
+  if(!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
+
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
       return res.status(500).send({message: 'Failed to read configurations!'});

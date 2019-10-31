@@ -175,7 +175,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     }
   }
 
-  private saveMarks() {
+  async saveMarks(): Promise<boolean> {
     const markDetails = [];
     for(let i = 0; i < this.markDetailsComponents.length; i++) {
       if(this.markDetailsComponents[i] !== null && this.markDetailsComponents[i] !== undefined) {
@@ -186,11 +186,15 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       }
     }
     this.appService.isLoading$.next(true);
-    this.assignmentService.saveMarks(markDetails).subscribe((response: any) => {
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.isLoading$.next(false);
-    });
+    return await this.assignmentService.saveMarks(markDetails).toPromise()
+      .then(() => {
+        this.appService.isLoading$.next(false);
+        return true;
+      })
+      .catch(() => {
+        this.appService.isLoading$.next(false);
+        return false;
+      });
   }
 
   private createMarkIcon(event) {
