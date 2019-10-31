@@ -113,12 +113,15 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         this.currentPage = parseInt(entries[0].target.attributes[1].value);
       }
     }, {threshold:[0.5]});
+
+    let maxHeight: number = 0;
     for(let i = this.currentPage; i <= this.pdfPages; i++) {
       observe.observe(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[i - 1]);
+      maxHeight += parseInt(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[i - 1].style.height.replace("px", ""));
     }
-    this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[this.currentPage - 1].clientHeight + 'px';
-    this.markerContainer.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.container.scrollHeight + 'px';
-    this.container.nativeElement.style.height = this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.container.scrollHeight + 'px';
+
+    this.container.nativeElement.style.height = maxHeight + "px";
+    this.markerContainer.nativeElement.style.height = maxHeight + "px";
 
     // Set Marks if exists
     for(let i = 0; i < this.markDetailsRawData.length; i++) {

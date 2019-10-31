@@ -40,6 +40,8 @@ table {
 
   .pdf-marker-assignment-overview-select-assignment {
     cursor: pointer;
+    width: 100%;
+    display: inline-block;
   }
 
   .pdf-marker-assignment-overview-assignment-grade-data {
@@ -52,7 +54,7 @@ table {
     font-size: 18px;
   }
 
-  .pdf-marker-assignment-overview-edit{
+  .pdf-marker-assignment-overview-edit {
     width: 80%;
     display: inline-block;
     vertical-align: middle;
