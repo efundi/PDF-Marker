@@ -85,6 +85,10 @@ export class MarkTypeIconComponent implements OnInit {
     this.markType = markType;
   }
 
+  setIsDeleted(isDeleted: boolean) {
+    this.isDeleted = isDeleted;
+  }
+
   getMarkType(): IconTypeEnum {
     return this.markType;
   }

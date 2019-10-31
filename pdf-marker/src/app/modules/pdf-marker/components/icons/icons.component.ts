@@ -49,8 +49,11 @@ export class IconsComponent implements OnInit {
   }
 
   onSave(event) {
-    console.log("IconsComponent");
     this.control.emit('save');
+  }
+
+  onClearAll(event) {
+    this.control.emit('clearAll');
   }
 
 }

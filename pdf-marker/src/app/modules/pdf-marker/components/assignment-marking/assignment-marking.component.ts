@@ -168,23 +168,17 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   onControl(control: string) {
     switch (control) {
-      case 'save':  this.saveMarks();
-                    break;
+      case 'save'     :   this.saveMarks();
+                          break;
+      case 'clearAll' :   this.clearMarks();
+                          break;
       default:      console.log("No control '" + control + "' found!");
                     break;
     }
   }
 
-  async saveMarks(): Promise<boolean> {
-    const markDetails = [];
-    for(let i = 0; i < this.markDetailsComponents.length; i++) {
-      if(this.markDetailsComponents[i] !== null && this.markDetailsComponents[i] !== undefined) {
-        const markType = this.markDetailsComponents[i].instance;
-        if(markType.deleted === false) {
-          markDetails.push({ coordinates: markType.getCoordinates(), iconName: markType.iconName, iconType: markType.getMarkType() });
-        }
-      }
-    }
+  async saveMarks(marks: any[] = null): Promise<boolean> {
+    const markDetails = (marks) ? marks:this.getMarksToSave();
     this.appService.isLoading$.next(true);
     return await this.assignmentService.saveMarks(markDetails).toPromise()
       .then(() => {
@@ -195,6 +189,36 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         this.appService.isLoading$.next(false);
         return false;
       });
+  }
+
+  clearMarks() {
+    this.markDetailsComponents.map(markComponent => markComponent.instance.setIsDeleted(true));
+    const markDetails = this.getMarksToSave();
+    const shouldExit: boolean = confirm("Are you sure you want to delete all marks and comments for this assignment?");
+    if(shouldExit) {
+      this.saveMarks(markDetails)
+        .then(() => {
+          this.markDetailsComponents.forEach(markComponents => {
+            markComponents.destroy();
+          });
+          this.markDetailsRawData = [];
+        });
+    }
+  }
+
+  private getMarksToSave(): any[] {
+    const markDetails = [];
+    this.markDetailsComponents.forEach(markComponent => {
+      if(!markComponent.instance.deleted) {
+        const markType = markComponent.instance;
+        markDetails.push({
+          coordinates: markType.getCoordinates(),
+          iconName: markType.iconName,
+          iconType: markType.getMarkType()
+        });
+      }
+    });
+    return markDetails;
   }
 
   private createMarkIcon(event) {
