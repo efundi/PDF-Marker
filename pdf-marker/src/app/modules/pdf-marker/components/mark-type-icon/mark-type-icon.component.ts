@@ -1,5 +1,6 @@
 import {Component, ComponentRef, Input, OnInit} from '@angular/core';
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
+import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 
 @Component({
   selector: 'pdf-marker-mark-type-icon',
@@ -18,19 +19,40 @@ export class MarkTypeIconComponent implements OnInit {
     y: 0
   };
 
-  private index: number;
-
-  private markType: IconTypeEnum;
-
   private componentReferene: ComponentRef<MarkTypeIconComponent>;
 
   private isDeleted: boolean = false;
 
+  private totalMark: number = 0;
+
+  iconForm: FormGroup;
+
+  comment: string;
+
+  markType: IconTypeEnum;
+
+  iconTypeEnum = IconTypeEnum;
+
   showOptions: boolean;
 
-  constructor() { }
+  constructor(private fb: FormBuilder) {}
 
   ngOnInit() {
+    this.initForm();
+  }
+
+  private initForm() {
+    if(this.markType === IconTypeEnum.NUMBER) {
+      this.iconForm = this.fb.group({
+        totalMark: [this.totalMark, Validators.required]
+      });
+    } else if(this.markType === IconTypeEnum.COMMENT) {
+      this.iconForm = this.fb.group({
+        comment: [null, Validators.required]
+      });
+    } else {
+      this.iconForm = this.fb.group({});
+    }
   }
 
   onEdit(event) {
@@ -59,26 +81,35 @@ export class MarkTypeIconComponent implements OnInit {
   }
 
   onDrageEnded(event) {
-    console.log(event);
     this.coordinates.x += event.distance.x;
     this.coordinates.y += event.distance.y;
-    console.log("After drag", this.coordinates);
-    // emit change event here
+  }
+
+  onTotalMarkChange(event) {
+    const number = parseInt(this.iconForm.controls.totalMark.value);
+    if(!isNaN(number)) {
+      this.totalMark = number;
+    } else {
+      this.iconForm.controls.totalMark.setValue(this.totalMark);
+    }
   }
 
   setComponentRef(componentReference: ComponentRef<MarkTypeIconComponent>) {
     this.componentReferene = componentReference;
     this.coordinates.x = parseInt(this.componentReferene.location.nativeElement.style.left.replace("px", ""));
     this.coordinates.y = parseInt(this.componentReferene.location.nativeElement.style.top.replace("px", ""));
-    console.log("On init", this.coordinates);
   }
 
   getCoordinates() {
     return this.coordinates;
   }
 
-  setIndex(index: number) {
-    this.index = index;
+  setTotalMark(totalMark: number) {
+    this.totalMark = totalMark;
+  }
+
+  getTotalMark(): number {
+    return this.totalMark;
   }
 
   setMarkType(markType: IconTypeEnum) {

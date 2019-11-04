@@ -105,19 +105,24 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   pagesLoaded(pageNumber) {
     this.pdfPages = pageNumber;
     this.markDetailsComponents = [];
-    const intersections = [];
-    this.currentPage = this.pdfViewerAutoLoad.PDFViewerApplication.page;
+
+    const pdfViewerApplication = this.pdfViewerAutoLoad.PDFViewerApplication;
+    this.currentPage = (pdfViewerApplication.page) ? pdfViewerApplication.page:this.pdfViewerAutoLoad.page;
     const observe = new IntersectionObserver((entries) => {
       if(entries[0].isIntersecting === true) {
-        console.log(entries[0].target);
-        this.currentPage = parseInt(entries[0].target.attributes[1].value);
+        const target: any = entries[0].target;
+        const pageNumber = parseInt(target.dataset.pageNumber);
+
+        if(!isNaN(pageNumber)) {
+          this.currentPage = pageNumber;
+        }
       }
     }, {threshold:[0.5]});
 
     let maxHeight: number = 0;
     for(let i = this.currentPage; i <= this.pdfPages; i++) {
-      observe.observe(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[i - 1]);
-      maxHeight += parseInt(this.pdfViewerAutoLoad.PDFViewerApplication.pdfViewer.viewer.children[i - 1].style.height.replace("px", ""));
+      observe.observe(pdfViewerApplication.pdfViewer.viewer.children[i - 1]);
+      maxHeight += parseInt(pdfViewerApplication.pdfViewer.viewer.children[i - 1].style.height.replace("px", ""));
     }
 
     this.container.nativeElement.style.height = maxHeight + "px";
@@ -137,9 +142,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:left) + 'px');
 
       componentRef.instance.setComponentRef(componentRef);
-      componentRef.instance.setIndex(i);
       componentRef.instance.iconName = this.markDetailsRawData[i].iconName;
       componentRef.instance.setMarkType(this.markDetailsRawData[i].iconType);
+      if(this.markDetailsRawData[i].iconType === IconTypeEnum.NUMBER) {
+        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:0);
+      }
       this.markDetailsComponents.push(componentRef);
     }
     this.show = true;
@@ -211,11 +218,20 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.markDetailsComponents.forEach(markComponent => {
       if(!markComponent.instance.deleted) {
         const markType = markComponent.instance;
-        markDetails.push({
-          coordinates: markType.getCoordinates(),
-          iconName: markType.iconName,
-          iconType: markType.getMarkType()
-        });
+        if(markType.getMarkType() === IconTypeEnum.NUMBER) {
+          markDetails.push({
+            coordinates: markType.getCoordinates(),
+            iconName: markType.iconName,
+            iconType: markType.getMarkType(),
+            totalMark: markType.getTotalMark()
+          });
+        } else {
+          markDetails.push({
+            coordinates: markType.getCoordinates(),
+            iconName: markType.iconName,
+            iconType: markType.getMarkType()
+          });
+        }
       }
     });
     return markDetails;
@@ -238,7 +254,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const newIndex = this.markDetailsComponents.push(componentRef) - 1;
     componentRef.instance.setComponentRef(componentRef);
     componentRef.instance.iconName = this.selectedIcon.icon;
-    componentRef.instance.setIndex(newIndex);
     componentRef.instance.setMarkType(this.selectedIcon.type);
   }
 
