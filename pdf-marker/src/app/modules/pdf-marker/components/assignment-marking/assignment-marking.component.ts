@@ -17,6 +17,9 @@ import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/
 import {AppService} from "@coreModule/services/app.service";
 import {IconInfo} from "@pdfMarkerModule/info-objects/icon.info";
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
+import {MatDialog, MatDialogConfig} from "@angular/material/dialog";
+import {FileExplorerModalComponent} from "@sharedModule/components/file-explorer-modal/file-explorer-modal.component";
+import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
 
 
 @Component({
@@ -50,6 +53,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   constructor(private renderer: Renderer2,
               private assignmentService: AssignmentService,
               private el: ElementRef,
+              private dialog: MatDialog,
               private resolver: ComponentFactoryResolver,
               private route: ActivatedRoute,
               private router: Router,
@@ -199,17 +203,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   clearMarks() {
-    this.markDetailsComponents.map(markComponent => markComponent.instance.setIsDeleted(true));
     const markDetails = this.getMarksToSave();
-    const shouldExit: boolean = confirm("Are you sure you want to delete all marks and comments for this assignment?");
-    if(shouldExit) {
-      this.saveMarks(markDetails)
-        .then(() => {
-          this.markDetailsComponents.forEach(markComponents => {
-            markComponents.destroy();
-          });
-          this.markDetailsRawData = [];
-        });
+    if(markDetails.length > 0) {
+      const title = "Confirm";
+      const message = "Are you sure you want to delete all marks and comments for this assignment?";
+      this.openYesNoConfirmationDialog(title, message);
     }
   }
 
@@ -255,6 +253,37 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     componentRef.instance.setComponentRef(componentRef);
     componentRef.instance.iconName = this.selectedIcon.icon;
     componentRef.instance.setMarkType(this.selectedIcon.type);
+  }
+
+  private openYesNoConfirmationDialog(title: string = "Confirm", message: string) {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.disableClose = false;
+    dialogConfig.autoFocus = true;
+    dialogConfig.width = "400px";
+    dialogConfig.maxWidth = "400px";
+
+    dialogConfig.data = {
+      title: title,
+      message: message,
+    };
+
+    this.appService.isLoading$.next(true);
+    const dialog = this.dialog.open(YesAndNoConfirmationDialogComponent, dialogConfig);
+    dialog.afterOpened().subscribe(() => this.appService.isLoading$.next(false))
+    dialog.afterClosed()
+      .subscribe((shouldDelete) => {
+        if(shouldDelete) {
+          this.markDetailsComponents.map(markComponent => markComponent.instance.setIsDeleted(true));
+          const markDetails = this.getMarksToSave();
+          this.saveMarks(markDetails)
+            .then(() => {
+              this.markDetailsComponents.forEach(markComponents => {
+                markComponents.destroy();
+              });
+              this.markDetailsRawData = [];
+            });
+        }
+      });
   }
 
   ngOnDestroy(): void {

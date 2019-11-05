@@ -5,7 +5,7 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 // Shared Components
 import {FileExplorerComponent} from './components/file-explorer/file-explorer.component';
 import {FileExplorerModalComponent} from './components/file-explorer-modal/file-explorer-modal.component';
-import { SideNavigationComponent } from './components/side-navigation/side-navigation.component';
+import {SideNavigationComponent} from './components/side-navigation/side-navigation.component';
 import {AlertComponent} from "./components/alert/alert.component";
 // Angular Material Modules
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -30,6 +30,7 @@ import {MatTableModule} from "@angular/material/table";
 import {MatBadgeModule} from "@angular/material/badge";
 import {MatPaginatorModule} from "@angular/material/paginator";
 import {DragDropModule} from "@angular/cdk/drag-drop";
+import {YesAndNoConfirmationDialogComponent} from './components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -60,7 +61,7 @@ const SHARED_MODULES = [
 const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent],
   imports: [
     CommonModule,
     MatIconModule,
@@ -73,6 +74,6 @@ const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, Al
   ],
   providers: [{provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true}, AssignmentService],
   exports: [ ...SHARED_MODULES, ...SHARED_COMPONENTS ],
-  entryComponents: [ FileExplorerModalComponent ]
+  entryComponents: [ FileExplorerModalComponent, YesAndNoConfirmationDialogComponent ]
 })
 export class SharedModule { }
