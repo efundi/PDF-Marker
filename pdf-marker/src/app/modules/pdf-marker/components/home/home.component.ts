@@ -1,7 +1,8 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {ActivatedRoute, NavigationEnd, PRIMARY_OUTLET, Router} from "@angular/router";
 import {filter, map} from "rxjs/operators";
+import {AppService} from "@coreModule/services/app.service";
 
 @Component({
   selector: 'pdf-marker-home',
@@ -9,12 +10,16 @@ import {filter, map} from "rxjs/operators";
   styleUrls: ['./home.component.scss'],
   providers: [AssignmentService]
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   breadcrumbs: any;
   isMarkingPage: boolean;
   routeList: string[];
+
+  @ViewChild("content", {static: false})
+  content: ElementRef;
   constructor(private router: Router,
-              private activatedRoute: ActivatedRoute) {
+              private activatedRoute: ActivatedRoute,
+              private appService: AppService) {
   }
 
   ngOnInit() {
@@ -48,6 +53,10 @@ export class HomeComponent implements OnInit, OnDestroy {
         else
           this.isMarkingPage = false;
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.appService.setContainerElement(this.content);
   }
 
   ngOnDestroy(): void {

@@ -2,7 +2,7 @@
   <mat-sidenav #drawer class="sidenav" mode="side" opened>
     <pdf-marker-side-navigation></pdf-marker-side-navigation>
   </mat-sidenav>
-  <mat-sidenav-content>
+  <mat-sidenav-content #content>
     <mat-toolbar *ngIf="!isMarkingPage">
       <button
         type="button"

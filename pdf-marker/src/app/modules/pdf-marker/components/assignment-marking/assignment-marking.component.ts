@@ -109,6 +109,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   pagesLoaded(pageNumber) {
     this.pdfPages = pageNumber;
     this.markDetailsComponents = [];
+    this.appService.initializeScrollPosition();
 
     const pdfViewerApplication = this.pdfViewerAutoLoad.PDFViewerApplication;
     this.currentPage = (pdfViewerApplication.page) ? pdfViewerApplication.page:this.pdfViewerAutoLoad.page;
