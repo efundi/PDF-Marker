@@ -1,12 +1,12 @@
 <div cdkDrag class="pdf-marker-mark-type-icon-container" cdkDragBoundary=".boundary" (click)="onClicked($event)" (mouseover)="onMouseOver($event)" (mouseleave)="onMouseLeave($event)" (cdkDragEnded)="onDrageEnded($event)">
   <div class="pdf-marker-mark-type-icon-options" *ngIf="showOptions">
-    <mat-icon class="pdf-marker-mark-type-icon-edit" matTooltip="Edit">edit</mat-icon>
     <mat-icon class="pdf-marker-mark-type-icon-delete" matTooltip="Remove" (click)="onRemove($event)">delete_forever</mat-icon>
   </div>
   <div class="pdf-marker-mark-type-icon-icon" [class.pdf-marker-mark-type-icon-hovered]="showOptions">
     <form [formGroup]="iconForm">
       <mat-icon *ngIf="markType !== iconTypeEnum.NUMBER">{{ iconName }}</mat-icon>
-      <input class="pdf-marker-mark-type-icon-number-icon" type="text" *ngIf="markType === iconTypeEnum.NUMBER" formControlName="totalMark" (change)="onTotalMarkChange($event)"/>
+      <input [class.pdf-marker-mark-type-icon-number-icon]="showOptions" type="text" *ngIf="showOptions && markType === iconTypeEnum.NUMBER" formControlName="totalMark" (change)="onTotalMarkChange($event)"/>
+      <input [class.pdf-marker-mark-type-icon-number-icon-leave]="!showOptions" type="text" *ngIf="!showOptions && markType === iconTypeEnum.NUMBER" formControlName="totalMark" (change)="onTotalMarkChange($event)"/>
     </form>
   </div>
 </div>

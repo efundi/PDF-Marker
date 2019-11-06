@@ -6,13 +6,16 @@
     display: inline-block;
     position: absolute;
     top: 100%;
+    width: 100%;
     .mat-icon {
       font-size: 14px;
       height: fit-content;
       color: #fff !important;
-      padding: 2px;
-      display: inline;
+      display: inline-block;
       cursor: pointer;
+      width: 100%;
+      text-align: center;
+      padding: 2px 0 3px 0;
     }
 
     .pdf-marker-mark-type-icon-delete {
@@ -49,6 +52,22 @@
       border: none;
       color: #a94442;
       font-weight: 600;
+    }
+
+    .pdf-marker-mark-type-icon-number-icon-leave {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      width: 100%;
+      font-weight: 600;
+      border: 1px solid;
+      padding: 0;
+      height: 100%;
+      border-radius: 50%;
+      background: indianred;
+      color: #fff;
     }
 
     .pdf-marker-mark-type-icon-number-icon:focus {
