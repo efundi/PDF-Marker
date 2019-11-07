@@ -1,12 +1,16 @@
+$pdf-marker-gray: #D3D3D3;
 mat-toolbar {
   font-size: 16px;
   font-family: inherit !important;
   padding-left: 0;
+  border-top: 1px solid $pdf-marker-gray;
+  border-bottom: 1px solid $pdf-marker-gray;
   .pdf-marker-assignment-marking-settings-color {
     display: inline-block;
     float: left;
     margin: 0;
     padding: 0;
+    cursor: pointer;
   }
 
   .pdf-marker-assignment-marking-settings-config {
@@ -14,7 +18,7 @@ mat-toolbar {
     height: 20px;
     color: #888;
     font-weight: normal;
-    border: 1px solid #d3d3d3;
+    border: 1px solid $pdf-marker-gray;
     font-size: 12px;
   }
 
@@ -26,6 +30,14 @@ mat-toolbar {
 
     input {
       text-align: center;
+    }
+
+    .disabled-button {
+      color: #D7D7D7;
+    }
+
+    .tooltip-red {
+      background: #b71c1c;
     }
   }
 }

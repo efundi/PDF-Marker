@@ -3,6 +3,7 @@ import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {Observable, ReplaySubject, Subject} from "rxjs";
 import {makeStateKey, StateKey, TransferState} from "@angular/platform-browser";
 import {isPlatformServer} from "@angular/common";
+import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 
 @Injectable({
   providedIn: 'root'
@@ -38,6 +39,23 @@ export class AssignmentService {
 
   getAssignments(): Observable<object[]> {
     return this.http.get<object[]>('/api/assignments');
+  }
+
+  assignmentSettings(settings: AssignmentSettingsInfo) {
+    const body = {
+      settings: settings,
+      location: this.selectedPdfLocation
+    };
+
+    return this.http.post('/api/assignment/settings', body);
+  }
+
+  getAssignmentSettings() {
+    const body = {
+      location: this.selectedPdfLocation
+    };
+
+    return this.http.post('/api/assignment/settings/fetch', body);
   }
 
   getFile(pdfFileLocation: string) {

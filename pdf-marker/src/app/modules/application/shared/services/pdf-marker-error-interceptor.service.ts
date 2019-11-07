@@ -3,7 +3,7 @@ import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from "@angular/com
 import {Observable, throwError} from "rxjs";
 import {AlertService} from "@coreModule/services/alert.service";
 import {catchError} from "rxjs/operators";
-import {ValidationErrorInfo} from "@sharedModule/info-objects/validation-error.info";
+import {AppService} from "@coreModule/services/app.service";
 
 @Injectable()
 export class PdfMarkerErrorInterceptorService implements HttpInterceptor {
@@ -12,7 +12,14 @@ export class PdfMarkerErrorInterceptorService implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const alert = this.injector.get(AlertService);
-    return next.handle(req).pipe(
+    const appService = this.injector.get(AppService);
+
+    const request = req.clone({
+      setHeaders: {
+        client_id: appService.client_id
+      }
+    });
+    return next.handle(request).pipe(
       catchError((response: any) => {
         if(response.error.errors !== undefined) {
           response.error.errors.forEach(error => {

@@ -10,6 +10,8 @@ export class AppService {
 
   private containerElement: any;
 
+  public readonly client_id: string = "PDF_MARKER";
+
   constructor() { }
 
   initializeScrollPosition() {

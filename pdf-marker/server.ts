@@ -103,7 +103,13 @@ const store = multer.diskStorage({
 
 const upload = multer({storage: store}).single('file');
 
+const checkClient = (req, res) => {
+  return (req.headers.client_id && req.headers.client_id === "PDF_MARKER");
+};
+
 const settingsPost = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
   const errors = validationResult(req);
   if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
@@ -129,6 +135,8 @@ app.post('/api/settings', [
   ], settingsPost);
 
 const settingsGet = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
   return readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if(err)
       return res.status(500).send({ message: 'Failed to read configurations!'});
@@ -144,6 +152,8 @@ app.get('/api/settings', settingsGet);
 
 /*IMPORT API*/
 const uploadFn = (req, res, next) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
       return res.status(500).send({message: 'Failed to read configurations!'});
@@ -176,6 +186,8 @@ const uploadFn = (req, res, next) => {
 app.post('/api/import', uploadFn);
 
 const getAssignments = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
       return res.status(500).send({message: 'Failed to read configurations!'});
@@ -207,6 +219,8 @@ const getAssignments = (req, res) => {
 app.get('/api/assignments', getAssignments);
 
 const getPdfFile = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
   const errors = validationResult(req);
   if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
@@ -237,7 +251,8 @@ app.post('/api/pdf/file', [
 ], getPdfFile);
 
 const savingMarks = (req, res) => {
-
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
   if(req.body.location === null || req.body.location === undefined)
     return res.status(400).send({message: 'File location not provided'});
 
@@ -282,6 +297,8 @@ const savingMarks = (req, res) => {
 app.post("/api/assignment/marks/save", savingMarks);
 
 const getMarks = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
   const errors = validationResult(req);
   if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
@@ -322,6 +339,141 @@ const getMarks = (req, res) => {
 app.post("/api/assignment/marks/fetch", [
   check('location').not().isEmpty().withMessage('Assignment location not provided!')
 ], getMarks);
+
+const assignmentSettings = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
+
+  const errors = validationResult(req);
+  if(!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
+
+  const assignmentSettings = (req.body.settings !== null && req.body.settings !== undefined) ? req.body.settings:{};
+  if(JSON.stringify(assignmentSettings) === JSON.stringify({}))
+    return res.status(200).send();
+
+  // Check object compliance
+  const keys = ["defaultColour", "defaultTick", "incorrectTick"];
+  const assignmentSettingsKeys = Object.keys(assignmentSettings);
+  let invalidKeyFound = false;
+  assignmentSettingsKeys.forEach(key => {
+    invalidKeyFound = (keys.indexOf(key) === -1);
+  });
+
+  if(invalidKeyFound)
+    return res.status(400).send({ message: 'Invalid key found in settings'});
+
+  //check object validity
+  let errorFound: boolean;
+  let message: string;
+  for(let i = 0; i < assignmentSettingsKeys.length; i++) {
+    let value = assignmentSettings[assignmentSettingsKeys[i]];
+    let key = assignmentSettingsKeys[i];
+    if(key === keys[1] || key === keys[2]) {
+      if(isNaN(value)) {
+        errorFound = true;
+        message = key + " should be a number";
+      } else {
+        assignmentSettings[assignmentSettingsKeys[i]] = value = parseInt(value);
+      }
+
+      if(key === keys[1] && value < 1) {
+        errorFound = true;
+        message = key + " must be >= 1";
+      } else if(key === keys[2] && value > 0) {
+        errorFound = true;
+        message = key + " must be >= 1";
+      }
+    }
+
+    if(errorFound)
+      return res.status(400).send({ message: message});
+  }
+
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const config = JSON.parse(data.toString());
+    const location = req.body.location.replace(/\//g, sep);
+    const pathSplit = location.split(sep);
+    if(pathSplit.length !== 4) {
+      return res.status(404).send({message: 'Invalid path provided'});
+    }
+
+    const regEx = /(.*)\((.+)\)/;
+    if(!regEx.test(pathSplit[1])) {
+      return res.status(404).send({message: 'Invalid student folder'});
+    }
+
+    const studentFolder = dirname(dirname(config.defaultPath + sep + location));
+    const buffer = new Uint8Array(Buffer.from(JSON.stringify(assignmentSettings)));
+
+    return access(studentFolder, constants.F_OK, (err) => {
+      if(err)
+        return res.status(404).send({ message: `Path '${location}' not found!`});
+      else {
+        writeFile(studentFolder + sep + '.settings.json', buffer, (err) => {
+          if(err)
+            return res.status(500).send({ message: 'Failed to save assignment settings!'});
+          else
+            return res.status(200).send({message: 'Successfully saved!'});
+        });
+      }
+    });
+  });
+};
+
+app.post('/api/assignment/settings', [
+  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+], assignmentSettings);
+
+const getAssignmentSettings = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
+  const errors = validationResult(req);
+  if(!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
+
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const config = JSON.parse(data.toString());
+    const location = req.body.location.replace(/\//g, sep);
+    const pathSplit = location.split(sep);
+    if(pathSplit.length !== 4) {
+      return res.status(404).send({message: 'Invalid path provided'});
+    }
+
+    const regEx = /(.*)\((.+)\)/;
+    if(!regEx.test(pathSplit[1])) {
+      return res.status(404).send({message: 'Invalid student folder'});
+    }
+
+    const studentFolder = dirname(dirname(config.defaultPath + sep + location));
+
+    return readFile(studentFolder + sep + ".settings.json",(err, data) => {
+      if(err)
+        return res.status(200).send({});
+
+      if(!isJson(data))
+        return res.status(200).send({});
+      else
+        return res.status(200).send(JSON.parse(data.toString()));
+    });
+  });
+};
+
+app.post("/api/assignment/settings/fetch", [
+  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+], getAssignmentSettings);
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {

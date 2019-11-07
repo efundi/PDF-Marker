@@ -18,8 +18,8 @@ import {AppService} from "@coreModule/services/app.service";
 import {IconInfo} from "@pdfMarkerModule/info-objects/icon.info";
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
 import {MatDialog, MatDialogConfig} from "@angular/material/dialog";
-import {FileExplorerModalComponent} from "@sharedModule/components/file-explorer-modal/file-explorer-modal.component";
 import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
+import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 
 
 @Component({
@@ -46,6 +46,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   pdfPath :string;
   pdfPages: number = 0;
   currentPage: number = 0;
+  assignmentSettings: AssignmentSettingsInfo;
   private selectedIcon: IconInfo;
   private colour: string;
   private subscription: Subscription;
@@ -85,34 +86,23 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.appService.isLoading$.next(true);
     this.assignmentService.getSavedMarks().subscribe((marks: any[]) => {
       this.markDetailsRawData = marks;
-      this.openPDF();
-      if(isSubscription) {
-        this.pdfViewerAutoLoad.pdfSrc = this.pdfPath; // pdfSrc can be Blob or Uint8Array
-        this.pdfViewerAutoLoad.refresh();
-      }
+      this.assignmentService.getAssignmentSettings().subscribe((settings: AssignmentSettingsInfo) => {
+        this.assignmentSettings = settings;
+        if(this.assignmentSettings.defaultColour !== undefined && this.assignmentSettings.defaultColour !== null)
+          this.colour = this.assignmentSettings.defaultColour;
+        this.openPDF();
+        if(isSubscription) {
+          this.pdfViewerAutoLoad.pdfSrc = this.pdfPath; // pdfSrc can be Blob or Uint8Array
+          this.pdfViewerAutoLoad.refresh();
+        }
+      }, error => {
+        this.appService.isLoading$.next(false);
+        console.log(error);
+      });
     }, error => {
       console.log("Error fetching marks");
       this.appService.isLoading$.next(false);
     });
-  }
-
-  onSelectedIcon(selectedIcon: string) {
-    try {
-      this.selectedIcon = JSON.parse(selectedIcon);
-      this.renderer.addClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
-    } catch (e) {
-      console.log('None selected');
-      this.selectedIcon = undefined;
-      this.renderer.removeClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
-    }
-  }
-
-  onColourChanged(colour: string) {
-    console.log("AM: " + colour);
-  }
-
-  onSettings() {
-
   }
 
   pagesLoaded(pageNumber) {
@@ -157,6 +147,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
       componentRef.instance.setComponentRef(componentRef);
       componentRef.instance.iconName = this.markDetailsRawData[i].iconName;
+      componentRef.instance.colour = this.colour;
       componentRef.instance.setMarkType(this.markDetailsRawData[i].iconType);
       if(this.markDetailsRawData[i].iconType === IconTypeEnum.NUMBER) {
         componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:0);
@@ -165,6 +156,23 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     }
     this.show = true;
     this.appService.isLoading$.next(false);
+  }
+
+  onSelectedIcon(selectedIcon: string) {
+    try {
+      this.selectedIcon = JSON.parse(selectedIcon);
+      this.renderer.addClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
+    } catch (e) {
+      this.selectedIcon = undefined;
+      this.renderer.removeClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
+    }
+  }
+
+  onColourChanged(colour: string) {
+    this.colour = colour;
+    this.getActiveComponents().forEach(component => {
+      component.instance.colour = this.colour;
+    });
   }
 
   onPageChanged(pageNumber) {
@@ -198,6 +206,16 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       default:      console.log("No control '" + control + "' found!");
                     break;
     }
+  }
+
+  onAssignmentSettings(settings: AssignmentSettingsInfo) {
+    this.appService.isLoading$.next(true);
+    this.assignmentService.assignmentSettings(settings).subscribe((response) => {
+      console.log("Successful");
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.isLoading$.next(false);
+    });
   }
 
   async saveMarks(marks: any[] = null): Promise<boolean> {
@@ -247,6 +265,16 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     return markDetails;
   }
 
+  private getActiveComponents(): ComponentRef<MarkTypeIconComponent>[] {
+    const markDetailsComponents: ComponentRef<MarkTypeIconComponent>[] = [];
+    this.markDetailsComponents.forEach(markComponent => {
+      if (!markComponent.instance.deleted)
+        markDetailsComponents.push(markComponent);
+    });
+
+    return markDetailsComponents;
+  }
+
   private createMarkIcon(event) {
     const factory: ComponentFactory<MarkTypeIconComponent> = this.resolver.resolveComponentFactory(MarkTypeIconComponent);
     const componentRef = this.actualContainer.createComponent(factory);
@@ -261,10 +289,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0:((top > minHeight) ? minHeight:top)) + 'px');
     this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:((left > minWidth) ? minWidth:left)) + 'px');
 
-    const newIndex = this.markDetailsComponents.push(componentRef) - 1;
     componentRef.instance.setComponentRef(componentRef);
     componentRef.instance.iconName = this.selectedIcon.icon;
+    componentRef.instance.colour = this.colour;
     componentRef.instance.setMarkType(this.selectedIcon.type);
+    this.markDetailsComponents.push(componentRef);
   }
 
   private openYesNoConfirmationDialog(title: string = "Confirm", message: string) {
@@ -300,6 +329,13 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   private settings() {
     this.showSettings = !this.showSettings;
+    /*this.assignmentService.getAssignmentSettings().subscribe((settings: AssignmentSettingsInfo) => {
+      this.assignmentSettings = settings;
+      this.showSettings = !this.showSettings;
+    }, error => {
+      this.appService.isLoading$.next(false);
+      console.log(error);
+    })*/
   }
 
   ngOnDestroy(): void {
