@@ -48,12 +48,8 @@ export class IconsComponent implements OnInit {
     }
   }
 
-  onSave(event) {
-    this.control.emit('save');
-  }
-
-  onClearAll(event) {
-    this.control.emit('clearAll');
+  onControl(controlName: string) {
+    this.control.emit(controlName);
   }
 
 }

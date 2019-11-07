@@ -42,14 +42,15 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   actualContainer: ViewContainerRef;
 
   show: boolean;
+  showSettings: boolean;
   pdfPath :string;
   pdfPages: number = 0;
   currentPage: number = 0;
   private selectedIcon: IconInfo;
+  private colour: string;
   private subscription: Subscription;
   private markDetailsComponents: ComponentRef<MarkTypeIconComponent>[] = [];
   private markDetailsRawData: any[] = [];
-
   constructor(private renderer: Renderer2,
               private assignmentService: AssignmentService,
               private el: ElementRef,
@@ -104,6 +105,14 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       this.selectedIcon = undefined;
       this.renderer.removeClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
     }
+  }
+
+  onColourChanged(colour: string) {
+    console.log("AM: " + colour);
+  }
+
+  onSettings() {
+
   }
 
   pagesLoaded(pageNumber) {
@@ -183,6 +192,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       case 'save'     :   this.saveMarks();
                           break;
       case 'clearAll' :   this.clearMarks();
+                          break;
+      case 'settings' :   this.settings();
                           break;
       default:      console.log("No control '" + control + "' found!");
                     break;
@@ -285,6 +296,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
             });
         }
       });
+  }
+
+  private settings() {
+    this.showSettings = !this.showSettings;
   }
 
   ngOnDestroy(): void {

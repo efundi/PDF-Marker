@@ -6,8 +6,8 @@
   <span class="pdf-marker-fill-space"></span>
   <span>{{ currentPage }} / {{ pages }}</span>
   <span class="pdf-marker-fill-space"></span>
-  <button matTooltip="Clear All" mat-button mat-icon-button (click)="onClearAll($event)"><mat-icon>delete_sweep</mat-icon></button>
-  <button matTooltip="Settings" mat-button mat-icon-button><mat-icon>settings</mat-icon></button>
+  <button matTooltip="Clear All" mat-button mat-icon-button (click)="onControl('clearAll')"><mat-icon>delete_sweep</mat-icon></button>
+  <button matTooltip="Settings" mat-button mat-icon-button (click)="onControl('settings')"><mat-icon>settings</mat-icon></button>
   <span class="pdf-marker-fill-space"></span>
-  <button matTooltip="Save" mat-button mat-icon-button (click)="onSave($event)"><mat-icon>save</mat-icon></button>
+  <button matTooltip="Save" style="margin-right: 0 !important" mat-button mat-icon-button (click)="onControl('save')"><mat-icon>save</mat-icon></button>
 </mat-toolbar>

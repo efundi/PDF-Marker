@@ -16,9 +16,10 @@ import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/
 import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
 
 import { PdfJsViewerModule } from 'ng2-pdfjs-viewer';
+import { AssignmentMarkingSettingsComponent } from './components/assignment-marking-settings/assignment-marking-settings.component';
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, MarkTypeIconComponent, AssignmentMarkingComponent],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, MarkTypeIconComponent, AssignmentMarkingComponent, AssignmentMarkingSettingsComponent],
   imports: [
     CommonModule,
     SharedModule,

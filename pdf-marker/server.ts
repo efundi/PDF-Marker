@@ -406,22 +406,24 @@ const hierarchyModel = (pathInfos, configFolder) => {
   configFolder = configFolder.replace(pattern, '/');
   let model = pathInfos.reduce((hier, pathInfo) => {
     let stat = statSync(pathInfo);
-    if(stat.isFile()) {
-      let path = pathInfo.replace(configFolder + '/', '');
-      let pathObject: any = hier;
-      let pathSplit = path.split("/");
-      path.split("/").forEach((item) => {
-        if (!pathObject[item]) {
-          pathObject[item] = {};
-        }
-        pathObject = pathObject[item];
-      });
+    //if(stat.isFile()) {
+    let path = pathInfo.replace(configFolder + '/', '');
+    let pathObject: any = hier;
+    let pathSplit = path.split("/");
+    path.split("/").forEach((item) => {
+      if (!pathObject[item]) {
+        pathObject[item] = {};
+      }
+      pathObject = pathObject[item];
+    });
 
+    if(stat.isFile()) {
       pathObject.path = path;
       pathObject.basename = path.split("/").pop();
-      if(pathSplit.indexOf('Submission attachment(s)') > -1)
+      if (pathSplit.indexOf('Submission attachment(s)') > -1)
         pathObject.isPdf = true;
     }
+    //}
     return hier;
   }, {});
 

@@ -1,0 +1,31 @@
+mat-toolbar {
+  font-size: 16px;
+  font-family: inherit !important;
+  padding-left: 0;
+  .pdf-marker-assignment-marking-settings-color {
+    display: inline-block;
+    float: left;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pdf-marker-assignment-marking-settings-config {
+    width: 35px;
+    height: 20px;
+    color: #888;
+    font-weight: normal;
+    border: 1px solid #d3d3d3;
+    font-size: 12px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+
+    input {
+      text-align: center;
+    }
+  }
+}

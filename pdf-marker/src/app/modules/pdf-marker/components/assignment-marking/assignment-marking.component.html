@@ -1,6 +1,7 @@
 <ng-container>
   <div class="pdf-marker-assignment-marking-controls" *ngIf="show">
     <pdf-marker-icons [currentPage]="currentPage" [pages]="pdfPages" (selection)="onSelectedIcon($event)" (control)="onControl($event)"></pdf-marker-icons>
+    <pdf-marker-assignment-marking-settings *ngIf="showSettings" (colour)="onColourChanged($event)"></pdf-marker-assignment-marking-settings>
   </div>
   <div #container class="boundary">
     <div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)"></div>

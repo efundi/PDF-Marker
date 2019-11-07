@@ -3,6 +3,11 @@ mat-toolbar {
   font-family: Roboto,"Helvetica Neue",sans-serif !important;
   font-size: 16px;
 
+  button {
+    border: 1px solid #d3d3d3;
+    margin-right: 6px;
+  }
+
   .pdf-marker-icon-first {
     margin-left: -8px;
   }

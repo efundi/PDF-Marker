@@ -35,6 +35,8 @@ export class MarkTypeIconComponent implements OnInit {
 
   showOptions: boolean;
 
+  colour: string;
+
   constructor(private fb: FormBuilder) {}
 
   ngOnInit() {
