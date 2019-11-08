@@ -3,7 +3,7 @@
     <form [formGroup]="settingsForm">
       <span>Tick colour</span>&nbsp;&nbsp;
       <div [style.width.px]="colorPickerWidth" [style.height.px]="colorPickerHeight" [style.min-width.px]="colorPickerWidth" [style.min-height.px]="colorPickerHeight" class="pdf-marker-assignment-marking-settings-color-picker">
-        <span [style.width.px]="colorBlockWidth" [style.height.px]="colorBlockHeight" [style.background]="colour" class="pdf-marker-assignment-marking-settings-color" *ngFor="let colour of colours" (click)="onColourChange(colour)"></span>
+        <span [class.pdf-marker-assignment-marking-settings-color-selected]="selectedColour === colour" [style.width.px]="colorBlockWidth" [style.height.px]="colorBlockHeight" [style.background]="colour" class="pdf-marker-assignment-marking-settings-color" *ngFor="let colour of colours" (click)="onColourChange(colour)"></span>
       </div>&nbsp;&nbsp;&nbsp;
       <span>Correct tick default count</span>&nbsp;&nbsp;
       <input matInput #defaultTickToolTip="matTooltip" matTooltip="Value must be >= 1" matTooltipPosition="right" matTooltipClass="tooltip-red" type="text" formControlName="defaultTick" class="pdf-marker-assignment-marking-settings-config" (change)="onDefaultTickChange()">

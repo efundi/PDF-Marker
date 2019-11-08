@@ -23,6 +23,8 @@ export class AssignmentMarkingSettingsComponent implements OnInit, OnChanges {
 
   private readonly defaultColour = "#6F327A";
 
+  selectedColour: string = this.defaultColour;
+
   @Output()
   colour: EventEmitter<string> = new EventEmitter<string>();
 
@@ -53,6 +55,8 @@ export class AssignmentMarkingSettingsComponent implements OnInit, OnChanges {
         defaultTick: [(this.settingsIn.defaultTick) ? this.settingsIn.defaultTick:this.defaultTickValue, [Validators.required, Validators.pattern(this.digitPatten)]],
         incorrectTick: [(this.settingsIn.incorrectTick) ? this.settingsIn.incorrectTick:this.incorrectTickValue, [Validators.required,  Validators.pattern(this.digitPatten)]]
       });
+
+      this.selectedColour = (this.settingsIn.defaultColour) ? this.settingsIn.defaultColour:this.defaultColour;
     } else {
       this.settingsForm = this.fb.group({
         defaultColour: [this.defaultColour],
@@ -65,6 +69,7 @@ export class AssignmentMarkingSettingsComponent implements OnInit, OnChanges {
   onColourChange(colour: string) {
     this.colour.emit(colour);
     this.settingsForm.controls.defaultColour.setValue(colour);
+    this.selectedColour = colour;
   }
 
   onDefaultTickChange() {

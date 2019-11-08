@@ -329,13 +329,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   private settings() {
     this.showSettings = !this.showSettings;
-    /*this.assignmentService.getAssignmentSettings().subscribe((settings: AssignmentSettingsInfo) => {
-      this.assignmentSettings = settings;
-      this.showSettings = !this.showSettings;
-    }, error => {
-      this.appService.isLoading$.next(false);
-      console.log(error);
-    })*/
   }
 
   ngOnDestroy(): void {
