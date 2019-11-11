@@ -152,9 +152,12 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       if(this.markDetailsRawData[i].iconType === IconTypeEnum.NUMBER) {
         componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:0);
       } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.FULL_MARK) {
-        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:1);
-      } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.CROSS) {
-        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark <= 0) ? this.markDetailsRawData[i].totalMark:0);
+        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:this.assignmentSettings.defaultTick);
+      } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.HALF_MARK) {
+        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:this.assignmentSettings.defaultTick / 2)
+      }
+      else if(this.markDetailsRawData[i].iconType === IconTypeEnum.CROSS) {
+        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark <= 0) ? this.markDetailsRawData[i].totalMark:this.assignmentSettings.incorrectTick);
       }
       this.markDetailsComponents.push(componentRef);
     }
@@ -262,6 +265,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
           let totalMark;
           if(markType.getMarkType() === IconTypeEnum.FULL_MARK) {
             totalMark = (markType.getTotalMark() >= 1) ? markType.getTotalMark():(this.assignmentSettings.defaultTick >= 1) ? this.assignmentSettings.defaultTick:1;
+          } else if(markType.getMarkType() === IconTypeEnum.HALF_MARK) {
+            totalMark = (markType.getTotalMark() > 0) ? markType.getTotalMark():(this.assignmentSettings.defaultTick >= 1) ? this.assignmentSettings.defaultTick / 2: 0.5;
           } else if(markType.getMarkType() === IconTypeEnum.CROSS) {
             totalMark = (markType.getTotalMark() <= 0) ? markType.getTotalMark():(this.assignmentSettings.incorrectTick <= 0) ? this.assignmentSettings.incorrectTick:0;
           }
