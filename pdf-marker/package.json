@@ -51,9 +51,9 @@
     "@angular/platform-browser-dynamic": "~8.2.4",
     "@angular/platform-server": "~8.2.4",
     "@angular/router": "~8.2.4",
-    "@types/node": "^12.6.0",
     "@nguniversal/express-engine": "^8.1.1",
     "@nguniversal/module-map-ngfactory-loader": "8.1.1",
+    "@types/node": "^12.6.0",
     "express": "^4.15.2",
     "express-validator": "^6.2.0",
     "extract-zip": "^1.6.7",
@@ -61,6 +61,7 @@
     "jszip": "^3.2.2",
     "multer": "^1.4.2",
     "ng2-pdfjs-viewer": "^5.0.1",
+    "ngx-color-picker": "^8.2.0",
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
     "zone.js": "~0.9.1"

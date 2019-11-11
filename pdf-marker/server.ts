@@ -409,18 +409,18 @@ const assignmentSettings = (req, res) => {
       return res.status(404).send({message: 'Invalid student folder'});
     }
 
-    const studentFolder = dirname(dirname(config.defaultPath + sep + location));
+    const assignmentFolder = dirname(dirname(dirname(config.defaultPath + sep + location)));
     const buffer = new Uint8Array(Buffer.from(JSON.stringify(assignmentSettings)));
 
-    return access(studentFolder, constants.F_OK, (err) => {
+    return access(assignmentFolder, constants.F_OK, (err) => {
       if(err)
         return res.status(404).send({ message: `Path '${location}' not found!`});
       else {
-        writeFile(studentFolder + sep + '.settings.json', buffer, (err) => {
+        writeFile(assignmentFolder + sep + '.settings.json', buffer, (err) => {
           if(err)
             return res.status(500).send({ message: 'Failed to save assignment settings!'});
           else
-            return res.status(200).send({message: 'Successfully saved!'});
+            return res.status(200).send(assignmentSettings);
         });
       }
     });
@@ -457,9 +457,9 @@ const getAssignmentSettings = (req, res) => {
       return res.status(404).send({message: 'Invalid student folder'});
     }
 
-    const studentFolder = dirname(dirname(config.defaultPath + sep + location));
+    const assignmentFolder = dirname(dirname(dirname(config.defaultPath + sep + location)));
 
-    return readFile(studentFolder + sep + ".settings.json",(err, data) => {
+    return readFile(assignmentFolder + sep + ".settings.json",(err, data) => {
       if(err)
         return res.status(200).send({});
 

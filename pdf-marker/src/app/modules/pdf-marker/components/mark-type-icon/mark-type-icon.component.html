@@ -5,8 +5,7 @@
   <div class="pdf-marker-mark-type-icon-icon" [class.pdf-marker-mark-type-icon-hovered]="showOptions">
     <form [formGroup]="iconForm">
       <mat-icon [style.color]="colour" *ngIf="markType !== iconTypeEnum.NUMBER">{{ iconName }}</mat-icon>
-      <input [class.pdf-marker-mark-type-icon-number-icon]="showOptions" type="text" *ngIf="showOptions && markType === iconTypeEnum.NUMBER" formControlName="totalMark" (change)="onTotalMarkChange($event)"/>
-      <input [class.pdf-marker-mark-type-icon-number-icon-leave]="!showOptions" type="text" *ngIf="!showOptions && markType === iconTypeEnum.NUMBER" formControlName="totalMark" (change)="onTotalMarkChange($event)"/>
+      <input [style.background]="colour" [class.pdf-marker-mark-type-icon-number-icon-leave]="!showOptions" [class.pdf-marker-mark-type-icon-number-icon]="showOptions" type="text" *ngIf="markType === iconTypeEnum.NUMBER" formControlName="totalMark" (mouseleave)="onTotalMarkChange($event)"/>
     </form>
   </div>
 </div>

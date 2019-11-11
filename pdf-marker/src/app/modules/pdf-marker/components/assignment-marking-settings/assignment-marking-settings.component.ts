@@ -42,7 +42,9 @@ export class AssignmentMarkingSettingsComponent implements OnInit, OnChanges {
 
   settingsForm: FormGroup;
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder) {
+    this.settingsIn = this.defaultSettings;
+  }
 
   ngOnInit() {
     this.initForm();
@@ -69,7 +71,6 @@ export class AssignmentMarkingSettingsComponent implements OnInit, OnChanges {
   onColourChange(colour: string) {
     this.colour.emit(colour);
     this.settingsForm.controls.defaultColour.setValue(colour);
-    this.selectedColour = colour;
   }
 
   onDefaultTickChange() {
@@ -107,6 +108,7 @@ export class AssignmentMarkingSettingsComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges() {
+    console.log(this.settingsIn);
     this.initForm();
   }
 

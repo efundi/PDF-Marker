@@ -1,17 +1,23 @@
 <ng-container>
   <mat-toolbar class="pdf-marker-assignment-marking-settings">
     <form [formGroup]="settingsForm">
-      <span>Tick colour</span>&nbsp;&nbsp;
-      <div [style.width.px]="colorPickerWidth" [style.height.px]="colorPickerHeight" [style.min-width.px]="colorPickerWidth" [style.min-height.px]="colorPickerHeight" class="pdf-marker-assignment-marking-settings-color-picker">
-        <span [class.pdf-marker-assignment-marking-settings-color-selected]="selectedColour === colour" [style.width.px]="colorBlockWidth" [style.height.px]="colorBlockHeight" [style.background]="colour" class="pdf-marker-assignment-marking-settings-color" *ngFor="let colour of colours" (click)="onColourChange(colour)"></span>
-      </div>&nbsp;&nbsp;&nbsp;
-      <span>Correct tick default count</span>&nbsp;&nbsp;
-      <input matInput #defaultTickToolTip="matTooltip" matTooltip="Value must be >= 1" matTooltipPosition="right" matTooltipClass="tooltip-red" type="text" formControlName="defaultTick" class="pdf-marker-assignment-marking-settings-config" (change)="onDefaultTickChange()">
+      <button type="button" [disabled]="settingsForm.invalid" matTooltip="Save" mat-button mat-icon-button (click)="onSave()" class="pdf-marker-assignment-marking-settings-save"><mat-icon [class.disabled-button]="settingsForm.invalid">save</mat-icon></button>
       <div class="pdf-marker-fill-space"></div>
-      <span>Incorrect tick default count</span>&nbsp;&nbsp;
-      <input matInput #incorrectTickToolTip="matTooltip" matTooltip="Value must be <= 0" matTooltipPosition="right" matTooltipClass="tooltip-red" type="text" formControlName="incorrectTick" class="pdf-marker-assignment-marking-settings-config" (change)="onIncorrectTickChange()">
+      <div>
+        <button [style.after.background]="selectedColour" class="pdf-marker-assignment-marking-settings-color-pallette" mat-button mat-icon-button [(colorPicker)]="selectedColour" (colorPickerChange)="onColourChange($event)"><mat-icon [style.color]="selectedColour">palette</mat-icon></button>
+        <span [style.background]="selectedColour" [style.border]="'1px solid ' + selectedColour" class="pdf-marker-assignment-marking-settings-color-choice"></span>
+      </div>
+      <span>Select colour</span>
       <div class="pdf-marker-fill-space"></div>
-      <button type="button" [disabled]="settingsForm.invalid" matTooltip="Save" mat-button mat-icon-button (click)="onSave()"><mat-icon [class.disabled-button]="settingsForm.invalid">save</mat-icon></button>
+      <mat-form-field>
+        <input matInput #defaultTickToolTip="matTooltip" matTooltip="Value must be >= 1" matTooltipPosition="right" matTooltipClass="tooltip-red" type="text" formControlName="defaultTick" class="pdf-marker-assignment-marking-settings-config" (change)="onDefaultTickChange()">
+      </mat-form-field>&nbsp;&nbsp;
+      <span>Correct tick default count</span>
+      <div class="pdf-marker-fill-space"></div>
+      <mat-form-field>
+        <input matInput #incorrectTickToolTip="matTooltip" matTooltip="Value must be <= 0" matTooltipPosition="right" matTooltipClass="tooltip-red" type="text" formControlName="incorrectTick" class="pdf-marker-assignment-marking-settings-config" (change)="onIncorrectTickChange()">
+      </mat-form-field>&nbsp;&nbsp;
+      <span>Incorrect tick default count</span>
     </form>
   </mat-toolbar>
 </ng-container>

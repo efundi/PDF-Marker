@@ -151,6 +151,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       componentRef.instance.setMarkType(this.markDetailsRawData[i].iconType);
       if(this.markDetailsRawData[i].iconType === IconTypeEnum.NUMBER) {
         componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:0);
+      } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.FULL_MARK) {
+        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:1);
+      } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.CROSS) {
+        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark <= 0) ? this.markDetailsRawData[i].totalMark:0);
       }
       this.markDetailsComponents.push(componentRef);
     }
@@ -210,8 +214,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   onAssignmentSettings(settings: AssignmentSettingsInfo) {
     this.appService.isLoading$.next(true);
-    this.assignmentService.assignmentSettings(settings).subscribe((response) => {
+    this.assignmentService.assignmentSettings(settings).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
       console.log("Successful");
+      this.assignmentSettings = assignmentSettings;
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.isLoading$.next(false);
@@ -254,10 +259,17 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
             totalMark: markType.getTotalMark()
           });
         } else {
+          let totalMark;
+          if(markType.getMarkType() === IconTypeEnum.FULL_MARK) {
+            totalMark = (markType.getTotalMark() >= 1) ? markType.getTotalMark():(this.assignmentSettings.defaultTick >= 1) ? this.assignmentSettings.defaultTick:1;
+          } else if(markType.getMarkType() === IconTypeEnum.CROSS) {
+            totalMark = (markType.getTotalMark() <= 0) ? markType.getTotalMark():(this.assignmentSettings.incorrectTick <= 0) ? this.assignmentSettings.incorrectTick:0;
+          }
           markDetails.push({
             coordinates: markType.getCoordinates(),
             iconName: markType.iconName,
-            iconType: markType.getMarkType()
+            iconType: markType.getMarkType(),
+            totalMark: totalMark
           });
         }
       }
@@ -293,6 +305,13 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     componentRef.instance.iconName = this.selectedIcon.icon;
     componentRef.instance.colour = this.colour;
     componentRef.instance.setMarkType(this.selectedIcon.type);
+    if(componentRef.instance.getMarkType() === IconTypeEnum.FULL_MARK) {
+      const totalMark = (componentRef.instance.getTotalMark() >= 1) ? componentRef.instance.getTotalMark():(this.assignmentSettings.defaultTick >= 1) ? this.assignmentSettings.defaultTick:1;
+      componentRef.instance.setTotalMark(totalMark);
+    } else if(componentRef.instance.getMarkType() === IconTypeEnum.CROSS) {
+      const totalMark = (componentRef.instance.getTotalMark() <= 0) ? componentRef.instance.getTotalMark():(this.assignmentSettings.incorrectTick <= 0) ? this.assignmentSettings.incorrectTick:0;
+      componentRef.instance.setTotalMark(totalMark);
+    }
     this.markDetailsComponents.push(componentRef);
   }
 

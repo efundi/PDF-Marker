@@ -23,7 +23,7 @@ export class MarkTypeIconComponent implements OnInit {
 
   private isDeleted: boolean = false;
 
-  private totalMark: number = 0;
+  private totalMark: number = undefined;
 
   iconForm: FormGroup;
 
@@ -46,7 +46,7 @@ export class MarkTypeIconComponent implements OnInit {
   private initForm() {
     if(this.markType === IconTypeEnum.NUMBER) {
       this.iconForm = this.fb.group({
-        totalMark: [this.totalMark, Validators.required]
+        totalMark: [(this.totalMark) ? this.totalMark:0, Validators.required]
       });
     } else if(this.markType === IconTypeEnum.COMMENT) {
       this.iconForm = this.fb.group({
@@ -89,10 +89,12 @@ export class MarkTypeIconComponent implements OnInit {
 
   onTotalMarkChange(event) {
     const number = parseInt(this.iconForm.controls.totalMark.value);
+    console.log(number);
     if(!isNaN(number)) {
       this.totalMark = number;
-    } else {
       this.iconForm.controls.totalMark.setValue(this.totalMark);
+    } else {
+      this.iconForm.controls.totalMark.setValue((this.totalMark) ? this.totalMark:0);
     }
   }
 

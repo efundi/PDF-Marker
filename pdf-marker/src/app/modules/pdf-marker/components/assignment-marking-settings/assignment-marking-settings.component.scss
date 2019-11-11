@@ -1,26 +1,23 @@
 $pdf-marker-gray: #D3D3D3;
 mat-toolbar {
   font-size: 16px;
-  font-family: inherit !important;
   padding-left: 0;
   border-top: 1px solid $pdf-marker-gray;
   border-bottom: 1px solid $pdf-marker-gray;
 
-  .pdf-marker-assignment-marking-settings-color {
-    display: inline-block;
-    float: left;
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-    transition: all ease-in;
-
-    &:hover {
-      transform: scale(1.2);
-    }
+  .pdf-marker-assignment-marking-settings-color-choice {
+    display: block;
+    width: 25px;
+    margin-left: 7px;
+    text-align: center;
+    height: 2px;
+    border: 1px solid;
+    position: absolute;
+    top: 90%;
   }
 
-  .pdf-marker-assignment-marking-settings-color-selected {
-    transform: scale(1.2);
+  mat-form-field {
+    width: 35px;
   }
 
   .pdf-marker-assignment-marking-settings-config {
@@ -28,7 +25,6 @@ mat-toolbar {
     height: 20px;
     color: #888;
     font-weight: normal;
-    border: 1px solid $pdf-marker-gray;
     font-size: 12px;
   }
 
@@ -40,6 +36,11 @@ mat-toolbar {
 
     input {
       text-align: center;
+      margin-top: 8px;
+    }
+
+    .pdf-marker-assignment-marking-settings-save {
+      border: 1px solid #d3d3d3;
     }
 
     .disabled-button {

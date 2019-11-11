@@ -6498,6 +6498,11 @@ ng2-pdfjs-viewer@^5.0.1:
   resolved "https://registry.yarnpkg.com/ng2-pdfjs-viewer/-/ng2-pdfjs-viewer-5.0.1.tgz#5eaf0ae7b2589db9eeac5db3c8520caf775a9ed9"
   integrity sha512-Yt2uX4Gl9RDWuEsK4/YIJF/umJNevDNWeeXwYRfgicQQzU+sL15tFhaQiU49shN6H4ByFikRSR0+YWcniPC2Ww==
 
+ngx-color-picker@^8.2.0:
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/ngx-color-picker/-/ngx-color-picker-8.2.0.tgz#36b2e7f173e006f680dea39743d0bfc6c2531454"
+  integrity sha512-rzR+cByjNG9M/UskU5vNoH7cUc6oM8STTDFKOZmnlX4ALOuM1+61CBjsNTGETWfo9a/h5mbGX02oh5/iNAa7vA==
+
 nice-try@^1.0.4:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
