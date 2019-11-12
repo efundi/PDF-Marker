@@ -60,25 +60,21 @@ export class ImportComponent implements OnInit {
         this.hierarchyModel = value;
         this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
 
-        const dialogConfig = new MatDialogConfig();
-        dialogConfig.disableClose = false;
-        dialogConfig.autoFocus = true;
-        dialogConfig.height = '400px';
-        dialogConfig.width = '600px';
+        const config = new MatDialogConfig();
+        config.height = '400px';
+        config.width = '600px';
 
-        dialogConfig.data = {
+        config.data = {
           hierarchyModel: this.hierarchyModel,
           hierarchyModelKeys : this.hierarchyModelKeys,
           filename: this.hierarchyModelKeys[0]
         };
 
-        const dialog = this.dialog.open(FileExplorerModalComponent, dialogConfig);
-        dialog.afterOpened().subscribe(() => this.isLoading$.next(false))
-        dialog.afterClosed()
-          .subscribe(() => {
+        const isModalOpenedFn = () => {
           this.isModalOpened = !this.isModalOpened;
+        };
 
-        });
+        this.appService.createDialog(FileExplorerModalComponent, config, isModalOpenedFn);
       }
     });
 

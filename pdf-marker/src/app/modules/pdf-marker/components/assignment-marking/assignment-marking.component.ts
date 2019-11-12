@@ -17,10 +17,15 @@ import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/
 import {AppService} from "@coreModule/services/app.service";
 import {IconInfo} from "@pdfMarkerModule/info-objects/icon.info";
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
-import {MatDialog, MatDialogConfig} from "@angular/material/dialog";
+import {MatDialog, MatDialogConfig, MatDialogRef} from "@angular/material/dialog";
 import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
+import {FinaliseMarkingComponent} from "@pdfMarkerModule/components/finalise-marking/finalise-marking.component";
+import {DialogDimensionsInfo} from "@pdfMarkerModule/info-objects/dialog-dimensions.info";
 
+export interface ComponentType<T> {
+  new (...args: any[]): T;
+}
 
 @Component({
   selector: 'pdf-marker-assignment-marking',
@@ -210,6 +215,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
                           break;
       case 'settings' :   this.settings();
                           break;
+      case 'finalise' :   this.finalise();
+                          break;
       default:      console.log("No control '" + control + "' found!");
                     break;
     }
@@ -320,39 +327,43 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.markDetailsComponents.push(componentRef);
   }
 
-  private openYesNoConfirmationDialog(title: string = "Confirm", message: string) {
-    const dialogConfig = new MatDialogConfig();
-    dialogConfig.disableClose = false;
-    dialogConfig.autoFocus = true;
-    dialogConfig.width = "400px";
-    dialogConfig.maxWidth = "400px";
+  private settings() {
+    this.showSettings = !this.showSettings;
+  }
 
-    dialogConfig.data = {
+  private openYesNoConfirmationDialog(title: string = "Confirm", message: string) {
+    const config = new MatDialogConfig();
+    config.width = "400px";
+    config.maxWidth = "400px";
+    config.data = {
       title: title,
       message: message,
     };
 
-    this.appService.isLoading$.next(true);
-    const dialog = this.dialog.open(YesAndNoConfirmationDialogComponent, dialogConfig);
-    dialog.afterOpened().subscribe(() => this.appService.isLoading$.next(false))
-    dialog.afterClosed()
-      .subscribe((shouldDelete) => {
-        if(shouldDelete) {
-          this.markDetailsComponents.map(markComponent => markComponent.instance.setIsDeleted(true));
-          const markDetails = this.getMarksToSave();
-          this.saveMarks(markDetails)
-            .then(() => {
-              this.markDetailsComponents.forEach(markComponents => {
-                markComponents.destroy();
-              });
-              this.markDetailsRawData = [];
+    const shouldDeleteFn = (shouldDelete: boolean) => {
+      if(shouldDelete) {
+        this.markDetailsComponents.map(markComponent => markComponent.instance.setIsDeleted(true));
+        const markDetails = this.getMarksToSave();
+        this.saveMarks(markDetails)
+          .then(() => {
+            this.markDetailsComponents.forEach(markComponents => {
+              markComponents.destroy();
             });
-        }
-      });
+            this.markDetailsRawData = [];
+          });
+      }
+    };
+    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
   }
 
-  private settings() {
-    this.showSettings = !this.showSettings;
+  private finalise() {
+    const config: MatDialogConfig = new MatDialogConfig();
+    config.width = "600px";
+    config.height = "400px";
+    config.data = {
+      assignmentPath: this.assignmentService.getSelectedPdfLocation()
+    };
+    this.appService.createDialog(FinaliseMarkingComponent, config);
   }
 
   ngOnDestroy(): void {

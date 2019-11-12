@@ -66,6 +66,11 @@ pdf-marker-assignment-marking {
   position: relative;
 }
 
+pdf-marker-finalise-marking {
+  display: block;
+  position: relative;
+}
+
 .mat-dialog-container {
   padding-top: 0 !important;
 }
@@ -263,5 +268,5 @@ pdf-marker-file-explorer-modal {
 }
 
 .mat-dialog-container {
-  background: #F5F5F5 !important;
+  /*background: #F5F5F5 !important;*/
 }
