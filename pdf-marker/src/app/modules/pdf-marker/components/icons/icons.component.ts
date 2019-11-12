@@ -34,13 +34,13 @@ export class IconsComponent implements OnInit {
 
   ];
 
-  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer
-){
-  this.matIconRegistry.addSvgIcon(
-  "halfTick",
-  this.domSanitizer.bypassSecurityTrustResourceUrl("../../../assets/halftick.svg")
-);
-}
+  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) {
+    this.matIconRegistry.addSvgIcon(
+      "halfTick",
+      this.domSanitizer.bypassSecurityTrustResourceUrl("../../../assets/halftick.svg")
+    );
+  }
+
   ngOnInit() {
   }
 
