@@ -38,7 +38,7 @@ export class IconsComponent implements OnInit {
 ){
   this.matIconRegistry.addSvgIcon(
   "halfTick",
-  this.domSanitizer.bypassSecurityTrustResourceUrl("../../../assets/halftic.svg")
+  this.domSanitizer.bypassSecurityTrustResourceUrl("../../../assets/halftick.svg")
 );
 }
   ngOnInit() {
