@@ -22,7 +22,7 @@ import {CoreModule} from '@coreModule/core.module';
     CoreModule,
     SharedModule,
     LayoutModule,
-    PdfMarkerModule
+    PdfMarkerModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

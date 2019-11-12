@@ -1,6 +1,8 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
 import {IconInfo} from "@pdfMarkerModule/info-objects/icon.info";
+import { MatIconRegistry } from "@angular/material/icon";
+import { DomSanitizer } from "@angular/platform-browser";
 
 @Component({
   selector: 'pdf-marker-icons',
@@ -25,14 +27,20 @@ export class IconsComponent implements OnInit {
 
   readonly markIcons: IconInfo[] = [
     { icon: 'check', type: IconTypeEnum.FULL_MARK, toolTip: 'Single Mark' },
-    { icon: 'done_all', type: IconTypeEnum.HALF_MARK, toolTip: 'Half Mark' },
+    { icon: 'halfTick', type: IconTypeEnum.HALF_MARK, toolTip: 'Half Mark' },
     { icon: 'spellcheck', type: IconTypeEnum.ACK_MARK, toolTip: 'Acknowledge Tick' },
     { icon: 'close', type: IconTypeEnum.CROSS, toolTip: 'Zero or Negative Mark'},
-    { icon: 'iso', type: IconTypeEnum.NUMBER, toolTip: 'Points Assignment'}
+    { icon: 'iso', type: IconTypeEnum.NUMBER, toolTip: 'Points Assignment'},
+
   ];
 
-  constructor() { }
-
+  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer
+){
+  this.matIconRegistry.addSvgIcon(
+  "halfTick",
+  this.domSanitizer.bypassSecurityTrustResourceUrl("../../../assets/halftic.svg")
+);
+}
   ngOnInit() {
   }
 
