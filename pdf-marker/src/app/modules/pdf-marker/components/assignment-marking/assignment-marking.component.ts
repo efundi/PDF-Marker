@@ -17,15 +17,10 @@ import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/
 import {AppService} from "@coreModule/services/app.service";
 import {IconInfo} from "@pdfMarkerModule/info-objects/icon.info";
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
-import {MatDialog, MatDialogConfig, MatDialogRef} from "@angular/material/dialog";
+import {MatDialog, MatDialogConfig} from "@angular/material/dialog";
 import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 import {FinaliseMarkingComponent} from "@pdfMarkerModule/components/finalise-marking/finalise-marking.component";
-import {DialogDimensionsInfo} from "@pdfMarkerModule/info-objects/dialog-dimensions.info";
-
-export interface ComponentType<T> {
-  new (...args: any[]): T;
-}
 
 @Component({
   selector: 'pdf-marker-assignment-marking',
@@ -53,7 +48,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   currentPage: number = 0;
   assignmentSettings: AssignmentSettingsInfo;
   private selectedIcon: IconInfo;
-  private colour: string;
+  private colour: string = "#6F327A";
   private subscription: Subscription;
   private markDetailsComponents: ComponentRef<MarkTypeIconComponent>[] = [];
   private markDetailsRawData: any[] = [];
@@ -316,6 +311,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     componentRef.instance.setComponentRef(componentRef);
     componentRef.instance.iconName = this.selectedIcon.icon;
     componentRef.instance.colour = this.colour;
+    console.log(this.colour);
     componentRef.instance.setMarkType(this.selectedIcon.type);
     if(componentRef.instance.getMarkType() === IconTypeEnum.FULL_MARK) {
       const totalMark = (componentRef.instance.getTotalMark() >= 1) ? componentRef.instance.getTotalMark():(this.assignmentSettings.defaultTick >= 1) ? this.assignmentSettings.defaultTick:1;

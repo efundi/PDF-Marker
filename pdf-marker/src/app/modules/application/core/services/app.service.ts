@@ -1,7 +1,10 @@
 import {Injectable} from '@angular/core';
 import {Subject} from "rxjs";
 import {MatDialog, MatDialogConfig} from "@angular/material/dialog";
-import {ComponentType} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
+
+export interface ComponentType<T> {
+  new (...args: any[]): T;
+}
 
 @Injectable({
   providedIn: 'root'
