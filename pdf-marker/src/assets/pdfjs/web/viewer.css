@@ -293,7 +293,6 @@
      border-image: url(images/shadow.png) 9 9 repeat;
   background-color: white;
   border: none !important;
-  width: 100% !important;
 }
 
 .pdfViewer.removePageBorders .page {

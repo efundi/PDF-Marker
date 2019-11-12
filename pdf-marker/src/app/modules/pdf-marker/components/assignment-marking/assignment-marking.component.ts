@@ -124,12 +124,16 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     }, {threshold:[0.5]});
 
     let maxHeight: number = 0;
+    let maxWidth: number = 0;
     for(let i = this.currentPage; i <= this.pdfPages; i++) {
       observe.observe(pdfViewerApplication.pdfViewer.viewer.children[i - 1]);
       maxHeight += parseInt(pdfViewerApplication.pdfViewer.viewer.children[i - 1].style.height.replace("px", ""));
+      if(!maxWidth)
+        maxWidth += parseInt(pdfViewerApplication.pdfViewer.viewer.children[i - 1].style.width.replace("px", ""));
     }
 
     this.container.nativeElement.style.height = maxHeight + "px";
+    this.container.nativeElement.style.width = maxWidth + "px";
     this.markerContainer.nativeElement.style.height = maxHeight + "px";
 
     // Set Marks if exists
