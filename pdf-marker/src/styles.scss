@@ -79,6 +79,7 @@ body {
 
   .mat-drawer-content::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
     background: #F5F5F5;
   }
 
@@ -138,6 +139,8 @@ button {
     padding-left: 23px;
     padding-right: 23px;
     background: #F5F5F5;
+    display: table;
+    width: 95%;
   }
 
   mat-toolbar {
