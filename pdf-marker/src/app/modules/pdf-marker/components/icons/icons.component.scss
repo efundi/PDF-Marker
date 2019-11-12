@@ -1,3 +1,5 @@
+$pdf-marker-primary: #6f327a;
+
 mat-toolbar {
   padding-left: 0;
   font-family: Roboto,"Helvetica Neue",sans-serif !important;
@@ -6,6 +8,12 @@ mat-toolbar {
   button {
     border: 1px solid #d3d3d3;
     margin-right: 6px;
+  }
+
+
+  .pdf-marker-icons-svg-class {
+    stroke: $pdf-marker-primary;
+    stroke-width: 0;
   }
 
   .pdf-marker-icons-selected {
