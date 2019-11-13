@@ -1,20 +1,58 @@
+$pdf-marker-primary: #6f327a;
+
 .pdf-marker-finalise-marking-modal {
   width: 100%;
   height: 100%;
   position: relative;
+
+  .pdf-marker-finalise-marking-modal-student-details {
+    font-family: 'opensans-light', Helvetica, Roboto, "Helvetica Neue", sans-serif;
+    font-size: 25px;
+  }
 
   .pdf-marker-finalise-marking-modal-header {
     display: flex;
     flex-direction: row;
     align-items: center;
     width: 100%;
+    height: 15%;
+    margin-bottom: 2px;
   }
 
-  .pdf-marker-finalise-marking-modal-actions {
+  .pdf-marker-finalise-marking-modal-content {
+    height: 70%;
+    overflow: auto;
+
+    .mat-list-base {
+      .mat-list-item {
+        .mat-list-item-content {
+          padding-left: 0 !important;
+        }
+      }
+    }
+
+    .pdf-marker-finalise-marking-modal-content-results {
+      font-weight: 100;
+      border-bottom: 1px solid #d3d3d3;
+      padding-bottom: 10px;
+    }
+
+    .pdf-spacer {
+      background: $pdf-marker-primary;
+      width: 100%;
+      height: 1px;
+      display: block;
+      margin: 0;
+    }
+  }
+
+  .pdf-marker-finalise-marking-modal-footer {
+    padding: 0;
+    height: 10%;
+    margin: 0;
     position: absolute;
     top: 100%;
     transform: translate(0, -100%);
-    display: flex;
-    width: 100%;
+    font-size: 12px;
   }
 }

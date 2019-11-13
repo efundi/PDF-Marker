@@ -1,12 +1,21 @@
 <div class="pdf-marker-finalise-marking-modal">
   <div class="pdf-marker-finalise-marking-modal-header">
-    <h3>{{ studentDetails }}</h3>
+    <p class="pdf-marker-finalise-marking-modal-student-details">{{ studentDetails }}</p>
     <span class="pdf-marker-fill-space"></span>
     <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
   </div>
-  <div style="height: 300px;"></div>
-  <div class="pdf-marker-finalise-marking-modal-actions">
-    <span class="pdf-marker-fill-space"></span>
-    <button type="button" mat-button mat-raised-button>Submit</button>
+  <div class="pdf-marker-finalise-marking-modal-content">
+    <p class="pdf-marker-finalise-marking-modal-content-results">Results:</p>
+    <mat-list>
+      <mat-list-item *ngFor="let markDetails of totalCommentorNumberMarks; let i = index"><p>Question {{ (i + 1) }}</p><span class="pdf-marker-fill-space"></span> {{ (markDetails?.totalMark) ? markDetails?.totalMark:0 }}</mat-list-item>
+    </mat-list>
+    <mat-list>
+      <mat-list-item><p>General Marks</p><span class="pdf-marker-fill-space"></span> {{ (generalMarks >= 0) ? generalMarks:0 }}</mat-list-item>
+    </mat-list>
+    <span class="pdf-spacer"></span>
+    <mat-list>
+      <mat-list-item class="pdf-marker-finalise-marking-modal-result-total"><p>Total = {{ totalMark }}</p></mat-list-item>
+    </mat-list>
   </div>
+  <p class="pdf-marker-finalise-marking-modal-footer">Note: This is only a preview. Please go to Assignment Overview to Finalise and Export</p>
 </div>

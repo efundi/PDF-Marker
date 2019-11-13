@@ -358,10 +358,19 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   private finalise() {
     const config: MatDialogConfig = new MatDialogConfig();
-    config.width = "600px";
-    config.height = "400px";
+    config.width = "400px";
+    config.height = "500px";
+
+    const {
+      defaultTick,
+      incorrectTick
+    } = this.assignmentSettings;
+
     config.data = {
-      assignmentPath: this.assignmentService.getSelectedPdfLocation()
+      assignmentPath: this.assignmentService.getSelectedPdfLocation(),
+      marks: this.getMarksToSave(),
+      defaultTick: defaultTick,
+      incorrectTick: incorrectTick
     };
     this.appService.createDialog(FinaliseMarkingComponent, config);
   }

@@ -69,6 +69,21 @@ pdf-marker-assignment-marking {
 pdf-marker-finalise-marking {
   display: block;
   position: relative;
+  height: 100%;
+
+  mat-list {
+    .mat-list-item-content {
+      padding-left: 0 !important;
+    }
+  }
+
+  .pdf-marker-finalise-marking-modal-content::-webkit-scrollbar-thumb {
+    background: $pdf-marker-primary;
+    border-radius: 10px;
+  }
+  .pdf-marker-finalise-marking-modal-content::-webkit-scrollbar {
+    width: 5px;
+  }
 }
 
 .mat-dialog-container {

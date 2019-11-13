@@ -1,5 +1,6 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
+import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
 
 @Component({
   selector: 'pdf-marker-finalise-marking',
@@ -12,7 +13,13 @@ export class FinaliseMarkingComponent implements OnInit {
 
   studentDetails: string;
 
-  assignmentMarks: any[] = [];
+  generalMarks: number = 0;
+
+  numberCommentMarks: number = 0;
+
+  totalMark: number = 0;
+
+  totalCommentorNumberMarks: any[] = [];
 
   constructor(private dialogRef: MatDialogRef<FinaliseMarkingComponent>,
               @Inject(MAT_DIALOG_DATA) config) {
@@ -23,6 +30,30 @@ export class FinaliseMarkingComponent implements OnInit {
         this.studentDetails = studentDetails;
       }
     }
+
+    console.log(config);
+
+    config.marks.forEach(mark => {
+      switch (mark.iconType) {
+        case IconTypeEnum.FULL_MARK:
+          this.generalMarks += config.defaultTick;
+          break;
+        case IconTypeEnum.HALF_MARK:
+          this.generalMarks += (config.defaultTick / 2);
+          break;
+        case IconTypeEnum.CROSS:
+          this.generalMarks += config.incorrectTick;
+          break;
+        case IconTypeEnum.NUMBER:
+          this.totalCommentorNumberMarks.push(mark);
+          this.numberCommentMarks += mark.totalMark;
+          break;
+        default: break;
+      }
+    });
+
+
+    this.totalMark = (((this.generalMarks >= 0) ? this.generalMarks:0)  + ((this.numberCommentMarks >= 0) ? this.numberCommentMarks:0));
 
   }
 
