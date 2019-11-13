@@ -369,8 +369,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     config.data = {
       assignmentPath: this.assignmentService.getSelectedPdfLocation(),
       marks: this.getMarksToSave(),
-      defaultTick: defaultTick,
-      incorrectTick: incorrectTick
+      defaultTick: (defaultTick >= 1) ? defaultTick:1,
+      incorrectTick: (incorrectTick <= 0) ? incorrectTick:0
     };
     this.appService.createDialog(FinaliseMarkingComponent, config);
   }
