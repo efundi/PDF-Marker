@@ -30,7 +30,7 @@ export class IconsComponent implements OnInit {
     { icon: 'halfTick', type: IconTypeEnum.HALF_MARK, toolTip: 'Half Mark' },
     { icon: 'spellcheck', type: IconTypeEnum.ACK_MARK, toolTip: 'Acknowledge Tick' },
     { icon: 'close', type: IconTypeEnum.CROSS, toolTip: 'Zero or Negative Mark'},
-    { icon: 'iso', type: IconTypeEnum.NUMBER, toolTip: 'Points Assignment'},
+    { icon: 'comment', type: IconTypeEnum.NUMBER, toolTip: 'Comment and Mark'},
 
   ];
 
