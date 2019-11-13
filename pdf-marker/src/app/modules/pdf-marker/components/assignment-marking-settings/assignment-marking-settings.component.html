@@ -9,7 +9,6 @@
         </button>
         <span [style.background]="selectedColour" [style.border]="'1px solid ' + selectedColour" class="pdf-marker-assignment-marking-settings-color-choice"></span>
       </div>&nbsp;&nbsp;
-      <span>Select colour</span>&nbsp;&nbsp;
       <mat-form-field>
         <input matInput #defaultTickToolTip="matTooltip" matTooltip="Value must be >= 1" matTooltipPosition="right" matTooltipClass="tooltip-red" type="text" formControlName="defaultTick" class="pdf-marker-assignment-marking-settings-config" (change)="onDefaultTickChange()">
       </mat-form-field>&nbsp;&nbsp;
