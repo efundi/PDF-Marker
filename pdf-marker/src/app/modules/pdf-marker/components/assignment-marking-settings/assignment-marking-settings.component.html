@@ -12,11 +12,11 @@
       <mat-form-field>
         <input matInput #defaultTickToolTip="matTooltip" matTooltip="Value must be >= 1" matTooltipPosition="right" matTooltipClass="tooltip-red" type="text" formControlName="defaultTick" class="pdf-marker-assignment-marking-settings-config" (change)="onDefaultTickChange()">
       </mat-form-field>&nbsp;&nbsp;
-      <span>Correct tick default count</span>&nbsp;&nbsp;
+      <span>Single Mark Default Value</span>&nbsp;&nbsp;
       <mat-form-field>
         <input matInput #incorrectTickToolTip="matTooltip" matTooltip="Value must be <= 0" matTooltipPosition="right" matTooltipClass="tooltip-red" type="text" formControlName="incorrectTick" class="pdf-marker-assignment-marking-settings-config" (change)="onIncorrectTickChange()">
       </mat-form-field>&nbsp;&nbsp;
-      <span>Incorrect tick default count</span>
+      <span>Zero or Negative Mark Default Value</span>
     </form>
   </mat-toolbar>
 </ng-container>

@@ -23,38 +23,40 @@ export class FinaliseMarkingComponent implements OnInit {
 
   constructor(private dialogRef: MatDialogRef<FinaliseMarkingComponent>,
               @Inject(MAT_DIALOG_DATA) config) {
-    const assignmentPathSplit = config.assignmentPath.split("/");
-    if(assignmentPathSplit.length == 4) {
-      const studentDetails = assignmentPathSplit[1];
-      if(this.regEx.test(studentDetails)) {
-        this.studentDetails = studentDetails;
+    if(config.assignmentPath) {
+      const assignmentPathSplit = config.assignmentPath.split("/");
+      if (assignmentPathSplit.length == 4) {
+        const studentDetails = assignmentPathSplit[1];
+        if (this.regEx.test(studentDetails)) {
+          this.studentDetails = studentDetails;
+        }
       }
+
+      console.log(config);
+
+      config.marks.forEach(mark => {
+        switch (mark.iconType) {
+          case IconTypeEnum.FULL_MARK:
+            this.generalMarks += config.defaultTick;
+            break;
+          case IconTypeEnum.HALF_MARK:
+            this.generalMarks += (config.defaultTick / 2);
+            break;
+          case IconTypeEnum.CROSS:
+            this.generalMarks += config.incorrectTick;
+            break;
+          case IconTypeEnum.NUMBER:
+            this.totalCommentorNumberMarks.push(mark);
+            this.numberCommentMarks += mark.totalMark;
+            break;
+          default:
+            break;
+        }
+      });
+
+
+      this.totalMark = (((this.generalMarks >= 0) ? this.generalMarks : 0) + ((this.numberCommentMarks >= 0) ? this.numberCommentMarks : 0));
     }
-
-    console.log(config);
-
-    config.marks.forEach(mark => {
-      switch (mark.iconType) {
-        case IconTypeEnum.FULL_MARK:
-          this.generalMarks += config.defaultTick;
-          break;
-        case IconTypeEnum.HALF_MARK:
-          this.generalMarks += (config.defaultTick / 2);
-          break;
-        case IconTypeEnum.CROSS:
-          this.generalMarks += config.incorrectTick;
-          break;
-        case IconTypeEnum.NUMBER:
-          this.totalCommentorNumberMarks.push(mark);
-          this.numberCommentMarks += mark.totalMark;
-          break;
-        default: break;
-      }
-    });
-
-
-    this.totalMark = (((this.generalMarks >= 0) ? this.generalMarks:0)  + ((this.numberCommentMarks >= 0) ? this.numberCommentMarks:0));
-
   }
 
   ngOnInit() {
