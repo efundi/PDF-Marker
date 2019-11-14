@@ -1,12 +1,20 @@
-<div cdkDrag class="pdf-marker-mark-type-icon-container" cdkDragBoundary=".boundary" (click)="onClicked($event)" (mouseover)="onMouseOver($event)" (mouseleave)="onMouseLeave($event)" (cdkDragEnded)="onDrageEnded($event)">
+<div cdkDrag class="pdf-marker-mark-type-icon-container"
+     cdkDragBoundary=".boundary" (click)="onClicked($event)" (mouseover)="onMouseOver($event)"
+     (mouseleave)="onMouseLeave($event)" (cdkDragEnded)="onDrageEnded($event)">
   <div class="pdf-marker-mark-type-icon-options" *ngIf="showOptions">
+    <mat-icon  *ngIf="markType === iconTypeEnum.NUMBER" class="pdf-marker-mark-type-icon-edit" matTooltip="Add/Edit Comment" (click)="onEdit($event)">edit</mat-icon>
     <mat-icon class="pdf-marker-mark-type-icon-delete" matTooltip="Remove" (click)="onRemove($event)">delete_forever</mat-icon>
   </div>
   <div class="pdf-marker-mark-type-icon-icon" [class.pdf-marker-mark-type-icon-hovered]="showOptions">
     <form [formGroup]="iconForm">
       <mat-icon [style.color]="colour" *ngIf="markType !== iconTypeEnum.NUMBER && markType !== iconTypeEnum.HALF_MARK">{{ iconName }}</mat-icon>
       <mat-icon [style.color]="colour" *ngIf="markType === iconTypeEnum.HALF_MARK" [svgIcon]="iconName" [style.stroke]="colour" [style.stroke-width]="0"></mat-icon>
-      <input [style.background]="colour" [class.pdf-marker-mark-type-icon-number-icon-leave]="!showOptions" [class.pdf-marker-mark-type-icon-number-icon]="showOptions" type="text" *ngIf="markType === iconTypeEnum.NUMBER" formControlName="totalMark" (mouseleave)="onTotalMarkChange($event)"/>
+      <ng-container *ngIf="markType === iconTypeEnum.NUMBER">
+        <input [style.background]="colour" [class.pdf-marker-mark-type-icon-number-icon-leave]="!showOptions"
+               [class.pdf-marker-mark-type-icon-number-icon]="showOptions" type="text" formControlName="totalMark" (mouseleave)="onTotalMarkChange($event)"/>
+        <mat-icon class="pdf-marker-special-icon-attach">attach_file</mat-icon>
+      </ng-container>
     </form>
   </div>
 </div>
+git

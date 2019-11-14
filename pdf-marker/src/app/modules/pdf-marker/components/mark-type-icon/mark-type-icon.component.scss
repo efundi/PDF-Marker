@@ -6,7 +6,7 @@
     display: inline-block;
     position: absolute;
     top: 100%;
-    width: 100%;
+    width:50%;
     .mat-icon {
       font-size: 14px;
       height: fit-content;
@@ -73,6 +73,14 @@
     .pdf-marker-mark-type-icon-number-icon:focus {
       outline: none !important;
     }
+  }
+
+  .pdf-marker-special-icon-attach {
+    text-align: right !important;
+    width: 1px !important;
+    height: 1px !important;
+    filter: invert(100%);
+
   }
 
   .pdf-marker-mark-type-icon-hovered {
