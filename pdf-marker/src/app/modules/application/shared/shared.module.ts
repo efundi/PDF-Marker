@@ -31,6 +31,8 @@ import {MatBadgeModule} from "@angular/material/badge";
 import {MatPaginatorModule} from "@angular/material/paginator";
 import {DragDropModule} from "@angular/cdk/drag-drop";
 import {YesAndNoConfirmationDialogComponent} from './components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import { MarkingCommentModalComponent } from './components/marking-comment-modal/marking-comment-modal.component';
+import {BrowserModule} from "@angular/platform-browser";
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -61,7 +63,7 @@ const SHARED_MODULES = [
 const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent],
   imports: [
     CommonModule,
     MatIconModule,
@@ -70,10 +72,13 @@ const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, Al
     MatExpansionModule,
     MatListModule,
     MatDividerModule,
-    MatToolbarModule
+    MatToolbarModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatInputModule
   ],
   providers: [{provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true}, AssignmentService],
   exports: [ ...SHARED_MODULES, ...SHARED_COMPONENTS ],
-  entryComponents: [ FileExplorerModalComponent, YesAndNoConfirmationDialogComponent ]
+  entryComponents: [ FileExplorerModalComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent ]
 })
 export class SharedModule { }

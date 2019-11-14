@@ -1,6 +1,10 @@
 import {Component, ComponentRef, Input, OnInit} from '@angular/core';
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
+import {MatDialogConfig} from "@angular/material/dialog";
+import {FinaliseMarkingComponent} from "@pdfMarkerModule/components/finalise-marking/finalise-marking.component";
+import {AppService} from "@coreModule/services/app.service";
+import {MarkingCommentModalComponent} from "@sharedModule/components/marking-comment-modal/marking-comment-modal.component";
 
 @Component({
   selector: 'pdf-marker-mark-type-icon',
@@ -37,7 +41,7 @@ export class MarkTypeIconComponent implements OnInit {
 
   colour: string;
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder, private appService: AppService) {}
 
   ngOnInit() {
     this.initForm();
@@ -58,6 +62,7 @@ export class MarkTypeIconComponent implements OnInit {
   }
 
   onEdit(event) {
+    this.openMarkingCommentModal("Marking Comment", "");
     event.stopPropagation();
   }
 
@@ -134,5 +139,16 @@ export class MarkTypeIconComponent implements OnInit {
 
   get dimensions() {
     return this.widthAndHeight;
+  }
+
+  private openMarkingCommentModal(title: string = 'Marking Comment', message: string) {
+      const config = new MatDialogConfig();
+      config.width = "400px";
+      config.maxWidth = "400px";
+      config.data = {
+        title: title,
+        message: message,
+      };
+      this.appService.createDialog(MarkingCommentModalComponent, config);
   }
 }

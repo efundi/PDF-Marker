@@ -21,6 +21,7 @@ import {MatDialog, MatDialogConfig} from "@angular/material/dialog";
 import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 import {FinaliseMarkingComponent} from "@pdfMarkerModule/components/finalise-marking/finalise-marking.component";
+import {MarkingCommentModalComponent} from "@sharedModule/components/marking-comment-modal/marking-comment-modal.component";
 
 @Component({
   selector: 'pdf-marker-assignment-marking',
@@ -197,9 +198,16 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         case IconTypeEnum.FULL_MARK :
         case IconTypeEnum.HALF_MARK :
         case IconTypeEnum.ACK_MARK  :
-        case IconTypeEnum.CROSS     :
-        case IconTypeEnum.NUMBER    : this.createMarkIcon(event);
+        case IconTypeEnum.CROSS     : this.createMarkIcon(event);
                                       break;
+
+        case IconTypeEnum.NUMBER    : {
+          this.createMarkIcon(event);
+          this.openMarkingCommentDialog('Marking Comment', '');
+          break;
+        }
+
+
         default:  console.log("No icon type found!");
                   break;
       }
@@ -373,6 +381,18 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       incorrectTick: (incorrectTick <= 0) ? incorrectTick:0
     };
     this.appService.createDialog(FinaliseMarkingComponent, config);
+  }
+
+  private openMarkingCommentDialog(title: string = "Marking Comment", message: string) {
+    const config = new MatDialogConfig();
+    config.width = "400px";
+    config.maxWidth = "500px";
+    config.data = {
+      title: title,
+      message: message,
+    };
+
+    this.appService.createDialog(MarkingCommentModalComponent, config);
   }
 
   ngOnDestroy(): void {
