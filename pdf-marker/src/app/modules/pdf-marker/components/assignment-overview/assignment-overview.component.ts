@@ -6,6 +6,8 @@ import {Subscription} from "rxjs";
 import {AppService} from "@coreModule/services/app.service";
 import {MatPaginator} from "@angular/material/paginator";
 import {MatTableDataSource} from "@angular/material/table";
+import {MatDialogConfig} from "@angular/material/dialog";
+import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
 
 export interface AssignmentDetails {
   studentName: string;
@@ -107,6 +109,29 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         this.router.navigate(["/marker/assignment/marking"]);
     })
   }
+
+  onFinalizeAndExport() {
+    this.openYesNoConfirmationDialog(null, "Are you sure you want to finalise and zip this assignment?");
+  }
+
+  private openYesNoConfirmationDialog(title: string = "Confirm", message: string) {
+    const config = new MatDialogConfig();
+    config.width = "400px";
+    config.maxWidth = "400px";
+    config.data = {
+      title: title,
+      message: message,
+    };
+
+    const shouldFinalizeAndExportFn = (shouldFinalizeAndExport: boolean) => {
+      if(shouldFinalizeAndExport) {
+        console.log("Should Finalize and Export");
+      }
+    };
+    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldFinalizeAndExportFn);
+  }
+
+
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
