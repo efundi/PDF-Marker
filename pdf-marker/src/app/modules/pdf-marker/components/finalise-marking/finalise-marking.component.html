@@ -14,7 +14,7 @@
     </mat-list>
     <span class="pdf-spacer"></span>
     <mat-list>
-      <mat-list-item class="pdf-marker-finalise-marking-modal-result-total"><p>Total = {{ totalMark }}</p></mat-list-item>
+      <mat-list-item class="pdf-marker-finalise-marking-modal-result-total"><p>Total = {{ (totalMark >= 0) ? totalMark:0 }}</p></mat-list-item>
     </mat-list>
   </div>
   <p class="pdf-marker-finalise-marking-modal-footer">Note: This is only a preview. Please go to Assignment Overview to Finalise and Export</p>
