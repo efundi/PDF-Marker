@@ -1,27 +1,30 @@
 <ng-container>
-  <div mat-dialog-title class="pdf-marker-yes-and-no-confirmation-dialog-title"><h2>{{ title }}</h2></div>
-  <div mat-dialog-content class="pdf-marker-yes-and-no-confirmation-dialog-content">{{ message }}</div>
   <div class="pdf-spacer" style="border: 1px solid #F5F5F5"></div>
-
   <form [formGroup]="commentForm">
     <h1><mat-icon>add_comment</mat-icon> Marking Comment</h1>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
-    <mat-form-field [formGroupName]="sectionLabel" class="settings-halfWidth">
+    <mat-form-field class="settings-halfWidth">
       <mat-label>Section Title</mat-label>
       <input formControlName="sectionLabel" type="text" placeholder="Question/Section ..." matInput required [autocomplete]="false">
     </mat-form-field><br>
     <div class="pdf-spacer"></div>
     <mat-divider></mat-divider>
-    <mat-form-field [formGroupName]="comment" class="settings-halfWidth">
+    <mat-form-field >
+      <mat-label>Mark:</mat-label>
+      <input  type="number" formControlName="totalMark" placeholder="Mark Value..." matInput required [autocomplete]="false">
+    </mat-form-field><br>
+    <div class="pdf-spacer"></div>
+    <mat-divider></mat-divider>
+    <mat-form-field style="width:100%">
       <mat-label>Comment:</mat-label>
-      <textarea formControlName="markingComment" type="text" matInput placeholder="Marking comment to student..."></textarea>
+      <textarea formControlName="markingComment" type="text" matInput placeholder="Marking comment to student...">{{ comment }}</textarea>
     </mat-form-field>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
-    <div>
-      <button type="button" mat-raised-button color="" [disabled]="commentForm.invalid" (click)="onSubmit($event)">Save</button>
-      <button type="button" mat-raised-button color="" (click)="onCancel($event)">Cancel</button>
+    <div  mat-dialog-actions class="pdf-marker-yes-and-no-confirmation-dialog-actions">
+      <button style="padding-right: 15px" type="button" class="pdf-marker-yes-and-no-confirmation-dialog-yes" mat-button color="" (click)="onSubmit($event)">Save</button>
+      <button type="button" class="pdf-marker-yes-and-no-confirmation-dialog-no" mat-button color="" (click)="onCancel($event)">Cancel</button>
     </div>
   </form>
 </ng-container>

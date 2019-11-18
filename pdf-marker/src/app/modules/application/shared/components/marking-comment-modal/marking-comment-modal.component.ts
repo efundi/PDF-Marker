@@ -2,6 +2,7 @@ import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
 import {AppService} from "@coreModule/services/app.service";
+import validate = WebAssembly.validate;
 
 @Component({
   selector: 'pdf-marker-marking-comment-modal',
@@ -24,6 +25,8 @@ export class MarkingCommentModalComponent implements OnInit {
 
   readonly no: boolean = false;
 
+  private totalMark: number = undefined;
+
   constructor(private appService: AppService, private dialogRef: MatDialogRef<MarkingCommentModalComponent>,
               @Inject(MAT_DIALOG_DATA) config, private fb: FormBuilder) {
     this.title = config.title;
@@ -36,7 +39,8 @@ export class MarkingCommentModalComponent implements OnInit {
   private initForm() {
     this.commentForm = this.fb.group({
       sectionLabel: [null, Validators.required],
-      markingComment: [null]
+      markingComment: [null],
+      totalMark: [null, (this.totalMark) ? this.totalMark : 0, Validators.required, Validators.pattern('^[0-9]*$')]
     });
   }
 
@@ -46,14 +50,10 @@ export class MarkingCommentModalComponent implements OnInit {
   }
 
   onSubmit($event: MouseEvent) {
-    if (this.commentForm.invalid) {
-     // event.target.disabled = true;
-      return;
-    } else {
-      this.sectionLabel = this.commentForm.controls.sectionLabel.value;
-      if (this.commentForm.controls.comment.value != null) {
-        this.comment = this.commentForm.controls.comment.value;
-      }
+    this.sectionLabel = this.commentForm.controls.sectionLabel.value;
+    if (this.commentForm.controls.comment.value != null) {
+      this.comment = this.commentForm.controls.comment.value;
     }
+    this.dialogRef.close(true);
   }
 }
