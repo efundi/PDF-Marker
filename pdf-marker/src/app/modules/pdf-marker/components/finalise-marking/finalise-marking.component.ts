@@ -54,8 +54,7 @@ export class FinaliseMarkingComponent implements OnInit {
         }
       });
 
-
-      this.totalMark = (((this.generalMarks >= 0) ? this.generalMarks : 0) + ((this.numberCommentMarks >= 0) ? this.numberCommentMarks : 0));
+      this.totalMark = this.generalMarks + this.numberCommentMarks;
     }
   }
 
