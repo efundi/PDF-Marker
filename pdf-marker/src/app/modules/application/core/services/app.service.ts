@@ -30,7 +30,9 @@ export class AppService {
   createDialog(component: ComponentType<any>, config: MatDialogConfig, callback: any = () => {}) {
     this.isLoading$.next(true);
     const dialogConfig: MatDialogConfig = config;
-    dialogConfig.disableClose = false;
+    if (!dialogConfig.disableClose) {
+      dialogConfig.disableClose = false;
+    }
     dialogConfig.autoFocus = true;
 
     const dialog = this.dialog.open(component, dialogConfig);

@@ -33,6 +33,8 @@ export class MarkTypeIconComponent implements OnInit {
 
   comment: string;
 
+  sectionLabel: string;
+
   markType: IconTypeEnum;
 
   iconTypeEnum = IconTypeEnum;
@@ -40,6 +42,8 @@ export class MarkTypeIconComponent implements OnInit {
   showOptions: boolean;
 
   colour: string;
+
+  config: MatDialogConfig;
 
   constructor(private fb: FormBuilder, private appService: AppService) {}
 
@@ -114,11 +118,30 @@ export class MarkTypeIconComponent implements OnInit {
   }
 
   setTotalMark(totalMark: number) {
+    if (this.iconForm) {
+      this.iconForm.controls.totalMark.setValue(totalMark);
+    }
     this.totalMark = totalMark;
   }
 
   getTotalMark(): number {
     return this.totalMark;
+  }
+
+  setComment(comment: string) {
+    this.comment = comment;
+  }
+
+  getComment(): string {
+    return this.comment;
+  }
+
+  setSectionLabel(label: string) {
+    this.sectionLabel = label;
+  }
+
+  getSectionLabel(): string {
+    return this.sectionLabel;
   }
 
   setMarkType(markType: IconTypeEnum) {
@@ -142,13 +165,21 @@ export class MarkTypeIconComponent implements OnInit {
   }
 
   private openMarkingCommentModal(title: string = 'Marking Comment', message: string) {
-      const config = new MatDialogConfig();
-      config.width = "400px";
-      config.maxWidth = "400px";
-      config.data = {
-        title: title,
-        message: message,
-      };
-      this.appService.createDialog(MarkingCommentModalComponent, config);
-  }
+    const config = new MatDialogConfig();
+    config.width = "400px";
+    config.maxWidth = "500px";
+    config.data = {
+      markingComment: this.comment,
+      sectionLabel: this.sectionLabel,
+      totalMark: this.totalMark
+    };
+    const handelCommentFN = (formData: any) => {
+      console.log(formData);
+      this.totalMark = formData.totalMark;
+      this.sectionLabel = formData.sectionLabel;
+      this.comment = formData.markingComment;
+    };
+    this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
+}
+
 }

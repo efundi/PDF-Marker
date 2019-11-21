@@ -21,7 +21,7 @@ import {ColorPickerModule} from "ngx-color-picker";
 import { FinaliseMarkingComponent } from './components/finalise-marking/finalise-marking.component';
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, MarkTypeIconComponent, AssignmentMarkingComponent, AssignmentMarkingSettingsComponent, FinaliseMarkingComponent],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, AssignmentMarkingSettingsComponent, FinaliseMarkingComponent],
   imports: [
     CommonModule,
     SharedModule,

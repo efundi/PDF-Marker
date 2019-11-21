@@ -147,7 +147,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       const left = this.markDetailsRawData[i].coordinates.x;
 
       this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
-      this.renderer.addClass(componentRef.location.nativeElement, 'pdf-marker-mark-type-icon');
       this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0:top) + 'px');
       this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:left) + 'px');
 
@@ -157,6 +156,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       componentRef.instance.setMarkType(this.markDetailsRawData[i].iconType);
       if(this.markDetailsRawData[i].iconType === IconTypeEnum.NUMBER) {
         componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:0);
+        componentRef.instance.setSectionLabel(this.markDetailsRawData[i].sectionLabel);
+        componentRef.instance.setComment(this.markDetailsRawData[i].comment);
       } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.FULL_MARK) {
         componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:this.assignmentSettings.defaultTick);
       } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.HALF_MARK) {
@@ -199,18 +200,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         case IconTypeEnum.FULL_MARK :
         case IconTypeEnum.HALF_MARK :
         case IconTypeEnum.ACK_MARK  :
-        case IconTypeEnum.CROSS     : this.createMarkIcon(event);
-                                      break;
-
-        case IconTypeEnum.NUMBER    : {
-          this.createMarkIcon(event);
-          this.openMarkingCommentDialog('Marking Comment', '');
+        case IconTypeEnum.CROSS     :
+        case IconTypeEnum.NUMBER    : this.createMarkIcon(event);
           break;
-        }
-
-
         default:  console.log("No icon type found!");
-                  break;
+          break;
       }
     }
   }
@@ -218,15 +212,15 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   onControl(control: string) {
     switch (control) {
       case 'save'     :   this.saveMarks();
-                          break;
+        break;
       case 'clearAll' :   this.clearMarks();
-                          break;
+        break;
       case 'settings' :   this.settings();
-                          break;
+        break;
       case 'finalise' :   this.finalise();
-                          break;
+        break;
       default:      console.log("No control '" + control + "' found!");
-                    break;
+        break;
     }
   }
 
@@ -274,7 +268,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
             coordinates: markType.getCoordinates(),
             iconName: markType.iconName,
             iconType: markType.getMarkType(),
-            totalMark: markType.getTotalMark()
+            totalMark: markType.getTotalMark(),
+            sectionLabel: markType.getSectionLabel(),
+            comment : markType.getComment()
           });
         } else {
           let totalMark;
@@ -312,7 +308,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const componentRef = this.actualContainer.createComponent(factory);
 
     this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
-    this.renderer.addClass(componentRef.location.nativeElement, 'pdf-marker-mark-type-icon');
     const minWidth = this.markerContainer.nativeElement.scrollWidth - componentRef.instance.dimensions;
     const minHeight = this.markerContainer.nativeElement.scrollHeight - componentRef.instance.dimensions;
 
@@ -334,10 +329,21 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       const totalMark = (componentRef.instance.getTotalMark() <= 0) ? componentRef.instance.getTotalMark():(this.assignmentSettings.incorrectTick <= 0) ? this.assignmentSettings.incorrectTick:0;
       componentRef.instance.setTotalMark(totalMark);
     }
+    else if (componentRef.instance.getMarkType() === IconTypeEnum.NUMBER){
+      const config = this.openNewMarkingCommentModal('Marking Comment', '');
+      const handelCommentFN = (formData: any) => {
+        console.log(formData);
+        componentRef.instance.setTotalMark(formData.totalMark);
+        componentRef.instance.setSectionLabel(formData.sectionLabel);
+        componentRef.instance.setComment(formData.markingComment);
+      };
+      this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
+    }
     this.markDetailsComponents.push(componentRef);
   }
 
   private settings() {
+    this.showSettings = !this.showSettings;
     this.showSettings = !this.showSettings;
   }
 
@@ -385,16 +391,17 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.appService.createDialog(FinaliseMarkingComponent, config);
   }
 
-  private openMarkingCommentDialog(title: string = "Marking Comment", message: string) {
+  private openNewMarkingCommentModal(title: string = "Marking Comment", message: string) {
     const config = new MatDialogConfig();
     config.width = "400px";
     config.maxWidth = "500px";
+    config.disableClose = true;
     config.data = {
       title: title,
       message: message,
     };
 
-    this.appService.createDialog(MarkingCommentModalComponent, config);
+    return config;
   }
 
   ngOnDestroy(): void {
