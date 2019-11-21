@@ -113,6 +113,10 @@ export class MarkTypeIconComponent implements OnInit {
     this.coordinates.y = parseInt(this.componentReferene.location.nativeElement.style.top.replace("px", ""));
   }
 
+  getComponentRef() {
+    return this.componentReferene;
+  }
+
   getCoordinates() {
     return this.coordinates;
   }
@@ -171,7 +175,8 @@ export class MarkTypeIconComponent implements OnInit {
     config.data = {
       markingComment: this.comment,
       sectionLabel: this.sectionLabel,
-      totalMark: this.totalMark
+      totalMark: this.totalMark,
+      componentRef: this.componentReferene
     };
     const handelCommentFN = (formData: any) => {
       console.log(formData);

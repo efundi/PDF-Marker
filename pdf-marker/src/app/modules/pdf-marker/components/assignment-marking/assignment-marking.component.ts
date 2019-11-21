@@ -147,6 +147,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       const left = this.markDetailsRawData[i].coordinates.x;
 
       this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
+      this.renderer.addClass(componentRef.location.nativeElement, 'pdf-marker-mark-type-icon');
       this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0:top) + 'px');
       this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:left) + 'px');
 
@@ -156,8 +157,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       componentRef.instance.setMarkType(this.markDetailsRawData[i].iconType);
       if(this.markDetailsRawData[i].iconType === IconTypeEnum.NUMBER) {
         componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:0);
-        componentRef.instance.setSectionLabel(this.markDetailsRawData[i].sectionLabel);
-        componentRef.instance.setComment(this.markDetailsRawData[i].comment);
       } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.FULL_MARK) {
         componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:this.assignmentSettings.defaultTick);
       } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.HALF_MARK) {
@@ -202,9 +201,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         case IconTypeEnum.ACK_MARK  :
         case IconTypeEnum.CROSS     :
         case IconTypeEnum.NUMBER    : this.createMarkIcon(event);
-          break;
+                                      break;
         default:  console.log("No icon type found!");
-          break;
+                  break;
       }
     }
   }
@@ -212,15 +211,15 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   onControl(control: string) {
     switch (control) {
       case 'save'     :   this.saveMarks();
-        break;
+                          break;
       case 'clearAll' :   this.clearMarks();
-        break;
+                          break;
       case 'settings' :   this.settings();
-        break;
+                          break;
       case 'finalise' :   this.finalise();
-        break;
+                          break;
       default:      console.log("No control '" + control + "' found!");
-        break;
+                    break;
     }
   }
 
@@ -268,9 +267,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
             coordinates: markType.getCoordinates(),
             iconName: markType.iconName,
             iconType: markType.getMarkType(),
-            totalMark: markType.getTotalMark(),
-            sectionLabel: markType.getSectionLabel(),
-            comment : markType.getComment()
+            totalMark: markType.getTotalMark()
           });
         } else {
           let totalMark;
@@ -308,6 +305,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const componentRef = this.actualContainer.createComponent(factory);
 
     this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
+    this.renderer.addClass(componentRef.location.nativeElement, 'pdf-marker-mark-type-icon');
     const minWidth = this.markerContainer.nativeElement.scrollWidth - componentRef.instance.dimensions;
     const minHeight = this.markerContainer.nativeElement.scrollHeight - componentRef.instance.dimensions;
 
@@ -333,9 +331,14 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       const config = this.openNewMarkingCommentModal('Marking Comment', '');
       const handelCommentFN = (formData: any) => {
         console.log(formData);
+        if (formData.removeIcon) {
+        componentRef.instance.setIsDeleted(true);
+        componentRef.instance.getComponentRef().destroy();
+        } else {
         componentRef.instance.setTotalMark(formData.totalMark);
         componentRef.instance.setSectionLabel(formData.sectionLabel);
         componentRef.instance.setComment(formData.markingComment);
+      }
       };
       this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
     }

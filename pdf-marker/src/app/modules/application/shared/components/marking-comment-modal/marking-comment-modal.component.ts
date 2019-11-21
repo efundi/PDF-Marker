@@ -1,9 +1,9 @@
-import {Component, Inject, OnInit} from '@angular/core';
+import {Component, ComponentRef, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
 import {AppService} from "@coreModule/services/app.service";
-import validate = WebAssembly.validate;
 import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component";
+
 
 
 @Component({
@@ -22,6 +22,8 @@ export class MarkingCommentModalComponent implements OnInit {
 
   private markingComment: string;
 
+  private componentRef: ComponentRef<MarkTypeIconComponent>;
+
 
   readonly yes: boolean = true;
 
@@ -35,7 +37,8 @@ export class MarkingCommentModalComponent implements OnInit {
     this.initForm();
 
     this.title = config.title;
-    this.message = config.message;
+    this.message = config.message
+    this.componentRef = config.componentRef;
     if (config.markingComment) {
       this.markingComment = config.markingComment;
       this.commentForm.controls.markingComment.setValue(config.markingComment);
@@ -66,10 +69,10 @@ export class MarkingCommentModalComponent implements OnInit {
     if(this.commentForm.valid) {
       const markingCommentObj = {sectionLabel: this.markTypeIcon.getSectionLabel(),  totalMark: this.markTypeIcon.getTotalMark(), markingComment: this.markTypeIcon.getComment()};
       this.dialogRef.close(markingCommentObj);
-    }
-    else {
-      this.dialogRef.close(true);
-    }
+    } else {
+      const markingRemove = {removeIcon: true}
+      this.dialogRef.close(markingRemove);
+      }
   }
 
   onSubmit($event: MouseEvent) {
