@@ -67,7 +67,9 @@ export class MarkingCommentModalComponent implements OnInit {
       const markingCommentObj = {sectionLabel: this.markTypeIcon.getSectionLabel(),  totalMark: this.markTypeIcon.getTotalMark(), markingComment: this.markTypeIcon.getComment()};
       this.dialogRef.close(markingCommentObj);
     }
-
+    else {
+      this.dialogRef.close(true);
+    }
   }
 
   onSubmit($event: MouseEvent) {
