@@ -147,6 +147,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       const left = this.markDetailsRawData[i].coordinates.x;
 
       this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
+      this.renderer.addClass(componentRef.location.nativeElement, 'pdf-marker-mark-type-icon');
       this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0:top) + 'px');
       this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:left) + 'px');
 
@@ -311,6 +312,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const componentRef = this.actualContainer.createComponent(factory);
 
     this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
+    this.renderer.addClass(componentRef.location.nativeElement, 'pdf-marker-mark-type-icon');
     const minWidth = this.markerContainer.nativeElement.scrollWidth - componentRef.instance.dimensions;
     const minHeight = this.markerContainer.nativeElement.scrollHeight - componentRef.instance.dimensions;
 
