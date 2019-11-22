@@ -332,13 +332,13 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       const handelCommentFN = (formData: any) => {
         console.log(formData);
         if (formData.removeIcon) {
-        componentRef.instance.setIsDeleted(true);
-        componentRef.instance.getComponentRef().destroy();
+                componentRef.instance.setIsDeleted(true);
+                componentRef.instance.getComponentRef().destroy();
         } else {
-        componentRef.instance.setTotalMark(formData.totalMark);
-        componentRef.instance.setSectionLabel(formData.sectionLabel);
-        componentRef.instance.setComment(formData.markingComment);
-      }
+              componentRef.instance.setTotalMark(formData.totalMark);
+              componentRef.instance.setSectionLabel(formData.sectionLabel);
+              componentRef.instance.setComment(formData.markingComment);
+              }
       };
       this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
     }

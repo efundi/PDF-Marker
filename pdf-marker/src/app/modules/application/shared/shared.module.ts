@@ -1,39 +1,37 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {RouterModule} from "@angular/router";
-import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {RouterModule} from '@angular/router';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 // Shared Components
 import {FileExplorerComponent} from './components/file-explorer/file-explorer.component';
 import {FileExplorerModalComponent} from './components/file-explorer-modal/file-explorer-modal.component';
 import {SideNavigationComponent} from './components/side-navigation/side-navigation.component';
-import {AlertComponent} from "./components/alert/alert.component";
+import {AlertComponent} from './components/alert/alert.component';
 // Angular Material Modules
 import {MatToolbarModule} from '@angular/material/toolbar';
-import {MatDividerModule} from "@angular/material/divider";
-import {MatIconModule} from "@angular/material/icon";
-import {MatButtonModule} from "@angular/material/button";
-import {MatMenuModule} from "@angular/material/menu";
-import {MatTooltipModule} from "@angular/material/tooltip";
-import {MatListModule} from "@angular/material/list";
-import {MatSidenavModule} from "@angular/material/sidenav";
-import {MatInputModule} from "@angular/material/input";
-import {MatCheckboxModule} from "@angular/material/checkbox";
-import {MatSelectModule} from "@angular/material/select";
+import {MatDividerModule} from '@angular/material/divider';
+import {MatIconModule} from '@angular/material/icon';
+import {MatButtonModule} from '@angular/material/button';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatTooltipModule} from '@angular/material/tooltip';
+import {MatListModule} from '@angular/material/list';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatInputModule} from '@angular/material/input';
+import {MatCheckboxModule} from '@angular/material/checkbox';
+import {MatSelectModule} from '@angular/material/select';
 import {MatExpansionModule} from '@angular/material/expansion';
-import {MatDialogModule} from "@angular/material/dialog";
-import {MatProgressBarModule} from "@angular/material/progress-bar";
-import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
-import {PdfMarkerErrorInterceptorService} from "@sharedModule/services/pdf-marker-error-interceptor.service";
-import {AssignmentListComponent} from "@sharedModule/components/assignment-list/assignment-list.component";
-import {AssignmentService} from "@sharedModule/services/assignment.service";
-import {MatTableModule} from "@angular/material/table";
-import {MatBadgeModule} from "@angular/material/badge";
-import {MatPaginatorModule} from "@angular/material/paginator";
-import {DragDropModule} from "@angular/cdk/drag-drop";
+import {MatDialogModule} from '@angular/material/dialog';
+import {MatProgressBarModule} from '@angular/material/progress-bar';
+import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
+import {PdfMarkerErrorInterceptorService} from '@sharedModule/services/pdf-marker-error-interceptor.service';
+import {AssignmentListComponent} from '@sharedModule/components/assignment-list/assignment-list.component';
+import {AssignmentService} from '@sharedModule/services/assignment.service';
+import {MatTableModule} from '@angular/material/table';
+import {MatBadgeModule} from '@angular/material/badge';
+import {MatPaginatorModule} from '@angular/material/paginator';
+import {DragDropModule} from '@angular/cdk/drag-drop';
 import {YesAndNoConfirmationDialogComponent} from './components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
-import { MarkingCommentModalComponent } from './components/marking-comment-modal/marking-comment-modal.component';
-import {BrowserModule} from "@angular/platform-browser";
-import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component";
+import {MarkingCommentModalComponent} from './components/marking-comment-modal/marking-comment-modal.component';
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -57,14 +55,13 @@ const SHARED_MODULES = [
   RouterModule,
   FormsModule,
   ReactiveFormsModule,
-  DragDropModule,
   HttpClientModule
 ];
 
 const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, MarkTypeIconComponent],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent ],
   imports: [
     CommonModule,
     MatIconModule,
@@ -78,8 +75,8 @@ const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, Al
     ReactiveFormsModule,
     MatInputModule
   ],
-  providers: [{provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true}, AssignmentService, MarkTypeIconComponent],
+  providers: [{provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true}, AssignmentService ],
   exports: [ ...SHARED_MODULES, ...SHARED_COMPONENTS ],
-  entryComponents: [ FileExplorerModalComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, MarkTypeIconComponent ]
+  entryComponents: [ FileExplorerModalComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent ],
 })
 export class SharedModule { }

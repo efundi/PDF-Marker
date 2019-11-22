@@ -1,9 +1,7 @@
-import {Component, ComponentRef, Inject, OnInit} from '@angular/core';
+import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
-import {FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
+import {FormBuilder, FormControl, FormGroup, Validators} from "@angular/forms";
 import {AppService} from "@coreModule/services/app.service";
-import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component";
-
 
 
 @Component({
@@ -22,35 +20,35 @@ export class MarkingCommentModalComponent implements OnInit {
 
   private markingComment: string;
 
-  private componentRef: ComponentRef<MarkTypeIconComponent>;
-
-
   readonly yes: boolean = true;
 
   readonly no: boolean = false;
 
   private totalMark: number = undefined;
 
+  private  markingCommentObj: any;
+
   constructor(private appService: AppService, private dialogRef: MatDialogRef<MarkingCommentModalComponent>,
-              @Inject(MAT_DIALOG_DATA) config, private fb: FormBuilder, private markTypeIcon: MarkTypeIconComponent) {
+              @Inject(MAT_DIALOG_DATA) config, private fb: FormBuilder ) {
 
     this.initForm();
 
     this.title = config.title;
-    this.message = config.message
-    this.componentRef = config.componentRef;
+    this.message = config.message;
     if (config.markingComment) {
       this.markingComment = config.markingComment;
       this.commentForm.controls.markingComment.setValue(config.markingComment);
     }
     if (config.sectionLabel) {
       this.sectionLabel = config.sectionLabel;
-     this.commentForm.controls.sectionLabel.setValue(config.sectionLabel);
+      this.commentForm.controls.sectionLabel.setValue(config.sectionLabel);
     }
     if (config.totalMark) {
       this.totalMark = config.totalMark;
       this.commentForm.controls.totalMark.setValue(config.totalMark);
     }
+
+    this.markingCommentObj = {sectionLabel: this.commentForm.controls.sectionLabel.value,  totalMark: this.commentForm.controls.totalMark.value, markingComment: this.commentForm.controls.markingComment.value};
   }
 
   ngOnInit() {
@@ -67,8 +65,8 @@ export class MarkingCommentModalComponent implements OnInit {
 
   onCancel($event: MouseEvent) {
     if(this.commentForm.valid) {
-      const markingCommentObj = {sectionLabel: this.markTypeIcon.getSectionLabel(),  totalMark: this.markTypeIcon.getTotalMark(), markingComment: this.markTypeIcon.getComment()};
-      this.dialogRef.close(markingCommentObj);
+      //const markingCommentObj = {sectionLabel: this.markTypeIcon.getSectionLabel(),  totalMark: this.markTypeIcon.getTotalMark(), markingComment: this.markTypeIcon.getComment()};
+      this.dialogRef.close(this.markingCommentObj);
     } else {
       const markingRemove = {removeIcon: true}
       this.dialogRef.close(markingRemove);
@@ -77,13 +75,8 @@ export class MarkingCommentModalComponent implements OnInit {
 
   onSubmit($event: MouseEvent) {
     if (this.commentForm.valid) {
-      this.markTypeIcon.setSectionLabel(this.commentForm.controls.sectionLabel.value);
-      this.markTypeIcon.setTotalMark(this.commentForm.controls.totalMark.value);
-      if (this.commentForm.controls.markingComment.value != null) {
-        this.markTypeIcon.setComment(this.commentForm.controls.markingComment.value);
-      }
-      const markingCommentObj = {sectionLabel: this.commentForm.controls.sectionLabel.value,  totalMark: this.commentForm.controls.totalMark.value, markingComment: this.commentForm.controls.markingComment.value};
-      this.dialogRef.close(markingCommentObj);
+      this.markingCommentObj = {sectionLabel: this.commentForm.controls.sectionLabel.value,  totalMark: this.commentForm.controls.totalMark.value, markingComment: this.commentForm.controls.markingComment.value};
+      this.dialogRef.close(this.markingCommentObj);
     }
   }
 }
