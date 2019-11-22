@@ -7,7 +7,7 @@
   <div class="pdf-marker-finalise-marking-modal-content">
     <p class="pdf-marker-finalise-marking-modal-content-results">Results:</p>
     <mat-list>
-      <mat-list-item *ngFor="let markDetails of totalCommentorNumberMarks; let i = index"><p>Question {{ (i + 1) }}</p><span class="pdf-marker-fill-space"></span> {{ (markDetails?.totalMark) ? markDetails?.totalMark:0 }}</mat-list-item>
+      <mat-list-item *ngFor="let markDetails of totalCommentorNumberMarks; let i = index"><p>{{ (markDetails?.sectionLabel)+':' }}</p><span class="pdf-marker-fill-space"></span> {{ (markDetails?.totalMark) ? markDetails?.totalMark:0 }}</mat-list-item>
     </mat-list>
     <mat-list>
       <mat-list-item><p>General Marks</p><span class="pdf-marker-fill-space"></span> {{ generalMarks }}</mat-list-item>

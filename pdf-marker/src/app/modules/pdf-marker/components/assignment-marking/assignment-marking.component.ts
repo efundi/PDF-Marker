@@ -46,7 +46,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   showSettings: boolean;
   pdfPath :string;
   pdfPages: number = 0;
-  currentPage: number = 0;
+  currentPage: number = 1;
   assignmentSettings: AssignmentSettingsInfo;
   private selectedIcon: IconInfo;
   private colour: string = "#6F327A";
@@ -113,7 +113,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     const pdfViewerApplication = this.pdfViewerAutoLoad.PDFViewerApplication;
     this.currentPage = (pdfViewerApplication.page) ? pdfViewerApplication.page:this.pdfViewerAutoLoad.page;
-    const observe = new IntersectionObserver((entries) => {
+    /*const observe = new IntersectionObserver((entries) => {
       if(entries[0].isIntersecting === true) {
         const target: any = entries[0].target;
         const pageNumber = parseInt(target.dataset.pageNumber);
@@ -122,20 +122,20 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
           this.currentPage = pageNumber;
         }
       }
-    }, {threshold:[0.5]});
+    }, {threshold:[0.5]});*/
 
     let maxHeight: number = 0;
     let maxWidth: number = 0;
     for(let i = this.currentPage; i <= this.pdfPages; i++) {
-      observe.observe(pdfViewerApplication.pdfViewer.viewer.children[i - 1]);
+      //observe.observe(pdfViewerApplication.pdfViewer.viewer.children[i - 1]);
       maxHeight += parseInt(pdfViewerApplication.pdfViewer.viewer.children[i - 1].style.height.replace("px", ""));
       if(!maxWidth)
         maxWidth += parseInt(pdfViewerApplication.pdfViewer.viewer.children[i - 1].style.width.replace("px", ""));
     }
 
-    this.container.nativeElement.style.height = maxHeight + "px";
+    this.container.nativeElement.style.height = (maxHeight / this.pdfPages) + "px";
     this.container.nativeElement.style.width = maxWidth + "px";
-    this.markerContainer.nativeElement.style.height = maxHeight + "px";
+    this.markerContainer.nativeElement.style.height = (maxHeight / this.pdfPages) + "px";
 
     // Set Marks if exists
     for(let i = 0; i < this.markDetailsRawData.length; i++) {
@@ -157,6 +157,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       componentRef.instance.setMarkType(this.markDetailsRawData[i].iconType);
       if(this.markDetailsRawData[i].iconType === IconTypeEnum.NUMBER) {
         componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:0);
+        componentRef.instance.setSectionLabel(this.markDetailsRawData[i].sectionLabel);
+        componentRef.instance.setComment(this.markDetailsRawData[i].comment);
       } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.FULL_MARK) {
         componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:this.assignmentSettings.defaultTick);
       } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.HALF_MARK) {
@@ -189,8 +191,15 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   onPageChanged(pageNumber) {
-    console.log(pageNumber);
+    console.log("Hello page number" + pageNumber);
+    this.appService.initializeScrollPosition();
+    //this.currentPage = pageNumber;
+  }
+
+  onPageNumberChange(pageNumber: number) {
+    console.log("number was "+ this.currentPage);
     this.currentPage = pageNumber;
+    console.log("number is "+ this.currentPage);
   }
 
   onDropClick(event) {
@@ -218,8 +227,12 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
                           break;
       case 'finalise' :   this.finalise();
                           break;
-      default:      console.log("No control '" + control + "' found!");
-                    break;
+      case 'prevPage' :   this.currentPage -= 1;
+                          break;
+      case 'nextPage' :   this.currentPage += 1;
+                          break;
+      default         :   console.log("No control '" + control + "' found!");
+                          break;
     }
   }
 
@@ -267,7 +280,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
             coordinates: markType.getCoordinates(),
             iconName: markType.iconName,
             iconType: markType.getMarkType(),
-            totalMark: markType.getTotalMark()
+            totalMark: markType.getTotalMark(),
+            sectionLabel: markType.getSectionLabel(),
+            comment : markType.getComment()
           });
         } else {
           let totalMark;
@@ -326,27 +341,25 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     } else if(componentRef.instance.getMarkType() === IconTypeEnum.CROSS) {
       const totalMark = (componentRef.instance.getTotalMark() <= 0) ? componentRef.instance.getTotalMark():(this.assignmentSettings.incorrectTick <= 0) ? this.assignmentSettings.incorrectTick:0;
       componentRef.instance.setTotalMark(totalMark);
-    }
-    else if (componentRef.instance.getMarkType() === IconTypeEnum.NUMBER){
+    } else if (componentRef.instance.getMarkType() === IconTypeEnum.NUMBER) {
       const config = this.openNewMarkingCommentModal('Marking Comment', '');
       const handelCommentFN = (formData: any) => {
         console.log(formData);
         if (formData.removeIcon) {
-                componentRef.instance.setIsDeleted(true);
-                componentRef.instance.getComponentRef().destroy();
+          componentRef.instance.setIsDeleted(true);
+          componentRef.instance.getComponentRef().destroy();
         } else {
-              componentRef.instance.setTotalMark(formData.totalMark);
-              componentRef.instance.setSectionLabel(formData.sectionLabel);
-              componentRef.instance.setComment(formData.markingComment);
-              }
+          componentRef.instance.setTotalMark(formData.totalMark);
+          componentRef.instance.setSectionLabel(formData.sectionLabel);
+          componentRef.instance.setComment(formData.markingComment);
+        }
       };
       this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
     }
     this.markDetailsComponents.push(componentRef);
   }
 
-  private settings() {
-    this.showSettings = !this.showSettings;
+  private async settings() {
     this.showSettings = !this.showSettings;
   }
 

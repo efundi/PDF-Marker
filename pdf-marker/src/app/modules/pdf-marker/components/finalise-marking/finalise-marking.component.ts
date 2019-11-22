@@ -21,6 +21,8 @@ export class FinaliseMarkingComponent implements OnInit {
 
   totalCommentorNumberMarks: any[] = [];
 
+  private sectionLabel: string = '';
+
   constructor(private dialogRef: MatDialogRef<FinaliseMarkingComponent>,
               @Inject(MAT_DIALOG_DATA) config) {
     if(config.assignmentPath) {
@@ -48,6 +50,7 @@ export class FinaliseMarkingComponent implements OnInit {
           case IconTypeEnum.NUMBER:
             this.totalCommentorNumberMarks.push(mark);
             this.numberCommentMarks += mark.totalMark;
+            this.sectionLabel = config.sectionLabel;
             break;
           default:
             break;
