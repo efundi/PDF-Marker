@@ -17,11 +17,12 @@ export class PdfMarkerErrorInterceptorService implements HttpInterceptor {
     const request = req.clone({
       setHeaders: {
         client_id: appService.client_id
-      }
+      },
+      url: (req.url.startsWith("/api")) ? "http://localhost:4200" + req.url:req.url
     });
     return next.handle(request).pipe(
       catchError((response: any) => {
-        if(response.error.errors !== undefined) {
+        if(response.error && response.error.errors !== undefined) {
           response.error.errors.forEach(error => {
             alert.error(error.msg);
           })

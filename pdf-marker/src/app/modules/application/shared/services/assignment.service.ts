@@ -1,9 +1,10 @@
 import {Inject, Injectable, Optional, PLATFORM_ID} from '@angular/core';
 import {HttpClient, HttpHeaders} from "@angular/common/http";
-import {Observable, ReplaySubject, Subject} from "rxjs";
+import {EMPTY, Observable, ReplaySubject, Subject} from "rxjs";
 import {makeStateKey, StateKey, TransferState} from "@angular/platform-browser";
 import {isPlatformServer} from "@angular/common";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
+import {catchError, retry, shareReplay} from "rxjs/operators";
 
 @Injectable({
   providedIn: 'root'
@@ -32,7 +33,12 @@ export class AssignmentService {
         this.transferState.set(transferKey, this.assignments);
       });
     } else {
-      this.assignments = this.transferState.get<object[]>(transferKey, []);
+      this.getAssignments().subscribe(assignments => {
+        this.assignments = this.transferState.get<object[]>(transferKey, assignments);
+        this.assignmentListSource$.next(this.assignments);
+      }, error => {
+        this.assignments = this.transferState.get<object[]>(transferKey, []);
+      })
     }
     this.assignmentListSource$.next(this.assignments);
   }

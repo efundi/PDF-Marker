@@ -137,15 +137,32 @@ app.post('/api/settings', [
 const settingsGet = (req, res) => {
   if(!checkClient(req, res))
     return res.status(401).send({ message: 'Forbidden access to resource!'});
-  return readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if(err)
-      return res.status(500).send({ message: 'Failed to read configurations!'});
 
-    if(!isJson(data))
-      return res.status(200).send({});
-    else
-      return res.status(200).send(JSON.parse(data.toString()));
-  })
+  if(!existsSync(CONFIG_DIR)) {
+    mkdir(CONFIG_DIR, err => {
+      if (err)
+        return res.status(500).send({message: 'Failed to create configuration directory!'});
+      return readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+        if (err)
+          return res.status(500).send({message: 'Failed to read configurations!'});
+
+        if (!isJson(data))
+          return res.status(200).send({});
+        else
+          return res.status(200).send(JSON.parse(data.toString()));
+      })
+    });
+  } else {
+    return readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+      if (err)
+        return res.status(500).send({message: 'Failed to read configurations!'});
+
+      if (!isJson(data))
+        return res.status(200).send({});
+      else
+        return res.status(200).send(JSON.parse(data.toString()));
+    })
+  }
 };
 
 app.get('/api/settings', settingsGet);

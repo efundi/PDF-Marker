@@ -19,4 +19,37 @@ mat-toolbar {
   .pdf-marker-icons-selected {
     background: violet;
   }
+
+  .pdf-marker-icons-pdf-nav-buttons {
+    height: 30px;
+    width: auto;
+    padding: 4px;
+    border: 2px solid #6F6F6F;
+    line-height: normal;
+  }
+
+  form {
+    input {
+      text-align: center;
+      border-bottom: 1px solid;
+    }
+  }
+
+  .pdf-marker-icons-pdf-nav-buttons-disabled {
+    cursor: no-drop;
+    border: 2px solid #B5B5B5;
+  }
+
+  .pdf-marker-icons-pdf-nav-icons {
+    height: auto;
+    width: auto;
+    font-size: 16px;
+    font-weight: bolder;
+    color: #6F6F6F;
+    line-height: normal;
+  }
+
+  .pdf-marker-icons-pdf-nav-icons-disabled {
+    color: #B5B5B5;
+  }
 }

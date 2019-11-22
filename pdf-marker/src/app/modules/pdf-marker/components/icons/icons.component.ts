@@ -1,21 +1,32 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import { Validators } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
+import { Component, EventEmitter, Input, OnInit, Output, OnChanges, HostListener } from '@angular/core';
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
 import {IconInfo} from "@pdfMarkerModule/info-objects/icon.info";
 import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
+
+export enum KEY_CODE {
+  RIGHT_ARROW = 39,
+  LEFT_ARROW = 37
+};
 
 @Component({
   selector: 'pdf-marker-icons',
   templateUrl: './icons.component.html',
   styleUrls: ['./icons.component.scss']
 })
-export class IconsComponent implements OnInit {
+export class IconsComponent implements OnInit, OnChanges {
 
   @Output()
   selection: EventEmitter<string> = new EventEmitter<string>();
 
   @Output()
   control: EventEmitter<string> = new EventEmitter<string>();
+
+  @Output()
+  pageNumber: EventEmitter<number> = new EventEmitter<number>();
 
   @Input()
   currentPage: number;
@@ -24,6 +35,8 @@ export class IconsComponent implements OnInit {
   pages: number;
 
   selecetedIcon: IconInfo;
+
+  iconForm: FormGroup;
 
   readonly markIcons: IconInfo[] = [
     { icon: 'check', type: IconTypeEnum.FULL_MARK, toolTip: 'Single Mark' },
@@ -34,7 +47,7 @@ export class IconsComponent implements OnInit {
 
   ];
 
-  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) {
+  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
     this.matIconRegistry.addSvgIcon(
       "halfTick",
       this.domSanitizer.bypassSecurityTrustResourceUrl("../../../assets/halftick.svg")
@@ -42,9 +55,17 @@ export class IconsComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.initForm();
+  }
+
+  private initForm() {
+    this.iconForm = this.fb.group({
+      pageNumber: [(this.currentPage) ? this.currentPage.toString():"1", Validators.required]
+    });
   }
 
   onIconClick(event, selectedIcon: IconInfo) {
+    event.stopPropagation();
     if(JSON.stringify(this.selecetedIcon) === JSON.stringify(selectedIcon)) {
       this.selecetedIcon = undefined;
       this.selection.emit(undefined);
@@ -56,8 +77,42 @@ export class IconsComponent implements OnInit {
     }
   }
 
-  onControl(controlName: string) {
+  async onControl(event, controlName: string) {
+    event.stopPropagation();
+    this.currentPage += 1;
+    console.log(this.currentPage);
     this.control.emit(controlName);
   }
 
+  onPageNumberChange(event) {
+    console.log("number changed");
+    const number = parseInt(this.iconForm.controls.pageNumber.value);
+    if(!isNaN(number) && (number >= 1 && number <= this.pages)) {
+      console.log("number emit");
+      this.currentPage = number;
+      this.pageNumber.emit(this.currentPage);
+    } else {
+      this.iconForm.controls.pageNumber.setValue((this.currentPage) ? this.currentPage.toString():"1");
+    }
+  }
+
+  @HostListener('window:keyup', ['$event'])
+  keyEvent(event: KeyboardEvent) {
+    event.stopPropagation();
+    if (event.keyCode === KEY_CODE.RIGHT_ARROW) {
+      if(this.currentPage !== this.pages)
+        this.control.emit('nextPage');
+    }
+
+    if (event.keyCode === KEY_CODE.LEFT_ARROW) {
+      if(this.currentPage !== 1)
+        this.control.emit('prevPage');
+    }
+  }
+
+
+  ngOnChanges() {
+    if(this.iconForm)
+      this.iconForm.controls.pageNumber.setValue(this.currentPage.toString());
+  }
 }

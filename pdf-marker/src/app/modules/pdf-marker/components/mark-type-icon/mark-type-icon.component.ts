@@ -2,7 +2,6 @@ import {Component, ComponentRef, Input, OnInit} from '@angular/core';
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {MatDialogConfig} from "@angular/material/dialog";
-import {FinaliseMarkingComponent} from "@pdfMarkerModule/components/finalise-marking/finalise-marking.component";
 import {AppService} from "@coreModule/services/app.service";
 import {MarkingCommentModalComponent} from "@sharedModule/components/marking-comment-modal/marking-comment-modal.component";
 
@@ -91,7 +90,7 @@ export class MarkTypeIconComponent implements OnInit {
     event.stopPropagation();
   }
 
-  onDrageEnded(event) {
+  onDragedEnded(event) {
     this.coordinates.x += event.distance.x;
     this.coordinates.y += event.distance.y;
   }
@@ -185,6 +184,5 @@ export class MarkTypeIconComponent implements OnInit {
       this.comment = formData.markingComment;
     };
     this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
-}
-
+  }
 }

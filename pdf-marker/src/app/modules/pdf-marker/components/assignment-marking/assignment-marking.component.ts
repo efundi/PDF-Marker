@@ -217,6 +217,19 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     }
   }
 
+  onMouseWheel(event) {
+    console.log(event);
+    if(event.deltaY < 0) {
+      if(this.currentPage !== 1)
+        this.currentPage += -1;
+    } else {
+      if(this.currentPage !== this.pdfPages)
+        this.currentPage += 1;
+    }
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
   onControl(control: string) {
     switch (control) {
       case 'save'     :   this.saveMarks();
