@@ -12,7 +12,7 @@
       <ng-container *ngIf="markType === iconTypeEnum.NUMBER">
         <input [style.background]="colour" [class.pdf-marker-mark-type-icon-number-icon-leave]="!showOptions"
                [class.pdf-marker-mark-type-icon-number-icon]="showOptions" type="text" formControlName="totalMark" (mouseleave)="onTotalMarkChange($event)"/>
-        <mat-icon class="pdf-marker-special-icon-attach">attach_file</mat-icon>
+        <mat-icon *ngIf="hasComment" class="pdf-marker-special-icon-attach">attach_file</mat-icon>
       </ng-container>
     </form>
   </div>

@@ -32,6 +32,8 @@ export class MarkTypeIconComponent implements OnInit {
 
   comment: string;
 
+  hasComment: boolean;
+
   sectionLabel: string;
 
   markType: IconTypeEnum;
@@ -133,6 +135,11 @@ export class MarkTypeIconComponent implements OnInit {
 
   setComment(comment: string) {
     this.comment = comment;
+    if (comment !== null) {
+      this.hasComment = true;
+    } else {
+      this.hasComment = false;
+    }
   }
 
   getComment(): string {
