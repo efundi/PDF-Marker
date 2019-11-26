@@ -1,4 +1,4 @@
-<div cdkDrag cdkDragRootElement=".pdf-marker-mark-type-icon" class="pdf-marker-mark-type-icon-container"
+<div *ngIf="isDisplay" cdkDrag cdkDragRootElement=".pdf-marker-mark-type-icon" class="pdf-marker-mark-type-icon-container"
      cdkDragBoundary=".boundary" (click)="onClicked($event)" (mouseover)="onMouseOver($event)"
      (mouseleave)="onMouseLeave($event)" (cdkDragEnded)="onDragedEnded($event)">
   <div class="pdf-marker-mark-type-icon-options" *ngIf="showOptions">

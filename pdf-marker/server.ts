@@ -370,7 +370,7 @@ const assignmentSettings = (req, res) => {
     return res.status(200).send();
 
   // Check object compliance
-  const keys = ["defaultColour", "defaultTick", "incorrectTick"];
+  const keys = ["defaultColour"];
   const assignmentSettingsKeys = Object.keys(assignmentSettings);
   let invalidKeyFound = false;
   assignmentSettingsKeys.forEach(key => {
@@ -379,33 +379,6 @@ const assignmentSettings = (req, res) => {
 
   if(invalidKeyFound)
     return res.status(400).send({ message: 'Invalid key found in settings'});
-
-  //check object validity
-  let errorFound: boolean;
-  let message: string;
-  for(let i = 0; i < assignmentSettingsKeys.length; i++) {
-    let value = assignmentSettings[assignmentSettingsKeys[i]];
-    let key = assignmentSettingsKeys[i];
-    if(key === keys[1] || key === keys[2]) {
-      if(isNaN(value)) {
-        errorFound = true;
-        message = key + " should be a number";
-      } else {
-        assignmentSettings[assignmentSettingsKeys[i]] = value = parseInt(value);
-      }
-
-      if(key === keys[1] && value < 1) {
-        errorFound = true;
-        message = key + " must be >= 1";
-      } else if(key === keys[2] && value > 0) {
-        errorFound = true;
-        message = key + " must be >= 1";
-      }
-    }
-
-    if(errorFound)
-      return res.status(400).send({ message: message});
-  }
 
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)

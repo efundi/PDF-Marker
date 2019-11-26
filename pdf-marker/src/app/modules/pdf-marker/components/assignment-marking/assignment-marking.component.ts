@@ -44,15 +44,20 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   show: boolean;
   showSettings: boolean;
+  isInternalChange: boolean;
   pdfPath :string;
   pdfPages: number = 0;
   currentPage: number = 1;
+  defaultPage: number = 1;
   assignmentSettings: AssignmentSettingsInfo;
+  colour: string = "#6F327A";
+  isSelectedIcon: boolean;
   private selectedIcon: IconInfo;
-  private colour: string = "#6F327A";
   private subscription: Subscription;
-  private markDetailsComponents: ComponentRef<MarkTypeIconComponent>[] = [];
-  private markDetailsRawData: any[] = [];
+  private markDetailsComponents: any;
+  private markDetailsRawData: any[];
+  private readonly defaultFullMark = 1;
+  private readonly defaultIncorrectMark = 0;
   constructor(private renderer: Renderer2,
               private assignmentService: AssignmentService,
               private el: ElementRef,
@@ -71,9 +76,15 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
       if (pdfPath) {
-        this.markDetailsComponents.forEach(componentRef => {
-          componentRef.destroy();
+        const pagesArray = Object.keys(this.markDetailsComponents);
+        pagesArray.forEach(page => {
+          if (Array.isArray(this.markDetailsComponents[page])) {
+            this.markDetailsComponents[page].forEach(markComponentRef => {
+              markComponentRef.destroy();
+            });
+          }
         });
+        this.currentPage = 1;
         this.getAssignmentProgress(true);
       }
     });
@@ -113,21 +124,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     const pdfViewerApplication = this.pdfViewerAutoLoad.PDFViewerApplication;
     this.currentPage = (pdfViewerApplication.page) ? pdfViewerApplication.page:this.pdfViewerAutoLoad.page;
-    /*const observe = new IntersectionObserver((entries) => {
-      if(entries[0].isIntersecting === true) {
-        const target: any = entries[0].target;
-        const pageNumber = parseInt(target.dataset.pageNumber);
-
-        if(!isNaN(pageNumber)) {
-          this.currentPage = pageNumber;
-        }
-      }
-    }, {threshold:[0.5]});*/
 
     let maxHeight: number = 0;
     let maxWidth: number = 0;
     for(let i = this.currentPage; i <= this.pdfPages; i++) {
-      //observe.observe(pdfViewerApplication.pdfViewer.viewer.children[i - 1]);
       maxHeight += parseInt(pdfViewerApplication.pdfViewer.viewer.children[i - 1].style.height.replace("px", ""));
       if(!maxWidth)
         maxWidth += parseInt(pdfViewerApplication.pdfViewer.viewer.children[i - 1].style.width.replace("px", ""));
@@ -138,37 +138,22 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.markerContainer.nativeElement.style.height = (maxHeight / this.pdfPages) + "px";
 
     // Set Marks if exists
-    for(let i = 0; i < this.markDetailsRawData.length; i++) {
+    const pages = Object.keys(this.markDetailsRawData);
+    pages.forEach(page => {
+      if(Array.isArray(this.markDetailsRawData[page])) {
+        for (let i = 0; i < this.markDetailsRawData[page].length; i++) {
+          const factory: ComponentFactory<MarkTypeIconComponent> = this.resolver.resolveComponentFactory(MarkTypeIconComponent);
+          const componentRef = this.actualContainer.createComponent(factory);
+          this.createMark(componentRef, this.markDetailsRawData[page][i]);
 
-      const factory: ComponentFactory<MarkTypeIconComponent> = this.resolver.resolveComponentFactory(MarkTypeIconComponent);
-      const componentRef = this.actualContainer.createComponent(factory);
-
-      const top = this.markDetailsRawData[i].coordinates.y;
-      const left = this.markDetailsRawData[i].coordinates.x;
-
-      this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
-      this.renderer.addClass(componentRef.location.nativeElement, 'pdf-marker-mark-type-icon');
-      this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0:top) + 'px');
-      this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:left) + 'px');
-
-      componentRef.instance.setComponentRef(componentRef);
-      componentRef.instance.iconName = this.markDetailsRawData[i].iconName;
-      componentRef.instance.colour = this.colour;
-      componentRef.instance.setMarkType(this.markDetailsRawData[i].iconType);
-      if(this.markDetailsRawData[i].iconType === IconTypeEnum.NUMBER) {
-        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:0);
-        componentRef.instance.setSectionLabel(this.markDetailsRawData[i].sectionLabel);
-        componentRef.instance.setComment(this.markDetailsRawData[i].comment);
-      } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.FULL_MARK) {
-        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:this.assignmentSettings.defaultTick);
-      } else if(this.markDetailsRawData[i].iconType === IconTypeEnum.HALF_MARK) {
-        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark) ? this.markDetailsRawData[i].totalMark:this.assignmentSettings.defaultTick / 2)
+          if(this.markDetailsComponents[this.currentPage - 1])
+            this.markDetailsComponents[this.currentPage - 1].push(componentRef);
+          else
+            this.markDetailsComponents[this.currentPage - 1] = [componentRef];
+          console.log(this.markDetailsComponents);
+        }
       }
-      else if(this.markDetailsRawData[i].iconType === IconTypeEnum.CROSS) {
-        componentRef.instance.setTotalMark((this.markDetailsRawData[i].totalMark <= 0) ? this.markDetailsRawData[i].totalMark:this.assignmentSettings.incorrectTick);
-      }
-      this.markDetailsComponents.push(componentRef);
-    }
+    });
     this.show = true;
     this.appService.isLoading$.next(false);
   }
@@ -176,8 +161,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   onSelectedIcon(selectedIcon: string) {
     try {
       this.selectedIcon = JSON.parse(selectedIcon);
+      this.isSelectedIcon = true;
       this.renderer.addClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
     } catch (e) {
+      this.isSelectedIcon = false;
       this.selectedIcon = undefined;
       this.renderer.removeClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
     }
@@ -185,21 +172,21 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   onColourChanged(colour: string) {
     this.colour = colour;
-    this.getActiveComponents().forEach(component => {
-      component.instance.colour = this.colour;
-    });
+  }
+
+  onColourPickerClose(colour: string) {
+    if(this.colour !== this.assignmentSettings.defaultColour)
+      this.onAssignmentSettings({defaultColour: colour});
+    console.log("closed");
   }
 
   onPageChanged(pageNumber) {
-    console.log("Hello page number" + pageNumber);
     this.appService.initializeScrollPosition();
-    //this.currentPage = pageNumber;
+    this.pageMarks();
   }
 
   onPageNumberChange(pageNumber: number) {
-    console.log("number was "+ this.currentPage);
     this.currentPage = pageNumber;
-    console.log("number is "+ this.currentPage);
   }
 
   onDropClick(event) {
@@ -219,6 +206,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   onMouseWheel(event) {
     console.log(event);
+    event.stopImmediatePropagation();
+    event.preventDefault();
     if(event.deltaY < 0) {
       if(this.currentPage !== 1)
         this.currentPage += -1;
@@ -226,8 +215,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       if(this.currentPage !== this.pdfPages)
         this.currentPage += 1;
     }
-    event.stopPropagation();
-    event.preventDefault();
   }
 
   onControl(control: string) {
@@ -252,7 +239,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   onAssignmentSettings(settings: AssignmentSettingsInfo) {
     this.appService.isLoading$.next(true);
     this.assignmentService.assignmentSettings(settings).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
-      console.log("Successful");
       this.assignmentSettings = assignmentSettings;
       this.appService.isLoading$.next(false);
     }, error => {
@@ -285,91 +271,101 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   private getMarksToSave(): any[] {
     const markDetails = [];
-    this.markDetailsComponents.forEach(markComponent => {
-      if(!markComponent.instance.deleted) {
-        const markType = markComponent.instance;
-        if(markType.getMarkType() === IconTypeEnum.NUMBER) {
-          markDetails.push({
-            coordinates: markType.getCoordinates(),
-            iconName: markType.iconName,
-            iconType: markType.getMarkType(),
-            totalMark: markType.getTotalMark(),
-            sectionLabel: markType.getSectionLabel(),
-            comment : markType.getComment()
-          });
-        } else {
-          let totalMark;
-          if(markType.getMarkType() === IconTypeEnum.FULL_MARK) {
-            totalMark = (markType.getTotalMark() >= 1) ? markType.getTotalMark():(this.assignmentSettings.defaultTick >= 1) ? this.assignmentSettings.defaultTick:1;
-          } else if(markType.getMarkType() === IconTypeEnum.HALF_MARK) {
-            totalMark = (markType.getTotalMark() > 0) ? markType.getTotalMark():(this.assignmentSettings.defaultTick >= 1) ? this.assignmentSettings.defaultTick / 2: 0.5;
-          } else if(markType.getMarkType() === IconTypeEnum.CROSS) {
-            totalMark = (markType.getTotalMark() <= 0) ? markType.getTotalMark():(this.assignmentSettings.incorrectTick <= 0) ? this.assignmentSettings.incorrectTick:0;
+
+    const pagesArray = Object.keys(this.markDetailsComponents);
+    pagesArray.forEach(page => {
+      if(Array.isArray(this.markDetailsComponents[page])) {
+        this.markDetailsComponents[page].forEach(markComponent => {
+          if (!markComponent.instance.deleted) {
+            const markType = markComponent.instance;
+            const markDetailsData: any = {};
+            markDetailsData.coordinates = markType.getCoordinates();
+            markDetailsData.iconName = markType.getIconName();
+            markDetailsData.iconType = markType.getMarkType();
+            markDetailsData.totalMark = markType.getTotalMark();
+            markDetailsData.colour = markType.getColour();
+            markDetailsData.pageNumber = markType.getPageNumber();
+
+            if (markType.getMarkType() === IconTypeEnum.NUMBER) {
+              markDetailsData.sectionLabel = markType.getSectionLabel();
+              markDetailsData.comment = markType.getComment();
+            }
+
+            if (markDetails[page]) {
+              markDetails[page].push(markDetailsData);
+            } else {
+              markDetails[page] = [markDetailsData];
+            }
           }
-          markDetails.push({
-            coordinates: markType.getCoordinates(),
-            iconName: markType.iconName,
-            iconType: markType.getMarkType(),
-            totalMark: totalMark
-          });
-        }
+        });
       }
     });
     return markDetails;
   }
 
-  private getActiveComponents(): ComponentRef<MarkTypeIconComponent>[] {
-    const markDetailsComponents: ComponentRef<MarkTypeIconComponent>[] = [];
-    this.markDetailsComponents.forEach(markComponent => {
-      if (!markComponent.instance.deleted)
-        markDetailsComponents.push(markComponent);
-    });
-
-    return markDetailsComponents;
-  }
-
   private createMarkIcon(event) {
     const factory: ComponentFactory<MarkTypeIconComponent> = this.resolver.resolveComponentFactory(MarkTypeIconComponent);
     const componentRef = this.actualContainer.createComponent(factory);
+    this.createMark(componentRef, {event: event});
+    if(this.markDetailsComponents[this.currentPage - 1])
+      this.markDetailsComponents[this.currentPage - 1].push(componentRef);
+    else
+      this.markDetailsComponents[this.currentPage - 1] = [componentRef];
+    console.log(this.markDetailsComponents);
+  }
+
+  private createMark(componentRef: ComponentRef<MarkTypeIconComponent>, markTypeIconData = null) {
+    const event = markTypeIconData.event;
+    const top = (event) ? event.offsetY - (componentRef.instance.dimensions / 2):markTypeIconData.coordinates.y;
+    const left = (event) ? event.offsetX -  (componentRef.instance.dimensions / 2):markTypeIconData.coordinates.x;
 
     this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
     this.renderer.addClass(componentRef.location.nativeElement, 'pdf-marker-mark-type-icon');
-    const minWidth = this.markerContainer.nativeElement.scrollWidth - componentRef.instance.dimensions;
-    const minHeight = this.markerContainer.nativeElement.scrollHeight - componentRef.instance.dimensions;
-
-    const top = event.offsetY - (componentRef.instance.dimensions / 2);
-    const left = event.offsetX -  (componentRef.instance.dimensions / 2);
-
-    this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0:((top > minHeight) ? minHeight:top)) + 'px');
-    this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:((left > minWidth) ? minWidth:left)) + 'px');
+    if(event) {
+      const minWidth = this.markerContainer.nativeElement.scrollWidth - componentRef.instance.dimensions;
+      const minHeight = this.markerContainer.nativeElement.scrollHeight - componentRef.instance.dimensions;
+      this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0 : ((top > minHeight) ? minHeight : top)) + 'px');
+      this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0 : ((left > minWidth) ? minWidth : left)) + 'px');
+    } else {
+      this.renderer.setStyle(componentRef.location.nativeElement, 'top', ((top < 0) ? 0:top) + 'px');
+      this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:left) + 'px');
+    }
 
     componentRef.instance.setComponentRef(componentRef);
-    componentRef.instance.iconName = this.selectedIcon.icon;
-    componentRef.instance.colour = this.colour;
-    console.log(this.colour);
-    componentRef.instance.setMarkType(this.selectedIcon.type);
+    componentRef.instance.setIconName((event) ? this.selectedIcon.icon:markTypeIconData.iconName);
+    componentRef.instance.setColour((event) ? this.colour:markTypeIconData.colour);
+    componentRef.instance.setMarkType((event) ? this.selectedIcon.type:markTypeIconData.iconType);
+    componentRef.instance.setPageNumber((event) ? this.currentPage:markTypeIconData.pageNumber);
+    if(componentRef.instance.getPageNumber() === this.currentPage)
+      componentRef.instance.isDisplay = true;
+
     if(componentRef.instance.getMarkType() === IconTypeEnum.FULL_MARK) {
-      const totalMark = (componentRef.instance.getTotalMark() >= 1) ? componentRef.instance.getTotalMark():(this.assignmentSettings.defaultTick >= 1) ? this.assignmentSettings.defaultTick:1;
-      componentRef.instance.setTotalMark(totalMark);
+      componentRef.instance.setTotalMark(this.defaultFullMark);
+    } else if(componentRef.instance.getMarkType() === IconTypeEnum.HALF_MARK) {
+      componentRef.instance.setTotalMark((this.defaultFullMark / 2));
     } else if(componentRef.instance.getMarkType() === IconTypeEnum.CROSS) {
-      const totalMark = (componentRef.instance.getTotalMark() <= 0) ? componentRef.instance.getTotalMark():(this.assignmentSettings.incorrectTick <= 0) ? this.assignmentSettings.incorrectTick:0;
-      componentRef.instance.setTotalMark(totalMark);
+      componentRef.instance.setTotalMark(this.defaultIncorrectMark);
     } else if (componentRef.instance.getMarkType() === IconTypeEnum.NUMBER) {
-      const config = this.openNewMarkingCommentModal('Marking Comment', '');
-      const handelCommentFN = (formData: any) => {
-        console.log(formData);
-        if (formData.removeIcon) {
-          componentRef.instance.setIsDeleted(true);
-          componentRef.instance.getComponentRef().destroy();
-        } else {
-          componentRef.instance.setTotalMark(formData.totalMark);
-          componentRef.instance.setSectionLabel(formData.sectionLabel);
-          componentRef.instance.setComment(formData.markingComment);
-        }
-      };
-      this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
+      if(event) {
+        const config = this.openNewMarkingCommentModal('Marking Comment', '');
+        const handelCommentFN = (formData: any) => {
+          console.log(formData);
+          if (formData.removeIcon) {
+            componentRef.instance.setIsDeleted(true);
+            componentRef.instance.getComponentRef().destroy();
+          } else {
+            componentRef.instance.setTotalMark(formData.totalMark);
+            componentRef.instance.setSectionLabel(formData.sectionLabel);
+            componentRef.instance.setComment(formData.markingComment);
+          }
+        };
+        this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
+      } else {
+        componentRef.instance.setTotalMark((markTypeIconData.totalMark) ? markTypeIconData.totalMark:0);
+        componentRef.instance.setSectionLabel((markTypeIconData.sectionLabel) ? markTypeIconData.sectionLabel:"");
+        componentRef.instance.setComment((markTypeIconData.comment) ? markTypeIconData.comment:"");
+      }
     }
-    this.markDetailsComponents.push(componentRef);
   }
 
   private async settings() {
@@ -387,18 +383,34 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     const shouldDeleteFn = (shouldDelete: boolean) => {
       if(shouldDelete) {
-        this.markDetailsComponents.map(markComponent => markComponent.instance.setIsDeleted(true));
-        const markDetails = this.getMarksToSave();
-        this.saveMarks(markDetails)
-          .then(() => {
-            this.markDetailsComponents.forEach(markComponents => {
-              markComponents.destroy();
-            });
-            this.markDetailsRawData = [];
-          });
+        const pagesArray = Object.keys(this.markDetailsComponents);
+        pagesArray.forEach(page => {
+          if(Array.isArray(this.markDetailsComponents[page])) {
+            this.markDetailsComponents[page].map(markComponent => markComponent.instance.setIsDeleted(true));
+            const markDetails = this.getMarksToSave();
+            this.saveMarks(markDetails)
+              .then(() => {
+                this.markDetailsComponents[page].forEach(markComponents => {
+                  markComponents.destroy();
+                });
+                this.markDetailsRawData = [];
+              });
+          }
+        });
       }
     };
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+  }
+
+  private pageMarks() {
+    const pages = Object.keys(this.markDetailsComponents);
+    pages.forEach(page => {
+      if(Array.isArray(this.markDetailsComponents[page])) {
+        this.markDetailsComponents[page].forEach(markComponent => {
+          markComponent.instance.isDisplay = this.currentPage === markComponent.instance.getPageNumber();
+        });
+      }
+    });
   }
 
   private finalise() {
@@ -406,16 +418,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     config.width = "400px";
     config.height = "500px";
 
-    const {
-      defaultTick,
-      incorrectTick
-    } = this.assignmentSettings;
-
     config.data = {
       assignmentPath: this.assignmentService.getSelectedPdfLocation(),
       marks: this.getMarksToSave(),
-      defaultTick: (defaultTick >= 1) ? defaultTick:1,
-      incorrectTick: (incorrectTick <= 0) ? incorrectTick:0
+      defaultTick: this.defaultFullMark,
+      incorrectTick: this.defaultIncorrectMark
     };
     this.appService.createDialog(FinaliseMarkingComponent, config);
   }

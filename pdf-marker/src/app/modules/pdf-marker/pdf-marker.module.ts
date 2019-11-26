@@ -15,13 +15,12 @@ import {IconsComponent} from './components/icons/icons.component';
 import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component";
 import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
 
-import { PdfJsViewerModule } from 'ng2-pdfjs-viewer';
-import { AssignmentMarkingSettingsComponent } from './components/assignment-marking-settings/assignment-marking-settings.component';
+import {PdfJsViewerModule} from 'ng2-pdfjs-viewer';
 import {ColorPickerModule} from "ngx-color-picker";
-import { FinaliseMarkingComponent } from './components/finalise-marking/finalise-marking.component';
+import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-marking.component';
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, AssignmentMarkingSettingsComponent, FinaliseMarkingComponent, MarkTypeIconComponent],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent],
   imports: [
     CommonModule,
     SharedModule,

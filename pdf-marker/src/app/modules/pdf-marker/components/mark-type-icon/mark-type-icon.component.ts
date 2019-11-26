@@ -1,4 +1,4 @@
-import {Component, ComponentRef, Input, OnInit} from '@angular/core';
+import {Component, ComponentRef, OnInit} from '@angular/core';
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {MatDialogConfig} from "@angular/material/dialog";
@@ -12,7 +12,6 @@ import {MarkingCommentModalComponent} from "@sharedModule/components/marking-com
 })
 export class MarkTypeIconComponent implements OnInit {
 
-  @Input()
   iconName: string;
 
   private readonly widthAndHeight: number = 36;
@@ -27,6 +26,10 @@ export class MarkTypeIconComponent implements OnInit {
   private isDeleted: boolean = false;
 
   private totalMark: number = undefined;
+
+  private readonly defaultColour: string = "#6F327A";
+
+  private pageNumber: number;
 
   iconForm: FormGroup;
 
@@ -45,6 +48,8 @@ export class MarkTypeIconComponent implements OnInit {
   colour: string;
 
   config: MatDialogConfig;
+
+  isDisplay: boolean;
 
   constructor(private fb: FormBuilder, private appService: AppService) {}
 
@@ -164,6 +169,36 @@ export class MarkTypeIconComponent implements OnInit {
 
   getMarkType(): IconTypeEnum {
     return this.markType;
+  }
+
+  setColour(colour: string) {
+    this.colour = this.isColour(colour) ? colour:this.defaultColour;
+  }
+
+  getColour(): string {
+    return this.colour;
+  }
+
+  setPageNumber(pageNumber: number) {
+    this.pageNumber = pageNumber;
+  }
+
+  getPageNumber(): number {
+    return this.pageNumber;
+  }
+
+  setIconName(iconName: string) {
+    this.iconName = iconName;
+  }
+
+  getIconName(): string {
+    return this.iconName;
+  }
+
+  isColour(colour: string): boolean {
+    const style = new Option().style;
+    style.color = colour;
+    return style.color !== "";
   }
 
   get deleted(): boolean {

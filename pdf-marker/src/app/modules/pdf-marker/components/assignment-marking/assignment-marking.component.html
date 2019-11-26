@@ -1,9 +1,9 @@
 <ng-container>
   <div class="pdf-marker-assignment-marking-controls" *ngIf="show">
-    <pdf-marker-icons [currentPage]="currentPage" [pages]="pdfPages" (selection)="onSelectedIcon($event)" (control)="onControl($event)" (pageNumber)="onPageNumberChange($event)"></pdf-marker-icons>
-    <pdf-marker-assignment-marking-settings *ngIf="showSettings" (colour)="onColourChanged($event)" [settingsIn]="assignmentSettings" (settingsOut)="onAssignmentSettings($event)"></pdf-marker-assignment-marking-settings>
+    <pdf-marker-icons [selectedColour]="colour" [currentPage]="currentPage" [pages]="pdfPages" (selection)="onSelectedIcon($event)" (control)="onControl($event)" (pageNumber)="onPageNumberChange($event)" (colour)="onColourChanged($event)" (colourPickerClose)="onColourPickerClose($event)"></pdf-marker-icons>
   </div>
   <div #container class="boundary">
+    <!--<div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)" (wheel)="onMouseWheel($event)" [style.zIndex]="(isSelectedIcon) ? 'inherit':-1" [style.opacity]="(isSelectedIcon) ? 0.2:0" [style.background]="(isSelectedIcon) ? 'slategrey':'transparent'"></div>-->
     <div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)" (wheel)="onMouseWheel($event)"></div>
     <template style="height: 100%" #containerRef></template>
     <ng2-pdfjs-viewer autoscroll="true" [class.pdf-marker-assignment-marking-visible-pdf]="!show" *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"

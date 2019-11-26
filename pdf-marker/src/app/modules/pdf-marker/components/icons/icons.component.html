@@ -15,8 +15,13 @@
     <span><input matInput type="text" formControlName="pageNumber" (change)="onPageNumberChange($event)" [style.width]="iconForm.get('pageNumber')?.value?.length + 'ch'">  / {{ pages }}</span>
   </form>
   <span class="pdf-marker-fill-space"></span>
+  <div class="pdf-marker-assignment-marking-settings-color">
+    <button [style.border-color]="selectedColour" class="pdf-marker-assignment-marking-settings-color-pallette" mat-button mat-icon-button [(colorPicker)]="selectedColour" (colorPickerChange)="onColourChange($event)" (colorPickerClose)="onColourPickerClose($event)">
+      <mat-icon [style.color]="selectedColour">palette</mat-icon>
+    </button>
+    <span [style.background]="selectedColour" [style.border]="'1px solid ' + selectedColour" class="pdf-marker-assignment-marking-settings-color-choice"></span>
+  </div>&nbsp;&nbsp;
   <button matTooltip="Clear All" mat-button mat-icon-button (click)="onControl($event, 'clearAll')"><mat-icon>delete_sweep</mat-icon></button>
-  <button matTooltip="Settings" mat-button mat-icon-button (click)="onControl($event, 'settings')"><mat-icon>settings</mat-icon></button>
   <span class="pdf-marker-fill-space"></span>
   <button matTooltip="Save" style="margin-right: 0 !important" mat-button mat-icon-button (click)="onControl($event, 'save')"><mat-icon>save</mat-icon></button>
 </mat-toolbar>

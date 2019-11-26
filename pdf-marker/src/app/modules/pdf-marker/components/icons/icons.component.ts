@@ -1,11 +1,9 @@
-import { Validators } from '@angular/forms';
-import { FormBuilder } from '@angular/forms';
-import { FormGroup } from '@angular/forms';
-import { Component, EventEmitter, Input, OnInit, Output, OnChanges, HostListener } from '@angular/core';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output} from '@angular/core';
 import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
 import {IconInfo} from "@pdfMarkerModule/info-objects/icon.info";
-import { MatIconRegistry } from "@angular/material/icon";
-import { DomSanitizer } from "@angular/platform-browser";
+import {MatIconRegistry} from "@angular/material/icon";
+import {DomSanitizer} from "@angular/platform-browser";
 
 export enum KEY_CODE {
   RIGHT_ARROW = 39,
@@ -28,6 +26,12 @@ export class IconsComponent implements OnInit, OnChanges {
   @Output()
   pageNumber: EventEmitter<number> = new EventEmitter<number>();
 
+  @Output()
+  colour: EventEmitter<string> = new EventEmitter<string>();
+
+  @Output()
+  colourPickerClose: EventEmitter<string> = new EventEmitter<string>();
+
   @Input()
   currentPage: number;
 
@@ -35,6 +39,11 @@ export class IconsComponent implements OnInit, OnChanges {
   pages: number;
 
   selecetedIcon: IconInfo;
+
+  private readonly defaultColour = "#6F327A";
+
+  @Input()
+  selectedColour: string = this.defaultColour;
 
   iconForm: FormGroup;
 
@@ -79,8 +88,6 @@ export class IconsComponent implements OnInit, OnChanges {
 
   async onControl(event, controlName: string) {
     event.stopPropagation();
-    this.currentPage += 1;
-    console.log(this.currentPage);
     this.control.emit(controlName);
   }
 
@@ -110,6 +117,13 @@ export class IconsComponent implements OnInit, OnChanges {
     }
   }
 
+  onColourChange(colour: string) {
+    this.colour.emit(colour);
+  }
+
+  onColourPickerClose(colour: string) {
+    this.colourPickerClose.emit(colour);
+  }
 
   ngOnChanges() {
     if(this.iconForm)
