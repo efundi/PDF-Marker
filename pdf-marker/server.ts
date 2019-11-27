@@ -548,7 +548,6 @@ const hierarchyModel = (pathInfos, configFolder) => {
   configFolder = configFolder.replace(pattern, '/');
   let model = pathInfos.reduce((hier, pathInfo) => {
     let stat = statSync(pathInfo);
-    //if(stat.isFile()) {
     let path = pathInfo.replace(configFolder + '/', '');
     let pathObject: any = hier;
     let pathSplit = path.split("/");
@@ -565,7 +564,6 @@ const hierarchyModel = (pathInfos, configFolder) => {
       if (pathSplit.indexOf('Submission attachment(s)') > -1)
         pathObject.isPdf = true;
     }
-    //}
     return hier;
   }, {});
 

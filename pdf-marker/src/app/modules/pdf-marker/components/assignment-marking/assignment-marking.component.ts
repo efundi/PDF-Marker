@@ -42,12 +42,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   @ViewChild('containerRef', {read: ViewContainerRef, static: false})
   actualContainer: ViewContainerRef;
 
-  // @ts-ignore
-  //@ViewChild('pdfComponent') pdfComponent;
-
-  show: boolean;
   showSettings: boolean;
-  pdfPath :string;
+  pdfPath: string;
+  isPdfLoaded: boolean;
+  show: boolean;
   pdfPages: number = 0;
   currentPage: number = 1;
   assignmentSettings: AssignmentSettingsInfo;
@@ -79,14 +77,16 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
       if (pdfPath) {
-        const pagesArray = Object.keys(this.markDetailsComponents);
-        pagesArray.forEach(page => {
-          if (Array.isArray(this.markDetailsComponents[page])) {
-            this.markDetailsComponents[page].forEach(markComponentRef => {
-              markComponentRef.destroy();
-            });
-          }
-        });
+        if(!this.isNullOrUndefined(this.markDetailsComponents)) {
+          const pagesArray = Object.keys(this.markDetailsComponents);
+          pagesArray.forEach(page => {
+            if (Array.isArray(this.markDetailsComponents[page])) {
+              this.markDetailsComponents[page].forEach(markComponentRef => {
+                markComponentRef.destroy();
+              });
+            }
+          });
+        }
         this.currentPage = 1;
         this.getAssignmentProgress(true);
       }
@@ -98,6 +98,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   private getAssignmentProgress(isSubscription: boolean = false) {
+    this.isPdfLoaded = false;
     this.appService.isLoading$.next(true);
     this.assignmentService.getSavedMarks().subscribe((marks: any[]) => {
       this.markDetailsRawData = marks;
@@ -141,24 +142,30 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.markerContainer.nativeElement.style.height = (maxHeight / this.pdfPages) + "px";
 
     // Set Marks if exists
-    const pages = Object.keys(this.markDetailsRawData);
-    pages.forEach(page => {
-      if(Array.isArray(this.markDetailsRawData[page])) {
-        for (let i = 0; i < this.markDetailsRawData[page].length; i++) {
-          const factory: ComponentFactory<MarkTypeIconComponent> = this.resolver.resolveComponentFactory(MarkTypeIconComponent);
-          const componentRef = this.actualContainer.createComponent(factory);
-          this.createMark(componentRef, this.markDetailsRawData[page][i]);
+    if(!this.isNullOrUndefined(this.markDetailsRawData)) {
+      const pages = Object.keys(this.markDetailsRawData);
+      pages.forEach(page => {
+        if (Array.isArray(this.markDetailsRawData[page])) {
+          for (let i = 0; i < this.markDetailsRawData[page].length; i++) {
+            const factory: ComponentFactory<MarkTypeIconComponent> = this.resolver.resolveComponentFactory(MarkTypeIconComponent);
+            const componentRef = this.actualContainer.createComponent(factory);
+            this.createMark(componentRef, this.markDetailsRawData[page][i]);
 
-          if(this.markDetailsComponents[this.currentPage - 1])
-            this.markDetailsComponents[this.currentPage - 1].push(componentRef);
-          else
-            this.markDetailsComponents[this.currentPage - 1] = [componentRef];
-          console.log(this.markDetailsComponents);
+            if (this.markDetailsComponents[this.currentPage - 1])
+              this.markDetailsComponents[this.currentPage - 1].push(componentRef);
+            else
+              this.markDetailsComponents[this.currentPage - 1] = [componentRef];
+            console.log(this.markDetailsComponents);
+          }
         }
-      }
-    });
-    this.show = true;
+      });
+    }
+    this.isPdfLoaded = this.show = true;
     this.appService.isLoading$.next(false);
+  }
+
+  isNullOrUndefined(object: any): boolean {
+    return (object === null || object === undefined);
   }
 
   onSelectedIcon(selectedIcon: string) {
@@ -284,34 +291,36 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private getMarksToSave(): any[] {
     const markDetails = [];
 
-    const pagesArray = Object.keys(this.markDetailsComponents);
-    pagesArray.forEach(page => {
-      if(Array.isArray(this.markDetailsComponents[page])) {
-        this.markDetailsComponents[page].forEach(markComponent => {
-          if (!markComponent.instance.deleted) {
-            const markType = markComponent.instance;
-            const markDetailsData: any = {};
-            markDetailsData.coordinates = markType.getCoordinates();
-            markDetailsData.iconName = markType.getIconName();
-            markDetailsData.iconType = markType.getMarkType();
-            markDetailsData.totalMark = markType.getTotalMark();
-            markDetailsData.colour = markType.getColour();
-            markDetailsData.pageNumber = markType.getPageNumber();
+    if(!this.isNullOrUndefined(this.markDetailsComponents)) {
+      const pagesArray = Object.keys(this.markDetailsComponents);
+      pagesArray.forEach(page => {
+        if (Array.isArray(this.markDetailsComponents[page])) {
+          this.markDetailsComponents[page].forEach(markComponent => {
+            if (!markComponent.instance.deleted) {
+              const markType = markComponent.instance;
+              const markDetailsData: any = {};
+              markDetailsData.coordinates = markType.getCoordinates();
+              markDetailsData.iconName = markType.getIconName();
+              markDetailsData.iconType = markType.getMarkType();
+              markDetailsData.totalMark = markType.getTotalMark();
+              markDetailsData.colour = markType.getColour();
+              markDetailsData.pageNumber = markType.getPageNumber();
 
-            if (markType.getMarkType() === IconTypeEnum.NUMBER) {
-              markDetailsData.sectionLabel = markType.getSectionLabel();
-              markDetailsData.comment = markType.getComment();
-            }
+              if (markType.getMarkType() === IconTypeEnum.NUMBER) {
+                markDetailsData.sectionLabel = markType.getSectionLabel();
+                markDetailsData.comment = markType.getComment();
+              }
 
-            if (markDetails[page]) {
-              markDetails[page].push(markDetailsData);
-            } else {
-              markDetails[page] = [markDetailsData];
+              if (markDetails[page]) {
+                markDetails[page].push(markDetailsData);
+              } else {
+                markDetails[page] = [markDetailsData];
+              }
             }
-          }
-        });
-      }
-    });
+          });
+        }
+      });
+    }
     return markDetails;
   }
 
@@ -404,34 +413,38 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     const shouldDeleteFn = (shouldDelete: boolean) => {
       if(shouldDelete) {
-        const pagesArray = Object.keys(this.markDetailsComponents);
-        pagesArray.forEach(page => {
-          if(Array.isArray(this.markDetailsComponents[page])) {
-            this.markDetailsComponents[page].map(markComponent => markComponent.instance.setIsDeleted(true));
-            const markDetails = this.getMarksToSave();
-            this.saveMarks(markDetails)
-              .then(() => {
-                this.markDetailsComponents[page].forEach(markComponents => {
-                  markComponents.destroy();
+        if(!this.isNullOrUndefined(this.markDetailsComponents)) {
+          const pagesArray = Object.keys(this.markDetailsComponents);
+          pagesArray.forEach(page => {
+            if (Array.isArray(this.markDetailsComponents[page])) {
+              this.markDetailsComponents[page].map(markComponent => markComponent.instance.setIsDeleted(true));
+              const markDetails = this.getMarksToSave();
+              this.saveMarks(markDetails)
+                .then(() => {
+                  this.markDetailsComponents[page].forEach(markComponents => {
+                    markComponents.destroy();
+                  });
+                  this.markDetailsRawData = [];
                 });
-                this.markDetailsRawData = [];
-              });
-          }
-        });
+            }
+          });
+        }
       }
     };
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
   }
 
   private pageMarks() {
-    const pages = Object.keys(this.markDetailsComponents);
-    pages.forEach(page => {
-      if(Array.isArray(this.markDetailsComponents[page])) {
-        this.markDetailsComponents[page].forEach(markComponent => {
-          markComponent.instance.isDisplay = this.currentPage === markComponent.instance.getPageNumber();
-        });
-      }
-    });
+    if(!this.isNullOrUndefined((this.markDetailsComponents))) {
+      const pages = Object.keys(this.markDetailsComponents);
+      pages.forEach(page => {
+        if (Array.isArray(this.markDetailsComponents[page])) {
+          this.markDetailsComponents[page].forEach(markComponent => {
+            markComponent.instance.isDisplay = this.currentPage === markComponent.instance.getPageNumber();
+          });
+        }
+      });
+    }
   }
 
   private finalise() {
