@@ -100,6 +100,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   }
 
   onSelectedPdf(pdfFileLocation: string) {
+    this.appService.isLoading$.next(true);
     this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
       const blob = new Blob([blobData], { type: "application/pdf"});
       const fileUrl = URL.createObjectURL(blob);
