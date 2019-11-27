@@ -42,16 +42,19 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   @ViewChild('containerRef', {read: ViewContainerRef, static: false})
   actualContainer: ViewContainerRef;
 
+  // @ts-ignore
+  //@ViewChild('pdfComponent') pdfComponent;
+
   show: boolean;
   showSettings: boolean;
-  isInternalChange: boolean;
   pdfPath :string;
   pdfPages: number = 0;
   currentPage: number = 1;
-  defaultPage: number = 1;
   assignmentSettings: AssignmentSettingsInfo;
   colour: string = "#6F327A";
   isSelectedIcon: boolean;
+  wheelDirection: string;
+  isWheel: boolean;
   private selectedIcon: IconInfo;
   private subscription: Subscription;
   private markDetailsComponents: any;
@@ -177,12 +180,21 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   onColourPickerClose(colour: string) {
     if(this.colour !== this.assignmentSettings.defaultColour)
       this.onAssignmentSettings({defaultColour: colour});
-    console.log("closed");
   }
 
-  onPageChanged(pageNumber) {
+  onPaged(pageNumber: number) {
+    if(this.currentPage !== pageNumber && !this.isWheel) {
+      this.currentPage = pageNumber;
+    }
     this.appService.initializeScrollPosition();
     this.pageMarks();
+  }
+
+  onPagedChanged(pageNumber: number, isWheel:boolean = false) {
+    this.currentPage = pageNumber;
+    if(isWheel)
+      this.wheelDirection = undefined;
+    this.isWheel = isWheel;
   }
 
   onPageNumberChange(pageNumber: number) {
@@ -208,12 +220,12 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     console.log(event);
     event.stopImmediatePropagation();
     event.preventDefault();
-    if(event.deltaY < 0) {
-      if(this.currentPage !== 1)
-        this.currentPage += -1;
-    } else {
-      if(this.currentPage !== this.pdfPages)
-        this.currentPage += 1;
+    if(event.deltaY < 0 && this.currentPage !== 1 && this.wheelDirection !== "up") {
+      this.wheelDirection = "up";
+      this.onPagedChanged(this.currentPage - 1, true);
+    } else if(event.deltaY > 0 && this.currentPage !== this.pdfPages && this.wheelDirection !== "down") {
+      this.wheelDirection = "down";
+      this.onPagedChanged(this.currentPage + 1,true);
     }
   }
 
@@ -227,9 +239,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
                           break;
       case 'finalise' :   this.finalise();
                           break;
-      case 'prevPage' :   this.currentPage -= 1;
+      case 'prevPage' :   this.onPagedChanged(this.currentPage - 1);
                           break;
-      case 'nextPage' :   this.currentPage += 1;
+      case 'nextPage' :   this.onPagedChanged(this.currentPage + 1);
                           break;
       default         :   console.log("No control '" + control + "' found!");
                           break;
@@ -307,11 +319,18 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const factory: ComponentFactory<MarkTypeIconComponent> = this.resolver.resolveComponentFactory(MarkTypeIconComponent);
     const componentRef = this.actualContainer.createComponent(factory);
     this.createMark(componentRef, {event: event});
-    if(this.markDetailsComponents[this.currentPage - 1])
-      this.markDetailsComponents[this.currentPage - 1].push(componentRef);
-    else
-      this.markDetailsComponents[this.currentPage - 1] = [componentRef];
-    console.log(this.markDetailsComponents);
+    this.saveMarks().then((isSaved: boolean) => {
+      if(isSaved) {
+        if(this.markDetailsComponents[this.currentPage - 1])
+          this.markDetailsComponents[this.currentPage - 1].push(componentRef);
+        else
+          this.markDetailsComponents[this.currentPage - 1] = [componentRef];
+        console.log("Saved details successfully")
+      } else {
+        console.log("Error saving details");
+        componentRef.destroy();
+      }
+    });
   }
 
   private createMark(componentRef: ComponentRef<MarkTypeIconComponent>, markTypeIconData = null) {
@@ -320,6 +339,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const left = (event) ? event.offsetX -  (componentRef.instance.dimensions / 2):markTypeIconData.coordinates.x;
 
     this.renderer.setStyle(componentRef.location.nativeElement, 'position', 'absolute');
+    this.renderer.setStyle(componentRef.location.nativeElement, 'z-index', 1);
     this.renderer.addClass(componentRef.location.nativeElement, 'pdf-marker-mark-type-icon');
     if(event) {
       const minWidth = this.markerContainer.nativeElement.scrollWidth - componentRef.instance.dimensions;
@@ -331,6 +351,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       this.renderer.setStyle(componentRef.location.nativeElement, 'left', ((left < 0) ? 0:left) + 'px');
     }
 
+    componentRef.instance.setAssignmentMarkingRef(this);
     componentRef.instance.setComponentRef(componentRef);
     componentRef.instance.setIconName((event) ? this.selectedIcon.icon:markTypeIconData.iconName);
     componentRef.instance.setColour((event) ? this.colour:markTypeIconData.colour);

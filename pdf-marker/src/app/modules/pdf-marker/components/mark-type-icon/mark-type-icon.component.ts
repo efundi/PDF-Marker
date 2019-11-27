@@ -4,6 +4,7 @@ import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {MatDialogConfig} from "@angular/material/dialog";
 import {AppService} from "@coreModule/services/app.service";
 import {MarkingCommentModalComponent} from "@sharedModule/components/marking-comment-modal/marking-comment-modal.component";
+import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
 
 @Component({
   selector: 'pdf-marker-mark-type-icon',
@@ -30,6 +31,8 @@ export class MarkTypeIconComponent implements OnInit {
   private readonly defaultColour: string = "#6F327A";
 
   private pageNumber: number;
+
+  private assignmentMarkingComponentRef: AssignmentMarkingComponent;
 
   iconForm: FormGroup;
 
@@ -77,9 +80,20 @@ export class MarkTypeIconComponent implements OnInit {
   }
 
   onRemove(event) {
-    if(this.componentReferene)
-      this.componentReferene.destroy();
     this.isDeleted = true;
+    this.assignmentMarkingComponentRef.saveMarks().then((isSaved: boolean) => {
+      if(isSaved) {
+        if(this.componentReferene)
+          this.componentReferene.destroy();
+        console.log("Saved and destroyed");
+      } else {
+        this.isDeleted = false;
+        console.log("Not deleted");
+      }
+    }).catch(() => {
+      this.isDeleted = false;
+      console.log("Not deleted");
+    });
     event.stopPropagation();
   }
 
@@ -117,6 +131,10 @@ export class MarkTypeIconComponent implements OnInit {
     this.componentReferene = componentReference;
     this.coordinates.x = parseInt(this.componentReferene.location.nativeElement.style.left.replace("px", ""));
     this.coordinates.y = parseInt(this.componentReferene.location.nativeElement.style.top.replace("px", ""));
+  }
+
+  setAssignmentMarkingRef(assignmentMarkingComponentRef: AssignmentMarkingComponent) {
+    this.assignmentMarkingComponentRef = assignmentMarkingComponentRef;
   }
 
   getComponentRef() {

@@ -435,7 +435,7 @@ var PDFViewerApplication = {
 
             case 8:
               if (this.isViewerEmbedded && _app_options.AppOptions.get('externalLinkTarget') === _pdfjsLib.LinkTarget.NONE) {
-                _app_options.AppOptions.set('externalLinkTarget', _pdfjsLib.LinkTarget.TOP);
+                _app_options.AppOptions.set('externalLinkTarget', _pdfjsLib.LinkTarget.BLANK);
               }
 
               _context.next = 11;
@@ -1809,7 +1809,7 @@ var validateFileURL;
     } catch (ex) {
       var message = ex && ex.message;
       PDFViewerApplication.l10n.get('loading_error', null, 'An error occurred while loading the PDF.').then(function (loadingErrorMessage) {
-        
+
         let moreInfo = {}; //c1s
         moreInfo.message = message;
         window.setCustomError(moreInfo); //c1e
@@ -4546,7 +4546,7 @@ window.setCustomError = function(moreInfo) {
 window.applyUserDefaults = function (appOptions) {
   let locale = window.getUrlParameterByName('locale');
   if (locale) {
-    appOptions.set('locale', locale);    
+    appOptions.set('locale', locale);
   }
 
   let useOnlyCssZoom = window.getUrlParameterByName('useOnlyCssZoom');
@@ -7715,7 +7715,7 @@ function () {
           break;
         }
       }
-      
+
       let scrollMode = {
         VERTICAL: 0,
         HORIZONTAL: 1,
