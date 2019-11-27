@@ -18,7 +18,6 @@ import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment
 import {PdfJsViewerModule} from 'ng2-pdfjs-viewer';
 import {ColorPickerModule} from "ngx-color-picker";
 import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-marking.component';
-import {PdfViewerModule} from "ng2-pdf-viewer";
 
 @NgModule({
   declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent],
@@ -28,8 +27,7 @@ import {PdfViewerModule} from "ng2-pdf-viewer";
     LayoutModule,
     PdfMarkerRoutingModule,
     PdfJsViewerModule,
-    ColorPickerModule,
-    PdfViewerModule
+    ColorPickerModule
   ],
   providers: [SettingsService, ImportService],
   exports: [HomeComponent],
