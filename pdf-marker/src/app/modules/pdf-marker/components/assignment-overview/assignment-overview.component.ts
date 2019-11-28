@@ -33,6 +33,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   assignmentName: string = 'Assignment Name';
   assignmentsLength;
   assignmentPageSizeOptions: number[];
+  private assignmentGrades: any[] = [];
   private readonly submissionFolder = "Submission attachment(s)";
 
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
@@ -48,18 +49,25 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.subscription = this.assignmentService.selectedAssignmentChanged().subscribe((selectedAssignment) => {
       this.hierarchyModel = selectedAssignment;
-      this.generateDataFromModel();
+      this.getGrades();
     }, error => {
       this.appService.isLoading$.next(false);
     });
 
     if(!this.hierarchyModel && !!this.assignmentService.getSelectedAssignment()) {
       this.hierarchyModel = this.assignmentService.getSelectedAssignment();
-      this.generateDataFromModel();
+      this.getGrades();
     } else {
       this.router.navigate(["/marker"])
     }
 
+  }
+
+  private getGrades() {
+    this.assignmentService.getAssignmentGrades().subscribe((grades: any[]) => {
+      this.assignmentGrades = grades;
+      this.generateDataFromModel();
+    })
   }
 
   private generateDataFromModel() {
@@ -78,7 +86,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         value.studentName = matches[1];
         value.studentNumber = matches[2];
         value.assignment = this.hierarchyModel[this.assignmentName][key][this.submissionFolder] ? Object.keys(this.hierarchyModel[this.assignmentName][key][this.submissionFolder])[0]:'';
-        value.grade = 0;
+        const gradesInfo = this.assignmentGrades.find(gradesInfo => gradesInfo[this.assignmentName] === value.studentNumber);
+        console.log(gradesInfo);
+        value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5:0);
         value.path = (value.assignment) ? this.assignmentName + '/' + key + "/" + this.submissionFolder + "/" + value.assignment:'';
         values.push(value);
       }

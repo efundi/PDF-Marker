@@ -54,7 +54,8 @@ export class MarkTypeIconComponent implements OnInit {
 
   isDisplay: boolean;
 
-  constructor(private fb: FormBuilder, private appService: AppService) {}
+  constructor(private fb: FormBuilder,
+              private appService: AppService) {}
 
   ngOnInit() {
     this.initForm();
@@ -85,16 +86,17 @@ export class MarkTypeIconComponent implements OnInit {
       if(isSaved) {
         if(this.componentReferene)
           this.componentReferene.destroy();
-        console.log("Saved and destroyed");
+        this.appService.openSnackBar(true, "Removed");
       } else {
         this.isDeleted = false;
-        console.log("Not deleted");
+        this.appService.openSnackBar(false, "Unable to remove");
       }
     }).catch(() => {
       this.isDeleted = false;
-      console.log("Not deleted");
+      this.appService.openSnackBar(false, "Unable to remove");
     });
-    event.stopPropagation();
+    if(event)
+      event.stopPropagation();
   }
 
   onClicked(event) {
@@ -114,6 +116,16 @@ export class MarkTypeIconComponent implements OnInit {
   onDragedEnded(event) {
     this.coordinates.x += event.distance.x;
     this.coordinates.y += event.distance.y;
+
+    this.assignmentMarkingComponentRef.saveMarks().then((isSaved: boolean) => {
+      if(isSaved) {
+        this.appService.openSnackBar(true, "Saved");
+      } else {
+        this.appService.openSnackBar(false, "Unable to save");
+      }
+    }).catch(() => {
+      this.appService.openSnackBar(false, "Unable to save");
+    });
   }
 
   onTotalMarkChange(event) {

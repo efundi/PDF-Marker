@@ -3032,6 +3032,15 @@ cssesc@^0.1.0:
   resolved "https://registry.yarnpkg.com/cssesc/-/cssesc-0.1.0.tgz#c814903e45623371a0477b40109aaafbeeaddbb4"
   integrity sha1-yBSQPkViM3GgR3tAEJqq++6t27Q=
 
+csvtojson@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/csvtojson/-/csvtojson-2.0.0.tgz#688e866540814bed6d9a1648ce31bd3b8a4d570f"
+  integrity sha1-aI6GZUCBS+1tmhZIzjG9O4pNVw8=
+  dependencies:
+    bluebird "^3.5.1"
+    lodash "^4.17.3"
+    strip-bom "^2.0.0"
+
 currently-unhandled@^0.4.1:
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/currently-unhandled/-/currently-unhandled-0.4.1.tgz#988df33feab191ef799a61369dd76c17adf957ea"
@@ -3120,6 +3129,13 @@ decompress-response@^3.3.0:
   integrity sha1-gKTdMjdIOEv6JICDYirt7Jgq3/M=
   dependencies:
     mimic-response "^1.0.0"
+
+deeks@2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/deeks/-/deeks-2.2.1.tgz#4de360652998fd0a681153a9ffde5dcc6c983f4a"
+  integrity sha512-D2Qu3Fv5zBtBzXjXIUgWPRYn30d/IG6SCPOKIz42+LVTwhPeRI5+DAxdzap0vI2zYheiErIpVLwaUQBoA/iENw==
+  dependencies:
+    underscore "1.9.1"
 
 deep-equal@^1.0.1:
   version "1.1.0"
@@ -3354,6 +3370,11 @@ dns-txt@^2.0.2:
   integrity sha1-uR2Ab10nGI5Ks+fRB9iBocxGQrY=
   dependencies:
     buffer-indexof "^1.0.0"
+
+doc-path@2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/doc-path/-/doc-path-2.0.1.tgz#d2adb8bcd31c895b17b92f61eff39aaec04430d2"
+  integrity sha512-/CCG157H//3l513omROUzaREChY/OYpxqYXvQcv7gsrwGfjVOh5d/1gJigHJ6iTnO77pA8rMLZ63CgEPEM6+9Q==
 
 dom-serialize@^2.2.0:
   version "2.2.1"
@@ -5604,6 +5625,15 @@ jsesc@~0.5.0:
   resolved "https://registry.yarnpkg.com/jsesc/-/jsesc-0.5.0.tgz#e7dee66e35d6fc16f710fe91d5cf69f70f08911d"
   integrity sha1-597mbjXW/Bb3EP6R1c9p9w8IkR0=
 
+json-2-csv@^3.5.7:
+  version "3.5.7"
+  resolved "https://registry.yarnpkg.com/json-2-csv/-/json-2-csv-3.5.7.tgz#41f058787fb6e1d53c958d89ed9fcd5a5d95bf9e"
+  integrity sha512-4TyrgU5bIvXhgZRx7nZzeU25NFRUbwRChM9/QyNmxihgOYF0pSHg/U9OYIc4lDYwvYcwItPhvEB6I4XQ82ZePw==
+  dependencies:
+    deeks "2.2.1"
+    doc-path "2.0.1"
+    underscore "1.9.1"
+
 json-buffer@3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/json-buffer/-/json-buffer-3.0.0.tgz#5b1f397afc75d677bde8bcfc0e47e1f9a3d9a898"
@@ -5989,7 +6019,7 @@ lodash.without@~4.4.0:
   resolved "https://registry.yarnpkg.com/lodash.without/-/lodash.without-4.4.0.tgz#3cd4574a00b67bae373a94b748772640507b7aac"
   integrity sha1-PNRXSgC2e643OpS3SHcmQFB7eqw=
 
-lodash@^4.17.11, lodash@^4.17.13, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.4, lodash@^4.17.5:
+lodash@^4.17.11, lodash@^4.17.13, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.3, lodash@^4.17.4, lodash@^4.17.5:
   version "4.17.15"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
   integrity sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==
@@ -9707,6 +9737,11 @@ umask@~1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/umask/-/umask-1.1.0.tgz#f29cebf01df517912bb58ff9c4e50fde8e33320d"
   integrity sha1-8pzr8B31F5ErtY/5xOUP3o4zMg0=
+
+underscore@1.9.1:
+  version "1.9.1"
+  resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.9.1.tgz#06dce34a0e68a7babc29b365b8e74b8925203961"
+  integrity sha512-5/4etnCkd9c8gwgowi5/om/mYO5ajCaOgdzj/oW+0eQV9WxKBDZw5+ycmKmeaTXjInS/W0BzpGLo2xR2aBwZdg==
 
 unicode-canonical-property-names-ecmascript@^1.0.4:
   version "1.0.4"

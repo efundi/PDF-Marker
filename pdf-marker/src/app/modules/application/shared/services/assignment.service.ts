@@ -64,6 +64,14 @@ export class AssignmentService {
     return this.http.post('/api/assignment/settings/fetch', body);
   }
 
+  getAssignmentGrades() {
+    const body = {
+      location: Object.keys(this.selectedAssignment)[0]
+    };
+
+    return this.http.post('/api/assignment/grade', body);
+  }
+
   getFile(pdfFileLocation: string) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
@@ -128,5 +136,14 @@ export class AssignmentService {
 
   getSelectedPdfLocation(): string {
     return this.selectedPdfLocation;
+  }
+
+  saveStudentGrade(grade: number) {
+    const body = {
+      location: this.selectedPdfLocation,
+      totalMark: grade
+    };
+
+    return this.http.post("/api/assignment/student/grade", body);
   }
 }

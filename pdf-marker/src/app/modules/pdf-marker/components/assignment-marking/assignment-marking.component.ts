@@ -3,7 +3,7 @@ import {
   ComponentFactory,
   ComponentFactoryResolver,
   ComponentRef,
-  ElementRef,
+  ElementRef, HostListener,
   OnDestroy,
   OnInit,
   Renderer2,
@@ -267,6 +267,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   async saveMarks(marks: any[] = null): Promise<boolean> {
     const markDetails = (marks) ? marks:this.getMarksToSave();
+    console.log(markDetails);
     this.appService.isLoading$.next(true);
     return await this.assignmentService.saveMarks(markDetails).toPromise()
       .then(() => {
@@ -290,6 +291,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   private getMarksToSave(): any[] {
     const markDetails = [];
+    console.log(this.markDetailsComponents);
 
     if(!this.isNullOrUndefined(this.markDetailsComponents)) {
       const pagesArray = Object.keys(this.markDetailsComponents);
@@ -328,15 +330,16 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const factory: ComponentFactory<MarkTypeIconComponent> = this.resolver.resolveComponentFactory(MarkTypeIconComponent);
     const componentRef = this.actualContainer.createComponent(factory);
     this.createMark(componentRef, {event: event});
+    if(this.markDetailsComponents[this.currentPage - 1])
+      this.markDetailsComponents[this.currentPage - 1].push(componentRef);
+    else
+      this.markDetailsComponents[this.currentPage - 1] = [componentRef];
     this.saveMarks().then((isSaved: boolean) => {
       if(isSaved) {
-        if(this.markDetailsComponents[this.currentPage - 1])
-          this.markDetailsComponents[this.currentPage - 1].push(componentRef);
-        else
-          this.markDetailsComponents[this.currentPage - 1] = [componentRef];
-        console.log("Saved details successfully")
+        this.appService.openSnackBar(true, "Saved");
       } else {
-        console.log("Error saving details");
+        this.appService.openSnackBar(false, "Unable to save");
+        componentRef.instance.setIsDeleted(true);
         componentRef.destroy();
       }
     });
@@ -451,6 +454,15 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const config: MatDialogConfig = new MatDialogConfig();
     config.width = "400px";
     config.height = "500px";
+    config.disableClose = true;
+
+    const savedStudentGrade = (grade: number) => {
+      this.assignmentService.saveStudentGrade(grade).subscribe(() => {
+        this.appService.openSnackBar(true, "Successfully saved to grades file");
+      }, error => {
+        this.appService.openSnackBar(false, "Could not save to grades file");
+      })
+    };
 
     config.data = {
       assignmentPath: this.assignmentService.getSelectedPdfLocation(),
@@ -458,7 +470,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       defaultTick: this.defaultFullMark,
       incorrectTick: this.defaultIncorrectMark
     };
-    this.appService.createDialog(FinaliseMarkingComponent, config);
+    this.appService.createDialog(FinaliseMarkingComponent, config, savedStudentGrade);
   }
 
   private openNewMarkingCommentModal(title: string = "Marking Comment", message: string) {
@@ -472,6 +484,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     };
 
     return config;
+  }
+
+  @HostListener('window:beforeunload')
+  canDeactivate() {
+    return true;
   }
 
   ngOnDestroy(): void {

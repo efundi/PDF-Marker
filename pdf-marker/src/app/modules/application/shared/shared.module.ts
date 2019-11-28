@@ -32,6 +32,8 @@ import {MatPaginatorModule} from '@angular/material/paginator';
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import {YesAndNoConfirmationDialogComponent} from './components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {MarkingCommentModalComponent} from './components/marking-comment-modal/marking-comment-modal.component';
+import {MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule} from "@angular/material/snack-bar";
+import { SnackBarComponent } from './components/snack-bar/snack-bar.component';
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -55,13 +57,14 @@ const SHARED_MODULES = [
   RouterModule,
   FormsModule,
   ReactiveFormsModule,
-  HttpClientModule
+  HttpClientModule,
+  MatSnackBarModule
 ];
 
-const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent];
+const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent, SnackBarComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent ],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, SnackBarComponent ],
   imports: [
     CommonModule,
     MatIconModule,
@@ -75,8 +78,12 @@ const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, Al
     ReactiveFormsModule,
     MatInputModule
   ],
-  providers: [{provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true}, AssignmentService ],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true },
+    { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
+    AssignmentService
+  ],
   exports: [ ...SHARED_MODULES, ...SHARED_COMPONENTS ],
-  entryComponents: [ FileExplorerModalComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent ],
+  entryComponents: [ FileExplorerModalComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, SnackBarComponent ],
 })
 export class SharedModule { }

@@ -20,11 +20,13 @@ import 'zone.js/dist/zone-node';
 import * as express from 'express';
 import {extname, join, sep, dirname} from 'path';
 import {access, constants, readdir, readdirSync, readFile, statSync, stat, unlinkSync, unlink, writeFile, mkdir, existsSync, createReadStream} from 'fs';
+import { json2csv } from "json-2-csv";
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
 const extract = require('extract-zip');
 const glob = require('glob');
+const csvtojson = require('csvtojson');
 
 
 const CONFIG_FILE = 'config.json';
@@ -250,8 +252,8 @@ const getPdfFile = (req, res) => {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
     const config = JSON.parse(data.toString());
-    const location = req.body.location.replace(/\//g, sep);
-    const actualPath = config.defaultPath + sep + location;
+    const loc = req.body.location.replace(/\//g, sep);
+    const actualPath = config.defaultPath + sep + loc;
 
     return access(actualPath, constants.F_OK, (err) => {
       if(err)
@@ -283,8 +285,8 @@ const savingMarks = (req, res) => {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
     const config = JSON.parse(data.toString());
-    const location = req.body.location.replace(/\//g, sep);
-    const pathSplit = location.split(sep);
+    const loc = req.body.location.replace(/\//g, sep);
+    const pathSplit = loc.split(sep);
     if(pathSplit.length !== 4) {
         return res.status(404).send({message: 'Invalid path provided'});
     }
@@ -294,7 +296,7 @@ const savingMarks = (req, res) => {
       return res.status(404).send({message: 'Invalid student folder'});
     }
 
-    const studentFolder = dirname(dirname(config.defaultPath + sep + location));
+    const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
 
     return access(studentFolder, constants.F_OK, (err) => {
       if(err)
@@ -328,8 +330,8 @@ const getMarks = (req, res) => {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
     const config = JSON.parse(data.toString());
-    const location = req.body.location.replace(/\//g, sep);
-    const pathSplit = location.split(sep);
+    const loc = req.body.location.replace(/\//g, sep);
+    const pathSplit = loc.split(sep);
     if(pathSplit.length !== 4) {
       return res.status(404).send({message: 'Invalid path provided'});
     }
@@ -339,7 +341,7 @@ const getMarks = (req, res) => {
       return res.status(404).send({message: 'Invalid student folder'});
     }
 
-    const studentFolder = dirname(dirname(config.defaultPath + sep + location));
+    const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
 
     return readFile(studentFolder + sep + ".marks.json",(err, data) => {
       if(err)
@@ -388,8 +390,8 @@ const assignmentSettings = (req, res) => {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
     const config = JSON.parse(data.toString());
-    const location = req.body.location.replace(/\//g, sep);
-    const pathSplit = location.split(sep);
+    const loc = req.body.location.replace(/\//g, sep);
+    const pathSplit = loc.split(sep);
     if(pathSplit.length !== 4) {
       return res.status(404).send({message: 'Invalid path provided'});
     }
@@ -399,12 +401,12 @@ const assignmentSettings = (req, res) => {
       return res.status(404).send({message: 'Invalid student folder'});
     }
 
-    const assignmentFolder = dirname(dirname(dirname(config.defaultPath + sep + location)));
+    const assignmentFolder = dirname(dirname(dirname(config.defaultPath + sep + loc)));
     const buffer = new Uint8Array(Buffer.from(JSON.stringify(assignmentSettings)));
 
     return access(assignmentFolder, constants.F_OK, (err) => {
       if(err)
-        return res.status(404).send({ message: `Path '${location}' not found!`});
+        return res.status(404).send({ message: `Path '${loc}' not found!`});
       else {
         writeFile(assignmentFolder + sep + '.settings.json', buffer, (err) => {
           if(err)
@@ -436,8 +438,8 @@ const getAssignmentSettings = (req, res) => {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
     const config = JSON.parse(data.toString());
-    const location = req.body.location.replace(/\//g, sep);
-    const pathSplit = location.split(sep);
+    const loc = req.body.location.replace(/\//g, sep);
+    const pathSplit = loc.split(sep);
     if(pathSplit.length !== 4) {
       return res.status(404).send({message: 'Invalid path provided'});
     }
@@ -447,7 +449,7 @@ const getAssignmentSettings = (req, res) => {
       return res.status(404).send({message: 'Invalid student folder'});
     }
 
-    const assignmentFolder = dirname(dirname(dirname(config.defaultPath + sep + location)));
+    const assignmentFolder = dirname(dirname(dirname(config.defaultPath + sep + loc)));
 
     return readFile(assignmentFolder + sep + ".settings.json",(err, data) => {
       if(err)
@@ -464,6 +466,152 @@ const getAssignmentSettings = (req, res) => {
 app.post("/api/assignment/settings/fetch", [
   check('location').not().isEmpty().withMessage('Assignment location not provided!')
 ], getAssignmentSettings);
+
+const getGrades = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
+  const errors = validationResult(req);
+  if(!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
+
+  const keys = ["location"];
+  const bodyKeys = Object.keys(req.body);
+
+  if(validateRequest(keys, bodyKeys))
+    return res.status(400).send({ message: 'Invalid parameter found in request' });
+
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const config = JSON.parse(data.toString());
+    const loc = req.body.location.replace(/\//g, sep);
+
+    const assignmentFolder = config.defaultPath + sep + loc;
+    console.log(assignmentFolder);
+
+    return access(assignmentFolder + sep + "grades.csv", constants.F_OK, (err) => {
+      if(err)
+        return res.status(200).send({message: 'Could not read grades file'});
+      return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
+        .then((gradesJSON) => {
+          return res.status(200).send(gradesJSON)
+        })
+        .catch(reason => {
+          return res.status(400).send({message: reason });
+        })
+    });
+  });
+};
+
+app.post("/api/assignment/grade", [
+  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+], getGrades);
+
+const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
+  let invalidKeyFound = false;
+  for(let key of recievedKeys) {
+    if(requiredKeys.indexOf(key) == -1) {
+      invalidKeyFound = true;
+      break;
+    }
+  }
+  return invalidKeyFound;
+};
+
+const studentGrade = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
+  const errors = validationResult(req);
+  if(!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
+
+  const keys = ["location", "totalMark"];
+  const bodyKeys = Object.keys(req.body);
+
+  if(validateRequest(keys, bodyKeys))
+    return res.status(400).send({ message: 'Invalid parameter found in request' });
+
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const loc = req.body.location.replace(/\//g, sep);
+    const number = parseFloat(req.body.totalMark);
+    if(isNaN(number)) {
+      return res.status(400).send({message: 'Not a valid mark provided'});
+    }
+
+    const pathSplit = loc.split(sep);
+    if(pathSplit.length !== 4) {
+      return res.status(404).send({message: 'Invalid path provided'});
+    }
+
+    const regEx = /(.*)\((.+)\)/;
+    let assignmentName, studentNumber;
+    if(!regEx.test(pathSplit[1])) {
+      return res.status(404).send({message: 'Invalid student folder'});
+    }
+
+    const matches = regEx.exec(pathSplit[1]);
+
+    assignmentName = pathSplit[0];
+    studentNumber = matches[2];
+
+    const config = JSON.parse(data.toString());
+    const assignmentFolder =  dirname(dirname(dirname(config.defaultPath + sep + loc)));
+
+    return access(assignmentFolder + sep + "grades.csv", constants.F_OK, (err) => {
+      if(err)
+        return res.status(200).send({message: 'Could not read grades file'});
+
+      return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
+        .then((gradesJSON) => {
+          let changed = false;
+          for(let i = 0; i < gradesJSON.length; i++) {
+            if(gradesJSON[i] && gradesJSON[i][assignmentName] === studentNumber) {
+              gradesJSON[i].field5 = number;
+              changed = true;
+              console.log(gradesJSON[i]);
+              json2csv(gradesJSON, (err, csv) => {
+                if(err)
+                  return res.status(400).send({ message: "Failed to convert json to csv!" });
+
+                writeFile(assignmentFolder + sep + "grades.csv", csv, (err) => {
+                  if(err)
+                    return res.status(500).send({ message: 'Failed to save marks to grades.csv file!' });
+                  else
+                    return res.status(200).send({message: 'Successfully saved marks!'});
+                });
+              });
+              break;
+            }
+          }
+
+          if(changed) {
+            // more logic to save new JSON to CSV
+          } else {
+            return res.status(400).send({message: "Failed to save mark" });
+          }
+
+        })
+        .catch(reason => {
+          return res.status(400).send({message: reason });
+        })
+    });
+  });
+};
+
+app.post("/api/assignment/student/grade", [
+  check('location').not().isEmpty().withMessage('Assignment location not provided!'),
+  check('totalMark').not().isEmpty().withMessage('Assignment mark not provided!')
+], studentGrade);
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {

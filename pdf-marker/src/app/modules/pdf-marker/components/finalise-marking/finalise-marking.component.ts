@@ -72,7 +72,7 @@ export class FinaliseMarkingComponent implements OnInit {
   }
 
   onClose() {
-    this.dialogRef.close();
+    this.dialogRef.close((this.totalMark >= 0) ? this.totalMark:0);
   }
 
 }
