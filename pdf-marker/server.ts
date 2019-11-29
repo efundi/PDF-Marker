@@ -21,6 +21,8 @@ import * as express from 'express';
 import {extname, join, sep, dirname} from 'path';
 import {access, constants, readdir, readdirSync, readFile, statSync, stat, unlinkSync, unlink, writeFile, mkdir, existsSync, createReadStream} from 'fs';
 import { json2csv } from "json-2-csv";
+import {ComponentFactory} from "@angular/core";
+import {MarkTypeIconComponent} from "./src/app/modules/pdf-marker/components/mark-type-icon/mark-type-icon.component";
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
@@ -269,6 +271,10 @@ app.post('/api/pdf/file', [
   check('location').not().isEmpty().withMessage('File location not provided!')
 ], getPdfFile);
 
+const isNullOrUndefined = (object: any): boolean => {
+  return (object === null || object === undefined);
+};
+
 const savingMarks = (req, res) => {
   if(!checkClient(req, res))
     return res.status(401).send({ message: 'Forbidden access to resource!'});
@@ -276,6 +282,17 @@ const savingMarks = (req, res) => {
     return res.status(400).send({message: 'File location not provided'});
 
   const marks = Array.isArray(req.body.marks) ? req.body.marks:[];
+  let totalMark = 0;
+  if(!isNullOrUndefined(marks)) {
+    const pages = Object.keys(marks);
+    pages.forEach(page => {
+      if (Array.isArray(marks[page])) {
+        for (let i = 0; i < marks[page].length; i++) {
+          totalMark += (marks[page][i] && marks[page][i].totalMark) ? marks[page][i].totalMark:0;
+        }
+      }
+    });
+  }
 
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
@@ -306,8 +323,52 @@ const savingMarks = (req, res) => {
       writeFile(studentFolder + sep + '.marks.json', data, (err) => {
         if(err)
           return res.status(500).send({ message: 'Failed to save student marks!'});
-        else
-          return res.status(200).send({message: 'Successfully saved!'});
+
+        const matches = regEx.exec(pathSplit[1]);
+
+        const assignmentName = pathSplit[0];
+        const studentNumber = matches[2];
+
+        const assignmentFolder =  dirname(studentFolder);
+
+        return access(assignmentFolder + sep + "grades.csv", constants.F_OK, (err) => {
+          if(err)
+            return res.status(200).send({message: 'Could not read grades file'});
+
+          return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
+            .then((gradesJSON) => {
+              let changed = false;
+              for(let i = 0; i < gradesJSON.length; i++) {
+                if(gradesJSON[i] && gradesJSON[i][assignmentName] === studentNumber) {
+                  gradesJSON[i].field5 = totalMark;
+                  changed = true;
+                  console.log(gradesJSON[i]);
+                  json2csv(gradesJSON, (err, csv) => {
+                    if(err)
+                      return res.status(400).send({ message: "Failed to convert json to csv!" });
+
+                    writeFile(assignmentFolder + sep + "grades.csv", csv, (err) => {
+                      if(err)
+                        return res.status(500).send({ message: 'Failed to save marks to grades.csv file!' });
+                      else
+                        return res.status(200).send({message: 'Successfully saved marks!'});
+                    });
+                  });
+                  break;
+                }
+              }
+
+              if(changed) {
+                // more logic to save new JSON to CSV
+              } else {
+                return res.status(400).send({message: "Failed to save mark" });
+              }
+
+            })
+            .catch(reason => {
+              return res.status(400).send({message: reason });
+            })
+        });
       });
     });
   });
@@ -522,7 +583,7 @@ const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
   return invalidKeyFound;
 };
 
-const studentGrade = (req, res) => {
+/*const studentGrade = (req, res) => {
   if(!checkClient(req, res))
     return res.status(401).send({ message: 'Forbidden access to resource!'});
   const errors = validationResult(req);
@@ -611,7 +672,7 @@ const studentGrade = (req, res) => {
 app.post("/api/assignment/student/grade", [
   check('location').not().isEmpty().withMessage('Assignment location not provided!'),
   check('totalMark').not().isEmpty().withMessage('Assignment mark not provided!')
-], studentGrade);
+], studentGrade);*/
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {

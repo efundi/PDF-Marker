@@ -16,7 +16,6 @@
   height: 90%;
   position: relative;
   overflow: hidden;
-  border: 1px solid #eee;
   margin: 1px auto -8px auto;
 
   .boundary-drop-zone {
@@ -43,6 +42,10 @@
 
 .pdf-marker-assignment-marking-visible-pdf {
   visibility: hidden;
+}
+
+.pdf-marker-assignment-marking-container {
+  border: 1px solid #eee;
 }
 
 ng2-pdfjs-viewer {

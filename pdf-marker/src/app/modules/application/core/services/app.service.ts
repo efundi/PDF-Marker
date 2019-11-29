@@ -29,6 +29,10 @@ export class AppService {
     this.containerElement = element;
   }
 
+  getContainerElement() {
+    return this.containerElement;
+  }
+
   createDialog(component: ComponentType<any>, config: MatDialogConfig, callback: any = () => {}) {
     this.isLoading$.next(true);
     const dialogConfig: MatDialogConfig = config;

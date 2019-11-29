@@ -118,10 +118,11 @@ export class AssignmentService {
     return this.selectedPdfURLSource$.asObservable();
   }
 
-  saveMarks(marks: any[]) {
+  saveMarks(marks: any[], totalMark: number = 0) {
     const body = {
+      location: this.selectedPdfLocation,
       marks: marks,
-      location: this.selectedPdfLocation
+      totalMark: totalMark
     };
 
     return this.http.post("/api/assignment/marks/save", body);

@@ -53,6 +53,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   isSelectedIcon: boolean;
   wheelDirection: string;
   isWheel: boolean;
+  totalMark: number = 0;
   private selectedIcon: IconInfo;
   private subscription: Subscription;
   private markDetailsComponents: any;
@@ -269,7 +270,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const markDetails = (marks) ? marks:this.getMarksToSave();
     console.log(markDetails);
     this.appService.isLoading$.next(true);
-    return await this.assignmentService.saveMarks(markDetails).toPromise()
+    return await this.assignmentService.saveMarks(markDetails, this.totalMark).toPromise()
       .then(() => {
         this.appService.isLoading$.next(false);
         return true;
@@ -307,6 +308,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
               markDetailsData.totalMark = markType.getTotalMark();
               markDetailsData.colour = markType.getColour();
               markDetailsData.pageNumber = markType.getPageNumber();
+
+              this.totalMark += markType.getTotalMark();
 
               if (markType.getMarkType() === IconTypeEnum.NUMBER) {
                 markDetailsData.sectionLabel = markType.getSectionLabel();
