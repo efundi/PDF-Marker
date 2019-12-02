@@ -14,7 +14,17 @@ table {
   }
 
   .mat-header-cell {
-    width: calc(100% / 3);
+    width: calc(100% / 4);
+  }
+
+  tr {
+    th:last-child {
+      text-align: center;
+    }
+
+    td:last-child {
+      text-align: center;
+    }
   }
 
   .pdf-marker-assignment-overview-student-name {
@@ -27,11 +37,34 @@ table {
   }
 
   .pdf-marker-assignment-overview-assignment-grade {
-    border: 1px solid #888;
+    /*border: 1px solid #888;*/
     padding: 4px 10px;
     border-radius: 8px;
     text-align: center;
     display: inline-block;
+  }
+
+  .pdf-marker-assignment-overview-assignment-status {
+    color: #fff;
+    border-radius: 12px;
+    padding: 5px;
+    font-size: 11px;
+    font-weight: 400;
+  }
+
+  .pdf-marker-assignment-overview-assignment-status-on-time {
+    background: #1db954;
+    border: 1px solid #1db954;
+  }
+
+  .pdf-marker-assignment-overview-assignment-status-late {
+    background: #a94442;
+    border: 1px solid #a94442;
+  }
+
+  .pdf-marker-assignment-overview-assignment-status-unknown {
+    background: #2b72a1;
+    border: 1px solid #2b72a1;
   }
 
   .pdf-marker-assignment-overview-assignment-grade-header {
@@ -41,7 +74,9 @@ table {
   .pdf-marker-assignment-overview-select-assignment {
     cursor: pointer;
     width: 100%;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    word-break: break-word;
   }
 
   .pdf-marker-assignment-overview-assignment-grade-data {

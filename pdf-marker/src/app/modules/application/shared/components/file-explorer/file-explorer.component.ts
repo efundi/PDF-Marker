@@ -62,6 +62,9 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
         this.assignmentService.setSelectedPdfURL(fileUrl, pdfFileLocation);
         if (this.router.url !== "/marker/assignment/marking")
           this.router.navigate(["/marker/assignment/marking"]);
+      }, error => {
+        this.appService.isLoading$.next(false);
+        this.appService.openSnackBar(false, "Unable to open file")
       })
     }
   }

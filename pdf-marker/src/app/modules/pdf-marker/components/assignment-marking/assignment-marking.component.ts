@@ -3,7 +3,8 @@ import {
   ComponentFactory,
   ComponentFactoryResolver,
   ComponentRef,
-  ElementRef, HostListener,
+  ElementRef,
+  HostListener,
   OnDestroy,
   OnInit,
   Renderer2,
@@ -337,15 +338,17 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       this.markDetailsComponents[this.currentPage - 1].push(componentRef);
     else
       this.markDetailsComponents[this.currentPage - 1] = [componentRef];
-    this.saveMarks().then((isSaved: boolean) => {
-      if(isSaved) {
-        this.appService.openSnackBar(true, "Saved");
-      } else {
-        this.appService.openSnackBar(false, "Unable to save");
-        componentRef.instance.setIsDeleted(true);
-        componentRef.destroy();
-      }
-    });
+    if(componentRef.instance.getMarkType() !== IconTypeEnum.NUMBER) {
+      this.saveMarks().then((isSaved: boolean) => {
+        if (isSaved) {
+          this.appService.openSnackBar(true, "Saved");
+        } else {
+          this.appService.openSnackBar(false, "Unable to save");
+          componentRef.instance.setIsDeleted(true);
+          componentRef.destroy();
+        }
+      });
+    }
   }
 
   private createMark(componentRef: ComponentRef<MarkTypeIconComponent>, markTypeIconData = null) {
@@ -393,6 +396,15 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
             componentRef.instance.setTotalMark(formData.totalMark);
             componentRef.instance.setSectionLabel(formData.sectionLabel);
             componentRef.instance.setComment(formData.markingComment);
+            this.saveMarks().then((isSaved: boolean) => {
+              if(isSaved) {
+                this.appService.openSnackBar(true, "Saved");
+              } else {
+                this.appService.openSnackBar(false, "Unable to save");
+                componentRef.instance.setIsDeleted(true);
+                componentRef.destroy();
+              }
+            });
           }
         };
         this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);

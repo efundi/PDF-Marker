@@ -19,6 +19,8 @@ export interface AssignmentDetails {
   grade: number;
 
   path: string;
+
+  status: string;
 };
 
 @Component({
@@ -28,7 +30,7 @@ export interface AssignmentDetails {
 })
 export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   private hierarchyModel;
-  displayedColumns: string[] = ['studentName', 'assignment', 'grade'];
+  displayedColumns: string[] = ['studentName', 'assignment', 'grade', 'status'];
   dataSource: MatTableDataSource<AssignmentDetails>;
   assignmentName: string = 'Assignment Name';
   assignmentsLength;
@@ -80,16 +82,17 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
           studentNumber: '',
           assignment: '',
           grade: 0,
-          path: null
+          path: null,
+          status: ''
         };
         const matches = this.regEx.exec(key);
         value.studentName = matches[1];
         value.studentNumber = matches[2];
         value.assignment = this.hierarchyModel[this.assignmentName][key][this.submissionFolder] ? Object.keys(this.hierarchyModel[this.assignmentName][key][this.submissionFolder])[0]:'';
         const gradesInfo = this.assignmentGrades.find(gradesInfo => gradesInfo[this.assignmentName] === value.studentNumber);
-        console.log(gradesInfo);
         value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5:0);
         value.path = (value.assignment) ? this.assignmentName + '/' + key + "/" + this.submissionFolder + "/" + value.assignment:'';
+        value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7:'N/A');
         values.push(value);
       }
     });
@@ -118,6 +121,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       this.assignmentService.setSelectedPdfURL(fileUrl, pdfFileLocation);
       if(this.router.url !== "/marker/assignment/marking")
         this.router.navigate(["/marker/assignment/marking"]);
+    }, error => {
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(false, "Unable to open file")
     })
   }
 
