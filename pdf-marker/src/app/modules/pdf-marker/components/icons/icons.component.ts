@@ -51,7 +51,7 @@ export class IconsComponent implements OnInit, OnChanges {
     { icon: 'check', type: IconTypeEnum.FULL_MARK, toolTip: 'Single Mark' },
     { icon: 'halfTick', type: IconTypeEnum.HALF_MARK, toolTip: 'Half Mark' },
     { icon: 'spellcheck', type: IconTypeEnum.ACK_MARK, toolTip: 'Acknowledge Tick' },
-    { icon: 'close', type: IconTypeEnum.CROSS, toolTip: 'Zero or Negative Mark'},
+    { icon: 'close', type: IconTypeEnum.CROSS, toolTip: 'Cross Mark'},
     { icon: 'comment', type: IconTypeEnum.NUMBER, toolTip: 'Comment and Mark'},
 
   ];

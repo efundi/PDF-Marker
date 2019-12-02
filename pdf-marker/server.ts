@@ -342,7 +342,6 @@ const savingMarks = (req, res) => {
                 if(gradesJSON[i] && gradesJSON[i][assignmentName] === studentNumber) {
                   gradesJSON[i].field5 = totalMark;
                   changed = true;
-                  console.log(gradesJSON[i]);
                   json2csv(gradesJSON, (err, csv) => {
                     if(err)
                       return res.status(400).send({ message: "Failed to convert json to csv!" });
@@ -552,7 +551,6 @@ const getGrades = (req, res) => {
     const loc = req.body.location.replace(/\//g, sep);
 
     const assignmentFolder = config.defaultPath + sep + loc;
-    console.log(assignmentFolder);
 
     return access(assignmentFolder + sep + "grades.csv", constants.F_OK, (err) => {
       if(err)

@@ -7,12 +7,12 @@
     <button  *ngIf="iconData.icon === 'halfTick'" [matTooltip]="iconData.toolTip" [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
              (click)="onIconClick($event, iconData)" mat-button mat-icon-button ><mat-icon class="pdf-marker-icons-svg-class" [svgIcon]="iconData.icon" ></mat-icon></button>
   </ng-container>
-  <button matTooltip="Finalise" mat-button mat-icon-button (click)="onControl($event, 'finalise')"><mat-icon>announcement</mat-icon></button>
+  <button matTooltip="Preview Marks" mat-button mat-icon-button (click)="onControl($event, 'finalise')"><mat-icon>announcement</mat-icon></button>
   <span class="pdf-marker-fill-space"></span>
   <button matTooltip="Prev" mat-button mat-icon-button [disabled]="currentPage == 1" [class.pdf-marker-icons-pdf-nav-buttons-disabled]="currentPage == 1" (click)="onControl($event, 'prevPage')" class="pdf-marker-icons-pdf-nav-buttons"><mat-icon class="pdf-marker-icons-pdf-nav-icons" [class.pdf-marker-icons-pdf-nav-icons-disabled]="currentPage == 1">arrow_upward</mat-icon></button>
   <button matTooltip="Next" mat-button mat-icon-button [disabled]="currentPage == pages" [class.pdf-marker-icons-pdf-nav-buttons-disabled]="currentPage == pages" (click)="onControl($event, 'nextPage')" class="pdf-marker-icons-pdf-nav-buttons"><mat-icon class="pdf-marker-icons-pdf-nav-icons" [class.pdf-marker-icons-pdf-nav-icons-disabled]="currentPage == pages">arrow_downward</mat-icon></button>
   <form [formGroup]="iconForm">
-    <span><input matInput type="text" formControlName="pageNumber" (change)="onPageNumberChange($event)" [style.width]="iconForm.get('pageNumber')?.value?.length + 'ch'">  / {{ pages }}</span>
+    <span><input matInput type="text" formControlName="pageNumber" (change)="onPageNumberChange($event)" [style.width]="(iconForm.get('pageNumber')?.value + '')?.length + 'ch'">  / {{ pages }}</span>
   </form>
   <span class="pdf-marker-fill-space"></span>
   <div class="pdf-marker-assignment-marking-settings-color">

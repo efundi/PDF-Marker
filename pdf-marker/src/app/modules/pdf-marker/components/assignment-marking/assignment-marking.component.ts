@@ -471,21 +471,13 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     config.height = "500px";
     config.disableClose = true;
 
-    const savedStudentGrade = (grade: number) => {
-      this.assignmentService.saveStudentGrade(grade).subscribe(() => {
-        this.appService.openSnackBar(true, "Successfully saved to grades file");
-      }, error => {
-        this.appService.openSnackBar(false, "Could not save to grades file");
-      })
-    };
-
     config.data = {
       assignmentPath: this.assignmentService.getSelectedPdfLocation(),
       marks: this.getMarksToSave(),
       defaultTick: this.defaultFullMark,
       incorrectTick: this.defaultIncorrectMark
     };
-    this.appService.createDialog(FinaliseMarkingComponent, config, savedStudentGrade);
+    this.appService.createDialog(FinaliseMarkingComponent, config);
   }
 
   private openNewMarkingCommentModal(title: string = "Marking Comment", message: string) {
