@@ -35,6 +35,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   assignmentName: string = 'Assignment Name';
   assignmentsLength;
   assignmentPageSizeOptions: number[];
+  readonly pageSize: number = 10;
   private assignmentGrades: any[] = [];
   private readonly submissionFolder = "Submission attachment(s)";
 
@@ -102,7 +103,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     const range = [];
     let i = 0;
     while(i <= this.assignmentsLength) {
-        i += 5;
+        i += this.pageSize;
         range.push(i);
 
       if(i > this.assignmentsLength)
