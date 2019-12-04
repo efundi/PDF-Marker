@@ -54,6 +54,12 @@ export class MarkTypeIconComponent implements OnInit {
 
   isDisplay: boolean;
 
+  private red: number;
+
+  private green: number;
+
+  private blue: number;
+
   constructor(private fb: FormBuilder,
               private appService: AppService) {}
 
@@ -130,7 +136,6 @@ export class MarkTypeIconComponent implements OnInit {
 
   onTotalMarkChange(event) {
     const number = parseInt(this.iconForm.controls.totalMark.value);
-    console.log(number);
     if(!isNaN(number)) {
       this.totalMark = number;
       this.iconForm.controls.totalMark.setValue(this.totalMark);
@@ -228,7 +233,20 @@ export class MarkTypeIconComponent implements OnInit {
   isColour(colour: string): boolean {
     const style = new Option().style;
     style.color = colour;
+    if(style.color !== "") {
+      const regEx = /\(([0-9]+), ([0-9]+), ([0-9]+)\)/g;
+      const matches = regEx.exec(style.color);
+      if(matches && matches.length == 4) {
+        this.red = this.getRgbScale(+matches[1]);
+        this.green = this.getRgbScale(+matches[2]);
+        this.blue = this.getRgbScale(+matches[3]);
+      }
+    }
     return style.color !== "";
+  }
+
+  private getRgbScale(rgbValue: number): number {
+    return +parseFloat(((rgbValue / 255) + "")).toFixed(2);
   }
 
   get deleted(): boolean {
@@ -237,6 +255,18 @@ export class MarkTypeIconComponent implements OnInit {
 
   get dimensions() {
     return this.widthAndHeight;
+  }
+
+  get redColour() {
+    return this.red;
+  }
+
+  get greenColour() {
+    return this.green;
+  }
+
+  get blueColour() {
+    return this.blue;
   }
 
   private openMarkingCommentModal(title: string = 'Marking Comment', message: string) {
@@ -250,7 +280,6 @@ export class MarkTypeIconComponent implements OnInit {
       componentRef: this.componentReferene
     };
     const handelCommentFN = (formData: any) => {
-      console.log(formData);
       this.totalMark = formData.totalMark;
       this.sectionLabel = formData.sectionLabel;
       this.comment = formData.markingComment;

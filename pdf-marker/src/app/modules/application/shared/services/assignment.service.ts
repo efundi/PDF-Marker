@@ -18,6 +18,7 @@ export class AssignmentService {
   private selectedPdfLocation: string;
   private selectedPdfURL: string;
   private selectedPdfURLSource$: Subject<string> = new Subject<string>();
+  private selectedPdfBlob: Blob;
 
   constructor(private http: HttpClient,
               @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
@@ -112,6 +113,14 @@ export class AssignmentService {
 
   getSelectedPdfURL(): string {
     return this.selectedPdfURL;
+  }
+
+  setSelectedPdfBlob(blob: Blob) {
+    this.selectedPdfBlob = blob;
+  }
+
+  getSelectedPdfBlob() {
+    return this.selectedPdfBlob;
   }
 
   selectedPdfURLChanged(): Observable<string> {

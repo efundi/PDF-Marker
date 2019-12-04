@@ -3,7 +3,7 @@
     <pdf-marker-icons [selectedColour]="colour" [currentPage]="currentPage" [pages]="pdfPages" (selection)="onSelectedIcon($event)" (control)="onControl($event)" (pageNumber)="onPageNumberChange($event)" (colour)="onColourChanged($event)" (colourPickerClose)="onColourPickerClose($event)"></pdf-marker-icons>
   </div>
   <div #container class="boundary" [class.pdf-marker-assignment-marking-container]="isPdfLoaded">
-    <div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)" (wheel)="onMouseWheel($event)" [style.zIndex]="(isSelectedIcon) ? 1:-1" [style.opacity]="(isSelectedIcon) ? 0.2:0" [style.background]="(isSelectedIcon) ? 'slategrey':'transparent'"></div>
+    <div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)" (wheel)="onMouseWheel($event)"></div>
     <template style="height: 100%" #containerRef></template>
     <ng2-pdfjs-viewer autoscroll="true" *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
                       [viewBookmark]="false" zoom="100" [page]="currentPage" pagemode="none" [pdfSrc]="pdfPath" viewerId="pdfMarker" (onDocumentLoad)="pagesLoaded($event)" (onPageChange)="onPaged($event)"></ng2-pdfjs-viewer>

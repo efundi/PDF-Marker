@@ -60,6 +60,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
         const fileUrl = URL.createObjectURL(blob);
 
         this.assignmentService.setSelectedPdfURL(fileUrl, pdfFileLocation);
+        this.assignmentService.setSelectedPdfBlob(blob);
         if (this.router.url !== "/marker/assignment/marking")
           this.router.navigate(["/marker/assignment/marking"]);
       }, error => {

@@ -23,6 +23,9 @@ import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 import {FinaliseMarkingComponent} from "@pdfMarkerModule/components/finalise-marking/finalise-marking.component";
 import {MarkingCommentModalComponent} from "@sharedModule/components/marking-comment-modal/marking-comment-modal.component";
+import {PDFDocument, PDFPage, rgb} from 'pdf-lib'
+import {IconSvgEnum} from "@pdfMarkerModule/info-objects/icon-svg.enum";
+import {AnnotationFactory} from 'annotpdf';
 
 @Component({
   selector: 'pdf-marker-assignment-marking',
@@ -153,17 +156,17 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
             const componentRef = this.actualContainer.createComponent(factory);
             this.createMark(componentRef, this.markDetailsRawData[page][i]);
 
-            if (this.markDetailsComponents[this.currentPage - 1])
-              this.markDetailsComponents[this.currentPage - 1].push(componentRef);
+            if (this.markDetailsComponents[page])
+              this.markDetailsComponents[page].push(componentRef);
             else
-              this.markDetailsComponents[this.currentPage - 1] = [componentRef];
-            console.log(this.markDetailsComponents);
+              this.markDetailsComponents[page] = [componentRef];
           }
         }
       });
     }
     this.isPdfLoaded = this.show = true;
     this.appService.isLoading$.next(false);
+    this.createPdf();
   }
 
   isNullOrUndefined(object: any): boolean {
@@ -226,7 +229,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   onMouseWheel(event) {
-    console.log(event);
     event.stopImmediatePropagation();
     event.preventDefault();
     if(event.deltaY < 0 && this.currentPage !== 1 && this.wheelDirection !== "up") {
@@ -269,7 +271,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   async saveMarks(marks: any[] = null): Promise<boolean> {
     const markDetails = (marks) ? marks:this.getMarksToSave();
-    console.log(markDetails);
     this.appService.isLoading$.next(true);
     return await this.assignmentService.saveMarks(markDetails, this.totalMark).toPromise()
       .then(() => {
@@ -293,7 +294,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   private getMarksToSave(): any[] {
     const markDetails = [];
-    console.log(this.markDetailsComponents);
 
     if(!this.isNullOrUndefined(this.markDetailsComponents)) {
       const pagesArray = Object.keys(this.markDetailsComponents);
@@ -388,7 +388,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       if(event) {
         const config = this.openNewMarkingCommentModal('Marking Comment', '');
         const handelCommentFN = (formData: any) => {
-          console.log(formData);
           if (formData.removeIcon) {
             componentRef.instance.setIsDeleted(true);
             componentRef.instance.getComponentRef().destroy();
@@ -493,9 +492,85 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     return config;
   }
 
-  @HostListener('window:beforeunload')
-  canDeactivate() {
-    return true;
+  @HostListener('window:resize', ['$event'])
+  onResize(event) {
+    event.preventDefault();
+  }
+
+  // Sample for creating PDF
+  private createPdf() {
+    if(!this.isNullOrUndefined((this.markDetailsComponents))) {
+      this.appService.isLoading$.next(true);
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(this.assignmentService.getSelectedPdfBlob());
+      reader.onloadend = async () => {
+        const pdfFactory =  new AnnotationFactory(new Uint8Array(reader.result as ArrayBuffer));
+        let pdfDoc = await PDFDocument.load(reader.result);
+        let pdfPages: PDFPage[] = await pdfDoc.getPages();
+        let pageCount: number = 1;
+        pdfPages.forEach((pdfPage: PDFPage) => {
+          if (Array.isArray(this.markDetailsComponents[pageCount - 1])) {
+            this.markDetailsComponents[pageCount - 1].forEach(markComponent => {
+              const markObj = markComponent.instance;
+              if(!markObj.deleted) {
+                const coords = markObj.getCoordinates();
+                if(markObj.getMarkType() === IconTypeEnum.NUMBER) {
+                  pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, 80, 40], markObj.getComment(), markObj.getSectionLabel());
+                }
+              }
+            });
+          }
+          pageCount++;
+        });
+
+        pageCount = 1;
+        pdfDoc = await PDFDocument.load(pdfFactory.write());
+        pdfPages = await pdfDoc.getPages();
+        pdfPages.forEach((pdfPage: PDFPage) => {
+          if (Array.isArray(this.markDetailsComponents[pageCount - 1])) {
+            this.markDetailsComponents[pageCount - 1].forEach(markComponent => {
+              const markObj = markComponent.instance;
+              if(!markObj.deleted) {
+                const coords = markObj.getCoordinates();
+                const options = {
+                  x: (coords.x * 72 / 96) + 4,
+                  y: pdfPage.getHeight() - (coords.y * 72 / 96),
+                  borderColor: rgb(markObj.redColour, markObj.greenColour, markObj.blueColour),
+                  color: rgb(markObj.redColour, markObj.greenColour, markObj.blueColour),
+                };
+                if(markObj.getMarkType() === IconTypeEnum.FULL_MARK) {
+                  pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
+                } else if(markObj.getMarkType() === IconTypeEnum.HALF_MARK) {
+                  pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
+                  pdfPage.drawSvgPath(IconSvgEnum.HALF_MARK_SVG, {
+                    x: (coords.x * 72 / 96) + 4,
+                    y: pdfPage.getHeight() - (coords.y * 72 / 96),
+                    borderWidth: 2,
+                    borderColor: rgb(markObj.redColour, markObj.greenColour, markObj.blueColour),
+                    color: rgb(markObj.redColour, markObj.greenColour, markObj.blueColour)
+                  });
+                } else if(markObj.getMarkType() === IconTypeEnum.CROSS) {
+                  pdfPage.drawSvgPath(IconSvgEnum.CROSS_SVG, options);
+                } else if(markObj.getMarkType() === IconTypeEnum.ACK_MARK) {
+                  pdfPage.drawSvgPath(IconSvgEnum.ACK_MARK_SVG, options);
+                }
+              }
+            });
+          }
+          pageCount++;
+        });
+        const newPdfBytes = await pdfDoc.save();
+        const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        this.appService.isLoading$.next(false);
+      };
+
+      reader.onerror = () => {
+        this.appService.openSnackBar(false, 'Unable to create marked PDF');
+        this.appService.isLoading$.next(false);
+      }
+    }
   }
 
   ngOnDestroy(): void {

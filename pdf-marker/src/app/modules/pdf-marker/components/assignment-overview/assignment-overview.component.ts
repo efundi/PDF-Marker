@@ -55,6 +55,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       this.getGrades();
     }, error => {
       this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(false, "Unable to read selected assignment");
     });
 
     if(!this.hierarchyModel && !!this.assignmentService.getSelectedAssignment()) {
@@ -70,6 +71,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     this.assignmentService.getAssignmentGrades().subscribe((grades: any[]) => {
       this.assignmentGrades = grades;
       this.generateDataFromModel();
+    }, error => {
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(false, "Unable to read assignment grades file");
     })
   }
 
@@ -120,6 +124,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       const fileUrl = URL.createObjectURL(blob);
 
       this.assignmentService.setSelectedPdfURL(fileUrl, pdfFileLocation);
+      this.assignmentService.setSelectedPdfBlob(blob);
       if(this.router.url !== "/marker/assignment/marking")
         this.router.navigate(["/marker/assignment/marking"]);
     }, error => {
