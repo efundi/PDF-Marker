@@ -515,7 +515,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
               if(!markObj.deleted) {
                 const coords = markObj.getCoordinates();
                 if(markObj.getMarkType() === IconTypeEnum.NUMBER) {
-                  pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), (coords.x * 72 / 96) + 40, pdfPage.getHeight() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) + 80], markObj.getComment(), markObj.getSectionLabel());
+                  pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], markObj.getComment(), markObj.getSectionLabel());
                 }
               }
             });
