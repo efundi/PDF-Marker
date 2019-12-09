@@ -23,7 +23,7 @@ import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 import {FinaliseMarkingComponent} from "@pdfMarkerModule/components/finalise-marking/finalise-marking.component";
 import {MarkingCommentModalComponent} from "@sharedModule/components/marking-comment-modal/marking-comment-modal.component";
-import {PDFDocument, PDFPage, rgb} from 'pdf-lib'
+import {PageSizes, PDFDocument, PDFPage, rgb} from 'pdf-lib'
 import {IconSvgEnum} from "@pdfMarkerModule/info-objects/icon-svg.enum";
 import {AnnotationFactory} from 'annotpdf';
 
@@ -499,6 +499,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   // Sample for creating PDF
   private createPdf() {
+    let  generalMarks: number = 0;
+    let sectionMarks: string[] = [];
     if(!this.isNullOrUndefined((this.markDetailsComponents))) {
       this.appService.isLoading$.next(true);
       const reader = new FileReader();
@@ -515,7 +517,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
               if(!markObj.deleted) {
                 const coords = markObj.getCoordinates();
                 if(markObj.getMarkType() === IconTypeEnum.NUMBER) {
-                  pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], '\n\nMark Value: ' + markObj.getTotalMark() + '\nMarking Comment: ' +  markObj.getComment(), markObj.getSectionLabel());
+                    pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], 'Mark Value: ' + markObj.getTotalMark() + ' Marking Comment: ' + markObj.getComment(), markObj.getSectionLabel());
+                    sectionMarks.push( markObj.getSectionLabel() + ': ' + markObj.getTotalMark());
                 }
               }
             });
@@ -559,6 +562,22 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
           }
           pageCount++;
         });
+        const resultsPage = pdfDoc.addPage(PageSizes.A4);
+        resultsPage.drawText('RESULTS', {x: 250, y: 800});
+        resultsPage.drawText("",{x: 250, y: 775});
+        resultsPage.drawText('_______________________________________', {x: 25, y: 775});
+        resultsPage.drawText("",{x: 250, y: 750});
+        let y = 750;
+        for(let i = 0; i <= sectionMarks.length -1; i++) {
+          y = y - 25;
+          resultsPage.drawText(sectionMarks[i] + '', {x: 25, y: y});
+          resultsPage.drawText('', {x: 25, y:y});
+        }
+        y = y - 25;
+        resultsPage.drawText('_______________________________________', {x: 25, y:y});
+        y = y - 25;
+        resultsPage.drawText('', {x: 25, y:y});
+        resultsPage.drawText('General Marks: ' + generalMarks, {x: 25, y: y});
         const newPdfBytes = await pdfDoc.save();
         const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
