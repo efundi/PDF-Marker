@@ -543,7 +543,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
                 };
                 if(markObj.getMarkType() === IconTypeEnum.FULL_MARK) {
                   pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
+                  generalMarks++;
                 } else if(markObj.getMarkType() === IconTypeEnum.HALF_MARK) {
+                  generalMarks = generalMarks + 0.5;
                   pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
                   pdfPage.drawSvgPath(IconSvgEnum.HALF_MARK_SVG, {
                     x: (coords.x * 72 / 96) + 4,
