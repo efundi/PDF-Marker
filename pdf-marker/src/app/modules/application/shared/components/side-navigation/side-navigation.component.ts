@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import {AssignmentService} from "@sharedModule/services/assignment.service";
 
 @Component({
   selector: 'pdf-marker-side-navigation',
@@ -7,9 +8,15 @@ import { Component, OnInit } from '@angular/core';
 })
 export class SideNavigationComponent implements OnInit {
 
-  constructor() { }
+  constructor(private assignmentService: AssignmentService) { }
 
   ngOnInit() {
+  }
+
+  onRefresh(event) {
+    this.assignmentService.getAssignments().subscribe((assignments) => {
+      this.assignmentService.update(assignments);
+    });
   }
 
 }

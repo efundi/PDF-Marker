@@ -18,17 +18,34 @@
 import 'zone.js/dist/zone-node';
 
 import * as express from 'express';
-import {extname, join, sep, dirname} from 'path';
-import {access, constants, readdir, readdirSync, readFile, statSync, stat, unlinkSync, unlink, writeFile, mkdir, existsSync, createReadStream} from 'fs';
-import { json2csv } from "json-2-csv";
-import {ComponentFactory} from "@angular/core";
-import {MarkTypeIconComponent} from "./src/app/modules/pdf-marker/components/mark-type-icon/mark-type-icon.component";
+import {basename, dirname, extname, join, sep} from 'path';
+import {
+  access, accessSync,
+  constants,
+  createReadStream,
+  existsSync,
+  mkdir,
+  readdir,
+  readdirSync,
+  readFile,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFile, writeFileSync
+} from 'fs';
+import {json2csv} from "json-2-csv";
+import {PDFDocument, PDFPage, rgb} from 'pdf-lib';
+import {AnnotationFactory} from 'annotpdf';
+import {IconTypeEnum} from "./src/app/modules/pdf-marker/info-objects/icon-type.enum";
+import {IconSvgEnum} from "./src/app/modules/pdf-marker/info-objects/icon-svg.enum";
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
 const extract = require('extract-zip');
 const glob = require('glob');
 const csvtojson = require('csvtojson');
+const hexRgb = require('hex-rgb');
+const pathinfo = require('locutus/php/filesystem/pathinfo');
 
 
 const CONFIG_FILE = 'config.json';
@@ -224,15 +241,19 @@ const getAssignments = (req, res) => {
         return res.status(501).send({message: 'Error retrieving assignments'});
 
       const folderCount = folders.length;
-      folders.forEach(folder => {
-        glob(config.defaultPath + '/' + folder + '/**', (err, files) => {
-          files.sort((a, b) => (a > b) ? 1:-1);
-          folderModels.push(hierarchyModel(files, config.defaultPath));
+      if(folders.length) {
+        folders.forEach(folder => {
+          glob(config.defaultPath + '/' + folder + '/**', (err, files) => {
+            files.sort((a, b) => (a > b) ? 1 : -1);
+            folderModels.push(hierarchyModel(files, config.defaultPath));
 
-          if(folderModels.length == folderCount)
-            return res.status(200).send(folderModels);
+            if (folderModels.length == folderCount)
+              return res.status(200).send(folderModels);
+          });
         });
-      });
+      } else {
+        return res.status(200).send([]);
+      }
     });
   });
 };
@@ -581,14 +602,14 @@ const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
   return invalidKeyFound;
 };
 
-/*const studentGrade = (req, res) => {
+const finalizeAssignment = (req, res) => {
   if(!checkClient(req, res))
     return res.status(401).send({ message: 'Forbidden access to resource!'});
   const errors = validationResult(req);
   if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
-  const keys = ["location", "totalMark"];
+  const keys = ["location"];
   const bodyKeys = Object.keys(req.body);
 
   if(validateRequest(keys, bodyKeys))
@@ -601,76 +622,205 @@ const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
     if (!isJson(data))
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
-    const loc = req.body.location.replace(/\//g, sep);
-    const number = parseFloat(req.body.totalMark);
-    if(isNaN(number)) {
-      return res.status(400).send({message: 'Not a valid mark provided'});
-    }
-
-    const pathSplit = loc.split(sep);
-    if(pathSplit.length !== 4) {
-      return res.status(404).send({message: 'Invalid path provided'});
-    }
-
-    const regEx = /(.*)\((.+)\)/;
-    let assignmentName, studentNumber;
-    if(!regEx.test(pathSplit[1])) {
-      return res.status(404).send({message: 'Invalid student folder'});
-    }
-
-    const matches = regEx.exec(pathSplit[1]);
-
-    assignmentName = pathSplit[0];
-    studentNumber = matches[2];
-
     const config = JSON.parse(data.toString());
-    const assignmentFolder =  dirname(dirname(dirname(config.defaultPath + sep + loc)));
+    const loc = req.body.location.replace(/\//g, sep);
 
-    return access(assignmentFolder + sep + "grades.csv", constants.F_OK, (err) => {
+    const assignmentFolder = config.defaultPath + sep + loc;
+
+    let count = 0;
+    glob(assignmentFolder + sep + "/*", (err, files) => {
       if(err)
-        return res.status(200).send({message: 'Could not read grades file'});
+        return res.status(400).send({message: "Failed to read assignment '" + loc + "' submissions!"});
 
-      return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
-        .then((gradesJSON) => {
-          let changed = false;
-          for(let i = 0; i < gradesJSON.length; i++) {
-            if(gradesJSON[i] && gradesJSON[i][assignmentName] === studentNumber) {
-              gradesJSON[i].field5 = number;
-              changed = true;
-              console.log(gradesJSON[i]);
-              json2csv(gradesJSON, (err, csv) => {
-                if(err)
-                  return res.status(400).send({ message: "Failed to convert json to csv!" });
+      files.forEach(file => {
+        if(statSync(file).isDirectory()) {
+          const regEx = /(.*)\((.+)\)$/;
+          if(!regEx.test(file)) {
+            return res.status(400).send({message: 'Invalid student folder ' + basename(file)});
+          }
 
-                writeFile(assignmentFolder + sep + "grades.csv", csv, (err) => {
+          const matches = regEx.exec(file);
+
+          glob(file + sep + "Submission attachment(s)/*", (err, submissionFiles) => {
+            submissionFiles.forEach(submission => {
+              try {
+                accessSync(submission, constants.F_OK);
+                const studentFolder = dirname(dirname(submission));
+
+                return readFile(studentFolder + sep + ".marks.json", (err, data) => {
+                  let marks;
                   if(err)
-                    return res.status(500).send({ message: 'Failed to save marks to grades.csv file!' });
+                    marks = [];
+
+                  if(!isJson(data))
+                    marks = [];
                   else
-                    return res.status(200).send({message: 'Successfully saved marks!'});
+                    marks = JSON.parse(data.toString());
+
+                  if(marks.length > 0)  {
+                    const annotateFN = async (): Promise<{pdfBytes: Uint8Array, totalMark:number}> => {
+                      return await annotatePdfFile(res, submission, marks);
+                    };
+
+                    return annotateFN().then((data) => {
+                      const fileName = pathinfo(submission, 'PATHINFO_FILENAME') + "_MARK" + new Date().getTime();
+                      writeFileSync(studentFolder + sep + "Feedback Attachment(s)" + sep + fileName + ".pdf", data.pdfBytes);
+                      accessSync(assignmentFolder + sep + "grades.csv", constants.F_OK);
+                      return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
+                        .then((gradesJSON) => {
+                          let changed = false;
+                          for(let i = 0; i < gradesJSON.length; i++) {
+                            if(gradesJSON[i] && gradesJSON[i][loc] === matches[2]) {
+                              gradesJSON[i].field5 = data.totalMark;
+                              changed = true;
+                              json2csv(gradesJSON, (err, csv) => {
+                                if(err)
+                                  return res.status(400).send({ message: "Failed to convert json to csv!" });
+
+                                writeFile(assignmentFolder + sep + "grades.csv", csv, (err) => {
+                                  if(err)
+                                    return res.status(500).send({ message: 'Failed to save marks to grades.csv file!' });
+                                });
+                              }, {emptyFieldValue: ''});
+                              break;
+                            }
+                          }
+
+                          if(changed) {
+                            // more logic to save new JSON to CSV
+                          } else {
+                            return res.status(400).send({message: "Failed to save mark" });
+                          }
+
+                        })
+                        .catch(reason => {
+                          return res.status(400).send({message: reason });
+                        })
+                    }, (error) => {
+                      return res.status(400).send({message: error});
+                    });
+                  }
                 });
-              });
-              break;
-            }
-          }
+              } catch (e) {
+                return res.status(400).send({message: e.message});
+              }
+            })
+          })
+        }
+      });
 
-          if(changed) {
-            // more logic to save new JSON to CSV
-          } else {
-            return res.status(400).send({message: "Failed to save mark" });
-          }
-
-        })
-        .catch(reason => {
-          return res.status(400).send({message: reason });
-        })
+      return res.status(200).send({message: 'Successfully updated all records'});
     });
   });
 };
 
-app.post("/api/assignment/student/grade", [
-  check('location').not().isEmpty().withMessage('Assignment location not provided!'),
-  check('totalMark').not().isEmpty().withMessage('Assignment mark not provided!')
-], studentGrade);*/
+app.post("/api/assignment/finalize", [
+  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+], finalizeAssignment);
+
+const getRgbScale = (rgbValue: number): number => {
+  return +parseFloat(((rgbValue / 255) + "")).toFixed(2);
+};
+
+const annotatePdfFile = async (res, filePath: string, marks = []) => {
+  let totalMark = 0;
+  let generalMarks = 0;
+  let  allMarks: string[]= ["Results", "======="];
+  let longestStringCount = allMarks[0].length;
+  const file = readFileSync(filePath);
+  const pdfFactory =  new AnnotationFactory(file);
+  let pdfDoc = await PDFDocument.load(file);
+  let pdfPages: PDFPage[] = await pdfDoc.getPages();
+  let pageCount: number = 1;
+  pdfPages.forEach((pdfPage: PDFPage) => {
+    if (Array.isArray(marks[pageCount - 1])) {
+      marks[pageCount - 1].forEach(mark => {
+        const coords = mark.coordinates;
+        if(mark.iconType === IconTypeEnum.NUMBER) {
+          totalMark += (mark.totalMark) ? mark.totalMark:0;
+          pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], 'Mark Value: ' + mark.totalMark + ' Marking Comment: ' +  mark.comment, mark.sectionLabel);
+          let content = mark.sectionLabel + " = " + mark.totalMark;
+          longestStringCount = (content.length > longestStringCount) ? content.length:longestStringCount;
+          allMarks.push(content);
+        }
+      });
+    }
+    pageCount++;
+  });
+
+  pageCount = 1;
+  pdfDoc = await PDFDocument.load(pdfFactory.write());
+  pdfPages = await pdfDoc.getPages();
+  pdfPages.forEach((pdfPage: PDFPage) => {
+    if (Array.isArray(marks[pageCount - 1])) {
+      marks[pageCount - 1].forEach(mark => {
+        const colours = hexRgb(mark.colour);
+        const coords = mark.coordinates;
+        const options = {
+          x: (coords.x * 72 / 96) + 4,
+          y: pdfPage.getHeight() - (coords.y * 72 / 96),
+          borderColor: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
+          color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
+        };
+
+        if(mark.iconType !== IconTypeEnum.NUMBER) {
+          totalMark += (mark.totalMark) ? mark.totalMark:0;
+          generalMarks += (mark.totalMark) ? mark.totalMark:0;
+          if(mark.iconType === IconTypeEnum.FULL_MARK) {
+            pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
+          } else if(mark.iconType === IconTypeEnum.HALF_MARK) {
+            pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
+            pdfPage.drawSvgPath(IconSvgEnum.HALF_MARK_SVG, {
+              x: (coords.x * 72 / 96) + 4,
+              y: pdfPage.getHeight() - (coords.y * 72 / 96),
+              borderWidth: 2,
+              borderColor: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
+              color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
+            });
+          } else if(mark.iconType === IconTypeEnum.CROSS) {
+            pdfPage.drawSvgPath(IconSvgEnum.CROSS_SVG, options);
+          } else if(mark.iconType === IconTypeEnum.ACK_MARK) {
+            pdfPage.drawSvgPath(IconSvgEnum.ACK_MARK_SVG, options);
+          }
+        }
+      });
+    }
+    pageCount++;
+  });
+
+  const resultPage: PDFPage = pdfDoc.addPage();
+  let i = 0;
+  let y = 0;
+  allMarks.forEach(markString => {
+    y += 12;
+    if(i == 1)
+      resultPage.drawText("=======", {x: 5, y: resultPage.getHeight() -  y, size: 12});
+
+    resultPage.drawText(markString, {x: 5, y: resultPage.getHeight() -  y, size: 12});
+    resultPage.moveUp(12);
+    i++;
+  });
+
+  y += 12;
+  resultPage.drawText( "General Marks = " + generalMarks.toString(), {x: 5, y: resultPage.getHeight() -  y, size: 12});
+  resultPage.moveUp(12);
+
+  y += 12;
+  resultPage.drawText( "======================", {x: 5, y: resultPage.getHeight() -  y, size: 12});
+  resultPage.moveUp(12);
+
+  y += 12;
+  resultPage.drawText( "Total Marks \t\t\t\t\t\t" + totalMark.toString(), {x: 5, y: resultPage.getHeight() -  y, size: 12});
+  /*let ruler = "";
+  for(let i = 0; i < longestStringCount; i++) {
+    ruler += "=";
+  }
+  resultPage.drawText(ruler, { size: 24, x: 5});
+  resultPage.moveUp(24);
+  resultPage.drawText("General Marks = " + generalMarks, { size: 24, x: 5});*/
+  const newPdfBytes = await pdfDoc.save();
+  return Promise.resolve({pdfBytes: newPdfBytes, totalMark: totalMark});
+};
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
@@ -705,20 +855,6 @@ const extractZip = (file, destination, deleteSource, res = null) => {
       //return res.status(501).send({message: 'Error occurred while extracting file to disk!'});
     }
   }));
-
-  /*return new Promise((resolve, reject) => extract(file, {dir: destination}, (err) => {
-    if (!err) {
-      if (deleteSource) unlink(file, (err) => {});
-      nestedExtract(destination, extractZip);
-      if(res)
-        resolve(true);
-    } else {
-      console.log(err);
-      console.log("no");
-      reject(new Error('Error occurred while extracting file to disk!'));
-      //return res.status(501).send({message: 'Error occurred while extracting file to disk!'});
-    }
-  }));*/
 };
 
 const nestedExtract = (dir, zipExtractor) => {
@@ -732,22 +868,6 @@ const nestedExtract = (dir, zipExtractor) => {
       nestedExtract(join(dir, file), zipExtractor);
     }
   });
-
-  // Maybe we should test speed of the above code and this one
-  /*readdir(dir, (err, files) => {
-    files.forEach(file => {
-      stat(join(dir, file), (err, stats) => {
-        if(stats.isFile()) {
-          if (extname(file) === '.zip') {
-            // deleteSource = true to avoid infinite loops caused by extracting same file
-            zipExtractor(join(dir, file), dir, true);
-          }
-        } else {
-          nestedExtract(join(dir, file), zipExtractor);
-        }
-      })
-    });
-  });*/
 };
 
 const hierarchyModel = (pathInfos, configFolder) => {

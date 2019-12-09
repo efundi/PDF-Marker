@@ -1,4 +1,4 @@
-<ng-container *ngIf="assignments.length > 0; else empty">
+<ng-container *ngIf="assignments && assignments.length > 0; else empty">
   <pdf-marker-file-explorer *ngFor="let assignmentModel of assignments" [hierarchyModel]="assignmentModel" [first]="true"></pdf-marker-file-explorer>
 </ng-container>
 <ng-template #empty>

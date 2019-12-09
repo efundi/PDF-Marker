@@ -505,7 +505,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       reader.readAsArrayBuffer(this.assignmentService.getSelectedPdfBlob());
       reader.onloadend = async () => {
         const pdfFactory =  new AnnotationFactory(new Uint8Array(reader.result as ArrayBuffer));
-        let pdfDoc = await PDFDocument.load(reader.result);
+        let pdfDoc = await PDFDocument.load(reader.result, { ignoreEncryption: true });
         let pdfPages: PDFPage[] = await pdfDoc.getPages();
         let pageCount: number = 1;
         pdfPages.forEach((pdfPage: PDFPage) => {
@@ -515,7 +515,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
               if(!markObj.deleted) {
                 const coords = markObj.getCoordinates();
                 if(markObj.getMarkType() === IconTypeEnum.NUMBER) {
-                  pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], 'Mark Value: ' + markObj.getTotalMark() + ' Marking Comment: ' +  markObj.getComment(), markObj.getSectionLabel());
+                  pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], '\n\nMark Value: ' + markObj.getTotalMark() + '\nMarking Comment: ' +  markObj.getComment(), markObj.getSectionLabel());
                 }
               }
             });
@@ -524,7 +524,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         });
 
         pageCount = 1;
-        pdfDoc = await PDFDocument.load(pdfFactory.write());
+        pdfDoc = await PDFDocument.load(pdfFactory.write(), { ignoreEncryption: true });
         pdfPages = await pdfDoc.getPages();
         pdfPages.forEach((pdfPage: PDFPage) => {
           if (Array.isArray(this.markDetailsComponents[pageCount - 1])) {

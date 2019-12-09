@@ -279,7 +279,9 @@ export class MarkTypeIconComponent implements OnInit {
       totalMark: this.totalMark,
       componentRef: this.componentReferene
     };
+
     const handelCommentFN = (formData: any) => {
+      console.log("Form Data is", formData);
       this.totalMark = formData.totalMark;
       this.sectionLabel = formData.sectionLabel;
       this.comment = formData.markingComment;

@@ -28,20 +28,22 @@ export class AssignmentService {
     const transferKey: StateKey<string> = makeStateKey<string>('ListAssignments');
     if (isPlatformServer(this.platformId)) {
       this.assignmentList((err, assignmentList) => {
-        if(err)
+        if(err) {
           console.log(err);
-        this.assignments = assignmentList;
-        this.transferState.set(transferKey, this.assignments);
+        } else {
+          this.assignments = assignmentList;
+          this.transferState.set(transferKey, this.assignments);
+        }
       });
     } else {
       this.getAssignments().subscribe(assignments => {
         this.assignments = this.transferState.get<object[]>(transferKey, assignments);
         this.assignmentListSource$.next(this.assignments);
       }, error => {
-        this.assignments = this.transferState.get<object[]>(transferKey, []);
+        //this.assignments = this.transferState.get<object[]>(transferKey, []);
       })
     }
-    this.assignmentListSource$.next(this.assignments);
+    //this.assignmentListSource$.next(this.assignments);
   }
 
   getAssignments(): Observable<object[]> {
