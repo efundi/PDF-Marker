@@ -174,9 +174,9 @@ export class MarkTypeIconComponent implements OnInit {
   }
 
   setComment(comment: string) {
-    this.comment = comment;
-    if (comment !== null) {
+    if (comment !== null && comment !== "") {
       this.hasComment = true;
+      this.comment = comment;
     } else {
       this.hasComment = false;
     }
