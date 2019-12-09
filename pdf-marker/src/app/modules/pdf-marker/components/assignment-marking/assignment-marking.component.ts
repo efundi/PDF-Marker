@@ -518,7 +518,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
                 const coords = markObj.getCoordinates();
                 if(markObj.getMarkType() === IconTypeEnum.NUMBER) {
                     pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], 'Mark Value: ' + markObj.getTotalMark() + ' Marking Comment: ' + markObj.getComment(), markObj.getSectionLabel());
-                    sectionMarks.push( markObj.getSectionLabel() + ': ' + markObj.getTotalMark());
+                    sectionMarks.push( markObj.getSectionLabel() + ' = ' + markObj.getTotalMark());
                 }
               }
             });
@@ -563,7 +563,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
           pageCount++;
         });
         const resultsPage = pdfDoc.addPage(PageSizes.A4);
-        resultsPage.drawText('RESULTS', {x: 250, y: 800});
+        resultsPage.drawText('Results', {x: 250, y: 800});
         resultsPage.drawText("",{x: 250, y: 775});
         resultsPage.drawText('_______________________________________', {x: 25, y: 775});
         resultsPage.drawText("",{x: 250, y: 750});
