@@ -500,6 +500,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   // Sample for creating PDF
   private createPdf() {
     let  totalMMarks: number = 0;
+    let  generalMarks: number = 0;
     let sectionMarks: string[] = [];
     if(!this.isNullOrUndefined((this.markDetailsComponents))) {
       this.appService.isLoading$.next(true);
@@ -544,9 +545,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
                 };
                 if(markObj.getMarkType() === IconTypeEnum.FULL_MARK) {
                   pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
-                  totalMMarks++;
+                  generalMarks++;
                 } else if(markObj.getMarkType() === IconTypeEnum.HALF_MARK) {
-                  totalMMarks = totalMMarks + 0.5;
+                  generalMarks = generalMarks + 0.5;
                   pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
                   pdfPage.drawSvgPath(IconSvgEnum.HALF_MARK_SVG, {
                     x: (coords.x * 72 / 96) + 4,
@@ -565,6 +566,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
           }
           pageCount++;
         });
+        totalMMarks = totalMMarks + generalMarks;
+
         const resultsPage = pdfDoc.addPage(PageSizes.A4);
         resultsPage.drawText('Results', {x: 250, y: 800});
         resultsPage.drawText("",{x: 250, y: 775});
@@ -577,11 +580,13 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
           resultsPage.drawText('', {x: 25, y:y});
         }
         y = y - 25;
+        resultsPage.drawText('General Marks = ' + generalMarks, {x: 25, y: y});
+        y = y - 25;
         resultsPage.drawText('_______________________________________', {x: 25, y:y});
         y = y - 25;
         resultsPage.drawText('', {x: 25, y:y});
         y = y - 25;
-        resultsPage.drawText('Total = ' + totalMMarks, {x: 25, y: y});
+        resultsPage.drawText('Total = ' + totalMMarks , {x: 25, y: y});
         const newPdfBytes = await pdfDoc.save();
         const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
