@@ -580,7 +580,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         resultsPage.drawText('_______________________________________', {x: 25, y:y});
         y = y - 25;
         resultsPage.drawText('', {x: 25, y:y});
-        resultsPage.drawText('Total = ' + generalMarks, {x: 25, y: y});
+        y = y - 25;
+        resultsPage.drawText('Total = ' + totalMMarks, {x: 25, y: y});
         const newPdfBytes = await pdfDoc.save();
         const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
