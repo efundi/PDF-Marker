@@ -499,7 +499,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   // Sample for creating PDF
   private createPdf() {
-    let  generalMarks: number = 0;
+    let  totalMMarks: number = 0;
     let sectionMarks: string[] = [];
     if(!this.isNullOrUndefined((this.markDetailsComponents))) {
       this.appService.isLoading$.next(true);
@@ -519,6 +519,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
                 if(markObj.getMarkType() === IconTypeEnum.NUMBER) {
                     pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], 'Mark Value: ' + markObj.getTotalMark() + ' Marking Comment: ' + markObj.getComment(), markObj.getSectionLabel());
                     sectionMarks.push( markObj.getSectionLabel() + ' = ' + markObj.getTotalMark());
+                    totalMMarks = totalMMarks + markObj.getTotalMark();
                 }
               }
             });
@@ -543,9 +544,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
                 };
                 if(markObj.getMarkType() === IconTypeEnum.FULL_MARK) {
                   pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
-                  generalMarks++;
+                  totalMMarks++;
                 } else if(markObj.getMarkType() === IconTypeEnum.HALF_MARK) {
-                  generalMarks = generalMarks + 0.5;
+                  totalMMarks = totalMMarks + 0.5;
                   pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
                   pdfPage.drawSvgPath(IconSvgEnum.HALF_MARK_SVG, {
                     x: (coords.x * 72 / 96) + 4,
@@ -579,7 +580,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         resultsPage.drawText('_______________________________________', {x: 25, y:y});
         y = y - 25;
         resultsPage.drawText('', {x: 25, y:y});
-        resultsPage.drawText('General Marks: ' + generalMarks, {x: 25, y: y});
+        resultsPage.drawText('Total = ' + generalMarks, {x: 25, y: y});
         const newPdfBytes = await pdfDoc.save();
         const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
