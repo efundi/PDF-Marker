@@ -14,10 +14,11 @@ import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {IconsComponent} from './components/icons/icons.component';
 import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component";
 import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
+import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-marking.component';
 
 import {PdfJsViewerModule} from 'ng2-pdfjs-viewer';
 import {ColorPickerModule} from "ngx-color-picker";
-import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-marking.component';
+import { FileSaverModule } from 'ngx-filesaver';
 
 @NgModule({
   declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent],
@@ -27,7 +28,8 @@ import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-m
     LayoutModule,
     PdfMarkerRoutingModule,
     PdfJsViewerModule,
-    ColorPickerModule
+    ColorPickerModule,
+    FileSaverModule
   ],
   providers: [SettingsService, ImportService],
   exports: [HomeComponent],

@@ -8,6 +8,9 @@ import {MatPaginator} from "@angular/material/paginator";
 import {MatTableDataSource} from "@angular/material/table";
 import {MatDialogConfig} from "@angular/material/dialog";
 import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
+import {AlertService} from "@coreModule/services/alert.service";
+import {HttpEventType} from "@angular/common/http";
+import {FileSaverService} from "ngx-filesaver";
 
 export interface AssignmentDetails {
   studentName: string;
@@ -47,7 +50,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
               private router: Router,
-              private appService: AppService) { }
+              private appService: AppService,
+              private alertService: AlertService,
+              private fileSaverService: FileSaverService) { }
 
   ngOnInit() {
     this.subscription = this.assignmentService.selectedAssignmentChanged().subscribe((selectedAssignment) => {
@@ -148,7 +153,29 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
     const shouldFinalizeAndExportFn = (shouldFinalizeAndExport: boolean) => {
       if(shouldFinalizeAndExport) {
-        console.log("Should Finalize and Export");
+        this.appService.isLoading$.next(true);
+        this.assignmentService.finalizeAndExport(this.assignmentName).subscribe((events: any) => {
+          if(events.type === HttpEventType.Response) {
+            this.alertService.success("Successfully exported assignment");
+            let zipFileBuffer: Blob = events.body;
+            let blob = new Blob([zipFileBuffer], { type: "application/zip"});
+            this.fileSaverService.save(blob, this.assignmentName + ".zip");
+            this.appService.isLoading$.next(false);
+          }
+        }, (responseError) => {
+          let blob = new Blob([responseError.error], { type: "text/plain"});
+          const reader = new FileReader();
+          reader.addEventListener('loadend', (e) => {
+            try {
+              const error = JSON.parse(reader.result.toString());
+              this.alertService.error(error.message);
+            } catch (e) {
+              this.alertService.error("Unexpected error occurred!");
+            }
+          });
+          reader.readAsText(blob);
+          this.appService.isLoading$.next(false);
+        })
       }
     };
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldFinalizeAndExportFn);

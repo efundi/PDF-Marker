@@ -158,4 +158,20 @@ export class AssignmentService {
 
     return this.http.post("/api/assignment/student/grade", body);
   }
+
+  finalizeAndExport(assignmentName: string) {
+    const body = {
+      location: assignmentName,
+    };
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+    return this.http.post<Blob>("/api/assignment/finalize", body, {
+      reportProgress: true,
+      observe: 'events',
+      headers,
+      responseType: 'blob' as 'json'
+    });
+  }
 }

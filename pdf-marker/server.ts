@@ -33,8 +33,9 @@ import {
   unlinkSync,
   writeFile, writeFileSync
 } from 'fs';
-import {json2csv} from "json-2-csv";
-import {PDFDocument, PDFPage, rgb} from 'pdf-lib';
+import {json2csv, json2csvAsync } from "json-2-csv";
+const zipDir = require('zip-dir');
+import {PDFDocument, PDFPage, PageSizes, rgb} from 'pdf-lib';
 import {AnnotationFactory} from 'annotpdf';
 import {IconTypeEnum} from "./src/app/modules/pdf-marker/info-objects/icon-type.enum";
 import {IconSvgEnum} from "./src/app/modules/pdf-marker/info-objects/icon-svg.enum";
@@ -602,7 +603,14 @@ const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
   return invalidKeyFound;
 };
 
-const finalizeAssignment = (req, res) => {
+const asyncForEach = async(array, callback) => {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
+};
+
+const finalizeAssignment = async (req, res) => {
+  let failed: boolean = false;
   if(!checkClient(req, res))
     return res.status(401).send({ message: 'Forbidden access to resource!'});
   const errors = validationResult(req);
@@ -612,13 +620,12 @@ const finalizeAssignment = (req, res) => {
   const keys = ["location"];
   const bodyKeys = Object.keys(req.body);
 
+
   if(validateRequest(keys, bodyKeys))
     return res.status(400).send({ message: 'Invalid parameter found in request' });
 
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
-      return res.status(500).send({message: 'Failed to read configurations!'});
-
+  try {
+    const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
     if (!isJson(data))
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
@@ -626,97 +633,105 @@ const finalizeAssignment = (req, res) => {
     const loc = req.body.location.replace(/\//g, sep);
 
     const assignmentFolder = config.defaultPath + sep + loc;
+    const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_FILENAME');
+    const gradesJSON = await csvtojson().fromFile(assignmentFolder + sep + "grades.csv");
+    const files = glob.sync(assignmentFolder + sep + "/*");
 
-    let count = 0;
-    glob(assignmentFolder + sep + "/*", (err, files) => {
-      if(err)
-        return res.status(400).send({message: "Failed to read assignment '" + loc + "' submissions!"});
-
-      files.forEach(file => {
-        if(statSync(file).isDirectory()) {
+    const start = async () => {
+      await asyncForEach(files, async (file) => {
+        if (statSync(file).isDirectory()) {
           const regEx = /(.*)\((.+)\)$/;
-          if(!regEx.test(file)) {
-            return res.status(400).send({message: 'Invalid student folder ' + basename(file)});
+          if (!regEx.test(file)) {
+            failed = true;
+            return sendResponse(res, 500, 'Invalid student folder ' + basename(file));
           }
 
           const matches = regEx.exec(file);
 
-          glob(file + sep + "Submission attachment(s)/*", (err, submissionFiles) => {
-            submissionFiles.forEach(submission => {
+          const submissionFiles = glob.sync(file + sep + "Submission attachment(s)/*");
+          await asyncForEach(submissionFiles, async (submission) => {
+            try {
+              accessSync(submission, constants.F_OK);
+              const studentFolder = dirname(dirname(submission));
+
+              let marks;
+              let data;
               try {
-                accessSync(submission, constants.F_OK);
-                const studentFolder = dirname(dirname(submission));
-
-                return readFile(studentFolder + sep + ".marks.json", (err, data) => {
-                  let marks;
-                  if(err)
-                    marks = [];
-
-                  if(!isJson(data))
-                    marks = [];
-                  else
-                    marks = JSON.parse(data.toString());
-
-                  if(marks.length > 0)  {
-                    const annotateFN = async (): Promise<{pdfBytes: Uint8Array, totalMark:number}> => {
-                      return await annotatePdfFile(res, submission, marks);
-                    };
-
-                    return annotateFN().then((data) => {
-                      const fileName = pathinfo(submission, 'PATHINFO_FILENAME') + "_MARK" + new Date().getTime();
-                      writeFileSync(studentFolder + sep + "Feedback Attachment(s)" + sep + fileName + ".pdf", data.pdfBytes);
-                      accessSync(assignmentFolder + sep + "grades.csv", constants.F_OK);
-                      return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
-                        .then((gradesJSON) => {
-                          let changed = false;
-                          for(let i = 0; i < gradesJSON.length; i++) {
-                            if(gradesJSON[i] && gradesJSON[i][loc] === matches[2]) {
-                              gradesJSON[i].field5 = data.totalMark;
-                              changed = true;
-                              json2csv(gradesJSON, (err, csv) => {
-                                if(err)
-                                  return res.status(400).send({ message: "Failed to convert json to csv!" });
-
-                                writeFile(assignmentFolder + sep + "grades.csv", csv, (err) => {
-                                  if(err)
-                                    return res.status(500).send({ message: 'Failed to save marks to grades.csv file!' });
-                                });
-                              }, {emptyFieldValue: ''});
-                              break;
-                            }
-                          }
-
-                          if(changed) {
-                            // more logic to save new JSON to CSV
-                          } else {
-                            return res.status(400).send({message: "Failed to save mark" });
-                          }
-
-                        })
-                        .catch(reason => {
-                          return res.status(400).send({message: reason });
-                        })
-                    }, (error) => {
-                      return res.status(400).send({message: error});
-                    });
-                  }
-                });
+                data = readFileSync(studentFolder + sep + ".marks.json");
               } catch (e) {
-                return res.status(400).send({message: e.message});
+                marks = [];
               }
-            })
-          })
+
+              if (!isJson(data))
+                marks = [];
+              else
+                marks = JSON.parse(data.toString());
+
+              if (marks.length > 0) {
+                const annotateFN = async (): Promise<{ pdfBytes: Uint8Array, totalMark: number }> => {
+                  return await annotatePdfFile(res, submission, marks);
+                };
+
+                await annotateFN().then(async (data) => {
+                  const fileName = pathinfo(submission, 'PATHINFO_FILENAME') + "_MARK";
+                  writeFileSync(studentFolder + sep + "Feedback Attachment(s)" + sep + fileName + ".pdf", data.pdfBytes);
+                  accessSync(assignmentFolder + sep + "grades.csv", constants.F_OK);
+                  let changed = false;
+                  for (let i = 0; i < gradesJSON.length; i++) {
+                    if (gradesJSON[i] && gradesJSON[i][loc] === matches[2]) {
+                      gradesJSON[i].field5 = data.totalMark;
+                      changed = true;
+                      await json2csvAsync(gradesJSON, {emptyFieldValue: ''})
+                        .then(csv => {
+                          writeFileSync(assignmentFolder + sep + "grades.csv", csv);
+                        })
+                        .catch(() => {
+                          failed = true;
+                          return sendResponse(res, 400, 'Failed to save marks to grades.csv file for student ' + matches[2] + '!');
+                        });
+
+                      break;
+                    }
+                  }
+                  if (!changed) {
+                    failed = true;
+                    return sendResponse(res, 400, "Failed to save mark");
+                  }
+                }, (error) => {
+                  failed = true;
+                  return sendResponse(res, 400, "Error annotating marks to PDF [" + error.message + "]");
+                });
+              }
+            } catch (e) {
+              failed = true;
+              return sendResponse(res, 400, e.message);
+            }
+          });
         }
       });
-
-      return res.status(200).send({message: 'Successfully updated all records'});
-    });
-  });
+    };
+    await start();
+    if(!failed) {
+      return zipDir(assignmentFolder, { filter: (path, stat) => !/\.marks\.json|.settings.json$/.test(path)}, (err, buffer) => {
+        if(err)
+          return sendResponse(res, 400, "Could not export assignment");
+        return res.status(200).send(buffer);
+      })
+    }
+  } catch (e) {
+    return res.status(500).send({message: e.message });
+  }
 };
 
 app.post("/api/assignment/finalize", [
   check('location').not().isEmpty().withMessage('Assignment location not provided!')
 ], finalizeAssignment);
+
+
+const sendResponse = (res, statusCode: number, message: string) => {
+  //if(!res.headersSent)
+    return res.status(statusCode).send({ message: message });
+};
 
 const getRgbScale = (rgbValue: number): number => {
   return +parseFloat(((rgbValue / 255) + "")).toFixed(2);
@@ -725,8 +740,7 @@ const getRgbScale = (rgbValue: number): number => {
 const annotatePdfFile = async (res, filePath: string, marks = []) => {
   let totalMark = 0;
   let generalMarks = 0;
-  let  allMarks: string[]= ["Results", "======="];
-  let longestStringCount = allMarks[0].length;
+  let sectionMarks: string[] = [];
   const file = readFileSync(filePath);
   const pdfFactory =  new AnnotationFactory(file);
   let pdfDoc = await PDFDocument.load(file);
@@ -734,14 +748,12 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   let pageCount: number = 1;
   pdfPages.forEach((pdfPage: PDFPage) => {
     if (Array.isArray(marks[pageCount - 1])) {
-      marks[pageCount - 1].forEach(mark => {
-        const coords = mark.coordinates;
-        if(mark.iconType === IconTypeEnum.NUMBER) {
-          totalMark += (mark.totalMark) ? mark.totalMark:0;
-          pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], 'Mark Value: ' + mark.totalMark + ' Marking Comment: ' +  mark.comment, mark.sectionLabel);
-          let content = mark.sectionLabel + " = " + mark.totalMark;
-          longestStringCount = (content.length > longestStringCount) ? content.length:longestStringCount;
-          allMarks.push(content);
+      marks[pageCount - 1].forEach(markObj => {
+        const coords = markObj.coordinates;
+        if(markObj.iconType === IconTypeEnum.NUMBER) {
+          totalMark += (markObj.totalMark) ? markObj.totalMark:0;
+          pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], 'Mark Value: ' + markObj.totalMark + ' Marking Comment: ' +  markObj.comment, markObj.sectionLabel);
+          sectionMarks.push(markObj.sectionLabel + ' = ' + markObj.totalMark);
         }
       });
     }
@@ -788,38 +800,35 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     pageCount++;
   });
 
-  const resultPage: PDFPage = pdfDoc.addPage();
-  let i = 0;
-  let y = 0;
-  allMarks.forEach(markString => {
-    y += 12;
-    if(i == 1)
-      resultPage.drawText("=======", {x: 5, y: resultPage.getHeight() -  y, size: 12});
-
-    resultPage.drawText(markString, {x: 5, y: resultPage.getHeight() -  y, size: 12});
-    resultPage.moveUp(12);
-    i++;
-  });
-
-  y += 12;
-  resultPage.drawText( "General Marks = " + generalMarks.toString(), {x: 5, y: resultPage.getHeight() -  y, size: 12});
-  resultPage.moveUp(12);
-
-  y += 12;
-  resultPage.drawText( "======================", {x: 5, y: resultPage.getHeight() -  y, size: 12});
-  resultPage.moveUp(12);
-
-  y += 12;
-  resultPage.drawText( "Total Marks \t\t\t\t\t\t" + totalMark.toString(), {x: 5, y: resultPage.getHeight() -  y, size: 12});
-  /*let ruler = "";
-  for(let i = 0; i < longestStringCount; i++) {
-    ruler += "=";
+  const resultsPage = pdfDoc.addPage(PageSizes.A4);
+  resultsPage.drawText('Results', {x: 250, y: 800});
+  resultsPage.drawText("",{x: 250, y: 775});
+  resultsPage.drawText('_______________________________________', {x: 25, y: 775});
+  resultsPage.drawText("",{x: 250, y: 750});
+  let y = 750;
+  for(let i = 0; i <= sectionMarks.length -1; i++) {
+    y -= 25;
+    resultsPage.drawText(sectionMarks[i] + '', {x: 25, y: y});
+    resultsPage.drawText('', {x: 25, y:y});
   }
-  resultPage.drawText(ruler, { size: 24, x: 5});
-  resultPage.moveUp(24);
-  resultPage.drawText("General Marks = " + generalMarks, { size: 24, x: 5});*/
+  y -= 25;
+  resultsPage.drawText('_______________________________________', {x: 25, y:y});
+  y -= 25;
+  resultsPage.drawText('', {x: 25, y:y});
+  resultsPage.drawText('General Marks: ' + generalMarks, {x: 25, y: y});
+  y -= 25;
+  resultsPage.drawText('_______________________________________', {x: 25, y:y});
+  y -= 25;
+  resultsPage.drawText('', {x: 25, y:y});
+  y -= 25;
+  resultsPage.drawText('Total = ' + totalMark , {x: 25, y: y});
   const newPdfBytes = await pdfDoc.save();
   return Promise.resolve({pdfBytes: newPdfBytes, totalMark: totalMark});
+};
+
+const moveDown = (yCoordinate: number): number => {
+  yCoordinate -= 25;
+  return yCoordinate;
 };
 
 // All regular routes use the Universal engine
