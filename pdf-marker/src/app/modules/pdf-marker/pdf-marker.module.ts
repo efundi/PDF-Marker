@@ -19,9 +19,10 @@ import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-m
 import {PdfJsViewerModule} from 'ng2-pdfjs-viewer';
 import {ColorPickerModule} from "ngx-color-picker";
 import { FileSaverModule } from 'ngx-filesaver';
+import { CreateAssignmentComponent } from './components/create-assignment/create-assignment.component';
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent],
   imports: [
     CommonModule,
     SharedModule,

@@ -575,7 +575,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         y = this.adjustPointsForResults(y);
         resultsPage.drawText("",{x: 250, y: y, size: 12});
         y = this.adjustPointsForResults(y);
-        resultsPage.drawText('_______________________________________', {x: 25, y: 775, color: rgb(0.2110.211,0.211),  size: 12});
+        resultsPage.drawText('_______________________________________', {x: 25, y: 775, color: rgb(0.71,0.71,0.71),  size: 12});
         y = this.adjustPointsForResults(y);
         resultsPage.drawText("",{x: 250, y: y, size: 12});
 
@@ -592,7 +592,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         y = this.adjustPointsForResults(y);
         resultsPage.drawText('General Marks = ' + generalMarks, {x: 25, y: y, size: 12});
         y = this.adjustPointsForResults(y);
-        resultsPage.drawText('_______________________________________', {x: 25, y:y, color: rgb(0.211, 0.211, 0.211), size: 12});
+        resultsPage.drawText('_______________________________________', {x: 25, y:y, color: rgb(0.71, 0.71, 0.71), size: 12});
         y = this.adjustPointsForResults(y);
         resultsPage.drawText('', {x: 25, y:y, size: 12});
         y = this.adjustPointsForResults(y);
