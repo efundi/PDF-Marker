@@ -34,6 +34,14 @@ import {AnnotationFactory} from 'annotpdf';
   providers: []
 })
 export class AssignmentMarkingComponent implements OnInit, OnDestroy {
+  constructor(private renderer: Renderer2,
+              private assignmentService: AssignmentService,
+              private el: ElementRef,
+              private dialog: MatDialog,
+              private resolver: ComponentFactoryResolver,
+              private route: ActivatedRoute,
+              private router: Router,
+              private appService: AppService) { }
   // @ts-ignore
   @ViewChild('container') container: ElementRef;
 
@@ -64,15 +72,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private markDetailsRawData: any[];
   private readonly defaultFullMark = 1;
   private readonly defaultIncorrectMark = 0;
-  constructor(private renderer: Renderer2,
-              private assignmentService: AssignmentService,
-              private el: ElementRef,
-              private dialog: MatDialog,
-              private resolver: ComponentFactoryResolver,
-              private route: ActivatedRoute,
-              private router: Router,
-              private appService: AppService) { }
-
+  private number
   ngOnInit() {
     if(this.assignmentService.getSelectedPdfURL() === undefined || this.assignmentService.getSelectedPdfURL() === null){
       this.router.navigate(["/marker"]);
@@ -502,6 +502,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     let  totalMMarks: number = 0;
     let  generalMarks: number = 0;
     let sectionMarks: string[] = [];
+    let  resultsPage: PDFPage;
     if(!this.isNullOrUndefined((this.markDetailsComponents))) {
       this.appService.isLoading$.next(true);
       const reader = new FileReader();
@@ -568,25 +569,34 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         });
         totalMMarks = totalMMarks + generalMarks;
 
-        const resultsPage = pdfDoc.addPage(PageSizes.A4);
-        resultsPage.drawText('Results', {x: 250, y: 800});
-        resultsPage.drawText("",{x: 250, y: 775});
-        resultsPage.drawText('_______________________________________', {x: 25, y: 775});
-        resultsPage.drawText("",{x: 250, y: 750});
-        let y = 750;
+        resultsPage = pdfDoc.addPage(PageSizes.A4);
+        let y = 800;
+        resultsPage.drawText('Results', {x: 250, y: y, size: 14});
+        y = this.adjustPointsForResults(y);
+        resultsPage.drawText("",{x: 250, y: y, size: 12});
+        y = this.adjustPointsForResults(y);
+        resultsPage.drawText('_______________________________________', {x: 25, y: 775, color: rgb(0.2110.211,0.211),  size: 12});
+        y = this.adjustPointsForResults(y);
+        resultsPage.drawText("",{x: 250, y: y, size: 12});
+
         for(let i = 0; i <= sectionMarks.length -1; i++) {
-          y = y - 25;
-          resultsPage.drawText(sectionMarks[i] + '', {x: 25, y: y});
-          resultsPage.drawText('', {x: 25, y:y});
+          y = this.adjustPointsForResults(y);
+          resultsPage.drawText(sectionMarks[i] + '', {x: 25, y: y, size: 12});
+          resultsPage.drawText('', {x: 25, y:y, size: 12});
+
+          if (y <= 5 ) {
+            resultsPage = pdfDoc.addPage(PageSizes.A4);
+            y = 800;
+          }
         }
-        y = y - 25;
-        resultsPage.drawText('General Marks = ' + generalMarks, {x: 25, y: y});
-        y = y - 25;
-        resultsPage.drawText('_______________________________________', {x: 25, y:y});
-        y = y - 25;
-        resultsPage.drawText('', {x: 25, y:y});
-        y = y - 25;
-        resultsPage.drawText('Total = ' + totalMMarks , {x: 25, y: y});
+        y = this.adjustPointsForResults(y);
+        resultsPage.drawText('General Marks = ' + generalMarks, {x: 25, y: y, size: 12});
+        y = this.adjustPointsForResults(y);
+        resultsPage.drawText('_______________________________________', {x: 25, y:y, color: rgb(0.211, 0.211, 0.211), size: 12});
+        y = this.adjustPointsForResults(y);
+        resultsPage.drawText('', {x: 25, y:y, size: 12});
+        y = this.adjustPointsForResults(y);
+        resultsPage.drawText('Total = ' + totalMMarks , {x: 25, y: y, size: 12});
         const newPdfBytes = await pdfDoc.save();
         const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
@@ -600,6 +610,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       }
     }
   }
+
+  adjustPointsForResults(yVar: number) {
+    return yVar -15;
+  }
+
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
