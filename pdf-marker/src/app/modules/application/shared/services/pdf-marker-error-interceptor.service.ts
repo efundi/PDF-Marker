@@ -30,7 +30,6 @@ export class PdfMarkerErrorInterceptorService implements HttpInterceptor {
         } else if(response.error !== undefined) {
           alert.error(response.error.message);
         }
-        console.log("Error found");
         return throwError(response);
       })
     )
