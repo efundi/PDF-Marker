@@ -53,6 +53,7 @@
     "@angular/router": "~8.2.4",
     "@nguniversal/express-engine": "^8.1.1",
     "@nguniversal/module-map-ngfactory-loader": "8.1.1",
+    "@rxweb/reactive-form-validators": "^1.9.7",
     "@types/node": "^12.6.0",
     "annotpdf": "^1.0.11",
     "csvtojson": "2.0.0",

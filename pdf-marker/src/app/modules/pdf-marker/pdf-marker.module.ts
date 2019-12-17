@@ -15,11 +15,13 @@ import {IconsComponent} from './components/icons/icons.component';
 import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component";
 import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
 import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-marking.component';
+import { CreateAssignmentComponent } from './components/create-assignment/create-assignment.component';
 
 import {PdfJsViewerModule} from 'ng2-pdfjs-viewer';
 import {ColorPickerModule} from "ngx-color-picker";
+import {  RxReactiveFormsModule } from "@rxweb/reactive-form-validators"
 import { FileSaverModule } from 'ngx-filesaver';
-import { CreateAssignmentComponent } from './components/create-assignment/create-assignment.component';
+
 
 @NgModule({
   declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent],
@@ -30,7 +32,8 @@ import { CreateAssignmentComponent } from './components/create-assignment/create
     PdfMarkerRoutingModule,
     PdfJsViewerModule,
     ColorPickerModule,
-    FileSaverModule
+    FileSaverModule,
+    RxReactiveFormsModule
   ],
   providers: [SettingsService, ImportService],
   exports: [HomeComponent],

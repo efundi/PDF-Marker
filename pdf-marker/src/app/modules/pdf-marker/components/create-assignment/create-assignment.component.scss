@@ -1,0 +1,95 @@
+$pdf-marker-primary: #6f327a;
+
+table {
+  width: 100%;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  /*width: 50%;
+  margin: 0 auto;*/
+
+  .pdf-marker-file-upload {
+    display: flex;
+    padding: 2px;
+    border: 1px solid transparent;
+
+    #pdf-marker-upload-display {
+      display: flex;
+      width: 100%;
+      border: 0;
+      background: transparent;
+    }
+
+    button {
+      position: relative;
+      .pdf-marker-upload {
+        width: 100%;
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        margin: 0;
+        padding: 0;
+        z-index: 10;
+        font-size: 20px;
+        height: 36px;
+        opacity: 0;
+        filter: alpha(opacity=0);
+        background-color: #fff;
+      }
+    }
+  }
+
+  .pdf-marker-file-upload-error {
+    border: 1px solid #f44336;
+    border-radius: 4px;
+  }
+
+  .pdf-marker-create-assignment-add {
+    color: #3c763d;
+  }
+
+  .pdf-marker-create-assignment-remove {
+    color: #a94442;
+  }
+
+  .pdf-marker-create-assignment-tooltip-error {
+    color: #a94442;
+    background-color: #f2dede;
+    font-size: 12px;
+    left: 0;
+    top: 100%;
+    transform: translate(0px, -100%);
+    position: absolute;
+    padding: 0 5px;
+    border-radius: 2px;
+    width: -moz-fit-content;
+    width: fit-content;
+  }
+
+  .pdf-marker-create-assignment-cell-position {
+    position: relative;
+  }
+
+  .pdf-marker-rubric-container {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    justify-content: space-between;
+
+    .mat-form-field {
+      flex: 1;
+      flex-grow: unset;
+    }
+  }
+
+  .button-visibility {
+    visibility: hidden;
+  }
+
+  .pdf-marker-create-assignment-disabled {
+    cursor: no-drop;
+  }
+}
