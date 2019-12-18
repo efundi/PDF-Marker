@@ -5,6 +5,7 @@ import {makeStateKey, StateKey, TransferState} from "@angular/platform-browser";
 import {isPlatformServer} from "@angular/common";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 import {catchError, retry, shareReplay} from "rxjs/operators";
+import {CreateAssignmentInfo} from "@pdfMarkerModule/info-objects/create-assignment.info";
 
 @Injectable({
   providedIn: 'root'
@@ -172,6 +173,13 @@ export class AssignmentService {
       observe: 'events',
       headers,
       responseType: 'blob' as 'json'
+    });
+  }
+
+  createAssignment(createAssignmentInfo: any) {
+    return this.http.post("/api/assignment/create", createAssignmentInfo, {
+      reportProgress: true,
+      observe: 'events'
     });
   }
 }

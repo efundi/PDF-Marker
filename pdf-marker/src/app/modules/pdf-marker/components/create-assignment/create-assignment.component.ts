@@ -2,6 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import {FormArray, FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {RxwebValidators} from "@rxweb/reactive-form-validators";
 import {AlertService} from "@coreModule/services/alert.service";
+import {AssignmentService} from "@sharedModule/services/assignment.service";
+import {AppService} from "@coreModule/services/app.service";
+import {HttpEventType} from "@angular/common/http";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -12,12 +16,16 @@ export class CreateAssignmentComponent implements OnInit {
 
   createAssignmentForm: FormGroup;
   private readonly noRubricDefaultValue: boolean = false;
+  private studentFiles: File[] = [];
 
   readonly acceptMimeType = "application/pdf";
   isRubric: boolean = true;
 
   constructor(private fb: FormBuilder,
-              private alertService: AlertService) {}
+              private alertService: AlertService,
+              private assignmentService: AssignmentService,
+              private appService: AppService,
+              private router: Router) {}
 
   ngOnInit() {
     this.initForm();
@@ -37,9 +45,9 @@ export class CreateAssignmentComponent implements OnInit {
 
   private newFormGroupRow(): FormGroup {
     return this.fb.group({
-      studentId: [null, [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
-      studentName:[null, Validators.required],
-      studentSurname: [null , Validators.required],
+      studentId: ["tobosiw@gmail.com", [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
+      studentName:["Thatayaone", Validators.required],
+      studentSurname: ["Tobosi" , Validators.required],
       studentSubmission: [null, Validators.required],
       studentSubmissionText: [null]
     });
@@ -83,6 +91,10 @@ export class CreateAssignmentComponent implements OnInit {
       if(file && file.type === this.acceptMimeType) {
         this.studentFormGroupAtIndex(studentIndex).controls.studentSubmission.setErrors(null);
         this.studentFormGroupAtIndex(studentIndex).controls.studentSubmissionText.setValue(file.name);
+        if(!this.studentFiles[studentIndex])
+          this.studentFiles.push(file);
+        else
+          this.studentFiles[studentIndex] = file;
       } else {
         this.studentFormGroupAtIndex(studentIndex).controls.studentSubmission.setErrors({file: true});
         this.studentFormGroupAtIndex(studentIndex).controls.studentSubmissionText.setValue(file.name);
@@ -93,16 +105,55 @@ export class CreateAssignmentComponent implements OnInit {
 
   onStudentInfoRemove(studentIndex: number) {
     this.studentRow.controls.splice(studentIndex, 1);
+    this.studentFiles.splice(studentIndex, 1);
     this.studentRow.updateValueAndValidity();
   }
 
   onSubmit(event) {
+    event.target.disabled = true;
     if(this.createAssignmentForm.invalid || this.studentRow.invalid) {
       event.target.disabled = true;
       this.alertService.error("Please fill in the correct details!");
       return;
     }
 
-    console.log(this.createAssignmentForm);
+    const formValue: any = this.createAssignmentForm.value;
+    let formData: FormData = new FormData();
+    const studentData: any= [];
+    const {
+      assignmentName,
+      noRubric,
+      rubric
+    } = this.createAssignmentForm.value;
+
+    formData.append('assignmentName', assignmentName.trim());
+    formData.append('noRubric', noRubric);
+    formData.append('rubric', rubric);
+    let count = 0;
+    formValue.studentRow.map((studentRow: any) => {
+      let student: any = {};
+      student.studentId = studentRow.studentId.trim();
+      student.studentName = studentRow.studentName.trim();
+      student.studentSurname = studentRow.studentSurname.trim();
+      formData.append('file' + count, this.studentFiles[count]);
+      studentData.push(student);
+      count++;
+    });
+    formData.append('studentDetails', JSON.stringify(studentData));
+    this.assignmentService.createAssignment(formData).subscribe((events) => {
+      if(events.type === HttpEventType.UploadProgress) {
+
+      } else if(events.type === HttpEventType.Response) {
+        this.appService.isLoading$.next(false);
+        let model: any = events.body;
+        this.assignmentService.getAssignments().subscribe((assignments) => {
+          this.assignmentService.setSelectedAssignment(model);
+          this.router.navigate(["/marker/assignment/overview"]).then(() => this.assignmentService.update(assignments));
+        });
+      }
+    },error => {
+      this.appService.isLoading$.next(false);
+      event.target.disabled = false;
+    });
   }
 }

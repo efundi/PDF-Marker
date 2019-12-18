@@ -24,14 +24,16 @@ import {
   constants,
   createReadStream,
   existsSync,
-  mkdir,
+  mkdir, mkdirSync,
   readdir,
   readdirSync,
   readFile,
   readFileSync,
   statSync,
   unlinkSync,
-  writeFile, writeFileSync
+  writeFile,
+  writeFileSync,
+  copyFileSync
 } from 'fs';
 import {json2csv, json2csvAsync } from "json-2-csv";
 const zipDir = require('zip-dir');
@@ -50,8 +52,8 @@ const pathinfo = require('locutus/php/filesystem/pathinfo');
 
 
 const CONFIG_FILE = 'config.json';
-const CONFIG_DIR = './pdf-config/';
-const UPLOADS_DIR = './uploads';
+const CONFIG_DIR = '.' + sep + 'pdf-config' + sep;
+const UPLOADS_DIR = '.' + sep + 'uploads';
 
 const assignmentList = (callback) => {
   const folderModels = [];
@@ -123,7 +125,7 @@ const store = multer.diskStorage({
   }
 });
 
-const upload = multer({storage: store}).single('file');
+const upload = multer({storage: store}).any();
 
 const checkClient = (req, res) => {
   return (req.headers.client_id && req.headers.client_id === "PDF_MARKER");
@@ -800,36 +802,135 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     pageCount++;
   });
 
-  const resultsPage = pdfDoc.addPage(PageSizes.A4);
-  resultsPage.drawText('Results', {x: 250, y: 800});
-  resultsPage.drawText("",{x: 250, y: 775});
-  resultsPage.drawText('_______________________________________', {x: 25, y: 775});
-  resultsPage.drawText("",{x: 250, y: 750});
-  let y = 750;
-  for(let i = 0; i <= sectionMarks.length -1; i++) {
-    y -= 25;
-    resultsPage.drawText(sectionMarks[i] + '', {x: 25, y: y});
-    resultsPage.drawText('', {x: 25, y:y});
+  let resultsPage = pdfDoc.addPage(PageSizes.A4);
+  let y: number = 800;
+  const xPosition: number = 25;
+  const headerSize: number = 14;
+  const textSize: number = 12;
+  const borderColor = { red: 0.71, green: 0.71, blue: 0.71 };
+
+  resultsPage.drawText('Results', { x: resultsPage.getWidth() / 2, y: y, size: headerSize });
+  y = adjustPointsForResults(y);
+  y = adjustPointsForResults(y);
+  resultsPage.drawText('_______________________________________', { x: xPosition, y: 775, color: rgb(borderColor.red, borderColor.green, borderColor.blue),  size: textSize });
+  y = adjustPointsForResults(y);
+
+  for(let i = 0; i < sectionMarks.length; i++) {
+    y = adjustPointsForResults(y);
+    resultsPage.drawText(sectionMarks[i] + '', { x: xPosition, y: y, size: textSize });
+    resultsPage.drawText('', { x: xPosition, y:y, size: textSize });
+
+    if (y <= 5 ) {
+      resultsPage = pdfDoc.addPage(PageSizes.A4);
+      y = 800;
+    }
   }
-  y -= 25;
-  resultsPage.drawText('_______________________________________', {x: 25, y:y});
-  y -= 25;
-  resultsPage.drawText('', {x: 25, y:y});
-  resultsPage.drawText('General Marks: ' + generalMarks, {x: 25, y: y});
-  y -= 25;
-  resultsPage.drawText('_______________________________________', {x: 25, y:y});
-  y -= 25;
-  resultsPage.drawText('', {x: 25, y:y});
-  y -= 25;
-  resultsPage.drawText('Total = ' + totalMark , {x: 25, y: y});
+  y = adjustPointsForResults(y);
+  resultsPage.drawText('General Marks = ' + generalMarks, { x: xPosition, y: y, size: textSize });
+  y = adjustPointsForResults(y);
+  resultsPage.drawText('_______________________________________', { x: xPosition, y:y, color: rgb(borderColor.red, borderColor.green, borderColor.blue), size: textSize });
+  y = adjustPointsForResults(y);
+  resultsPage.drawText('', { x: xPosition, y:y, size: textSize });
+  y = adjustPointsForResults(y);
+  resultsPage.drawText('Total = ' + totalMark , { x: xPosition, y: y, size: textSize });
   const newPdfBytes = await pdfDoc.save();
-  return Promise.resolve({pdfBytes: newPdfBytes, totalMark: totalMark});
+  return Promise.resolve({ pdfBytes: newPdfBytes, totalMark: totalMark });
 };
 
-const moveDown = (yCoordinate: number): number => {
-  yCoordinate -= 25;
-  return yCoordinate;
+const adjustPointsForResults = (yCoordinate: number): number => {
+  return yCoordinate - 15;
 };
+
+const createAssignment = (req, res) => {
+  const acceptedParams = ["assignmentName", "noRubric", "rubric", "studentDetails"];
+  const receivedParams = Object.keys(req.body);
+  let isInvalidKey: boolean = false;
+  let invalidParam: string;
+
+  upload(req, res, function(err) {
+    if (err) {
+      return sendResponse(res, 400, 'Error uploading PDF files!');
+    } else {
+      for(let receivedParam of receivedParams) {
+        if(acceptedParams.indexOf(receivedParam)) {
+          isInvalidKey = true;
+          invalidParam = receivedParam;
+          break;
+        }
+      }
+
+      if(isInvalidKey)
+        return sendResponse(res, 400, `Invalid parameter ${invalidParam} found in request`);
+
+      if(req.body.assignmentName.legnth < 5)
+        return sendResponse(res, 400, `Assignment must be > 5 characters`);
+
+      const isRubric: boolean = req.body.isRubric;
+      if(isRubric) {
+        if(isNullOrUndefined(req.body.rubric))
+          return sendResponse(res, 400, `Rubric must be provided`);
+      }
+
+      if(!isJson(req.body.studentDetails))
+        return sendResponse(res, 400, `Student details not valid`);
+
+      const studentDetails: any[] = JSON.parse(req.body.studentDetails);
+
+      if(!Array.isArray(studentDetails))
+        return sendResponse(res, 400, `Student details must be a list`);
+
+      if(studentDetails.length !== req.files.length)
+        return sendResponse(res, 400, `Student details is not equal to number of files sent!`);
+
+      const assignmentName: string = req.body.assignmentName;
+      const rubric: string = req.body.rubric;
+
+      try {
+        const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
+        if (!isJson(data))
+          return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+        const config = JSON.parse(data.toString());
+        const gradesFile = "grades.csv";
+
+        let count = 0;
+        const headers = `"${assignmentName}","SCORE_GRADE_TYPE"\n`;
+        const line = `""\n`;
+        const subheaders = `"Display ID","ID","Last Name","First Name","Mark","Submission date","Late submission"\n`;
+        let csvString = headers + line + subheaders;
+        studentDetails.forEach((studentInfo: any) => {
+          let file: any = req.files[count];
+          const studentFolder = studentInfo.studentSurname.toUpperCase() + ", " + studentInfo.studentName.toUpperCase() + "(" + studentInfo.studentId.toUpperCase() + ")";
+          const feedbackFolder = studentFolder + sep + "Feedback Attachment(s)";
+          const submissionFolder = studentFolder + sep + "Submission attachment(s)";
+          const commentsFile = "comments.txt";
+          const timestampFile = "timestamp.txt";
+          const csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},"","",""\n`;
+          csvString += csvData;
+
+          mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, { recursive: true });
+          mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, { recursive: true });
+          copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
+          writeFileSync(config.defaultPath + sep + assignmentName + sep + studentFolder + sep + commentsFile, "");
+          writeFileSync(config.defaultPath + sep + assignmentName + sep + studentFolder + sep + timestampFile, "");
+          unlinkSync(file.path);
+          count++;
+        });
+
+        writeFileSync(config.defaultPath + sep + assignmentName + sep + gradesFile, csvString);
+        const files = glob.sync(config.defaultPath + sep + assignmentName + sep + "/**");
+        files.sort((a, b) => (a > b) ? 1 : -1);
+        const folderModel = hierarchyModel(files, config.defaultPath);
+        return res.status(200).send(folderModel);
+      } catch (e) {
+        return sendResponse(res, 400, e.message);
+      }
+    }
+  });
+};
+app.post("/api/assignment/create", [
+  check('assignmentName').not().isEmpty().withMessage('Assignment name must be provided!')
+], createAssignment);
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
