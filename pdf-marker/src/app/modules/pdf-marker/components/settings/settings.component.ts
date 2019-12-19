@@ -42,8 +42,9 @@ export class SettingsComponent implements OnInit {
   }
 
   onSubmit(event) {
+    this.alertService.clear();
     if(this.settingsForm.invalid) {
-      event.target.disabled = true;
+      this.alertService.error("Please fill in the correct details!");
       return;
     }
 

@@ -164,9 +164,9 @@ export class ImportComponent implements OnInit {
   }
 
   onSubmit(event) {
-
+    this.alertService.clear();
     if(this.importForm.invalid || !this.validMime || !this.isValidFormat) {
-      event.target.disabled = true;
+      this.alertService.error("Please fill in the correct details!");
       return;
     }
 

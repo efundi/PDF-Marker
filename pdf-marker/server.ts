@@ -125,7 +125,8 @@ const store = multer.diskStorage({
   }
 });
 
-const upload = multer({storage: store}).any();
+const uploadFiles = multer({storage: store}).any();
+const uploadFile = multer({storage: store}).single('file');
 
 const checkClient = (req, res) => {
   return (req.headers.client_id && req.headers.client_id === "PDF_MARKER");
@@ -202,7 +203,7 @@ const uploadFn = (req, res, next) => {
     if (!isJson(data))
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
-    upload(req, res, (err) => {
+    uploadFile(req, res, (err) => {
       if(err)
         return res.status(501).json({error: err});
 
@@ -847,7 +848,7 @@ const createAssignment = (req, res) => {
   let isInvalidKey: boolean = false;
   let invalidParam: string;
 
-  upload(req, res, function(err) {
+  uploadFiles(req, res, function(err) {
     if (err) {
       return sendResponse(res, 400, 'Error uploading PDF files!');
     } else {

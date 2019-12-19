@@ -110,9 +110,8 @@ export class CreateAssignmentComponent implements OnInit {
   }
 
   onSubmit(event) {
-    event.target.disabled = true;
+    this.alertService.clear();
     if(this.createAssignmentForm.invalid || this.studentRow.invalid) {
-      event.target.disabled = true;
       this.alertService.error("Please fill in the correct details!");
       return;
     }
@@ -153,7 +152,6 @@ export class CreateAssignmentComponent implements OnInit {
       }
     },error => {
       this.appService.isLoading$.next(false);
-      event.target.disabled = false;
     });
   }
 }
