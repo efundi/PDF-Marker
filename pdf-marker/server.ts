@@ -56,7 +56,6 @@ const CONFIG_DIR = '.' + sep + 'pdf-config' + sep;
 const UPLOADS_DIR = '.' + sep + 'uploads';
 
 const assignmentList = (callback) => {
-  const folderModels = [];
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
       return [];
@@ -83,20 +82,6 @@ const assignmentList = (callback) => {
     } catch (e) {
       callback(null, folderModels);
     }
-    /*readdir(config.defaultPath, (err, folders) => {
-      if(err)
-        return new Error('Failed to read workspace contents!');
-
-      folders.forEach(folder => {
-        glob(config.defaultPath + '/' + folder + '/**', (err, files) => {
-          files.sort((a, b) => (a > b) ? 1:-1);
-          folderModels.push(hierarchyModel(files, config.defaultPath));
-        });
-      });
-
-      callback(null, folderModels);
-    });*/
-
   });
 };
 
@@ -275,25 +260,6 @@ const getAssignments = (req, res) => {
     } catch (e) {
       return sendResponse(res, 500, e.message);
     }
-    /*readdir(config.defaultPath, (err, folders) => {
-      if(err)
-        return res.status(501).send({message: 'Error retrieving assignments'});
-
-      const folderCount = folders.length;
-      if(folders.length) {
-        folders.forEach(folder => {
-          glob(config.defaultPath + '/' + folder + '/**', (err, files) => {
-            files.sort((a, b) => (a > b) ? 1 : -1);
-            folderModels.push(hierarchyModel(files, config.defaultPath));
-
-            if (folderModels.length == folderCount)
-              return res.status(200).send(folderModels);
-          });
-        });
-      } else {
-        return res.status(200).send([]);
-      }
-    });*/
   });
 };
 

@@ -11,6 +11,8 @@ import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-
 import {AlertService} from "@coreModule/services/alert.service";
 import {HttpEventType} from "@angular/common/http";
 import {FileSaverService} from "ngx-filesaver";
+import {SettingsService} from "@pdfMarkerModule/services/settings.service";
+import {SettingInfo} from "@pdfMarkerModule/info-objects/setting.info";
 
 export interface AssignmentDetails {
   studentName: string;
@@ -46,12 +48,14 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
   readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
+  private settings: SettingInfo;
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
               private router: Router,
               private appService: AppService,
               private alertService: AlertService,
-              private fileSaverService: FileSaverService) { }
+              private fileSaverService: FileSaverService,
+              private settingsService: SettingsService) { }
 
   ngOnInit() {
     this.subscription = this.assignmentService.selectedAssignmentChanged().subscribe((selectedAssignment) => {
@@ -62,12 +66,21 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       this.appService.openSnackBar(false, "Unable to read selected assignment");
     });
 
-    if(!this.hierarchyModel && !!this.assignmentService.getSelectedAssignment()) {
-      this.hierarchyModel = this.assignmentService.getSelectedAssignment();
-      this.getGrades();
-    } else {
-      this.router.navigate(["/marker"])
-    }
+    this.settingsService.getConfigurations().subscribe((configurations: SettingInfo) => {
+      if(configurations.defaultPath && configurations.lmsSelection) {
+        this.settings = configurations;
+
+        if(!this.hierarchyModel && !!this.assignmentService.getSelectedAssignment()) {
+          this.hierarchyModel = this.assignmentService.getSelectedAssignment();
+          this.getGrades();
+        } else {
+          this.router.navigate(["/marker"])
+        }
+      }
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.isLoading$.next(false);
+    });
   }
 
   private getGrades() {
@@ -154,7 +167,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         this.appService.isLoading$.next(true);
         this.assignmentService.finalizeAndExport(this.assignmentName).subscribe((events: any) => {
           if(events.type === HttpEventType.Response) {
-            this.alertService.success("Successfully exported assignment");
+            this.alertService.success("Successfully exported assignment, You can now upload it to " + this.settings.lmsSelection);
             let zipFileBuffer: Blob = events.body;
             let blob = new Blob([zipFileBuffer], { type: "application/zip"});
             this.fileSaverService.save(blob, this.assignmentName + ".zip");
