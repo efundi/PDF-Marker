@@ -50,8 +50,6 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   }
 
   isSelected() {
-    console.log(this.hierarchyModel);
-    console.log(this.assignmentService.getSelectedAssignment());
     return ((JSON.stringify(this.hierarchyModel) === JSON.stringify(this.assignmentService.getSelectedAssignment())) && this.router.url === "/marker/assignment/overview");
   }
 

@@ -755,7 +755,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
         const coords = markObj.coordinates;
         if(markObj.iconType === IconTypeEnum.NUMBER) {
           totalMark += (markObj.totalMark) ? markObj.totalMark:0;
-          pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], markObj.getComment(), markObj.getSectionLabel() + " = " + markObj.getTotalMark());
+          pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], markObj.comment, markObj.sectionLabel + " = " + markObj.totalMark);
           sectionMarks.push(markObj.sectionLabel + ' = ' + markObj.totalMark);
         }
       });

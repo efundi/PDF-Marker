@@ -30,7 +30,7 @@ export class AssignmentService {
     if (isPlatformServer(this.platformId)) {
       this.assignmentList((err, assignmentList) => {
         if(err) {
-          console.log(err);
+          console.log("Error ", err);
         } else {
           this.assignments = assignmentList;
           this.transferState.set(transferKey, this.assignments);
@@ -86,7 +86,6 @@ export class AssignmentService {
   }
 
   update(assignments: object[]) {
-    console.log("Update", assignments);
     this.assignments = assignments;
     this.assignmentListSource$.next(this.assignments);
   }

@@ -44,7 +44,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
 
-  //readonly regEx = /(.*)\(([0-9]+)\)/;
   readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
   constructor(private assignmentService: AssignmentService,
@@ -69,7 +68,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     } else {
       this.router.navigate(["/marker"])
     }
-
   }
 
   private getGrades() {
@@ -169,12 +167,13 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
             try {
               const error = JSON.parse(reader.result.toString());
               this.alertService.error(error.message);
+              this.appService.isLoading$.next(false);
             } catch (e) {
               this.alertService.error("Unexpected error occurred!");
+              this.appService.isLoading$.next(false);
             }
           });
           reader.readAsText(blob);
-          this.appService.isLoading$.next(false);
         })
       }
     };
@@ -184,6 +183,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
 
   ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    if(!this.subscription.closed)
+      this.subscription.unsubscribe();
   }
 }
