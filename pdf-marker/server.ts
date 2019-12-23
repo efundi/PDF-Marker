@@ -65,7 +65,25 @@ const assignmentList = (callback) => {
       return [];
 
     const config = JSON.parse(data.toString());
-    readdir(config.defaultPath, (err, folders) => {
+    const folderModels = [];
+    try {
+      const folders: string[] = readdirSync(config.defaultPath);
+      const folderCount = folders.length;
+      if(folders.length) {
+        folders.forEach(folder => {
+          const files = glob.sync(config.defaultPath + '/' + folder + '/**');
+          files.sort((a, b) => (a > b) ? 1 : -1);
+          folderModels.push(hierarchyModel(files, config.defaultPath));
+          if (folderModels.length == folderCount)
+            callback(null, folderModels);
+        })
+      } else {
+        callback(null, folderModels);
+      }
+    } catch (e) {
+      callback(null, folderModels);
+    }
+    /*readdir(config.defaultPath, (err, folders) => {
       if(err)
         return new Error('Failed to read workspace contents!');
 
@@ -77,7 +95,7 @@ const assignmentList = (callback) => {
       });
 
       callback(null, folderModels);
-    });
+    });*/
 
   });
 };
@@ -240,7 +258,24 @@ const getAssignments = (req, res) => {
     const config = JSON.parse(data.toString());
 
     const folderModels = [];
-    readdir(config.defaultPath, (err, folders) => {
+    try {
+      const folders: string[] = readdirSync(config.defaultPath);
+      const folderCount = folders.length;
+      if(folders.length) {
+        folders.forEach(folder => {
+          const files = glob.sync(config.defaultPath + '/' + folder + '/**');
+          files.sort((a, b) => (a > b) ? 1 : -1);
+          folderModels.push(hierarchyModel(files, config.defaultPath));
+          if (folderModels.length == folderCount)
+            return res.status(200).send(folderModels);
+        })
+      } else {
+        return res.status(200).send([]);
+      }
+    } catch (e) {
+      return sendResponse(res, 500, e.message);
+    }
+    /*readdir(config.defaultPath, (err, folders) => {
       if(err)
         return res.status(501).send({message: 'Error retrieving assignments'});
 
@@ -258,7 +293,7 @@ const getAssignments = (req, res) => {
       } else {
         return res.status(200).send([]);
       }
-    });
+    });*/
   });
 };
 
