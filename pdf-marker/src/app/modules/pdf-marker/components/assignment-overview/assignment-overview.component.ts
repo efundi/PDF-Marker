@@ -49,6 +49,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
   private settings: SettingInfo;
+  isSettings: boolean;
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
               private router: Router,
@@ -69,7 +70,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     this.settingsService.getConfigurations().subscribe((configurations: SettingInfo) => {
       if(configurations.defaultPath && configurations.lmsSelection) {
         this.settings = configurations;
-
+        this.isSettings = true;
         if(!this.hierarchyModel && !!this.assignmentService.getSelectedAssignment()) {
           this.hierarchyModel = this.assignmentService.getSelectedAssignment();
           this.getGrades();
@@ -149,7 +150,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     })
   }
 
-  onFinalizeAndExport() {
+  onFinalizeAndExport(event) {
+    if(!this.isSettings) {
+      event.target.disabled = true;
+      return;
+    }
     this.openYesNoConfirmationDialog(null, "Are you sure you want to finalise and zip this assignment?");
   }
 
