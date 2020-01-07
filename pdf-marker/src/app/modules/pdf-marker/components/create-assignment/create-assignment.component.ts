@@ -45,9 +45,9 @@ export class CreateAssignmentComponent implements OnInit {
 
   private newFormGroupRow(): FormGroup {
     return this.fb.group({
-      studentId: ["tobosiw@gmail.com", [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
-      studentName:["Thatayaone", Validators.required],
-      studentSurname: ["Tobosi" , Validators.required],
+      studentId: [null, [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
+      studentName:[null, Validators.required],
+      studentSurname: [null, Validators.required],
       studentSubmission: [null, Validators.required],
       studentSubmissionText: [null]
     });
