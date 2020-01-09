@@ -172,7 +172,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         this.appService.isLoading$.next(true);
         this.assignmentService.finalizeAndExport(this.assignmentName).subscribe((events: any) => {
           if(events.type === HttpEventType.Response) {
-            this.alertService.success("Successfully exported assignment, You can now upload it to " + this.settings.lmsSelection);
+            this.alertService.success("Successfully exported assignment. You can now upload it to " + this.settings.lmsSelection + ".");
             let zipFileBuffer: Blob = events.body;
             let blob = new Blob([zipFileBuffer], { type: "application/zip"});
             this.fileSaverService.save(blob, this.assignmentName + ".zip");
