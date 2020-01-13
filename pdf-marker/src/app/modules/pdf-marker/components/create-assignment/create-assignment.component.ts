@@ -43,6 +43,7 @@ export class CreateAssignmentComponent implements OnInit {
       studentRow: this.fb.array([])
     });
 
+    this.assignmentName.nativeElement.focus();
     this.addNewRow();
   }
 
