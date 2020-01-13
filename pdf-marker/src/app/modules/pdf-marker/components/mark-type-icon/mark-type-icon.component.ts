@@ -174,10 +174,11 @@ export class MarkTypeIconComponent implements OnInit {
   }
 
   setComment(comment: string) {
-    if (comment !== null && comment !== "") {
+    if (comment !== null && comment !== " " && comment !== "") {
       this.hasComment = true;
       this.comment = comment;
     } else {
+      this.comment = " "; // this is a placeholder for showing the pop up in adobe. Adobe seems to need a comment to do this.
       this.hasComment = false;
     }
   }
