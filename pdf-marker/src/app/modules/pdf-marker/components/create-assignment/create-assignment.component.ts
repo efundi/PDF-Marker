@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import {FormArray, FormBuilder, FormGroup, Validators} from "@angular/forms";
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {FormArray, FormBuilder, FormControl, FormGroup, Validators} from "@angular/forms";
 import {RxwebValidators} from "@rxweb/reactive-form-validators";
 import {AlertService} from "@coreModule/services/alert.service";
 import {AssignmentService} from "@sharedModule/services/assignment.service";
@@ -20,6 +20,10 @@ export class CreateAssignmentComponent implements OnInit {
 
   readonly acceptMimeType = "application/pdf";
   isRubric: boolean = true;
+
+  // @ts-ignore
+  @ViewChild("assignmentName") assignmentName: ElementRef;
+
 
   constructor(private fb: FormBuilder,
               private alertService: AlertService,
@@ -73,10 +77,12 @@ export class CreateAssignmentComponent implements OnInit {
     if(this.fc.noRubric.value) {
       this.fc.rubric.setValidators(null);
       this.fc.rubric.updateValueAndValidity();
+      this.fc.rubric.disable();
       this.isRubric = false;
     } else {
       this.fc.rubric.setValidators(Validators.required);
       this.fc.rubric.updateValueAndValidity();
+      this.fc.rubric.enable();
     }
 
     this.createAssignmentForm.updateValueAndValidity();

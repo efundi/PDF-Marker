@@ -16,10 +16,11 @@
       <input formControlName="assignmentName" type="text" [readonly]="isAssignmentName" matInput required>
     </mat-form-field>
 
-    <mat-label>Rubric</mat-label>
+    <mat-label class="pdf-marker-form-labels">Rubric</mat-label>
     <div class="pdf-marker-rubric-container">
       <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange($event)">No Rubric</mat-checkbox>
       <ng-container>
+        <br>
         <mat-form-field [hideRequiredMarker]="importForm.get('noRubric').value">
           <mat-label>Select Rubric</mat-label>
           <mat-select formControlName="rubric" required="importForm.get('noRubric').value">
@@ -28,7 +29,6 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <button type="button" mat-raised-button>Add a Rubric</button>
       </ng-container>
     </div>
     <div class="pdf-spacer"></div>

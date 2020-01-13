@@ -148,10 +148,12 @@ export class ImportComponent implements OnInit {
     if(this.fc.noRubric.value) {
       this.fc.rubric.setValidators(null);
       this.fc.rubric.updateValueAndValidity();
+      this.fc.rubric.disable();
       this.isRubric = false;
     } else {
       this.fc.rubric.setValidators(Validators.required);
       this.fc.rubric.updateValueAndValidity();
+      this.fc.rubric.enable();
     }
 
     this.importForm.updateValueAndValidity();

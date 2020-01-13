@@ -34,11 +34,16 @@ form {
     }
   }
 
+  .pdf-marker-form-labels {
+    font-weight: 500;
+  }
+
   .pdf-marker-rubric-container {
-    display: flex;
+    /*display: flex;
     align-items: center;
     flex: 1 1 auto;
-    justify-content: space-between;
+    justify-content: space-between;*/
+    padding-top: 20px;
 
     .mat-form-field {
       flex: 1;

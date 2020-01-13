@@ -42,6 +42,10 @@ form {
     }
   }
 
+  .pdf-marker-form-labels {
+    font-weight: 500;
+  }
+
   .pdf-marker-file-upload-error {
     border: 1px solid #f44336;
     border-radius: 4px;
@@ -74,15 +78,16 @@ form {
   }
 
   .pdf-marker-rubric-container {
-    display: flex;
-    align-items: center;
-    flex: 1 1 auto;
-    justify-content: space-between;
+       /*display: flex;
+       align-items: center;
+       flex: 1 1 auto;
+       justify-content: space-between;*/
+      padding-top: 20px;
 
-    .mat-form-field {
-      flex: 1;
-      flex-grow: unset;
-    }
+       .mat-form-field {
+         flex: 1;
+         flex-grow: unset;
+       }
   }
 
   .button-visibility {

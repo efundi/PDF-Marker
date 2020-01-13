@@ -6,13 +6,14 @@
     <div class="pdf-spacer"></div>
     <mat-form-field class="settings-halfWidth">
       <mat-label>Assignment: </mat-label>
-      <input formControlName="assignmentName" type="text" placeholder="My Assignment" matInput required [autocomplete]="false">
-    </mat-form-field><br>
+      <input #assignmentName formControlName="assignmentName" type="text" placeholder="My Assignment" matInput required [autocomplete]="false" maxlength="50">
+    </mat-form-field>
     <div class="pdf-spacer"></div>
-    <mat-label>Rubric</mat-label>
+    <mat-label class="pdf-marker-form-labels">Rubric</mat-label>
     <div class="pdf-marker-rubric-container">
       <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange()">No Rubric</mat-checkbox>
       <ng-container>
+        <br>
         <mat-form-field [hideRequiredMarker]="createAssignmentForm.get('noRubric').value">
           <mat-label>Select Rubric</mat-label>
           <mat-select formControlName="rubric" required="createAssignmentForm.get('noRubric').value">
@@ -20,10 +21,10 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <button type="button" mat-raised-button>Add a Rubric</button>
       </ng-container>
     </div>
     <div>
+      <mat-label class="pdf-marker-form-labels">Students</mat-label>
       <table>
         <tbody formArrayName="studentRow">
           <tr *ngFor="let studentInfo of studentRow.controls; let studentIndex=index" [formGroupName]="studentIndex">
