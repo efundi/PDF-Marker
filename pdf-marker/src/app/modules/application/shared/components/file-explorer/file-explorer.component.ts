@@ -2,8 +2,9 @@ import {Component, Input, OnChanges, OnInit} from '@angular/core';
 import {Router} from "@angular/router";
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {AppService} from "@coreModule/services/app.service";
-import {Observable} from "rxjs";
+import {Observable, Subscription} from "rxjs";
 import {of} from "rxjs";
+import {FormBuilder, FormGroup} from "@angular/forms";
 
 @Component({
   selector: 'pdf-marker-file-explorer',
@@ -23,11 +24,30 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   @Input()
   first: boolean;
 
+  private subscription: Subscription;
+
+  @Input()
+  filePath: string = undefined;
+
+  @Input()
+  parent: string = undefined;
+
+  @Input()
+  scrollToElement: HTMLElement;
+
   constructor(private router: Router,
               private assignmentService: AssignmentService,
               private appService: AppService) { }
 
   ngOnInit() {
+    if(this.first) {
+      this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfFile => {
+        if(this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + "/"))
+          this.filePath = this.assignmentService.getSelectedPdfLocation();
+        else
+          this.filePath = undefined;
+      });
+    }
   }
 
   getModelKeys(folder) {
@@ -47,6 +67,11 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
     this.assignmentService.setSelectedAssignment(hierarchyModel);
     if(this.router.url !== "/marker/assignment/overview")
       this.router.navigate(["/marker/assignment/overview"]);
+  }
+
+  scrollToFile() {
+    this.scrollToElement.scrollIntoView({ block: 'start', behavior: 'smooth'});
+    this.filePath = undefined;
   }
 
   isSelected() {

@@ -47,6 +47,13 @@ ul {
   cursor: pointer;
 }
 
+.selected-pdf {
+  border: 1px solid cornflowerblue;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-right: 4px;
+}
+
 .pdf-marker-overview {
   display: inline-block;
   vertical-align: super;

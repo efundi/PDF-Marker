@@ -72,7 +72,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private markDetailsRawData: any[];
   private readonly defaultFullMark = 1;
   private readonly defaultIncorrectMark = 0;
-  private number
+
   ngOnInit() {
     if(this.assignmentService.getSelectedPdfURL() === undefined || this.assignmentService.getSelectedPdfURL() === null){
       this.router.navigate(["/marker"]);
