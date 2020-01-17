@@ -10,7 +10,7 @@
       <input type="text" formControlName="assignmentZipFileText" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
       <button type="button" mat-raised-button *ngIf="isFileLoaded && validMime && isValidFormat" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
     </div>
-    <div class="pdf-spacer"></div>
+    <div class="pdf-spacer"><hr></div>
     <mat-form-field *ngIf="isFileLoaded && validMime && isValidFormat">
       <mat-label>Assignment Name</mat-label>
       <input formControlName="assignmentName" type="text" [readonly]="isAssignmentName" matInput required>

@@ -21,10 +21,11 @@ import {PdfJsViewerModule} from 'ng2-pdfjs-viewer';
 import {ColorPickerModule} from "ngx-color-picker";
 import {  RxReactiveFormsModule } from "@rxweb/reactive-form-validators"
 import { FileSaverModule } from 'ngx-filesaver';
+import { RubricImportComponent } from './components/rubric-import/rubric-import.component';
 
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent, RubricImportComponent],
   imports: [
     CommonModule,
     SharedModule,
