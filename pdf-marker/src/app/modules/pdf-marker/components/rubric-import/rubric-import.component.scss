@@ -5,17 +5,15 @@ $pdf-marker-primary: #6f327a;
 }
 
 table {
-  width: 500px;
+  min-width: 500px;
+  width: 50%;
 }
 
 form {
-  /*display: flex;
-  flex-direction: column;*/
+  display: flex;
+  flex-direction: column;
   /*width: 50%;
   margin: 0 auto;*/
-  .mat-form-field {
-    width: 500px;
-  }
 
   .pdf-marker-file-upload {
     display: flex;
