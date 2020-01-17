@@ -600,7 +600,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         const newPdfBytes = await pdfDoc.save();
         const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        //window.open(url, '_blank');
         this.appService.isLoading$.next(false);
       };
 
