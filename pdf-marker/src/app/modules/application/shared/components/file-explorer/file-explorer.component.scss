@@ -20,6 +20,10 @@ ul {
   vertical-align: bottom;
 }
 
+.file-name-selected {
+  color: #2962ff !important;
+}
+
 .file {
   color: #888 !important;
   vertical-align: bottom;
@@ -27,6 +31,13 @@ ul {
 
 .file-name-text {
   color: #888;
+}
+
+.file-name {
+  display: block;
+  width: 100%;
+  /* position: absolute; */
+  word-break: break-all;
 }
 
 .folder-name {

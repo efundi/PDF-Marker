@@ -35,8 +35,10 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   @Input()
   scrollToElement: HTMLElement;
 
+  isFileSelected: boolean;
+
   constructor(private router: Router,
-              private assignmentService: AssignmentService,
+              public assignmentService: AssignmentService,
               private appService: AppService) { }
 
   ngOnInit() {
@@ -44,8 +46,10 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
       this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfFile => {
         if(this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + "/"))
           this.filePath = this.assignmentService.getSelectedPdfLocation();
-        else
+        else {
+          this.isFileSelected = false;
           this.filePath = undefined;
+        }
       });
     }
   }
@@ -72,6 +76,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   scrollToFile() {
     this.scrollToElement.scrollIntoView({ block: 'start', behavior: 'smooth'});
     this.filePath = undefined;
+    this.isFileSelected = true;
   }
 
   isSelected() {

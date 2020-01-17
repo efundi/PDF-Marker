@@ -220,6 +220,7 @@ const uploadFn = (req, res, next) => {
         return res.status(404).send({message: 'Not a valid zip file. Please select a file with a .zip extension!'});
 
       extractZip(UPLOADS_DIR + sep + req.file.originalname, config.defaultPath + sep, true, res).then(() => {
+        // Create settings.json on assignment
         return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
       }).catch((error) => {
         return res.status(501).send({message: error.message});
