@@ -4,9 +4,13 @@ $pdf-marker-primary: #6f327a;
   display: flex;
 }
 
+.pdf-marker-rubric-import-hide {
+  display: none;
+}
+
 table {
   min-width: 500px;
-  width: 50%;
+  /*width: 50%;*/
 }
 
 form {
@@ -15,34 +19,48 @@ form {
   /*width: 50%;
   margin: 0 auto;*/
 
-  .pdf-marker-file-upload {
+  #pdf-marker-file-upload-wrapper {
     display: flex;
-    padding: 2px;
-    border: 1px solid transparent;
+    align-items: flex-start;
 
-    #pdf-marker-upload-display {
-      display: flex;
-      width: 100%;
-      border: 0;
-      background: transparent;
+    .mat-form-field {
+      width: 25%;
     }
 
-    button {
-      position: relative;
-      .pdf-marker-upload {
+    .pdf-marker-file-upload {
+      display: flex;
+      padding: 2px;
+      border: 1px solid transparent;
+      width: 75%;
+
+      .pdf-marker-file-upload-remove {
+        color: #a94442 !important;
+      }
+
+      #pdf-marker-upload-display {
+        display: flex;
         width: 100%;
-        position: absolute;
-        top: 0;
-        right: 0;
-        left: 0;
-        margin: 0;
-        padding: 0;
-        z-index: 10;
-        font-size: 20px;
-        height: 36px;
-        opacity: 0;
-        filter: alpha(opacity=0);
-        background-color: #fff;
+        border: 0;
+        background: transparent;
+      }
+
+      button {
+        position: relative;
+        .pdf-marker-upload {
+          width: 100%;
+          position: absolute;
+          top: 0;
+          right: 0;
+          left: 0;
+          margin: 0;
+          padding: 0;
+          z-index: 10;
+          font-size: 20px;
+          height: 36px;
+          opacity: 0;
+          filter: alpha(opacity=0);
+          background-color: #fff;
+        }
       }
     }
   }

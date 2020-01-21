@@ -4,21 +4,26 @@
     <h1><mat-icon>apps</mat-icon>&nbsp;Rubric</h1>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
-    <mat-form-field>
-      <div class="rubric-setup">
-        <input formControlName="rubricName" type="text" placeholder="Rubric Name" matInput required [autocomplete]="false" maxlength="50">
-        <div class="pdf-marker-file-upload" [class.pdf-marker-file-upload-error]="(rubricForm.get('rubricFile')?.errors && rubricForm.get('rubricFile')?.touched && rubricForm.get('rubricFile')?.dirty)">
-          <button type="button" mat-raised-button>Browse<input formControlName="rubricFile" type="file" class="pdf-marker-upload" [accept]="acceptMimeType" required (change)="onFileChange($event)"></button>
-          &nbsp;&nbsp;
-          <input type="text" formControlName="rubricFileText" id="pdf-marker-upload-display" readonly placeholder="Choose JSON File">
+    <div id="pdf-marker-file-upload-wrapper">
+      <mat-form-field>
+        <div class="rubric-setup">
+          <input formControlName="rubricName" type="text" placeholder="Rubric Name" matInput required [autocomplete]="false" maxlength="50">
         </div>
+      </mat-form-field>
+      <div class="pdf-marker-file-upload" [class.pdf-marker-file-upload-error]="(rubricForm.get('rubricFile')?.errors && rubricForm.get('rubricFile')?.touched && rubricForm.get('rubricFile')?.dirty)">
+        <button type="button" [class.pdf-marker-rubric-import-hide]="rubricForm.invalid" (click)="onResetpreviousUpload(); fileElement.value = null" mat-button mat-icon-button><mat-icon class="pdf-marker-file-upload-remove">close</mat-icon></button>
+        <button type="button" mat-raised-button>Browse<input formControlName="rubricFile" #fileElement type="file" class="pdf-marker-upload" [accept]="acceptMimeType" required (click)="fileElement.value = null" (change)="onFileChange($event)"></button>
+        &nbsp;&nbsp;
+        <input type="text" formControlName="rubricFileText" id="pdf-marker-upload-display" readonly placeholder="Choose JSON File">
       </div>
-    </mat-form-field>
-    <div class="pdf-spacer"></div>
-    <div class="pdf-marker-submit">
-      <button type="button" mat-raised-button [disabled]="rubricForm.invalid" (click)="onSubmit($event)">Add</button>
     </div>
-    <div class="pdf-spacer"></div>
+    <div [class.pdf-marker-rubric-import-hide]="rubricForm.invalid">
+      <div class="pdf-spacer"></div>
+      <div class="pdf-marker-submit">
+        <button type="button" mat-raised-button [disabled]="rubricForm.invalid" (click)="onSubmit($event)">Add</button>
+      </div>
+    </div>
+    <div class="pdf-spacer">{{ rubricForm.get('rubricFile').value }}</div>
     <table mat-table [dataSource]="dataSource">
 
       <!-- Title Column -->
@@ -30,7 +35,7 @@
       <!-- Actions Column -->
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef> Actions </th>
-        <td mat-cell *matCellDef="let element"><span><button matTooltip="View" mat-button mat-icon-button (click)="showRubric(element.id)"><mat-icon>visibility</mat-icon></button><button matTooltip="Delete" mat-button mat-icon-button  (click)="deleteRubric(element.id)"><mat-icon>delete</mat-icon></button></span></td>
+        <td mat-cell *matCellDef="let element"><span><button type="button" matTooltip="View" mat-button mat-icon-button (click)="showRubric(element.id)"><mat-icon>visibility</mat-icon></button><button type="button" matTooltip="Delete" mat-button mat-icon-button  (click)="deleteRubric(element.id)"><mat-icon>delete</mat-icon></button></span></td>
       </ng-container>
 
       <!-- In Use Column -->
