@@ -1,16 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {MatTableDataSource} from "@angular/material/table";
 import {AlertService} from "@coreModule/services/alert.service";
 import {AppService} from "@coreModule/services/app.service";
 import {Mapping} from "@coreModule/utils/mapping.class";
 import {IRubric, Rubric, RubricCriteria, RubricCriteriaLevels} from "@coreModule/utils/rubric.class";
+import {ImportService} from "@pdfMarkerModule/services/import.service";
 
 interface IRubricDatasource {
 
+  rubricId: number;
+
   name: string;
 
-  inUse?: boolean
+  inUse?: boolean;
 }
 
 @Component({
@@ -24,18 +27,25 @@ export class RubricImportComponent implements OnInit {
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
   private isLoading$ = this.appService.isLoading$;
   private file: File;
+  private fileContents: IRubric;
 
   rubricForm: FormGroup;
-  dataSource: MatTableDataSource<IRubricDatasource> = new MatTableDataSource([{id: 0, name: "Values and Ethics Rubric", inUse: false }, {id: 1, name: "Professional Values", inUse: false}]);
+  dataSource: MatTableDataSource<IRubricDatasource>;
   rubrics: IRubric[];
   validMime: boolean;
 
   constructor(private fb: FormBuilder,
               private alertService: AlertService,
-              private appService: AppService) { }
+              private appService: AppService,
+              private importService: ImportService) { }
 
   ngOnInit() {
+    this.isLoading$.next(true);
     this.init();
+    this.importService.getRubrics().subscribe((rubrics: IRubric[]) => {
+      this.populateRubrics(rubrics);
+      this.isLoading$.next(false);
+    }, error => this.isLoading$.next(false));
   }
 
   private init() {
@@ -82,6 +92,7 @@ export class RubricImportComponent implements OnInit {
                 this.fc.rubricFileText.setValue(file.name);
                 this.fc.rubricName.setValue(this.getRubricNameFromFilename(file.name));
                 this.file = file;
+                this.fileContents = json;
               } else {
                 this.setErrorMessage(file, "Invalid rubric!");
               }
@@ -113,8 +124,17 @@ export class RubricImportComponent implements OnInit {
     console.log("Show Rubric at index = " + index);
   }
 
-  deleteRubric(index: number) {
-    console.log("Delete Rubric at index = " + index);
+  deleteRubric(rubricId: number) {
+    console.log("Delete Rubric id = " + rubricId);
+    this.isLoading$.next(true);
+    this.importService.deleteRubric(rubricId).subscribe((rubrics: IRubric[]) => {
+      this.populateRubrics(rubrics);
+      this.isLoading$.next(false);
+      this.appService.openSnackBar(true, "Rubric deleted");
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to delete");
+      this.isLoading$.next(false)
+    });
   }
 
   private resetPreviousUpload() {
@@ -143,8 +163,24 @@ export class RubricImportComponent implements OnInit {
     formData.append("rubricName", this.fc.rubricName.value);
     formData.append('file', this.file);
 
+    this.isLoading$.next(true);
+    this.importService.importRubricFile(formData).subscribe((rubrics: IRubric[]) => {
+      this.populateRubrics(rubrics);
+      this.isLoading$.next(false);
+      this.appService.openSnackBar(true, "Rubric saved");
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to save");
+      this.isLoading$.next(false);
+    });
+  }
 
-    console.log(formData);
+  private populateRubrics(rubrics: IRubric[]) {
+    this.rubrics = rubrics;
+    const data = [];
+    this.rubrics.forEach((rubric: IRubric) => {
+      data.push({rubricId: rubric.rubricId, name: rubric.name});
+    });
+    this.dataSource = new MatTableDataSource<IRubricDatasource>(data);
   }
 
 }

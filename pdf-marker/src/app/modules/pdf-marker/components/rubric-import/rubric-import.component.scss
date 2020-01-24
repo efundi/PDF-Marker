@@ -8,10 +8,13 @@ $pdf-marker-primary: #6f327a;
   display: none;
 }
 
-table {
-  min-width: 500px;
-  /*width: 50%;*/
+#pdf-marker-rubric-import-rubric-list {
+  table {
+    min-width: 500px;
+    width: 100%;
+  }
 }
+
 
 form {
   display: flex;

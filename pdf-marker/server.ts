@@ -41,6 +41,7 @@ import {PDFDocument, PDFPage, PageSizes, rgb} from 'pdf-lib';
 import {AnnotationFactory} from 'annotpdf';
 import {IconTypeEnum} from "./src/app/modules/pdf-marker/info-objects/icon-type.enum";
 import {IconSvgEnum} from "./src/app/modules/pdf-marker/info-objects/icon-svg.enum";
+import {IRubric} from "./src/app/modules/application/core/utils/rubric.class";
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
@@ -196,9 +197,32 @@ const settingsGet = (req, res) => {
 app.get('/api/settings', settingsGet);
 
 /*IMPORT API*/
+
+const zipFileUploadCallback = (req,res, data, err) => {
+  if(err)
+    return res.status(501).json({error: err});
+
+  if(!req.file)
+    return res.status(404).send({message: 'No file uploaded!'});
+
+  const config = JSON.parse(data.toString());
+  const mimeTypes = ["application/zip", "application/x-zip-compressed"];
+
+  if(mimeTypes.indexOf(req.file.mimetype) == -1)
+    return res.status(404).send({message: 'Not a valid zip file. Please select a file with a .zip extension!'});
+
+  extractZip(UPLOADS_DIR + sep + req.file.originalname, config.defaultPath + sep, true, res).then(() => {
+    // Create settings.json on assignment
+    return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
+  }).catch((error) => {
+    return res.status(501).send({message: error.message});
+  });
+};
+
 const uploadFn = (req, res, next) => {
   if(!checkClient(req, res))
     return res.status(401).send({ message: 'Forbidden access to resource!'});
+
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
       return res.status(500).send({message: 'Failed to read configurations!'});
@@ -207,29 +231,226 @@ const uploadFn = (req, res, next) => {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
     uploadFile(req, res, (err) => {
-      if(err)
-        return res.status(501).json({error: err});
-
-      if(!req.file)
-        return res.status(404).send({message: 'No file uploaded!'});
-
-      const config = JSON.parse(data.toString());
-      const mimeTypes = ["application/zip", "application/x-zip-compressed"];
-
-      if(mimeTypes.indexOf(req.file.mimetype) == -1)
-        return res.status(404).send({message: 'Not a valid zip file. Please select a file with a .zip extension!'});
-
-      extractZip(UPLOADS_DIR + sep + req.file.originalname, config.defaultPath + sep, true, res).then(() => {
-        // Create settings.json on assignment
-        return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
-      }).catch((error) => {
-        return res.status(501).send({message: error.message});
-      });
+      zipFileUploadCallback(req, res, data, err);
     });
   });
 };
 
 app.post('/api/import', uploadFn);
+
+/*END IMPORT API*/
+
+/*RUBRIC IMPORT API*/
+
+const rubricFileUpload = (req,res, err) => {
+
+  if(err) {
+    deleteUploadedFile(req.file.originalname);
+    return res.status(501).json({error: err});
+  }
+
+  if(!req.file)
+    return res.status(404).send({message: 'No file uploaded!'});
+
+  const mimeTypes = ["application/json"];
+
+  const rubricName = req.body.rubricName;
+
+  if(mimeTypes.indexOf(req.file.mimetype) == -1) {
+    deleteUploadedFile(req.file.originalname);
+    return res.status(404).send({message: 'Not a valid JSON file. Please select a file with a .json extension!'});
+  }
+
+  return readFile(UPLOADS_DIR + sep + req.file.originalname, (err, data) => {
+    if (err) {
+      deleteUploadedFile(req.file.originalname);
+      return res.status(500).send({message: 'Failed to read rubric file!'});
+    }
+
+    if (!isJson(data)) {
+      deleteUploadedFile(req.file.originalname);
+      return res.status(404).send({message: 'Rubric file is not a valid JSON file!'});
+    }
+
+    const uploadedRubric: IRubric = JSON.parse(data.toString());
+    // Read file contents of rubricFiles, if file does not exist, create one.
+    // If file exists, get file contents, then append to it.
+    if(!existsSync(CONFIG_DIR)) {
+      mkdir(CONFIG_DIR, err => {
+        if (err) {
+          deleteUploadedFile(req.file.originalname);
+          return res.status(500).send({message: 'Failed to create configuration directory!'});
+        }
+
+        uploadedRubric.name = rubricName;
+        return writeRubricFile(req, res, [uploadedRubric]);
+      });
+    } else {
+      if(existsSync(CONFIG_DIR + "rubrics.json")) {
+        return readFile(CONFIG_DIR + "rubrics.json", (err, data) => {
+          if (err) {
+            deleteUploadedFile(req.file.originalname);
+            return res.status(500).send({message: 'Failed to read file containing list of rubrics!'});
+          }
+
+          if (!isJson(data)) {
+            deleteUploadedFile(req.file.originalname);
+            return res.status(400).send({message: 'Corrupted rubrics file'});
+          }
+
+          const rubrics: IRubric[] = JSON.parse(data.toString());
+          if(Array.isArray(rubrics)) {
+            let indexFound: number = -1;
+
+            for(let i = 0; i < rubrics.length; i++) {
+              if(rubrics[i].rubricId == uploadedRubric.rubricId) {
+                indexFound = i;
+                break;
+              }
+            }
+
+            if(indexFound == -1) {
+              rubrics.push(uploadedRubric);
+              rubrics[rubrics.length - 1].name = rubricName;
+            }
+            else {
+              rubrics[indexFound] = {...uploadedRubric};
+              rubrics[indexFound].name = rubricName;
+            }
+
+            return writeRubricFile(req, res, rubrics);
+          }
+          deleteUploadedFile(req.file.originalname);
+          return res.status(400).send({message: 'Rubric database appears to not be a list!'});
+        })
+      } else {
+        uploadedRubric.name = rubricName;
+        return writeRubricFile(req, res, [uploadedRubric]);
+      }
+    }
+  });
+};
+
+const deleteUploadedFile = (filePath: string) => {
+  if(existsSync(filePath))
+    unlinkSync(filePath)
+};
+
+const writeRubricFile = (req, res, rubricData: object) => {
+  return writeFile(CONFIG_DIR + "rubrics.json", JSON.stringify(rubricData), (err) => {
+    if(err) {
+      return res.status(500).send({message: 'Failed to write to rubric file!'});
+      deleteUploadedFile(req.file.originalname);
+    }
+
+    return res.status(200).send(rubricData);
+  });
+};
+
+const rubricUploadFn = async (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
+
+  return uploadFile(req, res, (err) => {
+    if(err)
+      return res.status(500).send({message: "Error uploading rubric file"});
+
+    rubricFileUpload(req, res, err);
+  });
+};
+
+app.post('/api/rubric/import', [
+  check('rubricName').not().isEmpty().withMessage('Rubric name not provided!')
+], rubricUploadFn);
+/*END RUBRIC IMPORT API*/
+
+
+/* READ RUBRICS */
+
+const getRubricsFn = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
+
+  if(!existsSync(CONFIG_DIR)) {
+    return mkdir(CONFIG_DIR, err => {
+      if (err)
+        return res.status(500).send({message: 'Failed to create configuration directory!'});
+
+      return writeRubricFile(req, res, []);
+    });
+  } else {
+    if(existsSync(CONFIG_DIR + "rubrics.json")) {
+      return readFile(CONFIG_DIR + "rubrics.json", (err, data) => {
+        if (err)
+          return res.status(500).send({message: 'Failed to read file containing list of rubrics!'});
+
+        if (!isJson(data))
+          return res.status(400).send({message: 'Corrupted rubrics file'});
+
+        const rubrics: IRubric[] = JSON.parse(data.toString());
+        if(Array.isArray(rubrics))
+          return res.status(200).send(rubrics);
+        return writeRubricFile(req, res, []);
+      });
+    } else {
+      return writeRubricFile(req, res, []);
+    }
+  }
+};
+
+app.get('/api/rubric/import', getRubricsFn);
+/* END READ RUBRICS */
+
+/* DELETE RUBRICS */
+
+const deleteRubricsFn = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
+
+  if(!req.params.id)
+    return res.status(400).send({ message: 'No rubric id specified'});
+
+  if(isNaN(req.params.id))
+    return res.status(400).send({ message: 'Rubric id not valid!'});
+
+  const rubricId:number = req.params.id;
+
+  if(existsSync(CONFIG_DIR + "rubrics.json")) {
+    return readFile(CONFIG_DIR + "rubrics.json", (err, data) => {
+      if (err)
+        return res.status(500).send({message: 'Failed to read file containing list of rubrics!'});
+
+      if (!isJson(data))
+        return res.status(400).send({message: 'Corrupted rubrics file'});
+
+      const rubrics: IRubric[] = JSON.parse(data.toString());
+      if(Array.isArray(rubrics)) {
+        let indexFound: number = -1;
+
+        for(let i = 0; i < rubrics.length; i++) {
+          if(rubrics[i].rubricId == rubricId) {
+            indexFound = i;
+            break;
+          }
+        }
+
+        if(indexFound == -1)
+          return res.status(404).send({message: 'Could not find rubric'});
+        else {
+          rubrics.splice(indexFound, 1);
+        }
+
+        return writeRubricFile(req, res, rubrics);
+      }
+      return res.status(400).send({message: "Rubric database appears to not be a list!"});
+    });
+  }
+
+  return res.status(200).send([]);
+};
+
+app.get('/api/rubric/delete/:id', deleteRubricsFn);
+/* DELETE READ RUBRICS */
 
 const getAssignments = (req, res) => {
   if(!checkClient(req, res))
@@ -958,8 +1179,6 @@ const extractZip = (file, destination, deleteSource, res = null) => {
       if(res)
         resolve(true);
     } else {
-      console.log(err);
-      console.log("no");
       reject(new Error('Error occurred while extracting file to disk!'));
       //return res.status(501).send({message: 'Error occurred while extracting file to disk!'});
     }
