@@ -12,6 +12,10 @@ export interface IRubric {
   criterias: IRubricCriteria[]
 }
 
+export interface IRubricName {
+  name?: string;
+}
+
 export class RubricCriteria implements IRubricCriteria {
   description: string;
 

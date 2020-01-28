@@ -6,6 +6,8 @@ import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {AppService} from "@coreModule/services/app.service";
 import {HttpEventType} from "@angular/common/http";
 import {Router} from "@angular/router";
+import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
+import {ImportService} from "@pdfMarkerModule/services/import.service";
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -21,6 +23,8 @@ export class CreateAssignmentComponent implements OnInit {
   readonly acceptMimeType = "application/pdf";
   isRubric: boolean = true;
 
+  rubrics: IRubricName[];
+
   // @ts-ignore
   @ViewChild("assignmentName") assignmentName: ElementRef;
 
@@ -29,9 +33,17 @@ export class CreateAssignmentComponent implements OnInit {
               private alertService: AlertService,
               private assignmentService: AssignmentService,
               private appService: AppService,
-              private router: Router) {}
+              private router: Router,
+              private importService: ImportService) {}
 
   ngOnInit() {
+    this.importService.getRubricDetails().subscribe((rubrics: IRubricName[]) => {
+      this.rubrics = rubrics;
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to retrieve rubrics");
+      this.appService.isLoading$.next(false);
+    });
     this.initForm();
   }
 

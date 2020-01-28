@@ -42,7 +42,7 @@ import {PDFDocument, PDFPage, PageSizes, rgb} from 'pdf-lib';
 import {AnnotationFactory} from 'annotpdf';
 import {IconTypeEnum} from "./src/app/modules/pdf-marker/info-objects/icon-type.enum";
 import {IconSvgEnum} from "./src/app/modules/pdf-marker/info-objects/icon-svg.enum";
-import {IRubric} from "./src/app/modules/application/core/utils/rubric.class";
+import {IRubric, IRubricName} from "./src/app/modules/application/core/utils/rubric.class";
 import {Observable} from "rxjs";
 import {ZipInfo} from "./src/app/modules/application/core/info-objects/zip.info";
 
@@ -393,7 +393,7 @@ const deleteUploadedFile = (filePath: string) => {
     unlinkSync(filePath)
 };
 
-const writeRubricFile = (req, res, rubricData: object) => {
+const writeRubricFile = (req, res, rubricData: IRubric[]) => {
   return writeFile(CONFIG_DIR + "rubrics.json", JSON.stringify(rubricData), (err) => {
     if(req.file)
       deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
@@ -401,8 +401,21 @@ const writeRubricFile = (req, res, rubricData: object) => {
       return res.status(500).send({message: 'Failed to write to rubric file!'});
     }
 
-    return res.status(200).send(rubricData);
+    return getRubricNames(req, res, rubricData);
   });
+};
+
+const getRubricNames = (req, res, rubrics: IRubric[]) => {
+  const rubricNames: IRubricName[] = [];
+  if(Array.isArray(rubrics)) {
+    rubrics.forEach(rubric => {
+      const rubricName = { name : rubric.name};
+      rubricNames.push(rubricName);
+    });
+    return res.status(200).send(rubricNames);
+  }
+
+  return writeRubricFile(req, res, []);
 };
 
 const rubricUploadFn = async (req, res) => {
@@ -458,6 +471,39 @@ const getRubricsFn = (req, res) => {
 
 app.get('/api/rubric/import', getRubricsFn);
 /* END READ RUBRICS */
+
+/*READ RUBRIC NAMES*/
+const getRubricNamesFn = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
+
+  if(!existsSync(CONFIG_DIR)) {
+    return mkdir(CONFIG_DIR, err => {
+      if (err)
+        return res.status(500).send({message: 'Failed to create configuration directory!'});
+
+      return writeRubricFile(req, res, []);
+    });
+  } else {
+    if(existsSync(CONFIG_DIR + "rubrics.json")) {
+      return readFile(CONFIG_DIR + "rubrics.json", (err, data) => {
+        if (err)
+          return res.status(500).send({message: 'Failed to read file containing list of rubrics!'});
+
+        if (!isJson(data))
+          return res.status(400).send({message: 'Corrupted rubrics file'});
+
+        const rubrics: IRubric[] = JSON.parse(data.toString());
+
+        return getRubricNames(req, res, rubrics);
+      });
+    } else {
+      return writeRubricFile(req, res, []);
+    }
+  }
+};
+app.get('/api/rubric/details', getRubricNamesFn);
+/* END RUBRIC NAMES*/
 
 /* DELETE RUBRICS */
 

@@ -9,6 +9,7 @@ import {AppService} from "../../../application/core/services/app.service";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {HttpEventType} from '@angular/common/http';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
+import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -24,8 +25,6 @@ export class ImportComponent implements OnInit {
   readonly noRubricDefaultValue: boolean = false;
 
   private hierarchyModel$ = this.zipService.hierarchyModel$;
-
-  private isLoading$ = this.appService.isLoading$;
 
   private hierarchyModel;
 
@@ -44,6 +43,8 @@ export class ImportComponent implements OnInit {
   validMime: boolean;
 
   isValidFormat: boolean;
+
+  rubrics: IRubricName[];
 
   constructor(private fb: FormBuilder,
               private zipService: ZipService,
@@ -78,8 +79,16 @@ export class ImportComponent implements OnInit {
       }
     });
 
+    this.appService.isLoading$.next(true);
+    this.importService.getRubricDetails().subscribe((rubrics: IRubricName[]) => {
+      this.rubrics = rubrics;
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to retrieve rubrics");
+      this.appService.isLoading$.next(false);
+    });
     this.initForm();
-    this.isLoading$.next(false);
+    this.appService.isLoading$.next(false);
   }
 
   private initForm() {
@@ -94,7 +103,7 @@ export class ImportComponent implements OnInit {
 
   onFileChange(event) {
     if(event.target.files[0] !== undefined) {
-      this.isLoading$.next(true);
+      this.appService.isLoading$.next(true);
       this.file = event.target.files[0];
       this.validMime = this.isValidMimeType(this.file.type);
       this.setFileDetailsAndAssignmentName(this.file);
@@ -110,11 +119,11 @@ export class ImportComponent implements OnInit {
           this.alertService.error(this.sakaiService.formatErrorMessage);
         else
           this.alertService.clear();
-        this.isLoading$.next(false);
+        this.appService.isLoading$.next(false);
         this.isFileLoaded = true;
       }, error => {
         this.alertService.error(error);
-        this.isLoading$.next(false);
+        this.appService.isLoading$.next(false);
       })
     }
   }
@@ -133,7 +142,7 @@ export class ImportComponent implements OnInit {
     let isValid = this.acceptMimeType.indexOf(type) !== -1;
     if(!isValid) {
       this.alertService.error("Not a valid zip file. Please select a file with a .zip extension!");
-      this.isLoading$.next(false);
+      this.appService.isLoading$.next(false);
     }
     else
       this.alertService.clear();
@@ -160,7 +169,7 @@ export class ImportComponent implements OnInit {
   }
 
   onPreview() {
-    this.isLoading$.next(true);
+    this.appService.isLoading$.next(true);
     this.zipService.getEntries(this.file, true).subscribe();
     this.isModalOpened = !this.isModalOpened;
   }
@@ -181,18 +190,18 @@ export class ImportComponent implements OnInit {
     formData.append('file', this.file);
     formData.append('noRubric', noRubric);
     formData.append('file', rubric);
-    this.isLoading$.next(true);
+    this.appService.isLoading$.next(true);
     this.importService.importAssignmentFile(formData).subscribe((events) => {
 
       if(events.type === HttpEventType.UploadProgress) {
 
       } else if(events.type === HttpEventType.Response) {
-        this.isLoading$.next(false);
+        this.appService.isLoading$.next(false);
         let response: any = events.body;
         this.alertService.success(response.message);
         this.resetForm();
       }
-    }, error => this.isLoading$.next(false));
+    }, error => this.appService.isLoading$.next(false));
   }
 
   private resetForm() {
@@ -204,6 +213,7 @@ export class ImportComponent implements OnInit {
     this.validMime = false;
     this.isValidFormat = false;
     this.fc.noRubric.setValue(this.noRubricDefaultValue);
+    this.fc.rubric.enable();
     this.initForm();
     this.assignmentService.getAssignments().subscribe(assignments => {
       this.assignmentService.update(assignments);
