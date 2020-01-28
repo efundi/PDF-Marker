@@ -5,7 +5,7 @@
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
     <div class="pdf-marker-file-upload">
-      <button type="button" mat-raised-button>Browse<input formControlName="assignmentZipFile" type="file" class="pdf-marker-upload" [accept]="acceptMimeType" (change)="onFileChange($event)" required></button>
+      <button type="button" mat-raised-button>Browse<input formControlName="assignmentZipFile" type="file" #fileElement class="pdf-marker-upload" [accept]="acceptMimeType" (click)="fileElement.value = null" (change)="onFileChange($event)" required></button>
       &nbsp;&nbsp;
       <input type="text" formControlName="assignmentZipFileText" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
       <button type="button" mat-raised-button *ngIf="isFileLoaded && validMime && isValidFormat" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>

@@ -617,6 +617,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
 
   ngOnDestroy(): void {
+    this.assignmentService.setSelectedAssignment(null);
+    this.assignmentService.setSelectedPdfBlob(null);
+    this.assignmentService.setSelectedPdfURL(null, null);
     this.subscription.unsubscribe();
   }
 }

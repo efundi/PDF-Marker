@@ -37,11 +37,14 @@ import {
 } from 'fs';
 import {json2csv, json2csvAsync } from "json-2-csv";
 const zipDir = require('zip-dir');
+var JSZip = require("jszip");
 import {PDFDocument, PDFPage, PageSizes, rgb} from 'pdf-lib';
 import {AnnotationFactory} from 'annotpdf';
 import {IconTypeEnum} from "./src/app/modules/pdf-marker/info-objects/icon-type.enum";
 import {IconSvgEnum} from "./src/app/modules/pdf-marker/info-objects/icon-svg.enum";
 import {IRubric} from "./src/app/modules/application/core/utils/rubric.class";
+import {Observable} from "rxjs";
+import {ZipInfo} from "./src/app/modules/application/core/info-objects/zip.info";
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
@@ -211,11 +214,62 @@ const zipFileUploadCallback = (req,res, data, err) => {
   if(mimeTypes.indexOf(req.file.mimetype) == -1)
     return res.status(404).send({message: 'Not a valid zip file. Please select a file with a .zip extension!'});
 
-  extractZip(UPLOADS_DIR + sep + req.file.originalname, config.defaultPath + sep, true, res).then(() => {
-    // Create settings.json on assignment
-    return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
-  }).catch((error) => {
-    return res.status(501).send({message: error.message});
+  const folders = glob.sync(config.defaultPath + '/*');
+
+  let folderCount = 0;
+  folders.forEach(folder => {
+    folders[folderCount] = pathinfo(folder, 'PATHINFO_FILENAME');
+    folderCount++;
+  });
+
+
+
+  return readFile(UPLOADS_DIR + sep + req.file.originalname, (err, data) => {
+    let zip = new JSZip();
+    return zip.loadAsync(new Uint8Array(data))
+      .then((zipObject) => {
+        let entry: string = "";
+        zipObject.forEach((relativePath, zipEntry) => {
+          if(entry === "") {
+            entry = zipEntry.name;
+          }
+        });
+
+        const entryPath = entry.split("/");
+        if(entryPath.length > 0) {
+          let newFolder;
+          let oldPath = entryPath[0];
+          let foundCount: number = 0;
+          for(let i = 0; i < folders.length; i++) {
+            if(oldPath.toLowerCase() + "/" === folders[i].toLowerCase() + "/")
+              foundCount++;
+            else if((oldPath.toLowerCase() + " (" + (foundCount + 1) + ")" + "/") === folders[i].toLowerCase() + "/")
+              foundCount++;
+          }
+
+          if(foundCount != 0) {
+            newFolder = oldPath + " (" + (foundCount + 1) + ")" + "/";
+            extractZip(UPLOADS_DIR + sep + req.file.originalname, config.defaultPath + sep, true, newFolder, oldPath + "/", res).then(() => {
+              // Create settings.json on assignment
+              return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
+            }).catch((error) => {
+              return res.status(501).send({message: error.message});
+            });
+          } else {
+            extractZip(UPLOADS_DIR + sep + req.file.originalname, config.defaultPath + sep, true, "", "", res).then(() => {
+              // Create settings.json on assignment
+              return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
+            }).catch((error) => {
+              return res.status(501).send({message: error.message});
+            });
+          }
+        } else {
+          return res.status(501).send({message: "Zip Object contains no entries!"});
+        }
+      })
+      .catch(error => {
+        return res.status(501).send({message: error.message});
+      });
   });
 };
 
@@ -254,7 +308,7 @@ const rubricFileUpload = (req,res, err) => {
 
   const mimeTypes = ["application/json"];
 
-  const rubricName = req.body.rubricName;
+  const rubricName = req.body.rubricName.trim();
 
   if(mimeTypes.indexOf(req.file.mimetype) == -1) {
     deleteUploadedFile(req.file.originalname);
@@ -300,24 +354,27 @@ const rubricFileUpload = (req,res, err) => {
 
           const rubrics: IRubric[] = JSON.parse(data.toString());
           if(Array.isArray(rubrics)) {
-            let indexFound: number = -1;
+            let foundCount: number = 0;
 
-            for(let i = 0; i < rubrics.length; i++) {
-              if(rubrics[i].rubricId == uploadedRubric.rubricId) {
-                indexFound = i;
-                break;
-              }
+            const clonedRubrics = [...rubrics];
+            clonedRubrics.sort((a, b) => (a.name > b.name) ? 1:-1);
+
+            for(let i = 0; i < clonedRubrics.length; i++) {
+              if(clonedRubrics[i].name.toLowerCase() === rubricName.toLowerCase())
+                foundCount++;
+              else if(clonedRubrics[i].name.toLowerCase() === (rubricName.toLowerCase()  + " (" + (foundCount + 1) + ")"))
+                foundCount++;
             }
 
-            if(indexFound == -1) {
-              rubrics.push(uploadedRubric);
-              rubrics[rubrics.length - 1].name = rubricName;
+
+            if(foundCount !== 0) {
+              uploadedRubric.name = rubricName + " (" + (foundCount + 1) + ")";
             }
             else {
-              rubrics[indexFound] = {...uploadedRubric};
-              rubrics[indexFound].name = rubricName;
+              uploadedRubric.name = rubricName;
             }
 
+            rubrics.unshift(uploadedRubric);
             return writeRubricFile(req, res, rubrics);
           }
           deleteUploadedFile(req.file.originalname);
@@ -339,8 +396,8 @@ const deleteUploadedFile = (filePath: string) => {
 const writeRubricFile = (req, res, rubricData: object) => {
   return writeFile(CONFIG_DIR + "rubrics.json", JSON.stringify(rubricData), (err) => {
     if(err) {
-      return res.status(500).send({message: 'Failed to write to rubric file!'});
       deleteUploadedFile(req.file.originalname);
+      return res.status(500).send({message: 'Failed to write to rubric file!'});
     }
 
     return res.status(200).send(rubricData);
@@ -407,13 +464,10 @@ const deleteRubricsFn = (req, res) => {
   if(!checkClient(req, res))
     return res.status(401).send({ message: 'Forbidden access to resource!'});
 
-  if(!req.params.id)
-    return res.status(400).send({ message: 'No rubric id specified'});
+  if(!req.body.rubricName)
+    return res.status(400).send({ message: 'No rubric name specified'});
 
-  if(isNaN(req.params.id))
-    return res.status(400).send({ message: 'Rubric id not valid!'});
-
-  const rubricId:number = req.params.id;
+  const rubricName:string = req.body.rubricName;
 
   if(existsSync(CONFIG_DIR + "rubrics.json")) {
     return readFile(CONFIG_DIR + "rubrics.json", (err, data) => {
@@ -428,7 +482,7 @@ const deleteRubricsFn = (req, res) => {
         let indexFound: number = -1;
 
         for(let i = 0; i < rubrics.length; i++) {
-          if(rubrics[i].rubricId == rubricId) {
+          if(rubrics[i].name.toLowerCase() === rubricName.toLowerCase()) {
             indexFound = i;
             break;
           }
@@ -449,7 +503,8 @@ const deleteRubricsFn = (req, res) => {
   return res.status(200).send([]);
 };
 
-app.get('/api/rubric/delete/:id', deleteRubricsFn);
+app.post('/api/rubric/delete',
+  check('rubricName').not().isEmpty().withMessage('Rubric name not provided!'), deleteRubricsFn);
 /* DELETE READ RUBRICS */
 
 const getAssignments = (req, res) => {
@@ -799,12 +854,14 @@ const getGrades = (req, res) => {
     const loc = req.body.location.replace(/\//g, sep);
 
     const assignmentFolder = config.defaultPath + sep + loc;
+    console.log(assignmentFolder);
 
     return access(assignmentFolder + sep + "grades.csv", constants.F_OK, (err) => {
       if(err)
         return res.status(200).send({message: 'Could not read grades file'});
       return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
         .then((gradesJSON) => {
+          console.log(gradesJSON)
           return res.status(200).send(gradesJSON)
         })
         .catch(reason => {
@@ -857,7 +914,6 @@ const finalizeAssignment = async (req, res) => {
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
-
     const assignmentFolder = config.defaultPath + sep + loc;
     const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_FILENAME');
     const gradesJSON = await csvtojson().fromFile(assignmentFolder + sep + "grades.csv");
@@ -903,8 +959,14 @@ const finalizeAssignment = async (req, res) => {
                   writeFileSync(studentFolder + sep + "Feedback Attachment(s)" + sep + fileName + ".pdf", data.pdfBytes);
                   accessSync(assignmentFolder + sep + "grades.csv", constants.F_OK);
                   let changed = false;
+                  let assignmentHeader = "";
                   for (let i = 0; i < gradesJSON.length; i++) {
-                    if (gradesJSON[i] && gradesJSON[i][loc] === matches[2]) {
+                    if(i == 0) {
+                      const keys = Object.keys(gradesJSON[i]);
+                      if(keys.length > 0) {
+                        assignmentHeader = keys[0];
+                      }
+                    } else if (gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
                       gradesJSON[i].field5 = data.totalMark;
                       changed = true;
                       await json2csvAsync(gradesJSON, {emptyFieldValue: ''})
@@ -1171,8 +1233,8 @@ const isJson = (str) => {
   return true;
 };
 
-const extractZip = (file, destination, deleteSource, res = null) => {
-  return new Promise((resolve, reject) => extract(file, {dir: destination}, (err) => {
+const extractZip = (file, destination, deleteSource, newFolder, oldFolder, res = null) => {
+  return new Promise((resolve, reject) => extract(file, {dir: destination, onEntry: (entry, zipFile) => entry.fileName = entry.fileName.replace(oldFolder, newFolder)}, (err) => {
     if (!err) {
       if (deleteSource) unlinkSync(file);
       nestedExtract(destination, extractZip);

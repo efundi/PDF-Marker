@@ -124,10 +124,11 @@ export class RubricImportComponent implements OnInit {
     console.log("Show Rubric at index = " + index);
   }
 
-  deleteRubric(rubricId: number) {
-    console.log("Delete Rubric id = " + rubricId);
+  deleteRubric(rubricName: string) {
+    console.log("Delete Rubric name = " + rubricName);
+    let data  = { rubricName: rubricName};
     this.isLoading$.next(true);
-    this.importService.deleteRubric(rubricId).subscribe((rubrics: IRubric[]) => {
+    this.importService.deleteRubric(data).subscribe((rubrics: IRubric[]) => {
       this.populateRubrics(rubrics);
       this.isLoading$.next(false);
       this.appService.openSnackBar(true, "Rubric deleted");
@@ -168,6 +169,7 @@ export class RubricImportComponent implements OnInit {
       this.populateRubrics(rubrics);
       this.isLoading$.next(false);
       this.appService.openSnackBar(true, "Rubric saved");
+      this.resetPreviousUpload();
     }, error => {
       this.appService.openSnackBar(false, "Unable to save");
       this.isLoading$.next(false);
@@ -178,7 +180,7 @@ export class RubricImportComponent implements OnInit {
     this.rubrics = rubrics;
     const data = [];
     this.rubrics.forEach((rubric: IRubric) => {
-      data.push({rubricId: rubric.rubricId, name: rubric.name});
+      data.push({name: rubric.name});
     });
     this.dataSource = new MatTableDataSource<IRubricDatasource>(data);
   }

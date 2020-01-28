@@ -1,15 +1,13 @@
 export class Rubric implements IRubric {
-  rubricId;
   criterias: IRubricCriteria[];
 
   constructor() {
-    this.rubricId = 0;
     this.criterias = [];
   }
 }
 
 export interface IRubric {
-  rubricId: number;
+  rubricId?: number;
   name?: string;
   criterias: IRubricCriteria[]
 }

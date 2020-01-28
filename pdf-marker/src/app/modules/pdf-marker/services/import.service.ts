@@ -25,7 +25,7 @@ export class ImportService {
     return this.http.get<IRubric[]>('/api/rubric/import');
   }
 
-  deleteRubric(rubricId: number): Observable<IRubric[]> {
-    return this.http.get<IRubric[]>(`/api/rubric/delete/${rubricId}`);
+  deleteRubric(data: any): Observable<IRubric[]> {
+    return this.http.post<IRubric[]>('/api/rubric/delete', data);
   }
 }
