@@ -496,11 +496,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     event.preventDefault();
   }
 
-  adjustPointsForResults(yVar: number) {
-    return yVar -15;
-  }
-
-
   ngOnDestroy(): void {
     this.assignmentService.setSelectedAssignment(undefined);
     this.assignmentService.setSelectedPdfBlob(undefined);
