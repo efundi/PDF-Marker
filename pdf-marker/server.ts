@@ -299,7 +299,7 @@ app.post('/api/import', uploadFn);
 const rubricFileUpload = (req,res, err) => {
 
   if(err) {
-    deleteUploadedFile(req.file.originalname);
+    deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
     return res.status(501).json({error: err});
   }
 
@@ -311,18 +311,18 @@ const rubricFileUpload = (req,res, err) => {
   const rubricName = req.body.rubricName.trim();
 
   if(mimeTypes.indexOf(req.file.mimetype) == -1) {
-    deleteUploadedFile(req.file.originalname);
+    deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
     return res.status(404).send({message: 'Not a valid JSON file. Please select a file with a .json extension!'});
   }
 
   return readFile(UPLOADS_DIR + sep + req.file.originalname, (err, data) => {
     if (err) {
-      deleteUploadedFile(req.file.originalname);
+      deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
       return res.status(500).send({message: 'Failed to read rubric file!'});
     }
 
     if (!isJson(data)) {
-      deleteUploadedFile(req.file.originalname);
+      deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
       return res.status(404).send({message: 'Rubric file is not a valid JSON file!'});
     }
 
@@ -332,7 +332,7 @@ const rubricFileUpload = (req,res, err) => {
     if(!existsSync(CONFIG_DIR)) {
       mkdir(CONFIG_DIR, err => {
         if (err) {
-          deleteUploadedFile(req.file.originalname);
+          deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
           return res.status(500).send({message: 'Failed to create configuration directory!'});
         }
 
@@ -343,12 +343,12 @@ const rubricFileUpload = (req,res, err) => {
       if(existsSync(CONFIG_DIR + "rubrics.json")) {
         return readFile(CONFIG_DIR + "rubrics.json", (err, data) => {
           if (err) {
-            deleteUploadedFile(req.file.originalname);
+            deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
             return res.status(500).send({message: 'Failed to read file containing list of rubrics!'});
           }
 
           if (!isJson(data)) {
-            deleteUploadedFile(req.file.originalname);
+            deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
             return res.status(400).send({message: 'Corrupted rubrics file'});
           }
 
@@ -377,7 +377,7 @@ const rubricFileUpload = (req,res, err) => {
             rubrics.unshift(uploadedRubric);
             return writeRubricFile(req, res, rubrics);
           }
-          deleteUploadedFile(req.file.originalname);
+          deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
           return res.status(400).send({message: 'Rubric database appears to not be a list!'});
         })
       } else {
@@ -395,8 +395,8 @@ const deleteUploadedFile = (filePath: string) => {
 
 const writeRubricFile = (req, res, rubricData: object) => {
   return writeFile(CONFIG_DIR + "rubrics.json", JSON.stringify(rubricData), (err) => {
+    deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
     if(err) {
-      deleteUploadedFile(req.file.originalname);
       return res.status(500).send({message: 'Failed to write to rubric file!'});
     }
 
