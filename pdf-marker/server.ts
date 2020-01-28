@@ -395,7 +395,8 @@ const deleteUploadedFile = (filePath: string) => {
 
 const writeRubricFile = (req, res, rubricData: object) => {
   return writeFile(CONFIG_DIR + "rubrics.json", JSON.stringify(rubricData), (err) => {
-    deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
+    if(req.file)
+      deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
     if(err) {
       return res.status(500).send({message: 'Failed to write to rubric file!'});
     }
