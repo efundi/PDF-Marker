@@ -45,7 +45,10 @@ export class RubricImportComponent implements OnInit {
     this.importService.getRubrics().subscribe((rubrics: IRubric[]) => {
       this.populateRubrics(rubrics);
       this.isLoading$.next(false);
-    }, error => this.isLoading$.next(false));
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to retrieve rubrics");
+      this.isLoading$.next(false);
+    });
   }
 
   private init() {
@@ -63,7 +66,6 @@ export class RubricImportComponent implements OnInit {
   async onFileChange(event) {
     this.alertService.clear();
     this.resetPreviousUpload();
-    console.log(event.target.files[0]);
     if(event.target.files[0] === undefined || event.target.files[0] === null) {
       this.fc.rubricFile.setValue(null);
       this.fc.rubricFileText.setValue(null);
