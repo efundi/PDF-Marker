@@ -641,8 +641,14 @@ const savingMarks = (req, res) => {
           return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
             .then((gradesJSON) => {
               let changed = false;
+              let assignmentHeader;
               for(let i = 0; i < gradesJSON.length; i++) {
-                if(gradesJSON[i] && gradesJSON[i][assignmentName] === studentNumber) {
+                if(i == 0) {
+                  const keys = Object.keys(gradesJSON[i]);
+                  if(keys.length > 0) {
+                    assignmentHeader = keys[0];
+                  }
+                } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
                   gradesJSON[i].field5 = totalMark;
                   changed = true;
                   json2csv(gradesJSON, (err, csv) => {
@@ -854,14 +860,12 @@ const getGrades = (req, res) => {
     const loc = req.body.location.replace(/\//g, sep);
 
     const assignmentFolder = config.defaultPath + sep + loc;
-    console.log(assignmentFolder);
 
     return access(assignmentFolder + sep + "grades.csv", constants.F_OK, (err) => {
       if(err)
         return res.status(200).send({message: 'Could not read grades file'});
       return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
         .then((gradesJSON) => {
-          console.log(gradesJSON)
           return res.status(200).send(gradesJSON)
         })
         .catch(reason => {
@@ -959,14 +963,14 @@ const finalizeAssignment = async (req, res) => {
                   writeFileSync(studentFolder + sep + "Feedback Attachment(s)" + sep + fileName + ".pdf", data.pdfBytes);
                   accessSync(assignmentFolder + sep + "grades.csv", constants.F_OK);
                   let changed = false;
-                  let assignmentHeader = "";
+                  let assignmentHeader;
                   for (let i = 0; i < gradesJSON.length; i++) {
                     if(i == 0) {
                       const keys = Object.keys(gradesJSON[i]);
                       if(keys.length > 0) {
                         assignmentHeader = keys[0];
                       }
-                    } else if (gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
+                    } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
                       gradesJSON[i].field5 = data.totalMark;
                       changed = true;
                       await json2csvAsync(gradesJSON, {emptyFieldValue: ''})
