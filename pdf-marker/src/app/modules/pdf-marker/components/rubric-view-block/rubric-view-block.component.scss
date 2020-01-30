@@ -1,0 +1,49 @@
+
+// .rubric-block-full:hover  {
+//  background: #777;
+//  z-index: 100 !important;
+//  height: 208px !important;
+//  width: 500px !important;
+// }
+.rubric-block-full {
+  min-width: 80px;
+  border: 2px solid black;
+  padding: 8px;
+  font-weight: lighter;
+  margin: 8px 0;
+  width: 250px;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  overflow: hidden;
+  max-height: 250px;
+}
+
+* {
+  font-size: .95em;
+}
+.rubric-block-header {
+  text-align: center;
+  font-size: 1.1em;
+}
+.rubric-block-selected {
+  background: #777;
+}
+
+.hover-tooltip {
+  display: none;
+}
+.hover-effect:hover span.hover-tooltip{
+  display: block;
+}
+
+.hover-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 100;
+  border: 1px;
+  background-color: white;
+  border: 1px solid green;
+  padding: 3px;
+  color: green;
+  max-width: 250px;
+}

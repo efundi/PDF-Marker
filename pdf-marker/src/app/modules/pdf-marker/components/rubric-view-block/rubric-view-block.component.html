@@ -1,0 +1,21 @@
+
+  <div class="rubric-block-full hover-effect" (click)="onClickSelection()" [ngClass]="{'rubric-block-selected': isSelected}">
+    <div class="rubric-block-header">
+       <h5>{{ rubricBlocLabel }}</h5>
+    <div class="rubric-block-points">
+      Points: {{ rubricBlockScoreValue }}
+    </div>
+  </div>
+    <div class="rubric-block-description">{{ rubricBlockDescrpiton }}</div>
+
+    <span class="hover-tooltip">
+       <div class="rubric-block-header">
+       <h5>{{ rubricBlocLabel }}</h5>
+    <div class="rubric-block-points">
+      Points: {{ rubricBlockScoreValue }}
+    </div>
+  </div>
+    <div class="rubric-block-description">{{ rubricBlockDescrpiton }}</div>
+    </span>
+
+  </div>

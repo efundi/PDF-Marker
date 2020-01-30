@@ -68,6 +68,13 @@ export class AssignmentService {
     return this.http.post('/api/assignment/settings/fetch', body);
   }
 
+  getAssignmentGlobalSettings() {
+    const body = {
+      location: this.selectedAssignment
+    };
+    return this.http.post('/api/assignment/globalSettings/fetch', body);
+  }
+
   getAssignmentGrades() {
     const body = {
       location: Object.keys(this.selectedAssignment)[0]
@@ -144,6 +151,13 @@ export class AssignmentService {
       location: this.selectedPdfLocation
     };
     return this.http.post("/api/assignment/marks/fetch", body);
+  }
+
+  getAssingmentGlobalSettings() {
+    const body = {
+      location: this.selectedPdfLocation
+    };
+    return this.http.post("/api/assignment/globalSettings", body);
   }
 
   getSelectedPdfLocation(): string {

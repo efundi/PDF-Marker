@@ -190,7 +190,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   onColourPickerClose(colour: string) {
     if(this.colour !== this.assignmentSettings.defaultColour)
-      this.onAssignmentSettings({defaultColour: colour});
+      this.onAssignmentSettings({defaultColour: colour, rubricID: this.assignmentSettings.rubricID, isCreated: this.assignmentSettings.isCreated});
   }
 
   onPaged(pageNumber: number) {
@@ -497,7 +497,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.assignmentService.setSelectedAssignment(undefined);
     this.assignmentService.setSelectedPdfBlob(undefined);
     this.assignmentService.setSelectedPdfURL("", "");
     this.subscription.unsubscribe();

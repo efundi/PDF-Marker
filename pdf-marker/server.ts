@@ -926,6 +926,43 @@ app.post("/api/assignment/grade", [
   check('location').not().isEmpty().withMessage('Assignment location not provided!')
 ], getGrades);
 
+const getAssignmentGlobalSettings = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
+  const errors = validationResult(req);
+  if(!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
+
+  const keys = ["location"];
+  const bodyKeys = Object.keys(req.body);
+
+  if(validateRequest(keys, bodyKeys))
+    return res.status(400).send({ message: 'Invalid parameter found in request' });
+
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const config = JSON.parse(data.toString());
+    const loc = req.body.location.replace(/\//g, sep);
+
+    const assignmentFolder = config.defaultPath + sep + loc;
+
+    return access(assignmentFolder + sep + ".settings.json", constants.F_OK, (err) => {
+      if(err)
+        return res.status(200).send({message: 'Could not read settings file'});
+      return (assignmentFolder + sep + ".settings.json");
+    });
+  });
+};
+
+app.post("/api/assignment/globalSettings/fetch", [
+  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+], getAssignmentGlobalSettings);
+
 const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
   let invalidKeyFound = false;
   for(let key of recievedKeys) {

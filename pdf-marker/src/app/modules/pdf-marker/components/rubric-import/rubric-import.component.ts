@@ -1,6 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {MatTableDataSource} from "@angular/material/table";
+import {MatDialogConfig} from "@angular/material/dialog";
+import {RubricViewComponent} from "@pdfMarkerModule/components/rubric-view/rubric-view.component";
 import {AlertService} from "@coreModule/services/alert.service";
 import {AppService} from "@coreModule/services/app.service";
 import {Mapping} from "@coreModule/utils/mapping.class";
@@ -18,6 +20,8 @@ export class RubricImportComponent implements OnInit {
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
   private file: File;
   private fileContents: IRubric;
+
+  config: MatDialogConfig;
 
   rubricForm: FormGroup;
   dataSource: MatTableDataSource<IRubricName>;
@@ -113,6 +117,7 @@ export class RubricImportComponent implements OnInit {
   }
 
   showRubric(index: number) {
+    this.openRubricModal("", "");
     console.log("Show Rubric at index = " + index);
   }
 
@@ -173,6 +178,20 @@ export class RubricImportComponent implements OnInit {
     this.dataSource = new MatTableDataSource<IRubricName>(this.rubrics);
   }
 
+  private openRubricModal(title: string = 'Rubric Modal Test', message: string) {
+    console.log("Show Rubric at in modal method");
+    this.openRubricModalDialog('Rubric Modal Test', '');
+
+  }
+
+  private openRubricModalDialog(title: string = 'Rubric Modal Test', message: string) {
+    const config = new MatDialogConfig();
+    config.disableClose = false;
+    config.width = "1500px";
+    config.height = "750px";
+    config.data = {};
+
+    this.appService.createDialog(RubricViewComponent, config);
+
+  }
 }
-
-
