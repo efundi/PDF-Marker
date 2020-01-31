@@ -189,7 +189,7 @@ export class ImportComponent implements OnInit {
     const formData: FormData = new FormData();
     formData.append('file', this.file);
     formData.append('noRubric', noRubric);
-    formData.append('file', rubric);
+    formData.append('rubric', rubric);
     this.appService.isLoading$.next(true);
     this.importService.importAssignmentFile(formData).subscribe((events) => {
 

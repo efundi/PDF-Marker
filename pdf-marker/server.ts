@@ -20,31 +20,32 @@ import 'zone.js/dist/zone-node';
 import * as express from 'express';
 import {basename, dirname, extname, join, sep} from 'path';
 import {
-  access, accessSync,
+  access,
+  accessSync,
   constants,
+  copyFileSync,
   createReadStream,
   existsSync,
-  mkdir, mkdirSync,
-  readdir,
+  mkdir,
+  mkdirSync,
   readdirSync,
   readFile,
   readFileSync,
   statSync,
   unlinkSync,
   writeFile,
-  writeFileSync,
-  copyFileSync
+  writeFileSync
 } from 'fs';
-import {json2csv, json2csvAsync } from "json-2-csv";
-const zipDir = require('zip-dir');
-var JSZip = require("jszip");
-import {PDFDocument, PDFPage, PageSizes, rgb} from 'pdf-lib';
+import {json2csv, json2csvAsync} from "json-2-csv";
+import {PageSizes, PDFDocument, PDFPage, rgb} from 'pdf-lib';
 import {AnnotationFactory} from 'annotpdf';
 import {IconTypeEnum} from "./src/app/modules/pdf-marker/info-objects/icon-type.enum";
 import {IconSvgEnum} from "./src/app/modules/pdf-marker/info-objects/icon-svg.enum";
 import {IRubric, IRubricName} from "./src/app/modules/application/core/utils/rubric.class";
-import {Observable} from "rxjs";
-import {ZipInfo} from "./src/app/modules/application/core/info-objects/zip.info";
+import {AssignmentSettingsInfo} from "./src/app/modules/pdf-marker/info-objects/assignment-settings.info";
+
+const zipDir = require('zip-dir');
+var JSZip = require("jszip");
 
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
@@ -56,8 +57,27 @@ const pathinfo = require('locutus/php/filesystem/pathinfo');
 
 
 const CONFIG_FILE = 'config.json';
+const SETTING_FILE = '.settings.json';
+const MARK_FILE = '.marks.json';
+const GRADES_FILE = 'grades.csv';
+const RUBRICS_FILE = 'rubrics.json';
+const SUBMISSION_FOLDER = 'Submission attachment(s)';
+const FEEDBACK_FOLDER = 'Feedback Attachment(s)';
 const CONFIG_DIR = '.' + sep + 'pdf-config' + sep;
 const UPLOADS_DIR = '.' + sep + 'uploads';
+
+/*COMMON MESSAGES*/
+const INVALID_RUBRIC_JSON_FILE= "Rubric file is not a valid JSON file!";
+const COULD_NOT_CREATE_RUBRIC_FILE= "Failed to read rubric file!";
+const COULD_NOT_READ_RUBRIC_LIST= "Could not read list of rubrics!";
+const NOT_PROVIDED_RUBRIC= "Rubric must be provided!";
+const FORBIDDEN_RESOURCE= "Forbidden access to resource!";
+const COULD_NOT_CREATE_CONFIG_DIRECTORY= "Failed to create configuration directory!";
+const NOT_CONFIGURED_CONFIG_DIRECTORY= "Configure default location to extract files to on the settings page!";
+const EXTRACTED_ZIP= "Successfully extracted assignment to default folder!";
+const EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC= "Successfully extracted assignment to default folder! But Failed to write to rubrics file!";
+const NOT_PROVIDED_ASSIGNMENT_LOCATION= "Assignment location not provided!";
+/**/
 
 const assignmentList = (callback) => {
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
@@ -135,29 +155,71 @@ const store = multer.diskStorage({
 const uploadFiles = multer({storage: store}).any();
 const uploadFile = multer({storage: store}).single('file');
 
+/*HELPER FUNCTIONS*/
+const readFromFile = (req, res, filePath: string, callback = null) => {
+  return readFile(filePath, (err, data) => {
+    if (err) {
+      if(req.file)
+        deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
+      return res.status(500).send({message: err.message});
+    }
+
+    if(callback && isFunction(callback))
+      callback(data);
+  })
+};
+
+const writeToFile = (req, res, filePath: string, data: Uint8Array | string, customSuccessMsg: string = null, customFailureMsg: string = null, callback = null) => {
+  writeFile(filePath, data, (err) => {
+    if(err) {
+      if(req.file)
+        deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
+      return res.status(500).send({message: (customFailureMsg) ? customFailureMsg : err.message});
+    }
+
+    if(callback && isFunction(callback))
+      callback();
+    else
+      return res.status(200).send({message: (customSuccessMsg) ? customSuccessMsg:'Successfully saved to file!'});
+  });
+};
+
+const checkAccess = (req, res, filePath: string, callback = null) => {
+  return access(filePath, constants.F_OK, (err) => {
+    if(err) {
+      if(req.file)
+        deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
+      return res.status(404).send({message: err.message});
+    }
+
+    if(callback && isFunction(callback))
+      callback();
+  });
+};
+
 const checkClient = (req, res) => {
   return (req.headers.client_id && req.headers.client_id === "PDF_MARKER");
 };
 
+const isFunction = (functionToCheck) => {
+  return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
+};
+
+const isNullOrUndefined = (object: any): boolean => {
+  return (object === null || object === undefined);
+};
+/*END HELPER FUNCTIONS*/
+
 const settingsPost = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
   const errors = validationResult(req);
   if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
-  return access(req.body.defaultPath, constants.F_OK, (err) => {
-    if(err)
-      return res.status(404).send({ message: `Path '${req.body.defaultPath}' not found!`});
-    else {
-      const data = new Uint8Array(Buffer.from(JSON.stringify(req.body)));
-      writeFile(CONFIG_DIR + CONFIG_FILE, data, (err) => {
-        if(err)
-          return res.status(500).send({ message: 'Failed to save configurations!'});
-        else
-          return res.status(200).send({message: 'Successfully saved!'});
-      });
-    }
+  return checkAccess(req, res, req.body.defaultPath, () => {
+    const data = new Uint8Array(Buffer.from(JSON.stringify(req.body)));
+    return  writeToFile(req, res, CONFIG_DIR + CONFIG_FILE, data);
   });
 };
 
@@ -168,32 +230,26 @@ app.post('/api/settings', [
 
 const settingsGet = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
 
   if(!existsSync(CONFIG_DIR)) {
     mkdir(CONFIG_DIR, err => {
       if (err)
-        return res.status(500).send({message: 'Failed to create configuration directory!'});
-      return readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-        if (err)
-          return res.status(500).send({message: 'Failed to read configurations!'});
-
+        return res.status(500).send({message: COULD_NOT_CREATE_CONFIG_DIRECTORY});
+      return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
         if (!isJson(data))
           return res.status(200).send({});
         else
           return res.status(200).send(JSON.parse(data.toString()));
-      })
+      });
     });
   } else {
-    return readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-      if (err)
-        return res.status(500).send({message: 'Failed to read configurations!'});
-
+    return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
       if (!isJson(data))
         return res.status(200).send({});
       else
         return res.status(200).send(JSON.parse(data.toString()));
-    })
+    });
   }
 };
 
@@ -202,8 +258,10 @@ app.get('/api/settings', settingsGet);
 /*IMPORT API*/
 
 const zipFileUploadCallback = (req,res, data, err) => {
-  if(err)
+  if(err) {
+    deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
     return res.status(501).json({error: err});
+  }
 
   if(!req.file)
     return res.status(404).send({message: 'No file uploaded!'});
@@ -211,8 +269,77 @@ const zipFileUploadCallback = (req,res, data, err) => {
   const config = JSON.parse(data.toString());
   const mimeTypes = ["application/zip", "application/x-zip-compressed"];
 
-  if(mimeTypes.indexOf(req.file.mimetype) == -1)
+  if(mimeTypes.indexOf(req.file.mimetype) == -1) {
+    deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
     return res.status(404).send({message: 'Not a valid zip file. Please select a file with a .zip extension!'});
+  }
+
+  const acceptedParams = ["noRubric", "rubric"];
+  const receivedParams = Object.keys(req.body);
+  let isInvalidKey: boolean = false;
+  let invalidParam: string;
+
+  for(let receivedParam of receivedParams) {
+    if(acceptedParams.indexOf(receivedParam) == -1) {
+      isInvalidKey = true;
+      invalidParam = receivedParam;
+      break;
+    }
+  }
+
+  if(isInvalidKey) {
+    deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
+    return sendResponse(res, 400, `Invalid parameter ${invalidParam} found in request`);
+  }
+
+
+  const isRubric: boolean = (req.body.noRubric === 'true');
+  let rubricName: string;
+  let rubric: IRubric = null;
+  let rubricIndex: number;
+  let rubrics: IRubric[];
+
+  if(!isRubric) {
+    if(isNullOrUndefined(req.body.rubric)) {
+      deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
+      return sendResponse(res, 400, NOT_PROVIDED_RUBRIC);
+    }
+
+    rubricName = req.body.rubric.trim();
+    if(!isNullOrUndefined(rubricName)) {
+      try {
+        const rubricData = readFileSync(CONFIG_DIR + RUBRICS_FILE);
+
+        if(!isJson(rubricData)) {
+          deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
+          return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
+        }
+         rubrics = JSON.parse(rubricData.toString());
+
+        if(Array.isArray(rubrics)) {
+          let index: number = -1;
+          for(let i = 0; i < rubrics.length; i++) {
+            if(rubrics[i].name === rubricName) {
+              index = i;
+              break;
+            }
+          }
+
+          if(index != -1) {
+            rubric = rubrics[index];
+            rubricIndex = index;
+          }
+        } else {
+          deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
+          return res.status(400).send({message: COULD_NOT_READ_RUBRIC_LIST});
+        }
+
+      } catch (e) {
+        deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
+        return res.status(500).send({ messasge: e.message });
+      }
+    }
+  }
 
   const folders = glob.sync(config.defaultPath + '/*');
 
@@ -222,9 +349,8 @@ const zipFileUploadCallback = (req,res, data, err) => {
     folderCount++;
   });
 
-
-
-  return readFile(UPLOADS_DIR + sep + req.file.originalname, (err, data) => {
+  // Perform Import
+  return readFromFile(req, res,UPLOADS_DIR + sep + req.file.originalname, (data) => {
     let zip = new JSZip();
     return zip.loadAsync(new Uint8Array(data))
       .then((zipObject) => {
@@ -247,27 +373,44 @@ const zipFileUploadCallback = (req,res, data, err) => {
               foundCount++;
           }
 
+          const settings: AssignmentSettingsInfo = { defaultColour: "#6F327A", rubric: rubric, isCreated: false };
           if(foundCount != 0) {
             newFolder = oldPath + " (" + (foundCount + 1) + ")" + "/";
             extractZip(UPLOADS_DIR + sep + req.file.originalname, config.defaultPath + sep, true, newFolder, oldPath + "/", res).then(() => {
-              // Create settings.json on assignment
-              return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
+              return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
+                EXTRACTED_ZIP,
+                null, () => {
+                  rubrics[rubricIndex].inUse = true;
+                  return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
+                    EXTRACTED_ZIP,
+                    EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
+                });
             }).catch((error) => {
+              deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
               return res.status(501).send({message: error.message});
             });
           } else {
             extractZip(UPLOADS_DIR + sep + req.file.originalname, config.defaultPath + sep, true, "", "", res).then(() => {
-              // Create settings.json on assignment
-              return res.status(200).send({message: 'Successfully extracted assignment to default folder!'});
+              return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
+                EXTRACTED_ZIP,
+                null, () => {
+                  rubrics[rubricIndex].inUse = true;
+                  return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
+                    EXTRACTED_ZIP,
+                    EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
+                });
             }).catch((error) => {
+              deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
               return res.status(501).send({message: error.message});
             });
           }
         } else {
+          deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
           return res.status(501).send({message: "Zip Object contains no entries!"});
         }
       })
       .catch(error => {
+        deleteUploadedFile(UPLOADS_DIR + sep +req.file.originalname);
         return res.status(501).send({message: error.message});
       });
   });
@@ -275,17 +418,14 @@ const zipFileUploadCallback = (req,res, data, err) => {
 
 const uploadFn = (req, res, next) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
 
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
-      return res.status(500).send({message: 'Failed to read configurations!'});
-
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
     if (!isJson(data))
-      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+      return res.status(404).send({message: NOT_CONFIGURED_CONFIG_DIRECTORY});
 
-    uploadFile(req, res, (err) => {
-      zipFileUploadCallback(req, res, data, err);
+    return uploadFile(req, res, (err) => {
+      return zipFileUploadCallback(req, res, data, err);
     });
   });
 };
@@ -318,12 +458,12 @@ const rubricFileUpload = (req,res, err) => {
   return readFile(UPLOADS_DIR + sep + req.file.originalname, (err, data) => {
     if (err) {
       deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
-      return res.status(500).send({message: 'Failed to read rubric file!'});
+      return res.status(500).send({message: COULD_NOT_CREATE_RUBRIC_FILE});
     }
 
     if (!isJson(data)) {
       deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
-      return res.status(404).send({message: 'Rubric file is not a valid JSON file!'});
+      return res.status(404).send({message: INVALID_RUBRIC_JSON_FILE});
     }
 
     const uploadedRubric: IRubric = JSON.parse(data.toString());
@@ -333,15 +473,15 @@ const rubricFileUpload = (req,res, err) => {
       mkdir(CONFIG_DIR, err => {
         if (err) {
           deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
-          return res.status(500).send({message: 'Failed to create configuration directory!'});
+          return res.status(500).send({message: COULD_NOT_CREATE_CONFIG_DIRECTORY});
         }
 
         uploadedRubric.name = rubricName;
         return writeRubricFile(req, res, [uploadedRubric]);
       });
     } else {
-      if(existsSync(CONFIG_DIR + "rubrics.json")) {
-        return readFile(CONFIG_DIR + "rubrics.json", (err, data) => {
+      if(existsSync(CONFIG_DIR + RUBRICS_FILE)) {
+        return readFile(CONFIG_DIR + RUBRICS_FILE, (err, data) => {
           if (err) {
             deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
             return res.status(500).send({message: 'Failed to read file containing list of rubrics!'});
@@ -349,7 +489,7 @@ const rubricFileUpload = (req,res, err) => {
 
           if (!isJson(data)) {
             deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
-            return res.status(400).send({message: 'Corrupted rubrics file'});
+            return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
           }
 
           const rubrics: IRubric[] = JSON.parse(data.toString());
@@ -378,7 +518,7 @@ const rubricFileUpload = (req,res, err) => {
             return writeRubricFile(req, res, rubrics);
           }
           deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
-          return res.status(400).send({message: 'Rubric database appears to not be a list!'});
+          return res.status(400).send({message: COULD_NOT_READ_RUBRIC_LIST});
         })
       } else {
         uploadedRubric.name = rubricName;
@@ -393,12 +533,19 @@ const deleteUploadedFile = (filePath: string) => {
     unlinkSync(filePath)
 };
 
+const deleteMultipleFiles = (req) => {
+  if(req.files.length > 0) {
+    for(let i = 0; i < req.files.length; i++)
+      deleteUploadedFile(UPLOADS_DIR + sep + req.files[i].originalname);
+  }
+};
+
 const writeRubricFile = (req, res, rubricData: IRubric[]) => {
-  return writeFile(CONFIG_DIR + "rubrics.json", JSON.stringify(rubricData), (err) => {
+  return writeFile(CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubricData), (err) => {
     if(req.file)
       deleteUploadedFile(UPLOADS_DIR + sep + req.file.originalname);
     if(err) {
-      return res.status(500).send({message: 'Failed to write to rubric file!'});
+      return res.status(500).send({message: COULD_NOT_CREATE_RUBRIC_FILE});
     }
 
     return getRubricNames(req, res, rubricData);
@@ -409,7 +556,7 @@ const getRubricNames = (req, res, rubrics: IRubric[]) => {
   const rubricNames: IRubricName[] = [];
   if(Array.isArray(rubrics)) {
     rubrics.forEach(rubric => {
-      const rubricName = { name : rubric.name};
+      const rubricName = { name : rubric.name, inUse: (rubric.inUse) ? rubric.inUse: false};
       rubricNames.push(rubricName);
     });
     return res.status(200).send(rubricNames);
@@ -420,7 +567,7 @@ const getRubricNames = (req, res, rubrics: IRubric[]) => {
 
 const rubricUploadFn = async (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
 
   return uploadFile(req, res, (err) => {
     if(err)
@@ -431,7 +578,7 @@ const rubricUploadFn = async (req, res) => {
 };
 
 app.post('/api/rubric/import', [
-  check('rubricName').not().isEmpty().withMessage('Rubric name not provided!')
+  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC)
 ], rubricUploadFn);
 /*END RUBRIC IMPORT API*/
 
@@ -440,29 +587,26 @@ app.post('/api/rubric/import', [
 
 const getRubricsFn = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
 
   if(!existsSync(CONFIG_DIR)) {
     return mkdir(CONFIG_DIR, err => {
       if (err)
-        return res.status(500).send({message: 'Failed to create configuration directory!'});
+        return res.status(500).send({message: COULD_NOT_CREATE_CONFIG_DIRECTORY});
 
       return writeRubricFile(req, res, []);
     });
   } else {
-    if(existsSync(CONFIG_DIR + "rubrics.json")) {
-      return readFile(CONFIG_DIR + "rubrics.json", (err, data) => {
-        if (err)
-          return res.status(500).send({message: 'Failed to read file containing list of rubrics!'});
-
+    if(existsSync(CONFIG_DIR + RUBRICS_FILE)) {
+      return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
         if (!isJson(data))
-          return res.status(400).send({message: 'Corrupted rubrics file'});
+          return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
 
         const rubrics: IRubric[] = JSON.parse(data.toString());
         if(Array.isArray(rubrics))
           return res.status(200).send(rubrics);
         return writeRubricFile(req, res, []);
-      });
+      })
     } else {
       return writeRubricFile(req, res, []);
     }
@@ -475,26 +619,22 @@ app.get('/api/rubric/import', getRubricsFn);
 /*READ RUBRIC NAMES*/
 const getRubricNamesFn = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
 
   if(!existsSync(CONFIG_DIR)) {
     return mkdir(CONFIG_DIR, err => {
       if (err)
-        return res.status(500).send({message: 'Failed to create configuration directory!'});
+        return res.status(500).send({message: COULD_NOT_CREATE_CONFIG_DIRECTORY});
 
       return writeRubricFile(req, res, []);
     });
   } else {
-    if(existsSync(CONFIG_DIR + "rubrics.json")) {
-      return readFile(CONFIG_DIR + "rubrics.json", (err, data) => {
-        if (err)
-          return res.status(500).send({message: 'Failed to read file containing list of rubrics!'});
-
+    if(existsSync(CONFIG_DIR + RUBRICS_FILE)) {
+      return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
         if (!isJson(data))
-          return res.status(400).send({message: 'Corrupted rubrics file'});
+          return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
 
         const rubrics: IRubric[] = JSON.parse(data.toString());
-
         return getRubricNames(req, res, rubrics);
       });
     } else {
@@ -509,20 +649,17 @@ app.get('/api/rubric/details', getRubricNamesFn);
 
 const deleteRubricsFn = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
 
   if(!req.body.rubricName)
-    return res.status(400).send({ message: 'No rubric name specified'});
+    return res.status(400).send({ message: NOT_PROVIDED_RUBRIC});
 
   const rubricName:string = req.body.rubricName;
 
-  if(existsSync(CONFIG_DIR + "rubrics.json")) {
-    return readFile(CONFIG_DIR + "rubrics.json", (err, data) => {
-      if (err)
-        return res.status(500).send({message: 'Failed to read file containing list of rubrics!'});
-
+  if(existsSync(CONFIG_DIR + RUBRICS_FILE)) {
+    return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
       if (!isJson(data))
-        return res.status(400).send({message: 'Corrupted rubrics file'});
+        return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
 
       const rubrics: IRubric[] = JSON.parse(data.toString());
       if(Array.isArray(rubrics)) {
@@ -537,13 +674,12 @@ const deleteRubricsFn = (req, res) => {
 
         if(indexFound == -1)
           return res.status(404).send({message: 'Could not find rubric'});
-        else {
+        else
           rubrics.splice(indexFound, 1);
-        }
 
         return writeRubricFile(req, res, rubrics);
       }
-      return res.status(400).send({message: "Rubric database appears to not be a list!"});
+      return res.status(400).send({message: COULD_NOT_READ_RUBRIC_LIST});
     });
   }
 
@@ -551,18 +687,16 @@ const deleteRubricsFn = (req, res) => {
 };
 
 app.post('/api/rubric/delete',
-  check('rubricName').not().isEmpty().withMessage('Rubric name not provided!'), deleteRubricsFn);
+  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), deleteRubricsFn);
 /* DELETE READ RUBRICS */
 
 const getAssignments = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
-      return res.status(500).send({message: 'Failed to read configurations!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
 
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
     if (!isJson(data))
-      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+      return res.status(404).send({message: NOT_CONFIGURED_CONFIG_DIRECTORY});
 
     const config = JSON.parse(data.toString());
 
@@ -591,26 +725,20 @@ app.get('/api/assignments', getAssignments);
 
 const getPdfFile = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
   const errors = validationResult(req);
   if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
-      return res.status(500).send({message: 'Failed to read configurations!'});
-
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
     if (!isJson(data))
-      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+      return res.status(404).send({message: NOT_CONFIGURED_CONFIG_DIRECTORY});
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
     const actualPath = config.defaultPath + sep + loc;
 
-    return access(actualPath, constants.F_OK, (err) => {
-      if(err)
-        return res.status(404).send({ message: `pdf file not found!`});
-
+    return checkAccess(req, res, actualPath, () => {
       const file = createReadStream(actualPath);
       file.pipe(res);
     });
@@ -621,13 +749,9 @@ app.post('/api/pdf/file', [
   check('location').not().isEmpty().withMessage('File location not provided!')
 ], getPdfFile);
 
-const isNullOrUndefined = (object: any): boolean => {
-  return (object === null || object === undefined);
-};
-
 const savingMarks = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
   if(req.body.location === null || req.body.location === undefined)
     return res.status(400).send({message: 'File location not provided'});
 
@@ -637,77 +761,53 @@ const savingMarks = (req, res) => {
     const pages = Object.keys(marks);
     pages.forEach(page => {
       if (Array.isArray(marks[page])) {
-        for (let i = 0; i < marks[page].length; i++) {
+        for (let i = 0; i < marks[page].length; i++)
           totalMark += (marks[page][i] && marks[page][i].totalMark) ? marks[page][i].totalMark:0;
-        }
       }
     });
   }
 
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
-      return res.status(500).send({message: 'Failed to read configurations!'});
-
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
     if (!isJson(data))
-      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+      return res.status(404).send({message: NOT_CONFIGURED_CONFIG_DIRECTORY});
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
     const pathSplit = loc.split(sep);
-    if(pathSplit.length !== 4) {
-        return res.status(404).send({message: 'Invalid path provided'});
-    }
+    if(pathSplit.length !== 4)
+      return res.status(404).send({message: 'Invalid path provided'});
 
     const regEx = /(.*)\((.+)\)/;
-    if(!regEx.test(pathSplit[1])) {
+    if(!regEx.test(pathSplit[1]))
       return res.status(404).send({message: 'Invalid student folder'});
-    }
 
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
 
-    return access(studentFolder, constants.F_OK, (err) => {
-      if(err)
-        return res.status(404).send({ message: `Student folder not found!`});
-
-      const data = new Uint8Array(Buffer.from(JSON.stringify(marks)));
-      writeFile(studentFolder + sep + '.marks.json', data, (err) => {
-        if(err)
-          return res.status(500).send({ message: 'Failed to save student marks!'});
-
+    return checkAccess(req, res, studentFolder, () => {
+      return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
         const matches = regEx.exec(pathSplit[1]);
 
-        const assignmentName = pathSplit[0];
         const studentNumber = matches[2];
-
         const assignmentFolder =  dirname(studentFolder);
 
-        return access(assignmentFolder + sep + "grades.csv", constants.F_OK, (err) => {
-          if(err)
-            return res.status(200).send({message: 'Could not read grades file'});
-
-          return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
+        return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
+          return csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE)
             .then((gradesJSON) => {
               let changed = false;
               let assignmentHeader;
               for(let i = 0; i < gradesJSON.length; i++) {
                 if(i == 0) {
                   const keys = Object.keys(gradesJSON[i]);
-                  if(keys.length > 0) {
+                  if(keys.length > 0)
                     assignmentHeader = keys[0];
-                  }
-                } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
+                } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
                   gradesJSON[i].field5 = totalMark;
                   changed = true;
                   json2csv(gradesJSON, (err, csv) => {
                     if(err)
                       return res.status(400).send({ message: "Failed to convert json to csv!" });
 
-                    writeFile(assignmentFolder + sep + "grades.csv", csv, (err) => {
-                      if(err)
-                        return res.status(500).send({ message: 'Failed to save marks to grades.csv file!' });
-                      else
-                        return res.status(200).send({message: 'Successfully saved marks!'});
-                    });
+                    return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, "Successfully saved marks!", "Failed to save marks to " + GRADES_FILE +" file!", null);
                   }, {emptyFieldValue: ''});
                   break;
                 }
@@ -715,17 +815,15 @@ const savingMarks = (req, res) => {
 
               if(changed) {
                 // more logic to save new JSON to CSV
-              } else {
+              } else
                 return res.status(400).send({message: "Failed to save mark" });
-              }
-
             })
             .catch(reason => {
               return res.status(400).send({message: reason });
             })
         });
-      });
-    });
+      })
+    })
   });
 };
 
@@ -733,17 +831,14 @@ app.post("/api/assignment/marks/save", savingMarks);
 
 const getMarks = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
   const errors = validationResult(req);
   if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
-      return res.status(500).send({message: 'Failed to read configurations!'});
-
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
     if (!isJson(data))
-      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+      return res.status(404).send({message: NOT_CONFIGURED_CONFIG_DIRECTORY});
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
@@ -759,7 +854,7 @@ const getMarks = (req, res) => {
 
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
 
-    return readFile(studentFolder + sep + ".marks.json",(err, data) => {
+    return readFile(studentFolder + sep + MARK_FILE,(err, data) => {
       if(err)
         return res.status(200).send([]);
 
@@ -772,12 +867,13 @@ const getMarks = (req, res) => {
 };
 
 app.post("/api/assignment/marks/fetch", [
-  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getMarks);
 
+// Only For updating colour for now
 const assignmentSettings = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
 
   const errors = validationResult(req);
   if(!errors.isEmpty())
@@ -798,60 +894,53 @@ const assignmentSettings = (req, res) => {
   if(invalidKeyFound)
     return res.status(400).send({ message: 'Invalid key found in settings'});
 
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
-      return res.status(500).send({message: 'Failed to read configurations!'});
-
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
     if (!isJson(data))
-      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+      return res.status(404).send({message: NOT_CONFIGURED_CONFIG_DIRECTORY});
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
     const pathSplit = loc.split(sep);
-    if(pathSplit.length !== 4) {
+    if(pathSplit.length !== 4)
       return res.status(404).send({message: 'Invalid path provided'});
-    }
 
     const regEx = /(.*)\((.+)\)/;
-    if(!regEx.test(pathSplit[1])) {
+    if(!regEx.test(pathSplit[1]))
       return res.status(404).send({message: 'Invalid student folder'});
-    }
 
     const assignmentFolder = dirname(dirname(dirname(config.defaultPath + sep + loc)));
-    const buffer = new Uint8Array(Buffer.from(JSON.stringify(assignmentSettings)));
 
-    return access(assignmentFolder, constants.F_OK, (err) => {
-      if(err)
-        return res.status(404).send({ message: `Path '${loc}' not found!`});
-      else {
-        writeFile(assignmentFolder + sep + '.settings.json', buffer, (err) => {
-          if(err)
-            return res.status(500).send({ message: 'Failed to save assignment settings!'});
-          else
-            return res.status(200).send(assignmentSettings);
-        });
-      }
+    return checkAccess(req, res, assignmentFolder, () => {
+      return readFromFile(req, res, assignmentFolder + sep + SETTING_FILE, (data) => {
+        if (!isJson(data))
+          return res.status(404).send({message: 'Assignment settings file corrupt!'});
+
+        let settings: AssignmentSettingsInfo = JSON.parse(data);
+        settings.defaultColour = (assignmentSettings.defaultColour) ? assignmentSettings.defaultColour:settings.defaultColour;
+        const buffer = new Uint8Array(Buffer.from(JSON.stringify(settings)));
+
+        return writeToFile(req, res, assignmentFolder + sep + SETTING_FILE, buffer, null, "Failed to save assignment settings!", () => {
+          return res.status(200).send(assignmentSettings);
+        })
+      })
     });
   });
 };
 
 app.post('/api/assignment/settings', [
-  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], assignmentSettings);
 
 const getAssignmentSettings = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
   const errors = validationResult(req);
   if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
-      return res.status(500).send({message: 'Failed to read configurations!'});
-
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
     if (!isJson(data))
-      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+      return res.status(404).send({message: NOT_CONFIGURED_CONFIG_DIRECTORY});
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
@@ -861,13 +950,12 @@ const getAssignmentSettings = (req, res) => {
     }
 
     const regEx = /(.*)\((.+)\)/;
-    if(!regEx.test(pathSplit[1])) {
+    if(!regEx.test(pathSplit[1]))
       return res.status(404).send({message: 'Invalid student folder'});
-    }
 
     const assignmentFolder = dirname(dirname(dirname(config.defaultPath + sep + loc)));
 
-    return readFile(assignmentFolder + sep + ".settings.json",(err, data) => {
+    return readFile(assignmentFolder + sep + SETTING_FILE,(err, data) => {
       if(err)
         return res.status(200).send({});
 
@@ -880,12 +968,12 @@ const getAssignmentSettings = (req, res) => {
 };
 
 app.post("/api/assignment/settings/fetch", [
-  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getAssignmentSettings);
 
 const getGrades = (req, res) => {
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
   const errors = validationResult(req);
   if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
@@ -896,22 +984,17 @@ const getGrades = (req, res) => {
   if(validateRequest(keys, bodyKeys))
     return res.status(400).send({ message: 'Invalid parameter found in request' });
 
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
-      return res.status(500).send({message: 'Failed to read configurations!'});
-
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
     if (!isJson(data))
-      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+      return res.status(404).send({message: NOT_CONFIGURED_CONFIG_DIRECTORY});
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
 
     const assignmentFolder = config.defaultPath + sep + loc;
 
-    return access(assignmentFolder + sep + "grades.csv", constants.F_OK, (err) => {
-      if(err)
-        return res.status(200).send({message: 'Could not read grades file'});
-      return csvtojson().fromFile(assignmentFolder + sep + "grades.csv")
+    return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
+      return csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE)
         .then((gradesJSON) => {
           return res.status(200).send(gradesJSON)
         })
@@ -923,7 +1006,7 @@ const getGrades = (req, res) => {
 };
 
 app.post("/api/assignment/grade", [
-  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getGrades);
 
 const getAssignmentGlobalSettings = (req, res) => {
@@ -960,7 +1043,7 @@ const getAssignmentGlobalSettings = (req, res) => {
 };
 
 app.post("/api/assignment/globalSettings/fetch", [
-  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getAssignmentGlobalSettings);
 
 const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
@@ -983,7 +1066,7 @@ const asyncForEach = async(array, callback) => {
 const finalizeAssignment = async (req, res) => {
   let failed: boolean = false;
   if(!checkClient(req, res))
-    return res.status(401).send({ message: 'Forbidden access to resource!'});
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
   const errors = validationResult(req);
   if(!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
@@ -998,13 +1081,13 @@ const finalizeAssignment = async (req, res) => {
   try {
     const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
     if (!isJson(data))
-      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+      return res.status(404).send({message: NOT_CONFIGURED_CONFIG_DIRECTORY});
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
     const assignmentFolder = config.defaultPath + sep + loc;
     const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_FILENAME');
-    const gradesJSON = await csvtojson().fromFile(assignmentFolder + sep + "grades.csv");
+    const gradesJSON = await csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE);
     const files = glob.sync(assignmentFolder + sep + "/*");
 
     const start = async () => {
@@ -1018,7 +1101,7 @@ const finalizeAssignment = async (req, res) => {
 
           const matches = regEx.exec(file);
 
-          const submissionFiles = glob.sync(file + sep + "Submission attachment(s)/*");
+          const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + "/*");
           await asyncForEach(submissionFiles, async (submission) => {
             try {
               accessSync(submission, constants.F_OK);
@@ -1027,7 +1110,7 @@ const finalizeAssignment = async (req, res) => {
               let marks;
               let data;
               try {
-                data = readFileSync(studentFolder + sep + ".marks.json");
+                data = readFileSync(studentFolder + sep + MARK_FILE);
               } catch (e) {
                 marks = [];
               }
@@ -1044,8 +1127,8 @@ const finalizeAssignment = async (req, res) => {
 
                 await annotateFN().then(async (data) => {
                   const fileName = pathinfo(submission, 'PATHINFO_FILENAME') + "_MARK";
-                  writeFileSync(studentFolder + sep + "Feedback Attachment(s)" + sep + fileName + ".pdf", data.pdfBytes);
-                  accessSync(assignmentFolder + sep + "grades.csv", constants.F_OK);
+                  writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + ".pdf", data.pdfBytes);
+                  accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
                   let changed = false;
                   let assignmentHeader;
                   for (let i = 0; i < gradesJSON.length; i++) {
@@ -1059,11 +1142,11 @@ const finalizeAssignment = async (req, res) => {
                       changed = true;
                       await json2csvAsync(gradesJSON, {emptyFieldValue: ''})
                         .then(csv => {
-                          writeFileSync(assignmentFolder + sep + "grades.csv", csv);
+                          writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
                         })
                         .catch(() => {
                           failed = true;
-                          return sendResponse(res, 400, 'Failed to save marks to grades.csv file for student ' + matches[2] + '!');
+                          return sendResponse(res, 400, 'Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
                         });
 
                       break;
@@ -1100,7 +1183,7 @@ const finalizeAssignment = async (req, res) => {
 };
 
 app.post("/api/assignment/finalize", [
-  check('location').not().isEmpty().withMessage('Assignment location not provided!')
+  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], finalizeAssignment);
 
 
@@ -1233,39 +1316,92 @@ const createAssignment = (req, res) => {
         }
       }
 
-      if(isInvalidKey)
+      if(isInvalidKey) {
+        deleteMultipleFiles(req);
         return sendResponse(res, 400, `Invalid parameter ${invalidParam} found in request`);
-
-      if(req.body.assignmentName.legnth < 5)
-        return sendResponse(res, 400, `Assignment must be > 5 characters`);
-
-      const isRubric: boolean = req.body.isRubric;
-      if(isRubric) {
-        if(isNullOrUndefined(req.body.rubric))
-          return sendResponse(res, 400, `Rubric must be provided`);
       }
 
-      if(!isJson(req.body.studentDetails))
+      if(req.body.assignmentName.legnth < 5) {
+        deleteMultipleFiles(req);
+        return sendResponse(res, 400, `Assignment must be > 5 characters`);
+      }
+
+      const assignmentName: string = req.body.assignmentName.trim();
+
+      const isRubric: boolean = (req.body.noRubric === 'true');
+      let rubricName: string;
+      let rubric: IRubric = null;
+      let rubricIndex: number;
+      let rubrics: IRubric[];
+
+      if(!isRubric) {
+        if(isNullOrUndefined(req.body.rubric)) {
+          deleteMultipleFiles(req);
+          return sendResponse(res, 400, NOT_PROVIDED_RUBRIC);
+        }
+
+        rubricName = req.body.rubric.trim();
+        if(!isNullOrUndefined(rubricName)) {
+          try {
+            const rubricData = readFileSync(CONFIG_DIR + RUBRICS_FILE);
+
+            if(!isJson(rubricData)) {
+              deleteMultipleFiles(req);
+              return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
+            }
+            rubrics = JSON.parse(rubricData.toString());
+
+            if(Array.isArray(rubrics)) {
+              let index: number = -1;
+              for(let i = 0; i < rubrics.length; i++) {
+                if(rubrics[i].name === rubricName) {
+                  index = i;
+                  break;
+                }
+              }
+
+              if(index != -1) {
+                rubric = rubrics[index];
+                rubricIndex = index;
+              }
+            } else {
+              deleteMultipleFiles(req);
+              return res.status(400).send({message: COULD_NOT_READ_RUBRIC_LIST});
+            }
+
+          } catch (e) {
+            deleteMultipleFiles(req);
+            return res.status(500).send({ messasge: e.message });
+          }
+        }
+      }
+
+      if(!isJson(req.body.studentDetails)) {
+        deleteMultipleFiles(req);
         return sendResponse(res, 400, `Student details not valid`);
+      }
 
       const studentDetails: any[] = JSON.parse(req.body.studentDetails);
 
-      if(!Array.isArray(studentDetails))
+      if(!Array.isArray(studentDetails)) {
+        deleteMultipleFiles(req);
         return sendResponse(res, 400, `Student details must be a list`);
+      }
 
-      if(studentDetails.length !== req.files.length)
+      if(studentDetails.length !== req.files.length) {
+        deleteMultipleFiles(req);
         return sendResponse(res, 400, `Student details is not equal to number of files sent!`);
-
-      const assignmentName: string = req.body.assignmentName;
-      const rubric: string = req.body.rubric;
+      }
 
       try {
         const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
-        if (!isJson(data))
-          return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+        if (!isJson(data)) {
+          deleteMultipleFiles(req);
+          return res.status(404).send({message: NOT_CONFIGURED_CONFIG_DIRECTORY});
+        }
 
         const config = JSON.parse(data.toString());
-        const gradesFile = "grades.csv";
+        const settings: AssignmentSettingsInfo =  { defaultColour: "#6F327A", rubric: rubric, isCreated: true };
 
         let count = 0;
         const headers = `"${assignmentName}","SCORE_GRADE_TYPE"\n`;
@@ -1275,8 +1411,8 @@ const createAssignment = (req, res) => {
         studentDetails.forEach((studentInfo: any) => {
           let file: any = req.files[count];
           const studentFolder = studentInfo.studentSurname.toUpperCase() + ", " + studentInfo.studentName.toUpperCase() + "(" + studentInfo.studentId.toUpperCase() + ")";
-          const feedbackFolder = studentFolder + sep + "Feedback Attachment(s)";
-          const submissionFolder = studentFolder + sep + "Submission attachment(s)";
+          const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
+          const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
           const csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},"","",""\n`;
           csvString += csvData;
 
@@ -1287,12 +1423,14 @@ const createAssignment = (req, res) => {
           count++;
         });
 
-        writeFileSync(config.defaultPath + sep + assignmentName + sep + gradesFile, csvString);
+        writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
+        writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
         const files = glob.sync(config.defaultPath + sep + assignmentName + sep + "/**");
         files.sort((a, b) => (a > b) ? 1 : -1);
         const folderModel = hierarchyModel(files, config.defaultPath);
         return res.status(200).send(folderModel);
       } catch (e) {
+        deleteMultipleFiles(req);
         return sendResponse(res, 400, e.message);
       }
     }
@@ -1366,7 +1504,7 @@ const hierarchyModel = (pathInfos, configFolder) => {
     if(stat.isFile()) {
       pathObject.path = path;
       pathObject.basename = path.split("/").pop();
-      if (pathSplit.indexOf('Submission attachment(s)') > -1)
+      if (pathSplit.indexOf(SUBMISSION_FOLDER) > -1)
         pathObject.isPdf = true;
     }
     return hier;

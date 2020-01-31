@@ -9,11 +9,13 @@ export class Rubric implements IRubric {
 export interface IRubric {
   rubricId?: number;
   name?: string;
-  criterias: IRubricCriteria[]
+  criterias: IRubricCriteria[];
+  inUse?: boolean;
 }
 
 export interface IRubricName {
   name?: string;
+  inUse?: boolean;
 }
 
 export class RubricCriteria implements IRubricCriteria {

@@ -11,10 +11,10 @@ export class SettingsService {
   constructor(private http: HttpClient) { }
 
   saveConfigurations(settings: SettingInfo):Observable<any> {
-    return this.http.post('/api/settings/assignmentglobal', settings);
+    return this.http.post('/api/settings', settings);
   }
 
   getConfigurations(): Observable<any> {
-    return this.http.get('/api/settings/assignmentglobal');
+    return this.http.get('/api/settings');
   }
 }
