@@ -136,9 +136,7 @@ export class RubricImportComponent implements OnInit {
   }
 
   private resetPreviousUpload() {
-    this.fc.rubricName.setValue(null);
-    this.fc.rubricFile.setValue(null);
-    this.fc.rubricFileText.setValue(null);
+    this.rubricForm.reset();
     this.rubricForm.updateValueAndValidity();
   }
 
