@@ -24,10 +24,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
 </head>
 <body>
-    <p id="version"></p>
+    <p id="version" class="hidden"></p>
     <div id="notification" class="hidden">
       <p id="message"></p>
       <button id="close-button" onClick="closeNotification()">
@@ -43,10 +43,11 @@
       const notification = document.getElementById('notification');
       const message = document.getElementById('message');
       const restartButton = document.getElementById('restart-button');
-      
+
       ipcRenderer.send('app_version');
       ipcRenderer.on('app_version', (event, arg) => {
         ipcRenderer.removeAllListeners('app_version');
+        version.classList.remove('hidden');
         version.innerText = 'Version ' + arg.version;
         console.log('Version: ' + arg.version);
       });
@@ -66,7 +67,7 @@
       function closeNotification() {
         notification.classList.add('hidden');
       }
-      
+
       function restartApp() {
         console.log('Restarting PDF Marker');
         ipcRenderer.send('restart_app');

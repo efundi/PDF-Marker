@@ -23,7 +23,7 @@
         <button type="button" mat-raised-button [disabled]="rubricForm.invalid" (click)="onSubmit($event)">Add</button>
       </div>
     </div>
-    <div class="pdf-spacer"><hr></div>
+    <div class="pdf-spacer"><mat-divider></mat-divider></div>
     <div id="pdf-marker-rubric-import-rubric-list" [class.pdf-marker-rubric-import-hide]="rubrics?.length == 0">
       <table mat-table [dataSource]="dataSource">
 
