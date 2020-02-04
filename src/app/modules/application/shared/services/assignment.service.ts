@@ -190,9 +190,6 @@ export class AssignmentService {
   }
 
   createAssignment(createAssignmentInfo: any) {
-    return this.http.post("/api/assignment/create", createAssignmentInfo, {
-      reportProgress: true,
-      observe: 'events'
-    });
+    return this.http.post("/api/assignment/create", createAssignmentInfo);
   }
 }

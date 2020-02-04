@@ -23,9 +23,6 @@ import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 import {FinaliseMarkingComponent} from "@pdfMarkerModule/components/finalise-marking/finalise-marking.component";
 import {MarkingCommentModalComponent} from "@sharedModule/components/marking-comment-modal/marking-comment-modal.component";
-import {PageSizes, PDFDocument, PDFPage, rgb} from 'pdf-lib'
-import {IconSvgEnum} from "@pdfMarkerModule/info-objects/icon-svg.enum";
-import {AnnotationFactory} from 'annotpdf';
 
 @Component({
   selector: 'pdf-marker-assignment-marking',

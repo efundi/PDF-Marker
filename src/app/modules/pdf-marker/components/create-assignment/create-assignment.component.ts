@@ -158,17 +158,13 @@ export class CreateAssignmentComponent implements OnInit {
       count++;
     });
     formData.append('studentDetails', JSON.stringify(studentData));
-    this.assignmentService.createAssignment(formData).subscribe((events) => {
-      if(events.type === HttpEventType.UploadProgress) {
-
-      } else if(events.type === HttpEventType.Response) {
+    this.appService.isLoading$.next(true);
+    this.assignmentService.createAssignment(formData).subscribe((model) => {
+      this.assignmentService.getAssignments().subscribe((assignments) => {
+        this.assignmentService.setSelectedAssignment(model);
+        this.router.navigate(["/marker/assignment/overview"]).then(() => this.assignmentService.update(assignments));
         this.appService.isLoading$.next(false);
-        let model: any = events.body;
-        this.assignmentService.getAssignments().subscribe((assignments) => {
-          this.assignmentService.setSelectedAssignment(model);
-          this.router.navigate(["/marker/assignment/overview"]).then(() => this.assignmentService.update(assignments));
-        });
-      }
+      });
     },error => {
       this.appService.isLoading$.next(false);
     });
