@@ -7,6 +7,7 @@ import {AssignmentOverviewComponent} from "@pdfMarkerModule/components/assignmen
 import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
 import { CreateAssignmentComponent } from './components/create-assignment/create-assignment.component';
 import {RubricImportComponent} from "@pdfMarkerModule/components/rubric-import/rubric-import.component";
+import {AssignmentMarkingRubricComponent} from "@pdfMarkerModule/components/assignment-marking-rubric/assignment-marking-rubric.component";
 
 
 const routes: Routes = [
@@ -16,6 +17,7 @@ const routes: Routes = [
   { path: 'assignment/upload', component: CreateAssignmentComponent },
   { path: 'assignment/overview', component: AssignmentOverviewComponent },
   { path: 'assignment/marking', component: AssignmentMarkingComponent },
+  { path: 'assignment/marking/rubric', component: AssignmentMarkingRubricComponent },
   { path: 'assignment/rubric', component: RubricImportComponent },
   { path: '**', redirectTo: '', pathMatch: 'full'}
 ];

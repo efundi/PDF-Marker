@@ -5,6 +5,9 @@ import {AppService} from "@coreModule/services/app.service";
 import {Observable, Subscription} from "rxjs";
 import {of} from "rxjs";
 import {FormBuilder, FormGroup} from "@angular/forms";
+import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
+import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
+import {RoutesEnum} from "@coreModule/utils/routes.enum";
 
 @Component({
   selector: 'pdf-marker-file-explorer',
@@ -54,23 +57,11 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
     }
   }
 
-  getModelKeys(folder) {
-    return Object.keys(this.hierarchyModel[folder]);
-  }
-
-  getModel(folder) {
-    return this.hierarchyModel[folder];
-  }
-
-  isFile(object): boolean {
-    return (this.hierarchyModel[object]) ? !!(this.hierarchyModel[object].path):false;
-  }
-
   onAssignment(hierarchyModel) {
     this.appService.isLoading$.next(true);
     this.assignmentService.setSelectedAssignment(hierarchyModel);
-    if(this.router.url !== "/marker/assignment/overview")
-      this.router.navigate(["/marker/assignment/overview"]);
+    if(this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW)
+      this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
   }
 
   scrollToFile() {
@@ -80,23 +71,17 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   }
 
   isSelected() {
-    return ((JSON.stringify(this.hierarchyModel) === JSON.stringify(this.assignmentService.getSelectedAssignment())) && this.router.url === "/marker/assignment/overview");
+    return ((JSON.stringify(this.hierarchyModel) === JSON.stringify(this.assignmentService.getSelectedAssignment())) && this.router.url === RoutesEnum.ASSIGNMENT_OVERVIEW);
   }
 
   onSelectedPdf(pdfFileLocation: string) {
-    if(this.router.url !== "/marker/assignment/marking" || this.assignmentService.getSelectedPdfLocation() !== pdfFileLocation) {
+    if((this.router.url !== RoutesEnum.ASSIGNMENT_MARKER && this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC) || this.assignmentService.getSelectedPdfLocation() !== pdfFileLocation) {
       this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
-        const blob = new Blob([blobData], {type: "application/pdf"});
-        const fileUrl = URL.createObjectURL(blob);
-
-        this.assignmentService.setSelectedPdfURL(fileUrl, pdfFileLocation);
-        this.assignmentService.setSelectedPdfBlob(blob);
-        if (this.router.url !== "/marker/assignment/marking")
-          this.router.navigate(["/marker/assignment/marking"]);
+        this.assignmentService.configure(pdfFileLocation, blobData);
       }, error => {
         this.appService.isLoading$.next(false);
-        this.appService.openSnackBar(false, "Unable to open file")
-      })
+        this.appService.openSnackBar(false, "Unable to read file")
+      });
     }
   }
 

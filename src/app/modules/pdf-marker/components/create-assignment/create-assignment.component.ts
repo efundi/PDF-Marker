@@ -8,6 +8,8 @@ import {HttpEventType} from "@angular/common/http";
 import {Router} from "@angular/router";
 import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
+import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
+import {RoutesEnum} from "@coreModule/utils/routes.enum";
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -20,10 +22,11 @@ export class CreateAssignmentComponent implements OnInit {
   private readonly noRubricDefaultValue: boolean = false;
   private studentFiles: File[] = [];
 
-  readonly acceptMimeType = "application/pdf";
   isRubric: boolean = true;
 
   rubrics: IRubricName[];
+
+  readonly MimeTypesEnum = MimeTypesEnum;
 
   // @ts-ignore
   @ViewChild("assignmentName") assignmentName: ElementRef;
@@ -107,7 +110,7 @@ export class CreateAssignmentComponent implements OnInit {
       this.studentFormGroupAtIndex(studentIndex).controls.studentSubmissionText.setValue(null);
     } else {
       const file: File = await event.target.files[0];
-      if(file && file.type === this.acceptMimeType) {
+      if(file && file.type === MimeTypesEnum.PDF) {
         this.studentFormGroupAtIndex(studentIndex).controls.studentSubmission.setErrors(null);
         this.studentFormGroupAtIndex(studentIndex).controls.studentSubmissionText.setValue(file.name);
         if(!this.studentFiles[studentIndex])
@@ -162,7 +165,7 @@ export class CreateAssignmentComponent implements OnInit {
     this.assignmentService.createAssignment(formData).subscribe((model) => {
       this.assignmentService.getAssignments().subscribe((assignments) => {
         this.assignmentService.setSelectedAssignment(model);
-        this.router.navigate(["/marker/assignment/overview"]).then(() => this.assignmentService.update(assignments));
+        this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]).then(() => this.assignmentService.update(assignments));
         this.appService.isLoading$.next(false);
       });
     },error => {

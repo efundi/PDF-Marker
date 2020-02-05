@@ -1,0 +1,56 @@
+.pdf-marker-assignment-marking-rubric-controls {
+  height: 10%;
+  min-width: 64px;
+  position: sticky;
+  top: -1px;
+  left: 0;
+  width: inherit;
+  z-index: 1000;
+}
+
+.pdf-marker-dropzone {
+  cursor: copy;
+}
+
+.boundary {
+  height: 90%;
+  position: relative;
+  overflow: hidden;
+  margin: 1px auto -8px auto;
+
+  .boundary-drop-zone {
+    position:absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    opacity: 0;
+  }
+
+  .pdf-marker-mark-type-icon {
+    z-index: 1 !important;
+  }
+}
+
+.boundary::-webkit-scrollbar {
+  width: 7px;
+  background: transparent;
+}
+
+.boundary::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+.pdf-marker-assignment-marking-rubric-visible-pdf {
+  visibility: hidden;
+}
+
+.pdf-marker-assignment-marking-rubric-container {
+  border: 1px solid #eee;
+}
+
+ng2-pdfjs-viewer {
+  iframe {
+    border: none !important;
+  }
+}

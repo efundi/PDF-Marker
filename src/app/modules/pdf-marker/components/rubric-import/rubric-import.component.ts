@@ -8,6 +8,7 @@ import {AppService} from "@coreModule/services/app.service";
 import {Mapping} from "@coreModule/utils/mapping.class";
 import {IRubric, IRubricName, Rubric, RubricCriteria, RubricCriteriaLevels} from "@coreModule/utils/rubric.class";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
+import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
 
 @Component({
   selector: 'pdf-marker-rubric-import',
@@ -16,7 +17,6 @@ import {ImportService} from "@pdfMarkerModule/services/import.service";
 })
 export class RubricImportComponent implements OnInit {
 
-  readonly acceptMimeType = "application/json";
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
   private file: File;
   private fileContents: IRubric;
@@ -26,7 +26,8 @@ export class RubricImportComponent implements OnInit {
   rubricForm: FormGroup;
   dataSource: MatTableDataSource<IRubricName>;
   rubrics: IRubricName[];
-  validMime: boolean;
+
+  readonly MimeTypesEnum = MimeTypesEnum;
 
   constructor(private fb: FormBuilder,
               private alertService: AlertService,
@@ -65,7 +66,7 @@ export class RubricImportComponent implements OnInit {
       this.fc.rubricFileText.setValue(null);
     } else {
       const file: File = await event.target.files[0];
-      if(file && file.type === this.acceptMimeType) {
+      if(file && file.type === MimeTypesEnum.JSON) {
 
         const reader = new FileReader();
 

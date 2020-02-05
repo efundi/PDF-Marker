@@ -3,6 +3,7 @@ import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {ActivatedRoute, NavigationEnd, PRIMARY_OUTLET, Router} from "@angular/router";
 import {filter, map} from "rxjs/operators";
 import {AppService} from "@coreModule/services/app.service";
+import {RoutesEnum} from "@coreModule/utils/routes.enum";
 
 @Component({
   selector: 'pdf-marker-home',
@@ -48,7 +49,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         };
 
         this.routeList = this.breadcrumbs.url.split("/");
-        if(this.router.url === "/marker/assignment/marking")
+        if (this.router.url === RoutesEnum.ASSIGNMENT_MARKER)
           this.isMarkingPage = true;
         else
           this.isMarkingPage = false;

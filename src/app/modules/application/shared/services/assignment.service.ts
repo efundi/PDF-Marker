@@ -1,11 +1,13 @@
 import {Inject, Injectable, Optional, PLATFORM_ID} from '@angular/core';
 import {HttpClient, HttpHeaders} from "@angular/common/http";
-import {EMPTY, Observable, ReplaySubject, Subject} from "rxjs";
+import {Observable, ReplaySubject, Subject} from "rxjs";
 import {makeStateKey, StateKey, TransferState} from "@angular/platform-browser";
 import {isPlatformServer} from "@angular/common";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
-import {catchError, retry, shareReplay} from "rxjs/operators";
-import {CreateAssignmentInfo} from "@pdfMarkerModule/info-objects/create-assignment.info";
+import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
+import {RoutesEnum} from "@coreModule/utils/routes.enum";
+import {Router} from "@angular/router";
+import {AppService} from "@coreModule/services/app.service";
 
 @Injectable({
   providedIn: 'root'
@@ -20,11 +22,14 @@ export class AssignmentService {
   private selectedPdfURL: string;
   private selectedPdfURLSource$: Subject<string> = new Subject<string>();
   private selectedPdfBlob: Blob;
+  private assignmentSettingsInfo: AssignmentSettingsInfo;
 
   constructor(private http: HttpClient,
               @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
               @Inject(PLATFORM_ID) private platformId: any,
-              private transferState: TransferState) {
+              private transferState: TransferState,
+              private router: Router,
+              private appService: AppService) {
 
     const transferKey: StateKey<string> = makeStateKey<string>('ListAssignments');
     if (isPlatformServer(this.platformId)) {
@@ -60,19 +65,12 @@ export class AssignmentService {
     return this.http.post('/api/assignment/settings', body);
   }
 
-  getAssignmentSettings() {
+  getAssignmentSettings(pdfLocation: string = this.selectedPdfLocation): Observable<AssignmentSettingsInfo> {
     const body = {
-      location: this.selectedPdfLocation
+      location: pdfLocation
     };
 
-    return this.http.post('/api/assignment/settings/fetch', body);
-  }
-
-  getAssignmentGlobalSettings() {
-    const body = {
-      location: this.selectedAssignment
-    };
-    return this.http.post('/api/assignment/globalSettings/fetch', body);
+    return this.http.post<AssignmentSettingsInfo>('/api/assignment/settings/fetch', body);
   }
 
   getAssignmentGrades() {
@@ -85,11 +83,29 @@ export class AssignmentService {
 
   getFile(pdfFileLocation: string) {
     const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
+      'Content-Type': MimeTypesEnum.JSON,
+      'Accept': MimeTypesEnum.JSON
     });
     const body = { location: pdfFileLocation };
     return this.http.post<Blob>("/api/pdf/file", body, {headers, responseType: 'blob' as 'json'});
+  }
+
+  configure(pdfLocation: string, blobData: Blob) {
+    const blob = new Blob([blobData], {type: MimeTypesEnum.PDF});
+    const fileUrl = URL.createObjectURL(blob);
+
+    this.getAssignmentSettings(pdfLocation).subscribe((assignmentSettingsInfo: AssignmentSettingsInfo) => {
+      this.setAssignmentSettings(assignmentSettingsInfo);
+      this.setSelectedPdfURL(fileUrl, pdfLocation);
+      this.setSelectedPdfBlob(blob);
+      if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER && !assignmentSettingsInfo.isCreated)
+        this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER]);
+      else if(this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC && assignmentSettingsInfo.isCreated)
+        this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER_RUBRIC]);
+    }, error => {
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(false, "Unable to read assignment settings");
+    });
   }
 
   update(assignments: object[]) {
@@ -118,6 +134,14 @@ export class AssignmentService {
     this.selectedPdfURL = selectedPdfURL;
     this.selectedPdfLocation = selectedPdfLocation;
     this.selectedPdfURLSource$.next(this.selectedPdfURL);
+  }
+
+  setAssignmentSettings(assignmentSettingsInfo: AssignmentSettingsInfo) {
+    this.assignmentSettingsInfo = assignmentSettingsInfo;
+  }
+
+  getAssignmentSettingsInfo(): AssignmentSettingsInfo {
+    return this.assignmentSettingsInfo;
   }
 
   getSelectedPdfURL(): string {
@@ -178,8 +202,8 @@ export class AssignmentService {
       location: assignmentName,
     };
     const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
+      'Content-Type': MimeTypesEnum.JSON,
+      'Accept': MimeTypesEnum.JSON
     });
     return this.http.post<Blob>("/api/assignment/finalize", body, {
       reportProgress: true,

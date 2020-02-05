@@ -38,6 +38,9 @@ export class IconsComponent implements OnInit, OnChanges {
   @Input()
   pages: number;
 
+  @Input()
+  isCreated: boolean;
+
   selecetedIcon: IconInfo;
 
   private readonly defaultColour = "#6F327A";
@@ -92,10 +95,8 @@ export class IconsComponent implements OnInit, OnChanges {
   }
 
   onPageNumberChange(event) {
-    console.log("number changed");
     const number = parseInt(this.iconForm.controls.pageNumber.value);
     if(!isNaN(number) && (number >= 1 && number <= this.pages)) {
-      console.log("number emit");
       this.currentPage = number;
       this.pageNumber.emit(this.currentPage);
     } else {

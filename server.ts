@@ -855,7 +855,7 @@ const assignmentSettings = (req, res) => {
     return res.status(200).send();
 
   // Check object compliance
-  const keys = ["defaultColour"];
+  const keys = ["defaultColour", "isCreated", "rubric", " rubricId"];
   const assignmentSettingsKeys = Object.keys(assignmentSettings);
   let invalidKeyFound = false;
   assignmentSettingsKeys.forEach(key => {

@@ -51,7 +51,7 @@
             </td>
             <td class="pdf-marker-create-assignment-cell-position">
               <div class="pdf-marker-file-upload" [class.pdf-marker-file-upload-error]="(studentInfo.get('studentSubmission')?.errors && studentInfo.get('studentSubmission')?.touched && studentInfo.get('studentSubmission')?.dirty)">
-                <button type="button" mat-raised-button>Browse<input formControlName="studentSubmission" type="file" class="pdf-marker-upload" [accept]="acceptMimeType" required (change)="onFileChange(studentIndex, $event)"></button>
+                <button type="button" mat-raised-button>Browse<input formControlName="studentSubmission" type="file" class="pdf-marker-upload" [accept]="MimeTypesEnum.PDF" required (change)="onFileChange(studentIndex, $event)"></button>
                 &nbsp;&nbsp;
                 <input type="text" formControlName="studentSubmissionText" id="pdf-marker-upload-display" readonly placeholder="Choose PDF File">
               </div>

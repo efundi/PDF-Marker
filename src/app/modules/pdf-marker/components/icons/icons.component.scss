@@ -20,6 +20,15 @@ mat-toolbar {
     background: violet;
   }
 
+  .pdf-button-disabled {
+    background: rgba(0,0,0,.12);
+  }
+
+  .pdf-icon-disabled {
+    color: rgba(0,0,0,.26);
+    stroke: rgba(0,0,0,.26);
+  }
+
   .pdf-marker-icons-pdf-nav-buttons {
     height: 30px;
     width: auto;

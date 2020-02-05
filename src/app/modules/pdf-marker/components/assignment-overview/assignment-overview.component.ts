@@ -13,6 +13,9 @@ import {HttpEventType} from "@angular/common/http";
 import {FileSaverService} from "ngx-filesaver";
 import {SettingsService} from "@pdfMarkerModule/services/settings.service";
 import {SettingInfo} from "@pdfMarkerModule/info-objects/setting.info";
+import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
+import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
+import {RoutesEnum} from "@coreModule/utils/routes.enum";
 
 export interface AssignmentDetails {
   studentName: string;
@@ -144,17 +147,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   onSelectedPdf(pdfFileLocation: string) {
     this.appService.isLoading$.next(true);
     this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
-      const blob = new Blob([blobData], { type: "application/pdf"});
-      const fileUrl = URL.createObjectURL(blob);
-
-      this.assignmentService.setSelectedPdfURL(fileUrl, pdfFileLocation);
-      this.assignmentService.setSelectedPdfBlob(blob);
-      if(this.router.url !== "/marker/assignment/marking")
-        this.router.navigate(["/marker/assignment/marking"]);
+      this.assignmentService.configure(pdfFileLocation, blobData);
     }, error => {
       this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(false, "Unable to open file")
-    })
+      this.appService.openSnackBar(false, "Unable to read file")
+    });
   }
 
   onFinalizeAndExport(event) {

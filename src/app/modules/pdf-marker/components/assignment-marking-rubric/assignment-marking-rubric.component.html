@@ -1,0 +1,12 @@
+<ng-container>
+  <div class="pdf-marker-assignment-marking-rubric-controls" *ngIf="isPdfLoaded">
+    <pdf-marker-icons [isCreated]="isCreated" [selectedColour]="colour" [currentPage]="currentPage" [pages]="pdfPages" (control)="onControl($event)" (pageNumber)="onPageNumberChange($event)" (colour)="onColourChanged($event)" (colourPickerClose)="onColourPickerClose($event)"></pdf-marker-icons>
+  </div>
+  <div #container class="boundary" [class.pdf-marker-assignment-marking-rubric-container]="isPdfLoaded">
+    <div #markerContainer class="boundary-drop-zone" (wheel)="onMouseWheel($event)"></div>
+    <template style="height: 100%" #containerRef></template>
+    <ng2-pdfjs-viewer autoscroll="true" *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
+                      [viewBookmark]="false" zoom="100" [page]="currentPage" pagemode="none" [pdfSrc]="pdfPath" viewerId="pdfMarker" (onDocumentLoad)="pagesLoaded($event)" (onPageChange)="onPaged($event)"></ng2-pdfjs-viewer>
+  </div>
+  <br><br>
+</ng-container>

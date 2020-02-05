@@ -78,7 +78,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     }
 
     this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
-      if (pdfPath) {
+      if (pdfPath && !this.assignmentService.getAssignmentSettingsInfo().isCreated) {
         if(!this.isNullOrUndefined(this.markDetailsComponents)) {
           const pagesArray = Object.keys(this.markDetailsComponents);
           pagesArray.forEach(page => {
@@ -104,23 +104,31 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.appService.isLoading$.next(true);
     this.assignmentService.getSavedMarks().subscribe((marks: any[]) => {
       this.markDetailsRawData = marks;
-      this.assignmentService.getAssignmentSettings().subscribe((settings: AssignmentSettingsInfo) => {
-        this.assignmentSettings = settings;
-        if(this.assignmentSettings.defaultColour !== undefined && this.assignmentSettings.defaultColour !== null)
-          this.colour = this.assignmentSettings.defaultColour;
-        this.openPDF();
-        if(isSubscription) {
-          this.pdfViewerAutoLoad.pdfSrc = this.pdfPath; // pdfSrc can be Blob or Uint8Array
-          this.pdfViewerAutoLoad.refresh();
-        }
-      }, error => {
-        this.appService.isLoading$.next(false);
-        console.log(error);
-      });
+      if(!!this.assignmentService.getAssignmentSettingsInfo()) {
+        this.assignmentSettings = this.assignmentService.getAssignmentSettingsInfo();
+        this.intializePage(isSubscription);
+      } else {
+        this.assignmentService.getAssignmentSettings().subscribe((settings: AssignmentSettingsInfo) => {
+          this.assignmentSettings = settings;
+          this.intializePage(isSubscription);
+        }, error => {
+          this.appService.isLoading$.next(false);
+        });
+      }
     }, error => {
       console.log("Error fetching marks");
       this.appService.isLoading$.next(false);
     });
+  }
+
+  private intializePage(isSubscription: boolean) {
+    if(this.assignmentSettings.defaultColour !== undefined && this.assignmentSettings.defaultColour !== null)
+      this.colour = this.assignmentSettings.defaultColour;
+    this.openPDF();
+    if(isSubscription) {
+      this.pdfViewerAutoLoad.pdfSrc = this.pdfPath; // pdfSrc can be Blob or Uint8Array
+      this.pdfViewerAutoLoad.refresh();
+    }
   }
 
   pagesLoaded(pageNumber) {
@@ -259,6 +267,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.appService.isLoading$.next(true);
     this.assignmentService.assignmentSettings(settings).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
       this.assignmentSettings = assignmentSettings;
+      this.assignmentService.setAssignmentSettings(assignmentSettings);
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.isLoading$.next(false);
@@ -494,8 +503,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.assignmentService.setSelectedPdfBlob(undefined);
-    this.assignmentService.setSelectedPdfURL("", "");
+    console.log(this.router.url);
+    //this.assignmentService.setSelectedPdfBlob(undefined);
+    //this.assignmentService.setAssignmentSettings(undefined);
+    //this.assignmentService.setSelectedPdfURL("", "");
     this.subscription.unsubscribe();
   }
 }
