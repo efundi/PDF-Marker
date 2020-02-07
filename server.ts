@@ -1380,7 +1380,7 @@ const createAssignment = (req, res) => {
       if(req.body.assignmentName.legnth < 5)
         return sendResponse(req, res, 400, `Assignment must be > 5 characters`);
 
-      const assignmentName: string = req.body.assignmentName.trim();
+      let assignmentName: string = req.body.assignmentName.trim();
 
       try {
         const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
@@ -1390,12 +1390,16 @@ const createAssignment = (req, res) => {
         const config = JSON.parse(data.toString());
         const folders = glob.sync(config.defaultPath + '/*');
 
+        let foundCount = 0;
         for(let i = 0; i < folders.length; i++) {
-          console.log(assignmentName.toLowerCase() + " === " + folders[i].toLowerCase());
-          if (assignmentName.toLowerCase() === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME')) {
-            return sendResponse(req, res, 400, "Duplicate assignment found!");
-          }
+          if(assignmentName.toLowerCase() === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
+            foundCount++;
+          else if((assignmentName.toLowerCase() + " (" + (foundCount + 1) + ")") === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
+            foundCount++;
         }
+
+        if(foundCount > 0)
+          assignmentName = assignmentName + " (" + (foundCount + 1) + ")";
 
         const isRubric: boolean = (req.body.noRubric === 'true');
         let rubricName: string;
