@@ -34,7 +34,7 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
   showSettings: boolean;
   show: boolean;
   pdfPath: string;
-  readonly isCreated: boolean = true;
+  readonly containsRubric: boolean = true;
 
   subscription: Subscription;
 
@@ -50,7 +50,7 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
     }
 
     this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
-      if (pdfPath && this.assignmentService.getAssignmentSettingsInfo().isCreated) {
+      if (pdfPath && this.assignmentService.getAssignmentSettingsInfo().rubric !== null) {
         this.currentPage = 1;
         this.getAssignmentProgress(true);
       }

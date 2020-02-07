@@ -98,9 +98,9 @@ export class AssignmentService {
       this.setAssignmentSettings(assignmentSettingsInfo);
       this.setSelectedPdfURL(fileUrl, pdfLocation);
       this.setSelectedPdfBlob(blob);
-      if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER && !assignmentSettingsInfo.isCreated)
+      if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER && assignmentSettingsInfo.rubric === null)
         this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER]);
-      else if(this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC && assignmentSettingsInfo.isCreated)
+      else if(this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC && assignmentSettingsInfo.rubric !== null)
         this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER_RUBRIC]);
     }, error => {
       this.appService.isLoading$.next(false);

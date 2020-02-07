@@ -9,6 +9,7 @@ import {Mapping} from "@coreModule/utils/mapping.class";
 import {IRubric, IRubricName, Rubric, RubricCriteria, RubricCriteriaLevels} from "@coreModule/utils/rubric.class";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
+import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
 
 @Component({
   selector: 'pdf-marker-rubric-import',
@@ -123,10 +124,36 @@ export class RubricImportComponent implements OnInit {
   }
 
   deleteRubric(rubricName: string) {
-    console.log("Delete Rubric name = " + rubricName);
     let data  = { rubricName: rubricName};
     this.appService.isLoading$.next(true);
-    this.importService.deleteRubric(data).subscribe((rubrics: IRubric[]) => {
+    this.importService.deleteRubricCheck(data).subscribe((isFound: boolean) => {
+      if(isFound) {
+        const config = new MatDialogConfig();
+        config.width = "400px";
+        config.maxWidth = "400px";
+        config.data = {
+          title: "Confirmation",
+          message: "This rubric is in use, are your sure you want to delete it?"
+        };
+        const shouldDeleteFn = (shouldDelete: boolean) => {
+          if(shouldDelete) {
+            this.deleteRubricImpl(rubricName, shouldDelete);
+          }
+        };
+
+        this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+      } else {
+        this.deleteRubricImpl(rubricName, true);
+      }
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to delete");
+      this.appService.isLoading$.next(false)
+    });
+  }
+
+  private deleteRubricImpl(rubricName: string, confirmation: boolean) {
+    let newData = { rubricName: rubricName, confirmation: confirmation };
+    this.importService.deleteRubric(newData).subscribe((rubrics: IRubric[]) => {
       this.populateRubrics(rubrics);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, "Rubric deleted");

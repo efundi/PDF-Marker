@@ -36,4 +36,8 @@ export class ImportService {
   getRubricContents(data: any): Observable<IRubric> {
     return this.http.post<IRubric>('/api/rubric/contents', data);
   }
+
+  deleteRubricCheck(data: any): Observable<boolean> {
+    return this.http.post<boolean>('/api/rubric/delete/check', data);
+  }
 }

@@ -1,6 +1,6 @@
 <ng-container>
   <div class="pdf-marker-assignment-marking-rubric-controls" *ngIf="isPdfLoaded">
-    <pdf-marker-icons [isCreated]="isCreated" [selectedColour]="colour" [currentPage]="currentPage" [pages]="pdfPages" (control)="onControl($event)" (pageNumber)="onPageNumberChange($event)" (colour)="onColourChanged($event)" (colourPickerClose)="onColourPickerClose($event)"></pdf-marker-icons>
+    <pdf-marker-icons [containsRubric]="containsRubric" [selectedColour]="colour" [currentPage]="currentPage" [pages]="pdfPages" (control)="onControl($event)" (pageNumber)="onPageNumberChange($event)" (colour)="onColourChanged($event)" (colourPickerClose)="onColourPickerClose($event)"></pdf-marker-icons>
   </div>
   <div #container class="boundary" [class.pdf-marker-assignment-marking-rubric-container]="isPdfLoaded">
     <div #markerContainer class="boundary-drop-zone" (wheel)="onMouseWheel($event)"></div>

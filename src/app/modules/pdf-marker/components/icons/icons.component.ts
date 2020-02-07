@@ -39,7 +39,7 @@ export class IconsComponent implements OnInit, OnChanges {
   pages: number;
 
   @Input()
-  isCreated: boolean;
+  containsRubric: boolean;
 
   selecetedIcon: IconInfo;
 

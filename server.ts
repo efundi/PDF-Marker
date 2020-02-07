@@ -624,7 +624,49 @@ const deleteRubricsFn = (req, res) => {
   if(!req.body.rubricName)
     return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
 
-  const rubricName:string = req.body.rubricName;
+  const rubricName:string = req.body.rubricName.trim();
+
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
+    if (!isJson(data))
+      return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+
+    const config = JSON.parse(data.toString());
+
+    try {
+      const folders: string[] = glob.sync(config.defaultPath + sep + "*");
+      let found :boolean = false;
+      folders.forEach(folder => {
+        const settingFileContents = readFileSync(folder + sep + SETTING_FILE);
+
+        if (!isJson(settingFileContents))
+          return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+
+        const settings: AssignmentSettingsInfo = JSON.parse(settingFileContents.toString());
+
+        if(settings.rubric && settings.rubric.name.toLowerCase() === rubricName.toLowerCase())
+          found = true;
+      });
+
+      return sendResponseData(req, res, 200, found);
+    } catch (e) {
+      return sendResponse(req, res, 500, e.message);
+    }
+  });
+};
+app.post('/api/rubric/delete/check',
+  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), deleteRubricsFn);
+
+const deleteRubricConfirmation = (req, res) => {
+  if(!checkClient(req, res))
+    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+
+  if(!req.body.rubricName)
+    return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
+
+  if(!req.body.confirmation)
+    return sendResponse(req, res, 400, FORBIDDEN_RESOURCE);
+
+  const rubricName:string = req.body.rubricName.trim();
 
   if(existsSync(CONFIG_DIR + RUBRICS_FILE)) {
     return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
@@ -653,11 +695,10 @@ const deleteRubricsFn = (req, res) => {
     });
   }
 
-  return sendResponseData(req, res, 200,[]);
+  return sendResponseData(req, res, 200, []);
 };
-
 app.post('/api/rubric/delete',
-  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), deleteRubricsFn);
+  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), deleteRubricConfirmation);
 /* DELETE READ RUBRICS */
 
 /*READ RUBRIC CONTENTS*/

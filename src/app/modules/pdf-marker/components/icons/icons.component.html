@@ -1,11 +1,11 @@
 <mat-toolbar>
   <button matTooltip="Apply Rubric" class="pdf-marker-icon-first" mat-button mat-icon-button><mat-icon>apps</mat-icon></button>
   <ng-container  *ngFor="let iconData of markIcons">
-    <button [disabled]="isCreated" *ngIf="iconData.icon !== 'halfTick'" [matTooltip]="iconData.toolTip" [class.pdf-button-disabled]="isCreated" [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
-            (click)="onIconClick($event, iconData)" mat-button mat-icon-button ><mat-icon  [class.pdf-icon-disabled]="isCreated">{{ iconData.icon }}</mat-icon></button>
+    <button [disabled]="containsRubric" *ngIf="iconData.icon !== 'halfTick'" [matTooltip]="iconData.toolTip" [class.pdf-button-disabled]="containsRubric" [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
+            (click)="onIconClick($event, iconData)" mat-button mat-icon-button ><mat-icon  [class.pdf-icon-disabled]="containsRubric">{{ iconData.icon }}</mat-icon></button>
 
-    <button [disabled]="isCreated" *ngIf="iconData.icon === 'halfTick'" [matTooltip]="iconData.toolTip" [class.pdf-button-disabled]="isCreated" [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
-             (click)="onIconClick($event, iconData)" mat-button mat-icon-button ><mat-icon class="pdf-marker-icons-svg-class" [svgIcon]="iconData.icon" [class.pdf-icon-disabled]="isCreated" ></mat-icon></button>
+    <button [disabled]="containsRubric" *ngIf="iconData.icon === 'halfTick'" [matTooltip]="iconData.toolTip" [class.pdf-button-disabled]="containsRubric" [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
+             (click)="onIconClick($event, iconData)" mat-button mat-icon-button ><mat-icon class="pdf-marker-icons-svg-class" [svgIcon]="iconData.icon" [class.pdf-icon-disabled]="containsRubric" ></mat-icon></button>
   </ng-container>
   <button matTooltip="Preview Marks" mat-button mat-icon-button (click)="onControl($event, 'finalise')"><mat-icon>announcement</mat-icon></button>
   <span class="pdf-marker-fill-space"></span>
