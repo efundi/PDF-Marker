@@ -19,7 +19,7 @@ export class PdfMarkerErrorInterceptorService implements HttpInterceptor {
         client_id: appService.client_id
       },
       // This is needed for electron.
-      // url: (req.url.startsWith("/api")) ? "http://localhost:4200" + req.url:req.url
+      url: (req.url.startsWith("/api")) ? "http://localhost:4200" + req.url:req.url
     });
     return next.handle(request).pipe(
       catchError((response: any) => {
