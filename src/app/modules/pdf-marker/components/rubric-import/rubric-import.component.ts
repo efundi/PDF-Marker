@@ -117,9 +117,9 @@ export class RubricImportComponent implements OnInit {
     this.fc.rubricName.setValue(null);
   }
 
-  showRubric(index: number) {
-    this.openRubricModal("", "");
-    console.log("Show Rubric at index = " + index);
+  showRubric(rubricName: string) {
+    this.openRubricModal(rubricName);
+    console.log("Show Rubric at index = " + rubricName);
   }
 
   deleteRubric(rubricName: string) {
@@ -177,20 +177,30 @@ export class RubricImportComponent implements OnInit {
     this.dataSource = new MatTableDataSource<IRubricName>(this.rubrics);
   }
 
-  private openRubricModal(title: string = 'Rubric Modal Test', message: string) {
-    console.log("Show Rubric at in modal method");
-    this.openRubricModalDialog('Rubric Modal Test', '');
+  private openRubricModal(rubricName: string) {
 
+    console.log("Open Rubric name = " + rubricName);
+    let data  = { rubricName: rubricName };
+    console.log(data);
+    this.importService.getRubricContents(data).subscribe((rubric: IRubric)  => {
+      this.openRubricModalDialog(rubric);
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(true, "Rubric View Opened");
+    }, error => {
+      this.appService.openSnackBar(false, "Rubric View Failed");
+      this.appService.isLoading$.next(false)
+    });
   }
-
-  private openRubricModalDialog(title: string = 'Rubric Modal Test', message: string) {
+  private openRubricModalDialog(rubric: IRubric) {
     const config = new MatDialogConfig();
     config.disableClose = false;
     config.width = "1500px";
     config.height = "750px";
-    config.data = {};
+    config.data = {
+      name: rubric.name,
+      criterias:  rubric.criterias,
+    }
 
-    this.appService.createDialog(RubricViewComponent, config);
+    this.appService.createDialog(RubricViewComponent, config);  }
 
-  }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {HttpClient} from "@angular/common/http";
+import {HttpClient, HttpEvent} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {IRubric} from "@coreModule/utils/rubric.class";
 
@@ -31,5 +31,9 @@ export class ImportService {
 
   deleteRubric(data: any): Observable<IRubric[]> {
     return this.http.post<IRubric[]>('/api/rubric/delete', data);
+  }
+
+  getRubricContents(data: any): Observable<IRubric> {
+    return this.http.post<IRubric>('/api/rubric/contents', data);
   }
 }

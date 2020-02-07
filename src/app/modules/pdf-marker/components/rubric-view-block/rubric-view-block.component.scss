@@ -38,7 +38,7 @@
 
 .hover-tooltip {
   display: none;
-  position: absolute;
+  position: fixed;
   z-index: 100;
   border: 1px;
   background-color: white;

@@ -1,21 +1,16 @@
-
-  <div class="rubric-block-full hover-effect" (click)="onClickSelection()" [ngClass]="{'rubric-block-selected': isSelected}">
-    <div class="rubric-block-header">
-       <h5>{{ rubricBlocLabel }}</h5>
-    <div class="rubric-block-points">
-      Points: {{ rubricBlockScoreValue }}
-    </div>
-  </div>
-    <div class="rubric-block-description">{{ rubricBlockDescrpiton }}</div>
-
-    <span class="hover-tooltip">
-       <div class="rubric-block-header">
-       <h5>{{ rubricBlocLabel }}</h5>
-    <div class="rubric-block-points">
-      Points: {{ rubricBlockScoreValue }}
-    </div>
-  </div>
-    <div class="rubric-block-description">{{ rubricBlockDescrpiton }}</div>
-    </span>
-
-  </div>
+<tr>
+  <td>
+    <span class="rubric-block-header">{{ criteriaBlock.name }}</span>
+    <div class="pdf-spacer"></div>
+    <span class="rubric-block-description">{{ criteriaBlock.description }}</span>
+  </td>
+  <td *ngFor="let level of criteriaBlock.levels" class="rubric-block-full">
+  <div class="rubric-block-header">
+        <h5>{{ level.label }}</h5>
+        <div class="rubric-block-points">
+          Points: <h5>{{ level.score }}</h5>
+        </div>
+      </div>
+      <div class="rubric-block-description">{{ level.description }}</div>
+  </td>
+</tr>

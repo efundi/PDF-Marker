@@ -660,6 +660,45 @@ app.post('/api/rubric/delete',
   check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), deleteRubricsFn);
 /* DELETE READ RUBRICS */
 
+/*READ RUBRIC CONTENTS*/
+const getRubricContentsFn = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
+  if(!req.body.rubricName)
+    return res.status(400).send({ message: NOT_PROVIDED_RUBRIC});
+  const rubricName:string = req.body.rubricName;
+  if(existsSync(CONFIG_DIR + RUBRICS_FILE)) {
+    return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
+      if (!isJson(data))
+        return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
+      const rubrics: IRubric[] = JSON.parse(data.toString());
+      if(Array.isArray(rubrics)) {
+        let indexFound: number = -1;
+
+        for(let i = 0; i < rubrics.length; i++) {
+          if(rubrics[i].name.toLowerCase() === rubricName.toLowerCase()) {
+            indexFound = i;
+            break;
+          }
+        }
+
+        if(indexFound == -1)
+          return res.status(404).send({message: 'Could not find rubric'});
+        else {
+          return res.status(200).send( rubrics[indexFound] );
+        }
+      }
+
+    });
+  }
+  return res.status(400).send({message: COULD_NOT_READ_RUBRIC_LIST});
+};
+app.post('/api/rubric/contents',
+  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), getRubricContentsFn);
+
+
+/* END RUBRIC CONTETNS*/
+
 const getAssignments = (req, res) => {
   if(!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
@@ -980,6 +1019,43 @@ const getGrades = (req, res) => {
 app.post("/api/assignment/grade", [
   check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getGrades);
+
+const getAssignmentGlobalSettings = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: 'Forbidden access to resource!'});
+  const errors = validationResult(req);
+  if(!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
+
+  const keys = ["location"];
+  const bodyKeys = Object.keys(req.body);
+
+  if(validateRequest(keys, bodyKeys))
+    return res.status(400).send({ message: 'Invalid parameter found in request' });
+
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const config = JSON.parse(data.toString());
+    const loc = req.body.location.replace(/\//g, sep);
+
+    const assignmentFolder = config.defaultPath + sep + loc;
+
+    return access(assignmentFolder + sep + ".settings.json", constants.F_OK, (err) => {
+      if(err)
+        return res.status(200).send({message: 'Could not read settings file'});
+      return (assignmentFolder + sep + ".settings.json");
+    });
+  });
+};
+
+app.post("/api/assignment/globalSettings/fetch", [
+  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
+], getAssignmentGlobalSettings);
 
 const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
   let invalidKeyFound = false;
