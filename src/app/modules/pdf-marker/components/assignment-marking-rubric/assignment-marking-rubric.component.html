@@ -2,11 +2,23 @@
   <div class="pdf-marker-assignment-marking-rubric-controls" *ngIf="isPdfLoaded">
     <pdf-marker-icons [containsRubric]="containsRubric" [selectedColour]="colour" [currentPage]="currentPage" [pages]="pdfPages" (control)="onControl($event)" (pageNumber)="onPageNumberChange($event)" (colour)="onColourChanged($event)" (colourPickerClose)="onColourPickerClose($event)"></pdf-marker-icons>
   </div>
+  <mat-drawer-container class="example-container">
+    <mat-drawer #drawer class="example-sidenav" mode="side">
+
   <div #container class="boundary" [class.pdf-marker-assignment-marking-rubric-container]="isPdfLoaded">
     <div #markerContainer class="boundary-drop-zone" (wheel)="onMouseWheel($event)"></div>
     <template style="height: 100%" #containerRef></template>
     <ng2-pdfjs-viewer autoscroll="true" *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
                       [viewBookmark]="false" zoom="100" [page]="currentPage" pagemode="none" [pdfSrc]="pdfPath" viewerId="pdfMarker" (onDocumentLoad)="pagesLoaded($event)" (onPageChange)="onPaged($event)"></ng2-pdfjs-viewer>
   </div>
+    </mat-drawer>
+  </mat-drawer-container>
   <br><br>
+  <div class="example-sidenav-content">
+    <button type="button" mat-button (click)="drawer.toggle()">
+      Toggle sidenav
+    </button>
+  </div>
+
+
 </ng-container>
