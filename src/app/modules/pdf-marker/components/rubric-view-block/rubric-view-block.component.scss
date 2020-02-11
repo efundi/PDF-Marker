@@ -23,8 +23,14 @@
 }
 .rubric-block-header {
   text-align: center;
-  font-size: 1.1em;
+  font-size: 2 em;
+  font-weight: bold;
 }
+
+.rubric-block-description {
+  font-weight: bold;
+}
+
 .rubric-block-selected {
   background: #777;
 }
