@@ -125,41 +125,45 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   private generateDataFromModel() {
     let values: AssignmentDetails[] = [];
     this.assignmentName = (Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0]:'';
-    Object.keys(this.hierarchyModel[this.assignmentName]).forEach(key => {
-      if(this.regEx.test(key) && this.sakaiService.getassignmentRootFiles().indexOf(key) === -1) {
-        let value: AssignmentDetails = {
-          studentName: '',
-          studentNumber: '',
-          assignment: '',
-          grade: 0,
-          path: null,
-          status: ''
-        };
-        const matches = this.regEx.exec(key);
-        value.studentName = matches[1];
-        value.studentNumber = matches[2];
-        value.assignment = this.hierarchyModel[this.assignmentName][key][this.submissionFolder] ? Object.keys(this.hierarchyModel[this.assignmentName][key][this.submissionFolder])[0]:'';
-        const gradesInfo = this.assignmentGrades.find(gradesInfo => gradesInfo[this.assignmentHeader] === value.studentNumber);
-        value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5:0);
-        value.path = (value.assignment) ? this.assignmentName + '/' + key + "/" + this.submissionFolder + "/" + value.assignment:'';
-        value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7:'N/A');
-        values.push(value);
-      }
-    });
-    this.dataSource = new MatTableDataSource(values);
-    this.dataSource.paginator = this.paginator;
-    this.assignmentsLength = values.length;
-    const range = [];
-    let i = 0;
-    while(i <= this.assignmentsLength) {
+    if(this.hierarchyModel[this.assignmentName]) {
+      Object.keys(this.hierarchyModel[this.assignmentName]).forEach(key => {
+        if (this.regEx.test(key) && this.sakaiService.getassignmentRootFiles().indexOf(key) === -1) {
+          let value: AssignmentDetails = {
+            studentName: '',
+            studentNumber: '',
+            assignment: '',
+            grade: 0,
+            path: null,
+            status: ''
+          };
+          const matches = this.regEx.exec(key);
+          value.studentName = matches[1];
+          value.studentNumber = matches[2];
+          value.assignment = this.hierarchyModel[this.assignmentName][key][this.submissionFolder] ? Object.keys(this.hierarchyModel[this.assignmentName][key][this.submissionFolder])[0] : '';
+          const gradesInfo = this.assignmentGrades.find(gradesInfo => gradesInfo[this.assignmentHeader] === value.studentNumber);
+          value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5 : 0);
+          value.path = (value.assignment) ? this.assignmentName + '/' + key + "/" + this.submissionFolder + "/" + value.assignment : '';
+          value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7 : 'N/A');
+          values.push(value);
+        }
+      });
+      this.dataSource = new MatTableDataSource(values);
+      this.dataSource.paginator = this.paginator;
+      this.assignmentsLength = values.length;
+      const range = [];
+      let i = 0;
+      while (i <= this.assignmentsLength) {
         i += this.pageSize;
         range.push(i);
 
-      if(i > this.assignmentsLength)
-        break;
+        if (i > this.assignmentsLength)
+          break;
+      }
+      this.assignmentPageSizeOptions = range;
+      this.appService.isLoading$.next(false);
+    } else {
+      this.router.navigate([RoutesEnum.MARKER]);
     }
-    this.assignmentPageSizeOptions = range;
-    this.appService.isLoading$.next(false);
   }
 
   onSelectedPdf(pdfFileLocation: string) {

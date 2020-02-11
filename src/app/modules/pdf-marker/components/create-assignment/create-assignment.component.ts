@@ -12,6 +12,8 @@ import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 import {AssignmentDetails} from "@pdfMarkerModule/components/assignment-overview/assignment-overview.component";
 import {SakaiService} from "@coreModule/services/sakai.service";
+import {MatDialogConfig} from "@angular/material/dialog";
+import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -96,22 +98,26 @@ export class CreateAssignmentComponent implements OnInit {
     const hierarchyModel = this.assignmentService.getSelectedAssignment();
 
     let values: AssignmentDetails[] = [];
-    Object.keys(hierarchyModel[this.assignmentId]).forEach(key => {
-      if(this.regEx.test(key) && this.sakaiService.getassignmentRootFiles().indexOf(key) === -1) {
-        let value: AssignmentDetails = {
-          studentName: '',
-          studentNumber: '',
-          assignment: '',
-        };
-        const matches = this.regEx.exec(key);
-        value.studentName = matches[1];
-        value.studentNumber = matches[2];
-        value.assignment = hierarchyModel[this.assignmentId][key][this.submissionFolder] ? Object.keys(hierarchyModel[this.assignmentId][key][this.submissionFolder])[0]:'';
-        values.push(value);
-      }
-    });
+    if(hierarchyModel[this.assignmentId]) {
+      Object.keys(hierarchyModel[this.assignmentId]).forEach(key => {
+        if (this.regEx.test(key) && this.sakaiService.getassignmentRootFiles().indexOf(key) === -1) {
+          let value: AssignmentDetails = {
+            studentName: '',
+            studentNumber: '',
+            assignment: '',
+          };
+          const matches = this.regEx.exec(key);
+          value.studentName = matches[1];
+          value.studentNumber = matches[2];
+          value.assignment = hierarchyModel[this.assignmentId][key][this.submissionFolder] ? Object.keys(hierarchyModel[this.assignmentId][key][this.submissionFolder])[0] : '';
+          values.push(value);
+        }
+      });
 
-    this.populateStudentDetails(values);
+      this.populateStudentDetails(values);
+    } else {
+      this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD]);
+    }
   }
 
   private populateStudentDetails(studentDetails: AssignmentDetails[]) {
@@ -249,54 +255,108 @@ export class CreateAssignmentComponent implements OnInit {
       return;
     }
 
+    if(this.isEdit)
+      this.onEdit();
+    else
+      this.onCreate();
+  }
+
+  private onEdit() {
     const formValue: any = this.createAssignmentForm.value;
     let formData: FormData = new FormData();
     const studentData: any= [];
-
     let count = 0;
+    let foundItemsToDelete: boolean = false;
+
     formValue.studentRow.map((studentRow: any) => {
       let student: any = {};
       student.studentId = studentRow.studentId.trim();
       student.studentName = studentRow.studentName.trim();
       student.studentSurname = studentRow.studentSurname.trim();
-      if(studentRow.shouldDelete)
+      if(this.isEdit && studentRow.shouldDelete)
         student.remove = true;
       formData.append('file' + count, this.studentFiles[count]);
       studentData.push(student);
       count++;
     });
-    formData.append('isEdit', 'true');
     formData.append('studentDetails', JSON.stringify(studentData));
-    if(this.isEdit) {
-      formData.append('assignmentName', this.assignmentId);
-      this.assignmentService.updateAssignment(formData).subscribe(model => {
-        this.assignmentService.getAssignments().subscribe((assignments) => {
-          this.assignmentService.setSelectedAssignment(model);
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]).then(() => this.assignmentService.update(assignments));
-          this.appService.isLoading$.next(false);
-        });
-      }, error => {
-        this.appService.isLoading$.next(false);
-      })
+    formData.append('isEdit', 'true');
+    formData.append('assignmentName', this.assignmentId);
+
+    if(foundItemsToDelete) {
+      const config = new MatDialogConfig();
+      config.width = "400px";
+      config.maxWidth = "400px";
+      config.data = {
+        title: "Confirmation",
+        message: "There are entries that you marked for deletion, are you sure you want to continue?",
+      };
+
+      const shouldContinueFn = (shouldContinue: boolean) => {
+        if(shouldContinue) {
+          this.performUpdate(formData);
+        } else {
+          return;
+        }
+      };
+      // Create Dialog
+      this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldContinueFn);
     } else {
-      const {
-        assignmentName,
-        noRubric,
-        rubric
-      } = this.createAssignmentForm.value;
-      formData.append('assignmentName', assignmentName.trim());
-      formData.append('noRubric', noRubric);
-      formData.append('rubric', rubric);
-      this.appService.isLoading$.next(true);
-      this.assignmentService.createAssignment(formData).subscribe((model) => {
-        this.assignmentService.getAssignments().subscribe((assignments) => {
-          this.assignmentService.setSelectedAssignment(model);
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]).then(() => this.assignmentService.update(assignments));
-          this.appService.isLoading$.next(false);
-        });
-      }, error => {
+      this.performUpdate(formData);
+    }
+  }
+
+  private onCreate() {
+    const formValue: any = this.createAssignmentForm.value;
+    let formData: FormData = new FormData();
+    const studentData: any= [];
+    let count = 0;
+
+    formValue.studentRow.map((studentRow: any) => {
+      let student: any = {};
+      student.studentId = studentRow.studentId.trim();
+      student.studentName = studentRow.studentName.trim();
+      student.studentSurname = studentRow.studentSurname.trim();
+      formData.append('file' + count, this.studentFiles[count]);
+      studentData.push(student);
+      count++;
+    });
+    formData.append('studentDetails', JSON.stringify(studentData));
+
+    const {
+      assignmentName,
+      noRubric,
+      rubric
+    } = this.createAssignmentForm.value;
+
+    formData.append('assignmentName', assignmentName.trim());
+    formData.append('noRubric', noRubric);
+    formData.append('rubric', rubric);
+    this.performCreate(formData);
+  }
+
+  private performCreate(formData: FormData) {
+    this.appService.isLoading$.next(true);
+    this.assignmentService.createAssignment(formData).subscribe((model) => {
+      this.assignmentService.getAssignments().subscribe((assignments) => {
+        this.assignmentService.setSelectedAssignment(model);
+        this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]).then(() => this.assignmentService.update(assignments));
         this.appService.isLoading$.next(false);
       });
-    }
+    }, error => {
+      this.appService.isLoading$.next(false);
+    });
+  }
+
+  private performUpdate(formData: FormData) {
+    this.assignmentService.updateAssignment(formData).subscribe(model => {
+      this.assignmentService.getAssignments().subscribe((assignments) => {
+        this.assignmentService.setSelectedAssignment(model);
+        this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]).then(() => this.assignmentService.update(assignments));
+        this.appService.isLoading$.next(false);
+      });
+    }, error => {
+      this.appService.isLoading$.next(false);
+    });
   }
 }
