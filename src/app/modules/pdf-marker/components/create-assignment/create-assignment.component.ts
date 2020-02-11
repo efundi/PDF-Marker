@@ -273,8 +273,10 @@ export class CreateAssignmentComponent implements OnInit {
       student.studentId = studentRow.studentId.trim();
       student.studentName = studentRow.studentName.trim();
       student.studentSurname = studentRow.studentSurname.trim();
-      if(this.isEdit && studentRow.shouldDelete)
+      if(this.isEdit && studentRow.shouldDelete) {
         student.remove = true;
+        foundItemsToDelete = true;
+      }
       formData.append('file' + count, this.studentFiles[count]);
       studentData.push(student);
       count++;
