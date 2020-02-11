@@ -1499,7 +1499,6 @@ const updateAssignment = (req, res) => {
   let isInvalidKey: boolean = false;
   let invalidParam: string;
   uploadFiles(req, res, function(err) {
-    console.log(req.files.length);
     if (err) {
       return sendResponse(req, res, 400, 'Error uploading PDF files!');
     } else {
@@ -1526,6 +1525,14 @@ const updateAssignment = (req, res) => {
           return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
 
         const config = JSON.parse(data.toString());
+
+        const assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
+        if (!isJson(assignmentSettingsBuffer))
+          return sendResponse(req, res, 400, "Invalid assignment settings file!");
+
+        const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
+        if(!assignmentSettingsInfo.isCreated)
+          return sendResponse(req, res, 400, "Operation not permitted on this type of assignment!");
 
         if(!isJson(req.body.studentDetails))
           return sendResponse(req, res, 400, `Student details not valid`);
