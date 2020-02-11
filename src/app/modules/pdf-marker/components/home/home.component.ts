@@ -14,7 +14,7 @@ import {RoutesEnum} from "@coreModule/utils/routes.enum";
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   breadcrumbs: any;
   isMarkingPage: boolean;
-  routeList: string[];
+  routeList: string[] = [];
 
   @ViewChild("content", {static: false})
   content: ElementRef;
@@ -33,9 +33,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       }))
       .pipe(filter(route => route.outlet === PRIMARY_OUTLET))
       .subscribe(route => {
-
         let snapshot = this.router.routerState.snapshot;
         this.breadcrumbs = [];
+        this.routeList = [];
         let url = snapshot.url;
         let routeData = route.snapshot.data;
 
@@ -48,7 +48,10 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
           params: params
         };
 
-        this.routeList = this.breadcrumbs.url.split("/");
+        this.breadcrumbs.url.split("/").forEach(route => {
+          this.routeList.push(decodeURI(route))
+        });
+
         if (this.router.url === RoutesEnum.ASSIGNMENT_MARKER)
           this.isMarkingPage = true;
         else

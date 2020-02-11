@@ -316,3 +316,12 @@ pdf-marker-file-explorer-modal {
 .mat-dialog-container {
   /*background: #F5F5F5 !important;*/
 }
+
+.pdf-button-disabled {
+  background: rgba(0,0,0,.12);
+}
+
+.pdf-icon-disabled {
+  color: rgba(0,0,0,.26);
+  stroke: rgba(0,0,0,.26);
+}

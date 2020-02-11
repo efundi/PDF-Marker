@@ -13,7 +13,6 @@ import {HttpEventType} from "@angular/common/http";
 import {FileSaverService} from "ngx-filesaver";
 import {SettingsService} from "@pdfMarkerModule/services/settings.service";
 import {SettingInfo} from "@pdfMarkerModule/info-objects/setting.info";
-import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
 
@@ -24,11 +23,11 @@ export interface AssignmentDetails {
 
   assignment: string
 
-  grade: number;
+  grade?: number;
 
-  path: string;
+  path?: string;
 
-  status: string;
+  status?: string;
 };
 
 @Component({
@@ -53,7 +52,14 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
   private settings: SettingInfo;
+  private assignmentSettings: AssignmentSettingsInfo;
   isSettings: boolean;
+  isCreated: boolean;
+
+  readonly menuItems = [
+    { title: "Add/remove Student Submissions", icon: "exposure", href: RoutesEnum.ASSIGNMENT_UPLOAD },
+  ];
+
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
               private router: Router,
@@ -65,7 +71,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.subscription = this.assignmentService.selectedAssignmentChanged().subscribe((selectedAssignment) => {
       this.hierarchyModel = selectedAssignment;
-      this.getGrades();
+      this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0]:'');
     }, error => {
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(false, "Unable to read selected assignment");
@@ -77,13 +83,25 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         this.isSettings = true;
         if(!this.hierarchyModel && !!this.assignmentService.getSelectedAssignment()) {
           this.hierarchyModel = this.assignmentService.getSelectedAssignment();
-          this.getGrades();
+          this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0]:'');
         } else {
           this.router.navigate(["/marker"])
         }
       }
       this.appService.isLoading$.next(false);
     }, error => {
+      this.appService.openSnackBar(false, "Unable to read application settings");
+      this.appService.isLoading$.next(false);
+    });
+  }
+
+  private getAssignmentSettings(assignmentName: string) {
+    this.assignmentService.getAssignmentSettings(assignmentName).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
+      this.assignmentSettings = assignmentSettings;
+      this.isCreated = this.assignmentSettings.isCreated;
+      this.getGrades();
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to read assignment settings");
       this.appService.isLoading$.next(false);
     });
   }

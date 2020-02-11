@@ -65,9 +65,9 @@ export class AssignmentService {
     return this.http.post('/api/assignment/settings', body);
   }
 
-  getAssignmentSettings(pdfLocation: string = this.selectedPdfLocation): Observable<AssignmentSettingsInfo> {
+  getAssignmentSettings(assignmentName: string = ""): Observable<AssignmentSettingsInfo> {
     const body = {
-      location: pdfLocation
+      location: ((assignmentName) ? assignmentName:(this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0]:"")
     };
 
     return this.http.post<AssignmentSettingsInfo>('/api/assignment/settings/fetch', body);
@@ -213,7 +213,11 @@ export class AssignmentService {
     });
   }
 
-  createAssignment(createAssignmentInfo: any) {
+  createAssignment(createAssignmentInfo: any): Observable<object> {
     return this.http.post("/api/assignment/create", createAssignmentInfo);
+  }
+
+  updateAssignment(updateAssignmentInfo: any): Observable<object> {
+    return this.http.put<object>("/api/assignment/update", updateAssignmentInfo);
   }
 }

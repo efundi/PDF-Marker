@@ -15,6 +15,7 @@ const routes: Routes = [
   { path: 'assignment/settings', component: SettingsComponent },
   { path: 'assignment/import', component: ImportComponent },
   { path: 'assignment/upload', component: CreateAssignmentComponent },
+  { path: 'assignment/upload/:id', component: CreateAssignmentComponent },
   { path: 'assignment/overview', component: AssignmentOverviewComponent },
   { path: 'assignment/marking', component: AssignmentMarkingComponent },
   { path: 'assignment/marking/rubric', component: AssignmentMarkingRubricComponent },

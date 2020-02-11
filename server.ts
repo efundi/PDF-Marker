@@ -34,7 +34,8 @@ import {
   statSync,
   unlinkSync,
   writeFile,
-  writeFileSync
+  writeFileSync,
+  rmdirSync, lstatSync
 } from 'fs';
 import {json2csv, json2csvAsync} from "json-2-csv";
 import {PageSizes, PDFDocument, PDFPage, rgb} from 'pdf-lib';
@@ -507,8 +508,10 @@ const deleteUploadedFile = (req) => {
 
 const deleteMultipleFiles = (req) => {
   if(req.files && req.files.length > 0) {
-    for(let i = 0; i < req.files.length; i++)
-      deleteUploadedFile(UPLOADS_DIR + sep + req.files[i].originalname);
+    for(let i = 0; i < req.files.length; i++) {
+      if(req.files[i] && existsSync(UPLOADS_DIR + sep + req.files[i].originalname))
+        unlinkSync(UPLOADS_DIR + sep + req.files[i].originalname);
+    }
   }
 };
 
@@ -997,14 +1000,12 @@ const getAssignmentSettings = (req, res) => {
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
     const pathSplit = loc.split(sep);
-    if(pathSplit.length !== 4)
+    if(pathSplit.length == 0)
       return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
 
-    const regEx = /(.*)\((.+)\)/;
-    if(!regEx.test(pathSplit[1]))
-      return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
 
-    const assignmentFolder = dirname(dirname(dirname(config.defaultPath + sep + loc)));
+
+    const assignmentFolder = config.defaultPath + sep + loc;
 
     return readFile(assignmentFolder + sep + SETTING_FILE,(err, data) => {
       if(err)
@@ -1492,6 +1493,93 @@ app.post("/api/assignment/create", [
   check('assignmentName').not().isEmpty().withMessage('Assignment name must be provided!')
 ], createAssignment);
 
+const updateAssignment = (req, res) => {
+  const acceptedParams = ["assignmentName", "studentDetails", "isEdit"];
+  const receivedParams = Object.keys(req.body);
+  let isInvalidKey: boolean = false;
+  let invalidParam: string;
+  uploadFiles(req, res, function(err) {
+    console.log(req.files.length);
+    if (err) {
+      return sendResponse(req, res, 400, 'Error uploading PDF files!');
+    } else {
+      for(let receivedParam of receivedParams) {
+        if(acceptedParams.indexOf(receivedParam)) {
+          isInvalidKey = true;
+          invalidParam = receivedParam;
+          break;
+        }
+      }
+
+      if(isInvalidKey)
+        return sendResponse(req, res, 400, `Invalid parameter ${invalidParam} found in request`);
+
+      if(req.body.assignmentName.legnth < 5)
+        return sendResponse(req, res, 400, `Assignment must be > 5 characters`);
+
+      let assignmentName: string = req.body.assignmentName.trim();
+      const isEdit: boolean = (req.body.isEdit && req.body.isEdit ==='true');
+
+      try {
+        const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
+        if (!isJson(data))
+          return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+
+        const config = JSON.parse(data.toString());
+
+        if(!isJson(req.body.studentDetails))
+          return sendResponse(req, res, 400, `Student details not valid`);
+
+        const studentDetails: any[] = JSON.parse(req.body.studentDetails);
+
+        if(!Array.isArray(studentDetails))
+          return sendResponse(req, res, 400, `Student details must be a list`);
+
+        if(studentDetails.length !== req.files.length)
+          return sendResponse(req, res, 400, `Student details is not equal to number of files sent!`);
+
+        let count = 0;
+        const headers = `"${assignmentName}","SCORE_GRADE_TYPE"\n`;
+        const line = `""\n`;
+        const subheaders = `"Display ID","ID","Last Name","First Name","Mark","Submission date","Late submission"\n`;
+        let csvString = headers + line + subheaders;
+        studentDetails.forEach((studentInfo: any) => {
+          let file: any = req.files[count];
+          const studentFolder = studentInfo.studentSurname.toUpperCase() + ", " + studentInfo.studentName.toUpperCase() + "(" + studentInfo.studentId.toUpperCase() + ")";
+          const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
+          const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
+          const csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},"","",""\n`;
+          csvString += csvData;
+
+          if(existsSync(config.defaultPath + sep + assignmentName + sep + studentFolder)) {
+            if(studentInfo.remove)
+              deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder);
+          } else {
+            mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, { recursive: true });
+            mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, { recursive: true });
+            copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
+          }
+          if(file)
+            unlinkSync(file.path);
+          count++;
+        });
+
+        writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
+        const files = glob.sync(config.defaultPath + sep + assignmentName + sep + "/**");
+        files.sort((a, b) => (a > b) ? 1 : -1);
+        const folderModel = hierarchyModel(files, config.defaultPath);
+
+        return sendResponseData(req, res, 200, folderModel);
+      } catch(e) {
+        return sendResponse(req, res, 400, e.message);
+      }
+    }
+  });
+};
+app.put("/api/assignment/update", [
+  check('assignmentName').not().isEmpty().withMessage('Assignment name must be provided!')
+], updateAssignment);
+
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
   res.render('index', { req });
@@ -1562,4 +1650,18 @@ const hierarchyModel = (pathInfos, configFolder) => {
   }, {});
 
   return model;
+};
+
+const deleteFolderRecursive = (path) => {
+  if( existsSync(path) ) {
+    readdirSync(path).forEach(function(file,index){
+      const curPath = path + "/" + file;
+      if(lstatSync(curPath).isDirectory()) { // recurse
+        deleteFolderRecursive(curPath);
+      } else { // delete file
+        unlinkSync(curPath);
+      }
+    });
+    rmdirSync(path);
+  }
 };
