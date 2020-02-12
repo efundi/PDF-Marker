@@ -15,6 +15,9 @@ import {SettingsService} from "@pdfMarkerModule/services/settings.service";
 import {SettingInfo} from "@pdfMarkerModule/info-objects/setting.info";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
+import {ImportService} from "@pdfMarkerModule/services/import.service";
+import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
+import {FormBuilder, FormGroup} from "@angular/forms";
 
 export interface AssignmentDetails {
   studentName: string;
@@ -55,6 +58,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   private assignmentSettings: AssignmentSettingsInfo;
   isSettings: boolean;
   isCreated: boolean;
+  private selectedRubric: string = null;
+  rubrics: IRubricName[] = [];
+  rubricForm: FormGroup;
 
   readonly menuItems = [
     { title: "Add/remove Student Submissions", icon: "exposure", href: RoutesEnum.ASSIGNMENT_UPLOAD },
@@ -66,15 +72,24 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
               private appService: AppService,
               private alertService: AlertService,
               private fileSaverService: FileSaverService,
-              private settingsService: SettingsService) { }
+              private settingsService: SettingsService,
+              private importService: ImportService,
+              private fb: FormBuilder) { }
 
   ngOnInit() {
+    this.initForm();
     this.subscription = this.assignmentService.selectedAssignmentChanged().subscribe((selectedAssignment) => {
       this.hierarchyModel = selectedAssignment;
       this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0]:'');
     }, error => {
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(false, "Unable to read selected assignment");
+    });
+
+    this.importService.getRubricDetails().subscribe((rubrics: IRubricName[]) => {
+      const data: IRubricName = {name: null, inUse: false};
+      rubrics.unshift(data);
+      this.rubrics = rubrics;
     });
 
     this.settingsService.getConfigurations().subscribe((configurations: SettingInfo) => {
@@ -95,10 +110,20 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     });
   }
 
+  private initForm() {
+    this.rubricForm = this.fb.group({
+      rubric: [null]
+    });
+  }
+
   private getAssignmentSettings(assignmentName: string) {
     this.assignmentService.getAssignmentSettings(assignmentName).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
       this.assignmentSettings = assignmentSettings;
       this.isCreated = this.assignmentSettings.isCreated;
+      if(this.assignmentSettings.rubric) {
+        this.selectedRubric = this.assignmentSettings.rubric.name;
+        this.rubricForm.controls.rubric.setValue(this.assignmentSettings.rubric.name);
+      }
       this.getGrades();
     }, error => {
       this.appService.openSnackBar(false, "Unable to read assignment settings");
@@ -164,6 +189,46 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     } else {
       this.router.navigate([RoutesEnum.MARKER]);
     }
+  }
+
+  onRubricChange(rubricName: string) {
+    if(rubricName !== this.selectedRubric) {
+
+    }
+  }
+
+  private confirmWithUser() {
+    const config = new MatDialogConfig();
+    config.width = "400px";
+    config.maxWidth = "400px";
+    config.data = {
+      title: "Confirmation",
+      message: "Changing or attaching a rubric to an assignment will erase previously marked assingment submission, do you wish to continue?",
+    };
+
+    const shouldChangeRubricFn = (shouldChangeRubric: boolean) => {
+      if(shouldChangeRubric) {
+        const {
+          rubric
+        } = this.rubricForm.controls.rubric.value;
+
+        this.updateAssignmentRubric(rubric);
+      } else {
+        this.rubricForm.controls.rubric.setValue(this.selectedRubric);
+      }
+    };
+
+    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldChangeRubricFn);
+  }
+
+  private updateAssignmentRubric(rubric: string) {
+    this.assignmentService.updateAssignmentRubric(rubric, this.assignmentName).subscribe((rubric: IRubricName) => {
+      this.selectedRubric = rubric.name;
+      this.rubricForm.controls.rubric.setValue(this.selectedRubric);
+    }, error => {
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(false, "Unable to update rubric");
+    });
   }
 
   onSelectedPdf(pdfFileLocation: string) {

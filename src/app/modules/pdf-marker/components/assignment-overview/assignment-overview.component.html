@@ -10,6 +10,11 @@
   <div class="pdf-marker-assignment-overview-assignment-header">
     <h1 class="pdf-marker-assignment-overview-assignment-name">{{ assignmentName }}</h1>
     <span class="pdf-marker-fill-space"></span>
+    <form [formGroup]="rubricForm">
+      <mat-select formControlName="rubric" placeholder="No rubric">
+        <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name" (onSelectionChange)="onRubricChange(rubric.name)">{{rubric.name}}</mat-option>
+      </mat-select>
+    </form>
     <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon>unarchive</mat-icon></button>
     &nbsp;&nbsp;
     <button [disabled]="!isCreated" mat-button mat-icon-button matTooltip="Assignment Settings" [matMenuTriggerFor]="menu"><mat-icon [class.pdf-icon-disabled]="!isCreated">settings</mat-icon></button>

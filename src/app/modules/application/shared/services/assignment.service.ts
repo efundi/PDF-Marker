@@ -8,6 +8,7 @@ import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {Router} from "@angular/router";
 import {AppService} from "@coreModule/services/app.service";
+import {IRubricName} from "@coreModule/utils/rubric.class";
 
 @Injectable({
   providedIn: 'root'
@@ -65,9 +66,13 @@ export class AssignmentService {
     return this.http.post('/api/assignment/settings', body);
   }
 
-  getAssignmentSettings(assignmentName: string = ""): Observable<AssignmentSettingsInfo> {
+  getAssignmentSettings(assignmentName: string = null): Observable<AssignmentSettingsInfo> {
+    if(!assignmentName)
+      assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0]:"");
+
+    console.log(assignmentName);
     const body = {
-      location: ((assignmentName) ? assignmentName:(this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0]:"")
+      location: assignmentName
     };
 
     return this.http.post<AssignmentSettingsInfo>('/api/assignment/settings/fetch', body);
@@ -93,8 +98,8 @@ export class AssignmentService {
   configure(pdfLocation: string, blobData: Blob) {
     const blob = new Blob([blobData], {type: MimeTypesEnum.PDF});
     const fileUrl = URL.createObjectURL(blob);
-
-    this.getAssignmentSettings(pdfLocation).subscribe((assignmentSettingsInfo: AssignmentSettingsInfo) => {
+    const assignmentName = ((pdfLocation && pdfLocation.split("/").length > 0) ? pdfLocation.split("/")[0]:"");
+    this.getAssignmentSettings(assignmentName).subscribe((assignmentSettingsInfo: AssignmentSettingsInfo) => {
       this.setAssignmentSettings(assignmentSettingsInfo);
       this.setSelectedPdfURL(fileUrl, pdfLocation);
       this.setSelectedPdfBlob(blob);
@@ -219,5 +224,14 @@ export class AssignmentService {
 
   updateAssignment(updateAssignmentInfo: any): Observable<object> {
     return this.http.put<object>("/api/assignment/update", updateAssignmentInfo);
+  }
+
+  updateAssignmentRubric(rubric: string, assignmentName: string): Observable<IRubricName> {
+    const body = {
+      rubricName: rubric,
+      assignmentName: assignmentName
+    };
+
+    return this.http.post<IRubricName>("/api/rubric/update", body);
   }
 }
