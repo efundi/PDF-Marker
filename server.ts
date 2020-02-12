@@ -1469,7 +1469,7 @@ const createAssignment = (req, res) => {
           mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, { recursive: true });
           mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, { recursive: true });
           copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
-          unlinkSync(file.path);
+          //unlinkSync(file.path);
           count++;
         });
 
@@ -1478,7 +1478,6 @@ const createAssignment = (req, res) => {
         const files = glob.sync(config.defaultPath + sep + assignmentName + sep + "/**");
         files.sort((a, b) => (a > b) ? 1 : -1);
         const folderModel = hierarchyModel(files, config.defaultPath);
-
         return sendResponseData(req, res, 200, folderModel);
       } catch(e) {
         return sendResponse(req, res, 400, e.message);
@@ -1563,8 +1562,6 @@ const updateAssignment = (req, res) => {
             mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, { recursive: true });
             copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
           }
-          if(file)
-            unlinkSync(file.path);
           count++;
         });
 
