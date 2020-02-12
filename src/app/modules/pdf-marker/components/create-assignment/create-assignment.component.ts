@@ -250,8 +250,7 @@ export class CreateAssignmentComponent implements OnInit {
       this.alertService.error("Please fill in the correct details!");
       return;
     } else if(this.isEdit && this.studentRow.length == 1) {
-      this.alertService.error("Your assignment should have at least one entry");
-      this.studentFormGroupAtIndex(0).controls.shouldDelete.setValue(false);
+      this.deletionErrorMessage();
       return;
     }
 
@@ -267,6 +266,7 @@ export class CreateAssignmentComponent implements OnInit {
     const studentData: any= [];
     let count = 0;
     let foundItemsToDelete: boolean = false;
+    let foundItemsCount = 0;
 
     formValue.studentRow.map((studentRow: any) => {
       let student: any = {};
@@ -276,11 +276,18 @@ export class CreateAssignmentComponent implements OnInit {
       if(this.isEdit && studentRow.shouldDelete) {
         student.remove = true;
         foundItemsToDelete = true;
+        foundItemsCount++;
       }
       formData.append('file' + count, this.studentFiles[count]);
       studentData.push(student);
       count++;
     });
+
+    if(foundItemsCount == studentData.length) {
+      this.deletionErrorMessage(foundItemsCount);
+      return;
+    }
+
     formData.append('studentDetails', JSON.stringify(studentData));
     formData.append('isEdit', 'true');
     formData.append('assignmentName', this.assignmentId);
@@ -360,5 +367,12 @@ export class CreateAssignmentComponent implements OnInit {
     }, error => {
       this.appService.isLoading$.next(false);
     });
+  }
+
+  private deletionErrorMessage(count: number = 1) {
+    this.alertService.error("Your assignment should have at least one entry");
+    for(let i = 0; i < count; i++)
+      this.studentFormGroupAtIndex(i).controls.shouldDelete.setValue(false);
+    return;
   }
 }
