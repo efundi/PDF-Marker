@@ -1,4 +1,4 @@
-import {Component, Inject, Input, OnInit} from '@angular/core';
+import {Component, Inject, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 import {IRubric, IRubricCriteria} from "@coreModule/utils/rubric.class";
 import {AppService} from "@coreModule/services/app.service";
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
@@ -8,15 +8,13 @@ import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
   templateUrl: './rubric-view-marking.component.html',
   styleUrls: ['./rubric-view-marking.component.scss']
 })
-export class RubricViewMarkingComponent implements OnInit {
+export class RubricViewMarkingComponent implements OnInit, OnChanges {
 
   rubricBlocks:  IRubricCriteria[];
   rubricName: string;
   @Input() rubricMarking: IRubric;
 
   constructor(private appService: AppService) {
-
-      this.buildRubricForMarking(this.rubricMarking)
   }
   buildRubricForMarking(rubric: IRubric) {
     console.log("InBuild for Marking" + this.rubricMarking);
@@ -25,5 +23,10 @@ export class RubricViewMarkingComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.buildRubricForMarking(this.rubricMarking);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log(changes);
   }
 }

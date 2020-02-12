@@ -38,8 +38,8 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
   containsRubric: boolean = true;
 
   subscription: Subscription;
-  rubricContainer: boolean = true;
-  markingContainer: boolean = true;
+  rubricContainer: boolean;
+  markingContainer: boolean;
   rubric: IRubric;
 
   constructor(private appService: AppService,
@@ -52,12 +52,13 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
       this.router.navigate(["/marker"]);
     } else {
       this.getAssignmentProgress();
+      this.markingContainer = true;
+      this.rubricContainer = true;
     }
 
     this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
       if (pdfPath && this.assignmentService.getAssignmentSettingsInfo().rubric !== null) {
         this.currentPage = 1;
-        this.rubric =  this.assignmentSettings.rubric;
         this.getAssignmentProgress(true);
       }
     });
@@ -67,10 +68,14 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
     this.isPdfLoaded = false;
     if(!!this.assignmentService.getAssignmentSettingsInfo()) {
       this.assignmentSettings = this.assignmentService.getAssignmentSettingsInfo();
+      if (this.assignmentSettings.rubric)
+        this.rubric =  this.assignmentSettings.rubric;
       this.intializePage(isSubscription);
     } else {
       this.assignmentService.getAssignmentSettings().subscribe((settings: AssignmentSettingsInfo) => {
         this.assignmentSettings = settings;
+        if (this.assignmentSettings.rubric)
+          this.rubric =  settings.rubric;
         this.intializePage(isSubscription);
       }, error => {
         this.appService.isLoading$.next(false);
