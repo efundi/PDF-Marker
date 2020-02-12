@@ -4,6 +4,7 @@ import {AppService} from "@coreModule/services/app.service";
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {Router} from "@angular/router";
 import {Subscription} from "rxjs";
+import {IRubric} from "@coreModule/utils/rubric.class";
 
 @Component({
   selector: 'pdf-marker-assignment-marking-rubric',
@@ -34,13 +35,17 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
   showSettings: boolean;
   show: boolean;
   pdfPath: string;
-  readonly containsRubric: boolean = true;
+  containsRubric: boolean = true;
 
   subscription: Subscription;
+  rubricContainer: boolean = true;
+  markingContainer: boolean = true;
+  rubric: IRubric;
 
   constructor(private appService: AppService,
               private assignmentService: AssignmentService,
               private router: Router) { }
+
 
   ngOnInit() {
     if(this.assignmentService.getSelectedPdfURL() === undefined || this.assignmentService.getSelectedPdfURL() === null){
@@ -52,6 +57,7 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
     this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
       if (pdfPath && this.assignmentService.getAssignmentSettingsInfo().rubric !== null) {
         this.currentPage = 1;
+        this.rubric =  this.assignmentSettings.rubric;
         this.getAssignmentProgress(true);
       }
     });
@@ -180,7 +186,7 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
 
   onColourPickerClose(colour: string) {
     if(this.colour !== this.assignmentSettings.defaultColour)
-      this.onAssignmentSettings({defaultColour: colour, rubricID: this.assignmentSettings.rubricID, isCreated: this.assignmentSettings.isCreated});
+      this.onAssignmentSettings({defaultColour: colour, rubricID: this.assignmentSettings.rubricID, rubric: this.assignmentSettings.rubric, isCreated: this.assignmentSettings.isCreated});
   }
 
   onAssignmentSettings(settings: AssignmentSettingsInfo) {
@@ -206,4 +212,11 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
     this.subscription.unsubscribe();
   }
 
+  toggleRubricContainer() {
+    this.rubricContainer = !this.rubricContainer;
+  }
+
+  toggleMarkingContainer() {
+    this.markingContainer = !this.markingContainer;
+  }
 }

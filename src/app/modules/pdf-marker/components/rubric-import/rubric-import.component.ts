@@ -2,7 +2,6 @@ import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {MatTableDataSource} from "@angular/material/table";
 import {MatDialogConfig} from "@angular/material/dialog";
-import {RubricViewComponent} from "@pdfMarkerModule/components/rubric-view/rubric-view.component";
 import {AlertService} from "@coreModule/services/alert.service";
 import {AppService} from "@coreModule/services/app.service";
 import {Mapping} from "@coreModule/utils/mapping.class";
@@ -10,6 +9,7 @@ import {IRubric, IRubricName, Rubric, RubricCriteria, RubricCriteriaLevels} from
 import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
 import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
+import {RubricViewModalComponent} from "@sharedModule/components/rubric-view-modal/rubric-view-modal.component";
 
 @Component({
   selector: 'pdf-marker-rubric-import',
@@ -228,6 +228,6 @@ export class RubricImportComponent implements OnInit {
       criterias:  rubric.criterias,
     }
 
-    this.appService.createDialog(RubricViewComponent, config);  }
+    this.appService.createDialog(RubricViewModalComponent, config);  }
 
 }

@@ -22,15 +22,13 @@ import {ColorPickerModule} from "ngx-color-picker";
 import {  RxReactiveFormsModule } from "@rxweb/reactive-form-validators"
 
 import { RubricImportComponent } from './components/rubric-import/rubric-import.component';
-import { RubricViewComponent } from './components/rubric-view/rubric-view.component';
-import { RubricViewBlockComponent } from './components/rubric-view-block/rubric-view-block.component';
 import {FileSaverModule} from "ngx-filesaver";
 import {AssignmentSettingsService} from "@pdfMarkerModule/services/assingment-settings.service";
 import { AssignmentMarkingRubricComponent } from './components/assignment-marking-rubric/assignment-marking-rubric.component';
 
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent, RubricImportComponent, RubricViewComponent, RubricViewBlockComponent, AssignmentMarkingRubricComponent],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent, RubricImportComponent, AssignmentMarkingRubricComponent],
   imports: [
     CommonModule,
     SharedModule,
@@ -42,7 +40,7 @@ import { AssignmentMarkingRubricComponent } from './components/assignment-markin
     RxReactiveFormsModule
   ],
   providers: [SettingsService, ImportService, AssignmentSettingsService],
-  exports: [HomeComponent, RubricViewComponent],
-  entryComponents: [MarkTypeIconComponent, FinaliseMarkingComponent, MarkTypeIconComponent, RubricViewComponent]
+  exports: [HomeComponent],
+  entryComponents: [MarkTypeIconComponent, FinaliseMarkingComponent, MarkTypeIconComponent]
 })
 export class PdfMarkerModule { }

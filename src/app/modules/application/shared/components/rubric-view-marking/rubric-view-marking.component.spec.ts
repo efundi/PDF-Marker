@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RubricViewComponent } from './rubric-view.component';
+import { RubricViewMarkingComponent } from './rubric-view-marking.component';
 
-describe('RubricViewComponent', () => {
-  let component: RubricViewComponent;
-  let fixture: ComponentFixture<RubricViewComponent>;
+describe('RubricViewMarkingComponent', () => {
+  let component: RubricViewMarkingComponent;
+  let fixture: ComponentFixture<RubricViewMarkingComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ RubricViewComponent ]
+      declarations: [ RubricViewMarkingComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(RubricViewComponent);
+    fixture = TestBed.createComponent(RubricViewMarkingComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

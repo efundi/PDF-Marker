@@ -55,13 +55,15 @@ ng2-pdfjs-viewer {
   }
 }
 .example-container {
-
+  height: 100% !important;
+  width: 100% !important;
   border: 1px solid rgba(0, 0, 0, 0.5);
 }
 
 .example-sidenav-content {
   display: flex;
   height: 100%;
+  wdith: 50% !important;
   align-items: center;
   justify-content: center;
 }
@@ -69,3 +71,11 @@ ng2-pdfjs-viewer {
 .example-sidenav {
   padding: 20px;
 }
+
+pdf-marker-assignment-marking-rubric-container-markingSplit {
+  min-width: 50%;
+}
+
+pdf-marker-assignment-marking-rubric-container-rubricSplit {
+  min-width: 50%;
+  }

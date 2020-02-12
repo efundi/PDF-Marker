@@ -7,6 +7,7 @@ import {FileExplorerComponent} from './components/file-explorer/file-explorer.co
 import {FileExplorerModalComponent} from './components/file-explorer-modal/file-explorer-modal.component';
 import {SideNavigationComponent} from './components/side-navigation/side-navigation.component';
 import {AlertComponent} from './components/alert/alert.component';
+
 // Angular Material Modules
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatDividerModule} from '@angular/material/divider';
@@ -34,6 +35,10 @@ import {YesAndNoConfirmationDialogComponent} from './components/yes-and-no-confi
 import {MarkingCommentModalComponent} from './components/marking-comment-modal/marking-comment-modal.component';
 import {MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule} from "@angular/material/snack-bar";
 import { SnackBarComponent } from './components/snack-bar/snack-bar.component';
+import {RubricViewBlockComponent} from "@sharedModule/components/rubric-view-block/rubric-view-block.component";
+import {RubricViewModalComponent} from "@sharedModule/components/rubric-view-modal/rubric-view-modal.component";
+import { RubricViewMarkingComponent } from './components/rubric-view-marking/rubric-view-marking.component';
+
 
 const SHARED_MODULES = [
   MatToolbarModule,
@@ -61,10 +66,10 @@ const SHARED_MODULES = [
   MatSnackBarModule
 ];
 
-const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent, SnackBarComponent];
+const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent, SnackBarComponent, RubricViewModalComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, SnackBarComponent ],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, SnackBarComponent, RubricViewModalComponent, RubricViewBlockComponent, RubricViewMarkingComponent],
   imports: [
     CommonModule,
     MatIconModule,
@@ -76,14 +81,14 @@ const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, Al
     MatToolbarModule,
     FormsModule,
     ReactiveFormsModule,
-    MatInputModule
+    MatInputModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true },
     { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
     AssignmentService
   ],
-  exports: [ ...SHARED_MODULES, ...SHARED_COMPONENTS ],
-  entryComponents: [ FileExplorerModalComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, SnackBarComponent ],
+  exports: [...SHARED_MODULES, ...SHARED_COMPONENTS, RubricViewMarkingComponent],
+  entryComponents: [ FileExplorerModalComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, SnackBarComponent, RubricViewModalComponent ],
 })
 export class SharedModule { }
