@@ -32,6 +32,9 @@ export class IconsComponent implements OnInit, OnChanges {
   @Output()
   colourPickerClose: EventEmitter<string> = new EventEmitter<string>();
 
+  @Output()
+  paneDisplayOption: EventEmitter<string> = new EventEmitter<string>();
+
   @Input()
   currentPage: number;
 
@@ -62,7 +65,19 @@ export class IconsComponent implements OnInit, OnChanges {
   constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
     this.matIconRegistry.addSvgIcon(
       "halfTick",
-      this.domSanitizer.bypassSecurityTrustResourceUrl("../../../assets/halftick.svg")
+      this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/halftick.svg")
+    );
+    this.matIconRegistry.addSvgIcon(
+      "layout-expand-left",
+      this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-left.svg")
+    );
+    this.matIconRegistry.addSvgIcon(
+      "layout-expand-right",
+      this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-right.svg")
+    );
+    this.matIconRegistry.addSvgIcon(
+      "layout-default",
+      this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-default.svg")
     );
   }
 
@@ -124,6 +139,10 @@ export class IconsComponent implements OnInit, OnChanges {
 
   onColourPickerClose(colour: string) {
     this.colourPickerClose.emit(colour);
+  }
+
+  onPaneNavigationClick(option: string) {
+    this.paneDisplayOption.emit(option);
   }
 
   ngOnChanges() {

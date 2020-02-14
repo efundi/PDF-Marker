@@ -136,9 +136,9 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
     this.pdfContainer.nativeElement.style.width = (this.maxWidth -5) + "px";
     this.rubricContainer.nativeElement.style.width = ( this.maxWidth -5) + "px";
     this.container.nativeElement.style.height = (this.maxHeight / this.pdfPages) + "px";
+    this.container.nativeElement.style.width = this.maxWidth + "px";
     this.pdfContainer.nativeElement.style.height = (this.maxHeight / this.pdfPages) + "px";
     this.rubricContainer.nativeElement.style.height = (this.maxHeight / this.pdfPages) + "px";
-    this.container.nativeElement.style.width = (this.maxWidth) + "px";
     this.displayContainer.nativeElement.style.width = (this.maxWidth*2)+"px";
     this.isPdfLoaded = this.show = true;
     this.appService.isLoading$.next(false);
@@ -160,6 +160,15 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
         break;
       case 'nextPage' :
         this.onPagedChanged(this.currentPage + 1);
+        break;
+      case 'showPDF' :
+        this.toggleMarkingContainer();
+        break;
+      case 'showBoth' :
+        this.toggleBothContainers();
+        break;
+      case 'showRubric' :
+        this.toggleRubricContainer();
         break;
       default         :
         console.log("No control '" + control + "' found!");
