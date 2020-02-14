@@ -219,17 +219,11 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
   }
 
   onColourChanged(colour: string) {
-    this.colour = colour;
+    return;
   }
 
   onColourPickerClose(colour: string) {
-    if (this.colour !== this.assignmentSettings.defaultColour)
-      this.onAssignmentSettings({
-        defaultColour: colour,
-        rubricID: this.assignmentSettings.rubricID,
-        rubric: this.assignmentSettings.rubric,
-        isCreated: this.assignmentSettings.isCreated
-      });
+    return;
   }
 
   onAssignmentSettings(settings: AssignmentSettingsInfo) {
@@ -287,6 +281,4 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
     this.pdfContainer.nativeElement.styleheight =  ((this.maxHeight / this.pdfPages)/2)-5 +'px';
 
   }
-
-
 }

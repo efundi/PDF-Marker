@@ -8,7 +8,7 @@ import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {Router} from "@angular/router";
 import {AppService} from "@coreModule/services/app.service";
-import {IRubricName} from "@coreModule/utils/rubric.class";
+import {IRubric} from "@coreModule/utils/rubric.class";
 
 @Injectable({
   providedIn: 'root'
@@ -70,7 +70,6 @@ export class AssignmentService {
     if(!assignmentName)
       assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0]:"");
 
-    console.log(assignmentName);
     const body = {
       location: assignmentName
     };
@@ -226,12 +225,12 @@ export class AssignmentService {
     return this.http.put<object>("/api/assignment/update", updateAssignmentInfo);
   }
 
-  updateAssignmentRubric(rubric: string, assignmentName: string): Observable<IRubricName> {
+  updateAssignmentRubric(rubric: string, assignmentName: string): Observable<IRubric> {
     const body = {
       rubricName: rubric,
       assignmentName: assignmentName
     };
 
-    return this.http.post<IRubricName>("/api/rubric/update", body);
+    return this.http.post<IRubric>("/api/assignment/rubric/update", body);
   }
 }

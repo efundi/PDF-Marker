@@ -78,7 +78,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     }
 
     this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
-      if (pdfPath && !this.assignmentService.getAssignmentSettingsInfo().isCreated) {
+      if (pdfPath && !!this.assignmentService.getAssignmentSettingsInfo() && this.assignmentService.getAssignmentSettingsInfo().rubric == null) {
         if(!this.isNullOrUndefined(this.markDetailsComponents)) {
           const pagesArray = Object.keys(this.markDetailsComponents);
           pagesArray.forEach(page => {
@@ -134,10 +134,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   pagesLoaded(pageNumber) {
     this.pdfPages = pageNumber;
     this.markDetailsComponents = [];
+    this.currentPage = 1;
     this.appService.initializeScrollPosition();
 
     const pdfViewerApplication = this.pdfViewerAutoLoad.PDFViewerApplication;
-    this.currentPage = (pdfViewerApplication.page) ? pdfViewerApplication.page:this.pdfViewerAutoLoad.page;
 
     let maxHeight: number = 0;
     let maxWidth: number = 0;
@@ -503,7 +503,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    console.log(this.router.url);
     //this.assignmentService.setSelectedPdfBlob(undefined);
     //this.assignmentService.setAssignmentSettings(undefined);
     //this.assignmentService.setSelectedPdfURL("", "");

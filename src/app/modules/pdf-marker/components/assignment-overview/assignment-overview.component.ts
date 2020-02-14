@@ -56,6 +56,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   private subscription: Subscription;
   private settings: SettingInfo;
   private assignmentSettings: AssignmentSettingsInfo;
+  private previouslyEmitted: string;
   isSettings: boolean;
   isCreated: boolean;
   private selectedRubric: string = null;
@@ -114,6 +115,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     this.rubricForm = this.fb.group({
       rubric: [null]
     });
+
+    this.onRubricChange();
   }
 
   private getAssignmentSettings(assignmentName: string) {
@@ -123,6 +126,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       if(this.assignmentSettings.rubric) {
         this.selectedRubric = this.assignmentSettings.rubric.name;
         this.rubricForm.controls.rubric.setValue(this.assignmentSettings.rubric.name);
+      } else {
+        this.selectedRubric = null;
+        this.rubricForm.controls.rubric.setValue(this.selectedRubric);
       }
       this.getGrades();
     }, error => {
@@ -191,10 +197,13 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     }
   }
 
-  onRubricChange(rubricName: string) {
-    if(rubricName !== this.selectedRubric) {
-
-    }
+  onRubricChange() {
+    this.rubricForm.valueChanges.subscribe(value => {
+      if(value.rubric !== this.previouslyEmitted && value.rubric !== this.selectedRubric) {
+        this.previouslyEmitted = value.rubric;
+        this.confirmWithUser();
+      }
+    })
   }
 
   private confirmWithUser() {
@@ -210,21 +219,24 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       if(shouldChangeRubric) {
         const {
           rubric
-        } = this.rubricForm.controls.rubric.value;
+        } = this.rubricForm.value;
 
         this.updateAssignmentRubric(rubric);
       } else {
         this.rubricForm.controls.rubric.setValue(this.selectedRubric);
       }
+      this.previouslyEmitted = undefined;
     };
 
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldChangeRubricFn);
   }
 
-  private updateAssignmentRubric(rubric: string) {
-    this.assignmentService.updateAssignmentRubric(rubric, this.assignmentName).subscribe((rubric: IRubricName) => {
-      this.selectedRubric = rubric.name;
-      this.rubricForm.controls.rubric.setValue(this.selectedRubric);
+  private updateAssignmentRubric(rubricName: string) {
+    this.appService.isLoading$.next(true);
+    this.assignmentService.updateAssignmentRubric(rubricName, this.assignmentName).subscribe((rubric: IRubric) => {
+      this.selectedRubric = (rubric) ? rubric.name:null;
+      this.appService.openSnackBar(true, "Successfully updated rubric");
+      this.appService.isLoading$.next(false);
     }, error => {
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(false, "Unable to update rubric");

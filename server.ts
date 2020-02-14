@@ -741,7 +741,80 @@ app.post('/api/rubric/contents',
   check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), getRubricContentsFn);
 
 
-/* END RUBRIC CONTETNS*/
+/* END RUBRIC CONTENTS*/
+
+/* CHANGE ASSIGNEMNT RUBRIC */
+
+const assignmentRubricUpdateFn = (req, res) => {
+  if(!checkClient(req, res))
+    return res.status(401).send({ message: FORBIDDEN_RESOURCE});
+
+  if(!req.body.assignmentName)
+    return res.status(400).send({ message: NOT_PROVIDED_ASSIGNMENT_LOCATION});
+
+  const rubricName:string = (req.body.rubricName) ? req.body.rubricName:null;
+  const assignmentName:string = req.body.assignmentName;
+
+  if(existsSync(CONFIG_DIR + RUBRICS_FILE)) {
+    return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
+      if (!isJson(data))
+        return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
+      const rubrics: IRubric[] = JSON.parse(data.toString());
+      let rubric: IRubric;
+      if (Array.isArray(rubrics)) {
+        if(rubricName) {
+          let indexFound: number = -1;
+
+          for (let i = 0; i < rubrics.length; i++) {
+            if (rubrics[i].name.toLowerCase() === rubricName.toLowerCase()) {
+              indexFound = i;
+              break;
+            }
+          }
+
+          if (indexFound == -1)
+            return res.status(404).send({message: 'Could not find rubric'});
+
+          rubric = rubrics[indexFound];
+        } else {
+          rubric = null;
+        }
+
+        return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
+          if (!isJson(data))
+            return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+
+          const config = JSON.parse(data.toString());
+          try {
+            const markFiles = glob.sync(config.defaultPath + sep + assignmentName + sep + "/**/" + MARK_FILE);
+            markFiles.forEach(markFile => {
+              unlinkSync(markFile);
+            });
+            return readFromFile(req, res, config.defaultPath + sep + assignmentName + sep + SETTING_FILE, (data) => {
+              if (!isJson(data))
+                return sendResponse(req, res, 400, "invalid assignment settings");
+
+              const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(data);
+              assignmentSettingsInfo.rubric = rubric;
+
+              return writeToFile(req, res, config.defaultPath + sep + assignmentName + sep + SETTING_FILE,
+                JSON.stringify(assignmentSettingsInfo), null, null, () => {
+                  return sendResponseData(req, res, 200, assignmentSettingsInfo.rubric);
+                });
+            });
+          } catch (e) {
+            return sendResponse(req, res, 500, e.message);
+          }
+        });
+      }
+    });
+  }
+  return res.status(400).send({message: COULD_NOT_READ_RUBRIC_LIST});
+};
+app.post('/api/assignment/rubric/update', [
+  check('assignmentName').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
+], assignmentRubricUpdateFn);
+/* END CHANGE ASSIGNMENT RUBRIC*/
 
 const getAssignments = (req, res) => {
   if(!checkClient(req, res))
