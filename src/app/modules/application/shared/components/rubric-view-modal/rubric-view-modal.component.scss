@@ -6,8 +6,6 @@ tr.example-detail-row {
   height: 0;
 }
 
-
-
 .example-element-detail {
   overflow: hidden;
   display: flex;
@@ -39,3 +37,6 @@ h5 {
 .pdf-marker-yes-and-no-confirmation-dialog-no {
   background: #BD362F;
 }
+ .closeButton {
+   float: right;
+ }

@@ -14,6 +14,8 @@ export class RubricViewModalComponent implements OnInit {
   rubricBlocks:  IRubricCriteria[];
   rubricName: string;
   @Input() rubricMarking: IRubric;
+  totalScore: number = 0;
+
 
   constructor(private appService: AppService, private dialogRef: MatDialogRef<RubricViewModalComponent>,
               @Inject(MAT_DIALOG_DATA) config) {
@@ -26,8 +28,18 @@ export class RubricViewModalComponent implements OnInit {
     console.log("InBuild for Modal");
     this.rubricName = rubricName;
     this.rubricBlocks = rubricCriterias;
+
+   this.rubricBlocks.forEach((value, index) => {
+     value.levels.forEach((value1, index1, array) => {
+       this.totalScore = this.totalScore + parseFloat(value1.score.toString());
+     })
+   })
+
   }
 
   ngOnInit() {}
 
+  onClose() {
+    this.dialogRef.close();
+  }
 }
