@@ -5,7 +5,7 @@
             (click)="onIconClick($event, iconData)" mat-button mat-icon-button ><mat-icon  [class.pdf-icon-disabled]="containsRubric">{{ iconData.icon }}</mat-icon></button>
 
     <button [disabled]="containsRubric" *ngIf="iconData.icon === 'halfTick'" [matTooltip]="iconData.toolTip" [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
-             (click)="onIconClick($event, iconData)" mat-button mat-icon-button ><mat-icon class="pdf-marker-icons-svg-class" [svgIcon]="iconData.icon" [class.pdf-icon-disabled]="containsRubric" ></mat-icon></button>
+            (click)="onIconClick($event, iconData)" mat-button mat-icon-button ><mat-icon class="pdf-marker-icons-svg-class" [svgIcon]="iconData.icon" [class.pdf-icon-disabled]="containsRubric" ></mat-icon></button>
   </ng-container>
   <button [disabled]="containsRubric" matTooltip="Preview Marks" mat-button mat-icon-button (click)="onControl($event, 'finalise')"><mat-icon [class.pdf-icon-disabled]="containsRubric">announcement</mat-icon></button>
   <span class="pdf-marker-fill-space"></span>
@@ -14,6 +14,10 @@
   <form [formGroup]="iconForm">
     <span><input matInput type="text" formControlName="pageNumber" (change)="onPageNumberChange($event)" [style.width]="(iconForm.get('pageNumber')?.value + '')?.length + 'ch'">  / {{ pages }}</span>
   </form>
+  <span class="pdf-marker-fill-space"></span>
+  <button [disabled]="!containsRubric" matTooltip="Display PDF Only" mat-button mat-icon-button (click)="onControl($event, 'pdfOnly')"><mat-icon [class.pdf-icon-disabled]="!containsRubric">undo</mat-icon></button>
+  <button [disabled]="!containsRubric" matTooltip="Shared View" mat-button mat-icon-button (click)="onControl($event, 'sharedView')"><mat-icon [class.pdf-icon-disabled]="!containsRubric">pause</mat-icon></button>
+  <button [disabled]="!containsRubric" matTooltip="Display Rubric Only" mat-button mat-icon-button (click)="onControl($event, 'rubricOnly')"><mat-icon [class.pdf-icon-disabled]="!containsRubric">redo</mat-icon></button>
   <span class="pdf-marker-fill-space"></span>
   <div class="pdf-marker-assignment-marking-settings-color">
     <button [disabled]="containsRubric" [style.border-color]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour" class="pdf-marker-assignment-marking-settings-color-pallette" mat-button mat-icon-button [(colorPicker)]="selectedColour" (colorPickerChange)="onColourChange($event)" (colorPickerClose)="onColourPickerClose($event)">

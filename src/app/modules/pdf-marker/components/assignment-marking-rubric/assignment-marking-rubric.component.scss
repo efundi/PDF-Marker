@@ -8,6 +8,11 @@
   z-index: 1000;
 }
 
+.full-container {
+  margin: 1px auto -8px auto;
+  display: inline-flex;
+}
+
 .pdf-marker-dropzone {
   cursor: copy;
 }
@@ -16,13 +21,13 @@
   height: 90%;
   position: relative;
   overflow: hidden;
-  margin: 1px auto -8px auto;
+
 
   .boundary-drop-zone {
     position:absolute;
     left: 0;
     top: 0;
-    height: 90%;
+    height: 100%;
     width: 100%;
     opacity: 0;
   }
@@ -63,6 +68,7 @@ ng2-pdfjs-viewer {
 .example-sidenav-content {
   display: flex;
   height: 100%;
+
   wdith: 50% !important;
   align-items: center;
   justify-content: center;
@@ -72,11 +78,11 @@ ng2-pdfjs-viewer {
   padding: 20px;
 }
 
-pdf-marker-assignment-marking-rubric-container-markingSplit {
+.pdf-marker-assignment-marking-rubric-container-markingSplit {
+//width: 50% !important;
 
-width: 50% !important;
 }
 
-pdf-marker-assignment-marking-rubric-container-rubricSplit {
-width: 50% !important;
+.pdf-marker-assignment-marking-rubric-container-rubricSplit {
+overflow: scroll;
   }

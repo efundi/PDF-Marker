@@ -1,31 +1,34 @@
 <ng-container>
+  <div #container>
   <div class="pdf-marker-assignment-marking-rubric-controls" *ngIf="isPdfLoaded">
     <pdf-marker-icons [containsRubric]="containsRubric" [selectedColour]="colour" [currentPage]="currentPage" [pages]="pdfPages" (control)="onControl($event)" (pageNumber)="onPageNumberChange($event)" (colour)="onColourChanged($event)" (colourPickerClose)="onColourPickerClose($event)"></pdf-marker-icons>
   </div>
-
-<ng-container class="pdf-marker-assignment-marking-rubric-container-markingSplit" >
-  <div #container class="boundary" [class.pdf-marker-assignment-marking-rubric-container]="isPdfLoaded">
+    <div #displayContainer class="full-container">
+  <div  #pdfContainer class="boundary pdf-marker-assignment-marking-rubric-container-markingSplit" [class.pdf-marker-assignment-marking-rubric-container]="isPdfLoaded">
     <div #markerContainer class="boundary-drop-zone" (wheel)="onMouseWheel($event)"></div>
     <template style="height: 90%" #containerRef></template>
     <ng2-pdfjs-viewer autoscroll="true" *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
                       [viewBookmark]="false" zoom="100" [page]="currentPage" pagemode="none" [pdfSrc]="pdfPath" viewerId="pdfMarker" (onDocumentLoad)="pagesLoaded($event)" (onPageChange)="onPaged($event)"></ng2-pdfjs-viewer>
+
+
+  </div>
+    <div #rubricContainer autoscroll="true" class="pdf-marker-assignment-marking-rubric-container-rubricSplit">
+      <pdf-marker-rubric-view-marking *ngIf="rubric" [rubricMarking]="rubric"></pdf-marker-rubric-view-marking>
+    </div>
+  </div>
   </div>
 </ng-container>
-  <ng-container autoscroll="true" class="pdf-marker-assignment-marking-rubric-container-rubricSplit">
-   <pdf-marker-rubric-view-marking *ngIf="rubric" [rubricMarking]="rubric"></pdf-marker-rubric-view-marking>
-  </ng-container>
   <br><br>
   <div class="example-sidenav-content">
-    <button type="button" mat-button mat-raised-button (click)="toggleRubricContainer()">
+    <button type="button" mat-button mat-raised-button (click)="toggleMarkingContainer()">
      Show PDF
     </button>
-    <button type="button" mat-button mat-raised-button (click)="toggleMarkingContainer()">
+    <button type="button" mat-button mat-raised-button (click)="toggleBothContainers()">
      Show Both
     </button>
-    <button type="button" mat-button mat-raised-button (click)="toggleMarkingContainer()">
+    <button type="button" mat-button mat-raised-button (click)="toggleRubricContainer()">
       Show Rubric
     </button>
   </div>
 
 
-</ng-container>
