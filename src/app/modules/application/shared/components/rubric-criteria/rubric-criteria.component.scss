@@ -1,0 +1,13 @@
+.criteria-row {
+  display: flex;
+  align-items: unset;
+  flex-direction: row;
+  width: fit-content;
+
+  .criteria-row-data {
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    background: #eee;
+  }
+}

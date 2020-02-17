@@ -325,3 +325,12 @@ pdf-marker-file-explorer-modal {
   color: rgba(0,0,0,.26);
   stroke: rgba(0,0,0,.26) !important;
 }
+
+pdf-marker-rubric-criteria {
+  width: fit-content;
+}
+
+pdf-marker-rubric-criteria-level-block {
+  display: flex;
+  flex-direction: column;
+}
