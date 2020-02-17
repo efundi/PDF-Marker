@@ -1,0 +1,6 @@
+<ng-container autoscroll="true">
+  <h4>{{rubric?.name}}</h4>
+  <table>
+    <pdf-marker-rubric-criteria *ngFor="let criteria of rubric.criterias; let criteriaIndex = index" [criteria]="criteria" (selectedCriteriaLevelIndex)="selectedCriteria($event, criteriaIndex)"></pdf-marker-rubric-criteria>
+  </table>
+</ng-container>

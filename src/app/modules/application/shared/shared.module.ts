@@ -7,7 +7,6 @@ import {FileExplorerComponent} from './components/file-explorer/file-explorer.co
 import {FileExplorerModalComponent} from './components/file-explorer-modal/file-explorer-modal.component';
 import {SideNavigationComponent} from './components/side-navigation/side-navigation.component';
 import {AlertComponent} from './components/alert/alert.component';
-
 // Angular Material Modules
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatDividerModule} from '@angular/material/divider';
@@ -34,10 +33,12 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
 import {YesAndNoConfirmationDialogComponent} from './components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {MarkingCommentModalComponent} from './components/marking-comment-modal/marking-comment-modal.component';
 import {MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule} from "@angular/material/snack-bar";
-import { SnackBarComponent } from './components/snack-bar/snack-bar.component';
-import {RubricViewBlockComponent} from "@sharedModule/components/rubric-view-block/rubric-view-block.component";
+import {SnackBarComponent} from './components/snack-bar/snack-bar.component';
+import {RubricCriteriaLevelBlockComponent} from "@sharedModule/components/rubric-criteria-level-block/rubric-criteria-level-block.component";
 import {RubricViewModalComponent} from "@sharedModule/components/rubric-view-modal/rubric-view-modal.component";
-import { RubricViewMarkingComponent } from './components/rubric-view-marking/rubric-view-marking.component';
+import {RubricViewMarkingComponent} from './components/rubric-view-marking/rubric-view-marking.component';
+import {RubricCriteriaComponent} from './components/rubric-criteria/rubric-criteria.component';
+import { RubricComponent } from './components/rubric/rubric.component';
 
 
 const SHARED_MODULES = [
@@ -69,7 +70,7 @@ const SHARED_MODULES = [
 const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent, SnackBarComponent, RubricViewModalComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, SnackBarComponent, RubricViewModalComponent, RubricViewBlockComponent, RubricViewMarkingComponent],
+  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, SnackBarComponent, RubricViewModalComponent, RubricCriteriaLevelBlockComponent, RubricViewMarkingComponent, RubricCriteriaComponent, RubricComponent],
   imports: [
     CommonModule,
     MatIconModule,

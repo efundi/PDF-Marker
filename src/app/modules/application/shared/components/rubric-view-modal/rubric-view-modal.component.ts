@@ -20,14 +20,13 @@ export class RubricViewModalComponent implements OnInit {
   constructor(private appService: AppService, private dialogRef: MatDialogRef<RubricViewModalComponent>,
               @Inject(MAT_DIALOG_DATA) config) {
     if (config != null) {
-      this.buildRubricForModal(config.name, config.criterias);
+      this.rubricMarking = config.rubric;
+      this.buildRubricForModal();
     }
   }
-  buildRubricForModal(rubricName: string, rubricCriterias: IRubricCriteria[])
-  {
-    console.log("InBuild for Modal");
-    this.rubricName = rubricName;
-    this.rubricBlocks = rubricCriterias;
+
+  buildRubricForModal() {
+    this.rubricBlocks = (this.rubricMarking && this.rubricMarking.criterias) ? this.rubricMarking.criterias:[];
 
    this.rubricBlocks.forEach((value, index) => {
      value.levels.forEach((value1, index1, array) => {

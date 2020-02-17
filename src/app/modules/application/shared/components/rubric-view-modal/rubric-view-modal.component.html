@@ -1,12 +1,7 @@
 <ng-container autoscroll="true">
-
-  <h4> {{rubricName}}</h4>
   <span class="pdf-marker-fill-space"></span>
   <button class="closeButton" type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
-  <table>
-        <pdf-marker-rubric-view-block *ngFor='let criteria of rubricBlocks' [criteriaBlock]="criteria"></pdf-marker-rubric-view-block>
-  </table>
+  <pdf-marker-rubric [rubric]="rubricMarking"></pdf-marker-rubric>
   <span class="pdf-marker-fill-space"></span>
   <p>Total Score: {{ totalScore }}</p>
-
 </ng-container>

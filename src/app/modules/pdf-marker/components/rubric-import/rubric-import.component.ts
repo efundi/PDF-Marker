@@ -120,7 +120,7 @@ export class RubricImportComponent implements OnInit {
 
   showRubric(rubricName: string) {
     this.openRubricModal(rubricName);
-    console.log("Show Rubric at index = " + rubricName);
+    //console.log("Show Rubric at index = " + rubricName);
   }
 
   deleteRubric(rubricName: string) {
@@ -206,9 +206,9 @@ export class RubricImportComponent implements OnInit {
 
   private openRubricModal(rubricName: string) {
 
-    console.log("Open Rubric name = " + rubricName);
+    //console.log("Open Rubric name = " + rubricName);
     let data  = { rubricName: rubricName };
-    console.log(data);
+    //console.log(data);
     this.importService.getRubricContents(data).subscribe((rubric: IRubric)  => {
       this.openRubricModalDialog(rubric);
       this.appService.isLoading$.next(false);
@@ -224,9 +224,8 @@ export class RubricImportComponent implements OnInit {
     config.width = "1500px";
     config.height = "750px";
     config.data = {
-      name: rubric.name,
-      criterias:  rubric.criterias,
-    }
+      rubric: rubric
+    };
 
     this.appService.createDialog(RubricViewModalComponent, config);  }
 

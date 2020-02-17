@@ -1,6 +1,3 @@
 <ng-container autoscroll="true">
-  <h4> {{rubricName}}</h4>
-  <table>
-    <pdf-marker-rubric-view-block *ngFor='let criteria of rubricBlocks' [criteriaBlock]="criteria"></pdf-marker-rubric-view-block>
-  </table>
+  <pdf-marker-rubric [rubric]="rubricMarking"></pdf-marker-rubric>
 </ng-container>
