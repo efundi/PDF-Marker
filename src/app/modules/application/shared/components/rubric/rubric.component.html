@@ -3,4 +3,5 @@
   <table border="1">
     <pdf-marker-rubric-criteria *ngFor="let criteria of rubric.criterias; let criteriaIndex = index" [criteria]="criteria" (selectedCriteriaLevelIndex)="selectedCriteria($event, criteriaIndex)"></pdf-marker-rubric-criteria>
   </table>
+  <p>Max Score: {{ maxScore }}</p>
 </ng-container>

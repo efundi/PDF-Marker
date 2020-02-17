@@ -1,24 +1,5 @@
 
-// .rubric-block-full:hover  {
-//  background: #777;
-//  z-index: 100 !important;
-//  height: 208px !important;
-//  width: 500px !important;
-// }
-/*.rubric-block-full {
-  min-width: 80px;
-  border: 2px solid black;
-  padding: 8px;
-  font-weight: lighter;
-  margin: 8px 0;
-  max-width: 250px;
-  text-overflow: ellipsis;
-  word-wrap: break-word;
-  overflow: hidden;
-  max-height: 100px;
-}*/
-
-.rubric-block-full {
+.rubric-level-block-full {
   min-width: 80px;
   font-weight: lighter;
   text-overflow: ellipsis;
@@ -28,41 +9,16 @@
   flex-direction: column;
   height: 100%;
   width: 200px;
+  padding: 0 3px 3px 3px !important;
 }
 
 * {
   font-size: .95em;
 }
-.rubric-block-header {
+.rubric-level-block-header {
   text-align: center;
-  font-size: 2 em;
-  font-weight: bold;
 }
 
-.rubric-block-description {
-  font-weight: bold;
-  max-width: 10%;
+.rubric-level-block-description {
 }
 
-.rubric-block-selected {
-  background: #777;
-}
-
-.hover-tooltip {
-  display: none;
-}
-.hover-effect:hover span.hover-tooltip{
-  display: block;
-}
-
-.hover-tooltip {
-  display: none;
-  position: fixed;
-  z-index: 100;
-  border: 1px;
-  background-color: white;
-  border: 1px solid green;
-  padding: 3px;
-  color: green;
-  max-width: 250px;
-}

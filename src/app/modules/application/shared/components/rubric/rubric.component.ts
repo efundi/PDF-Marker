@@ -10,12 +10,22 @@ export class RubricComponent implements OnInit, OnChanges {
 
   @Input()
   rubric: IRubric;
+  maxScore: number = 0;
 
   private rubricSelections = [];
 
   constructor() { }
 
   ngOnInit() {
+    this.getHighestScore(this.rubric);
+  }
+
+  getHighestScore(rubric: IRubric) {
+    this.rubric.criterias.forEach((value, index) => {
+      value.levels.forEach((value1, index1, array) => {
+        this.maxScore = this.maxScore + parseFloat(value1.score.toString());
+      })
+    })
   }
 
   selectedCriteria(criteriaLevelIndex: number, criteriaIndex) {

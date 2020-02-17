@@ -28,11 +28,11 @@ export class RubricViewModalComponent implements OnInit {
   buildRubricForModal() {
     this.rubricBlocks = (this.rubricMarking && this.rubricMarking.criterias) ? this.rubricMarking.criterias:[];
 
-   this.rubricBlocks.forEach((value, index) => {
-     value.levels.forEach((value1, index1, array) => {
-       this.totalScore = this.totalScore + parseFloat(value1.score.toString());
-     })
-   })
+  // this.rubricBlocks.forEach((value, index) => {
+  //   value.levels.forEach((value1, index1, array) => {
+  //     this.totalScore = this.totalScore + parseFloat(value1.score.toString());
+  //   })
+  // })
 
   }
 
