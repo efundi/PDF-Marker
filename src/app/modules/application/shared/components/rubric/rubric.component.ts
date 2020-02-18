@@ -1,5 +1,7 @@
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 import {IRubric, IRubricCriteria} from "@coreModule/utils/rubric.class";
+import {Router} from "@angular/router";
+import {RoutesEnum} from "@coreModule/utils/routes.enum";
 
 @Component({
   selector: 'pdf-marker-rubric',
@@ -12,9 +14,18 @@ export class RubricComponent implements OnInit, OnChanges {
   rubric: IRubric;
   maxScore: number = 0;
 
+  totalTally: number = 0;
+
   private rubricSelections = [];
 
-  constructor() { }
+  isMarkingRubricPage: boolean;
+
+
+
+  constructor(private router: Router) {
+    this.isMarkingRubricPage = this.router.url === RoutesEnum.ASSIGNMENT_MARKER_RUBRIC;
+    console.log("Am I in assignment rubric page? " + this.isMarkingRubricPage);
+  }
 
   ngOnInit() {
     this.getHighestScore(this.rubric);
@@ -29,9 +40,20 @@ export class RubricComponent implements OnInit, OnChanges {
   }
 
   selectedCriteria(criteriaLevelIndex: number, criteriaIndex) {
-    console.log(`Criteria Index ${criteriaIndex} and criteria level index ${criteriaLevelIndex}`);
-    this.rubricSelections[criteriaIndex] = criteriaLevelIndex;
-    console.log(this.rubricSelections);
+    if(this.isMarkingRubricPage) {
+      if (this.rubricSelections[criteriaIndex] === criteriaLevelIndex)
+        this.rubricSelections[criteriaIndex] = null;
+      else
+        this.rubricSelections[criteriaIndex] = criteriaLevelIndex;
+      this.totalTally = 0;
+      this.rubricSelections.forEach((criteriaLevelIndexValue, index) => {
+        if (criteriaLevelIndexValue !== null) {
+          this.totalTally += parseFloat("" + this.rubric.criterias[index].levels[criteriaLevelIndexValue].score);
+        }
+      });
+
+      console.log(this.rubricSelections);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {

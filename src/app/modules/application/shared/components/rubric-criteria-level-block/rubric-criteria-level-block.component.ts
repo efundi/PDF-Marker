@@ -11,6 +11,9 @@ export class RubricCriteriaLevelBlockComponent implements OnInit {
   @Input()
   criteriaLevel: IRubricCriteriaLevels;
 
+  @Input()
+  isMarkingRubricPage: boolean;
+
   @Output()
   selectedCriteriaLevel: EventEmitter<IRubricCriteriaLevels> = new EventEmitter<IRubricCriteriaLevels>();
   isSelected: boolean;
@@ -22,7 +25,8 @@ export class RubricCriteriaLevelBlockComponent implements OnInit {
   }
 
   onCriteriaLevelClick() {
-    this.selectedCriteriaLevel.emit(this.criteriaLevel);
+    if(this.isMarkingRubricPage)
+      this.selectedCriteriaLevel.emit(this.criteriaLevel);
   }
 
 }
