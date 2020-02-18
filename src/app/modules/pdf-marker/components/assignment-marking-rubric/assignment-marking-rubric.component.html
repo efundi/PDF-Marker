@@ -11,7 +11,7 @@
                       [viewBookmark]="false" zoom="100" [page]="currentPage" pagemode="none" [pdfSrc]="pdfPath" viewerId="pdfMarker" (onDocumentLoad)="pagesLoaded($event)" (onPageChange)="onPaged($event)"></ng2-pdfjs-viewer>
   </div>
     <div #rubricContainer autoscroll="true" class="pdf-marker-assignment-marking-rubric-container-rubricSplit">
-      <pdf-marker-rubric-view-marking *ngIf="rubric" [rubricMarking]="rubric"></pdf-marker-rubric-view-marking>
+      <pdf-marker-rubric-view-marking *ngIf="rubric" [rubricMarking]="rubric" [rubricSelections]="marks" (marksUpdated)="onMarksUpdated($event)"></pdf-marker-rubric-view-marking>
     </div>
   </div>
   </div>

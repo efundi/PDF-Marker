@@ -5,6 +5,9 @@ import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {Router} from "@angular/router";
 import {Subscription} from "rxjs";
 import {IRubric} from "@coreModule/utils/rubric.class";
+import {MatDialogConfig} from "@angular/material/dialog";
+import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
+import {RoutesEnum} from "@coreModule/utils/routes.enum";
 
 @Component({
   selector: 'pdf-marker-assignment-marking-rubric',
@@ -50,7 +53,7 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
   rubricContainerShow: boolean;
   pdfContainerShow: boolean;
   rubric: IRubric;
-
+  marks: any[] = [];
   maxHeight: number;
   maxWidth: number;
 
@@ -64,10 +67,19 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
     if (this.assignmentService.getSelectedPdfURL() === undefined || this.assignmentService.getSelectedPdfURL() === null) {
       this.router.navigate(["/marker"]);
     } else {
-      this.getAssignmentProgress();
-      this.rubricContainerShow = false;
-      this.pdfContainerShow = false;
-      this.toggleBothContainers();
+      this.appService.isLoading$.next(true);
+      this.assignmentService.getSavedMarks().subscribe((marks: any[]) => {
+        this.appService.isLoading$.next(false);
+        this.marks = marks;
+        this.getAssignmentProgress();
+        this.rubricContainerShow = false;
+        this.pdfContainerShow = false;
+        this.toggleBothContainers();
+      }, error => {
+        this.appService.isLoading$.next(false);
+        this.appService.openSnackBar(false, "Unable to read marks");
+        this.router.navigate([RoutesEnum.MARKER]);
+      });
     }
 
     this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
@@ -118,20 +130,14 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
 
     const pdfViewerApplication = this.pdfViewerAutoLoad.PDFViewerApplication;
 
-    console.log("Current page is " + this.currentPage);
-
     this.maxHeight = 0;
     this.maxWidth = 0;
 
     for (let i = this.currentPage; i <= this.pdfPages; i++) {
-      console.log(i);
       this.maxHeight += parseInt(pdfViewerApplication.pdfViewer.viewer.children[i - 1].style.height.replace("px", ""));
       if (!this.maxWidth)
         this.maxWidth += parseInt(pdfViewerApplication.pdfViewer.viewer.children[i - 1].style.width.replace("px", ""));
     }
-
-    console.log("Max Height:" + this.maxHeight);
-    console.log("Max Width:" + this.maxWidth);
 
     this.pdfContainer.nativeElement.style.width = (this.maxWidth -5) + "px";
     this.rubricContainer.nativeElement.style.width = ( this.maxWidth -5) + "px";
@@ -177,7 +183,19 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
   }
 
   clearMarks() {
+    let found: boolean = false;
+    for(let i = 0; i < this.marks.length; i++) {
+      if(this.marks[i] !== null) {
+        found = true;
+        break;
+      }
+    }
 
+    if(found) {
+      const title = "Confirm";
+      const message = "Are you sure you want to delete all marks for this assignment?";
+      this.openYesNoConfirmationDialog(title, message);
+    }
   }
 
   settings() {
@@ -226,6 +244,10 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
     return;
   }
 
+  onMarksUpdated(marks: any[] = []) {
+    this.marks = marks;
+  }
+
   onAssignmentSettings(settings: AssignmentSettingsInfo) {
     this.appService.isLoading$.next(true);
     this.assignmentService.assignmentSettings(settings).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
@@ -242,7 +264,6 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    console.log(this.router.url);
     //this.assignmentService.setSelectedPdfBlob(undefined);
     //this.assignmentService.setAssignmentSettings(undefined);
     //this.assignmentService.setSelectedPdfURL("", "");
@@ -279,6 +300,29 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
     this.rubricContainer.nativeElement.style.margin = "none";
     this.rubricContainer.nativeElement.styleheight = ((this.maxHeight / this.pdfPages)/2)-5 +'px';
     this.pdfContainer.nativeElement.styleheight =  ((this.maxHeight / this.pdfPages)/2)-5 +'px';
+  }
 
+  private openYesNoConfirmationDialog(title: string = "Confirm", message: string) {
+    const config = new MatDialogConfig();
+    config.width = "400px";
+    config.maxWidth = "400px";
+    config.data = {
+      title: title,
+      message: message,
+    };
+
+    const shouldDeleteFn = (shouldDelete: boolean) => {
+      if(shouldDelete) {
+        this.assignmentService.saveRubricMarks(this.assignmentSettings.rubric.name, [], 0).subscribe(() => {
+          this.marks = [];
+          this.appService.openSnackBar(true, "Saved");
+          this.appService.isLoading$.next(false);
+        }, error => {
+          this.appService.openSnackBar(false, "Unable to save marks");
+          this.appService.isLoading$.next(false);
+        })
+      }
+    };
+    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
   }
 }

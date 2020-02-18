@@ -12,7 +12,7 @@
     <span class="pdf-marker-fill-space"></span>
     <form [formGroup]="rubricForm">
       <mat-select formControlName="rubric" placeholder="No rubric">
-        <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{rubric.name}}</mat-option>
+        <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{ (rubric.name) ? rubric?.name:'No Rubric' }}</mat-option>
       </mat-select>
     </form>
     <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon>unarchive</mat-icon></button>

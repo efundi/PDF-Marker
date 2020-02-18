@@ -212,7 +212,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     config.maxWidth = "400px";
     config.data = {
       title: "Confirmation",
-      message: "Changing or attaching a rubric to an assignment will erase previously marked assingment submission, do you wish to continue?",
+      message: "Changing or attaching a rubric to an assignment will erase previously marked assignment submission, do you wish to continue?",
     };
 
     const shouldChangeRubricFn = (shouldChangeRubric: boolean) => {

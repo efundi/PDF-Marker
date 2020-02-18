@@ -17,6 +17,7 @@ export class RubricCriteriaComponent implements OnInit {
   @Output()
   selectedCriteriaLevelIndex: EventEmitter<number> = new EventEmitter<number>();
 
+  @Input()
   selectedCriteriaLevel: number = -1;
 
   constructor() { }

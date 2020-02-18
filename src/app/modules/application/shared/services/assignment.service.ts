@@ -174,6 +174,17 @@ export class AssignmentService {
     return this.http.post("/api/assignment/marks/save", body);
   }
 
+  saveRubricMarks(rubricName: string = "", marks: any[], totalMark: number = 0) {
+    const body = {
+      location: this.selectedPdfLocation,
+      marks: marks,
+      totalMark: totalMark,
+      rubricName: rubricName
+    };
+
+    return this.http.post("/api/assignment/rubric/marks/save", body);
+  }
+
   getSavedMarks() {
     const body = {
       location: this.selectedPdfLocation
