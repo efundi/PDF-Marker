@@ -344,7 +344,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     if(!this.subscription.closed)
       this.subscription.unsubscribe();
 
-    console.log(this.router);
     if(this.router.url.endsWith(RoutesEnum.ASSIGNMENT_UPLOAD))
       this.assignmentService.setSelectedAssignment(null);
   }

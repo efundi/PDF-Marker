@@ -1,4 +1,4 @@
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {FormArray, FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {RxwebValidators} from "@rxweb/reactive-form-validators";
 import {AlertService} from "@coreModule/services/alert.service";
@@ -20,7 +20,7 @@ import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-
   templateUrl: './create-assignment.component.html',
   styleUrls: ['./create-assignment.component.scss']
 })
-export class CreateAssignmentComponent implements OnInit {
+export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   createAssignmentForm: FormGroup;
   private readonly noRubricDefaultValue: boolean = false;
@@ -235,6 +235,7 @@ export class CreateAssignmentComponent implements OnInit {
   onStudentInfoRemove(studentIndex: number) {
     if(this.studentRow.length == 1) {
       this.alertService.error("Your assignment should have at least one entry");
+      this.appService.openSnackBar(false, "Your assignment should have at least one entry");
       this.studentFormGroupAtIndex(0).controls.shouldDelete.setValue(false);
       return;
     }
@@ -248,6 +249,7 @@ export class CreateAssignmentComponent implements OnInit {
     this.alertService.clear();
     if(this.createAssignmentForm.invalid || this.studentRow.invalid) {
       this.alertService.error("Please fill in the correct details!");
+      this.appService.openSnackBar(false, "Please fill in the correct details!");
       return;
     } else if(this.isEdit && this.studentRow.length == 1) {
       this.deletionErrorMessage();
@@ -371,8 +373,14 @@ export class CreateAssignmentComponent implements OnInit {
 
   private deletionErrorMessage(count: number = 1) {
     this.alertService.error("Your assignment should have at least one entry");
+    this.appService.openSnackBar(false, "Your assignment should have at least one entry");
     for(let i = 0; i < count; i++)
       this.studentFormGroupAtIndex(i).controls.shouldDelete.setValue(false);
     return;
+  }
+
+  ngOnDestroy(): void {
+    if(this.assignmentId && this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW)
+      this.assignmentService.setSelectedAssignment(null);
   }
 }
