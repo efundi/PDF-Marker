@@ -85,7 +85,18 @@ export class AssignmentMarkingRubricComponent implements OnInit, OnDestroy {
     this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
       if (pdfPath && this.assignmentService.getAssignmentSettingsInfo().rubric !== null) {
         this.currentPage = 1;
-        this.getAssignmentProgress(true);
+        this.assignmentService.getSavedMarks().subscribe((marks: any[]) => {
+          this.appService.isLoading$.next(false);
+          this.marks = marks;
+          this.getAssignmentProgress(true);
+          this.rubricContainerShow = false;
+          this.pdfContainerShow = false;
+          this.toggleBothContainers();
+        }, error => {
+          this.appService.isLoading$.next(false);
+          this.appService.openSnackBar(false, "Unable to read marks");
+          this.router.navigate([RoutesEnum.MARKER]);
+        });
       }
     });
   }
