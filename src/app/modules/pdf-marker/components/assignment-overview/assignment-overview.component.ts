@@ -18,6 +18,7 @@ import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
 import {FormBuilder, FormGroup} from "@angular/forms";
+import {RubricViewModalComponent} from "@sharedModule/components/rubric-view-modal/rubric-view-modal.component";
 
 export interface AssignmentDetails {
   studentName: string;
@@ -58,9 +59,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   private assignmentSettings: AssignmentSettingsInfo;
   private previouslyEmitted: string;
   isSettings: boolean;
+  isCreated: boolean;
+  isRubric: boolean;
   private selectedRubric: string = null;
   rubrics: IRubricName[] = [];
   rubricForm: FormGroup;
+
+  readonly menuItems = [
+    { title: "Add/remove Student Submissions", icon: "exposure", href: RoutesEnum.ASSIGNMENT_UPLOAD },
+  ];
 
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
@@ -119,12 +126,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   private getAssignmentSettings(assignmentName: string) {
     this.assignmentService.getAssignmentSettings(assignmentName).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
       this.assignmentSettings = assignmentSettings;
+      this.isCreated = this.assignmentSettings.isCreated;
       if(this.assignmentSettings.rubric) {
         this.selectedRubric = this.assignmentSettings.rubric.name;
         this.rubricForm.controls.rubric.setValue(this.assignmentSettings.rubric.name);
+        this.isRubric = true;
       } else {
         this.selectedRubric = null;
         this.rubricForm.controls.rubric.setValue(this.selectedRubric);
+        this.isRubric = false;
       }
       this.getGrades();
     }, error => {
@@ -220,6 +230,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         this.updateAssignmentRubric(rubric);
       } else {
         this.rubricForm.controls.rubric.setValue(this.selectedRubric);
+        this.isRubric = true;
       }
       this.previouslyEmitted = undefined;
     };
@@ -257,6 +268,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     this.openYesNoConfirmationDialog(null, "Are you sure you want to finalise and zip this assignment?");
   }
 
+  private isNullOrUndefined = (object: any): boolean => {
+    return (object === null || object === undefined);
+  };
+
   private openYesNoConfirmationDialog(title: string = "Confirm", message: string) {
     const config = new MatDialogConfig();
     config.width = "400px";
@@ -269,29 +284,55 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     const shouldFinalizeAndExportFn = (shouldFinalizeAndExport: boolean) => {
       if(shouldFinalizeAndExport) {
         this.appService.isLoading$.next(true);
-        this.assignmentService.finalizeAndExport(this.assignmentName).subscribe((events: any) => {
-          if(events.type === HttpEventType.Response) {
-            this.alertService.success("Successfully exported assignment. You can now upload it to " + this.settings.lmsSelection + ".");
-            let zipFileBuffer: Blob = events.body;
-            let blob = new Blob([zipFileBuffer], { type: "application/zip"});
-            this.fileSaverService.save(blob, this.assignmentName + ".zip");
-            this.appService.isLoading$.next(false);
-          }
-        }, (responseError) => {
-          let blob = new Blob([responseError.error], { type: "text/plain"});
-          const reader = new FileReader();
-          reader.addEventListener('loadend', (e) => {
-            try {
-              const error = JSON.parse(reader.result.toString());
-              this.alertService.error(error.message);
-              this.appService.isLoading$.next(false);
-            } catch (e) {
-              this.alertService.error("Unexpected error occurred!");
+        if (!(this.isNullOrUndefined(this.assignmentSettings.rubric))) {
+          this.assignmentService.finalizeAndExportRubric(this.assignmentName, this.assignmentSettings.rubric).subscribe((events: any) => {
+            if(events.type === HttpEventType.Response) {
+              this.alertService.success("Successfully exported assignment. You can now upload it to " + this.settings.lmsSelection + ".");
+              let zipFileBuffer: Blob = events.body;
+              let blob = new Blob([zipFileBuffer], { type: "application/zip"});
+              this.fileSaverService.save(blob, this.assignmentName + ".zip");
               this.appService.isLoading$.next(false);
             }
-          });
-          reader.readAsText(blob);
-        })
+          }, (responseError) => {
+            let blob = new Blob([responseError.error], { type: "text/plain"});
+            const reader = new FileReader();
+            reader.addEventListener('loadend', (e) => {
+              try {
+                const error = JSON.parse(reader.result.toString());
+                this.alertService.error(error.message);
+                this.appService.isLoading$.next(false);
+              } catch (e) {
+                this.alertService.error("Unexpected error occurred!");
+                this.appService.isLoading$.next(false);
+              }
+            });
+            reader.readAsText(blob);
+          })
+        } else {
+          this.assignmentService.finalizeAndExport(this.assignmentName).subscribe((events: any) => {
+            if(events.type === HttpEventType.Response) {
+              this.alertService.success("Successfully exported assignment. You can now upload it to " + this.settings.lmsSelection + ".");
+              let zipFileBuffer: Blob = events.body;
+              let blob = new Blob([zipFileBuffer], { type: "application/zip"});
+              this.fileSaverService.save(blob, this.assignmentName + ".zip");
+              this.appService.isLoading$.next(false);
+            }
+          }, (responseError) => {
+            let blob = new Blob([responseError.error], { type: "text/plain"});
+            const reader = new FileReader();
+            reader.addEventListener('loadend', (e) => {
+              try {
+                const error = JSON.parse(reader.result.toString());
+                this.alertService.error(error.message);
+                this.appService.isLoading$.next(false);
+              } catch (e) {
+                this.alertService.error("Unexpected error occurred!");
+                this.appService.isLoading$.next(false);
+              }
+            });
+            reader.readAsText(blob);
+          })
+        }
       }
     };
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldFinalizeAndExportFn);
@@ -306,5 +347,32 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     console.log(this.router);
     if(this.router.url.endsWith(RoutesEnum.ASSIGNMENT_UPLOAD))
       this.assignmentService.setSelectedAssignment(null);
+  }
+
+  viewRubric() {
+    if (this.selectedRubric != null) {
+      console.log("Open Rubric name = " + this.selectedRubric);
+      let data = {rubricName: this.selectedRubric};
+      //console.log(data);
+      this.importService.getRubricContents(data).subscribe((rubric: IRubric) => {
+        this.openRubricModalDialog(rubric);
+        this.appService.isLoading$.next(false);
+        this.appService.openSnackBar(true, "Rubric View Opened");
+      }, error => {
+        this.appService.openSnackBar(false, "Rubric View Failed");
+        this.appService.isLoading$.next(false)
+      });
+    }
+  }
+  private openRubricModalDialog(rubric: IRubric) {
+    const config = new MatDialogConfig();
+    config.disableClose = false;
+    config.width = "1500px";
+    config.height = "750px";
+    config.data = {
+      rubric: rubric
+    };
+
+    this.appService.createDialog(RubricViewModalComponent, config);
   }
 }

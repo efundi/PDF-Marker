@@ -33,7 +33,8 @@ export class RubricImportComponent implements OnInit {
   constructor(private fb: FormBuilder,
               private alertService: AlertService,
               private appService: AppService,
-              private importService: ImportService) { }
+              private importService: ImportService) {
+  }
 
   ngOnInit() {
     this.appService.isLoading$.next(true);
@@ -62,12 +63,12 @@ export class RubricImportComponent implements OnInit {
   async onFileChange(event) {
     this.alertService.clear();
     this.resetPreviousUpload();
-    if(event.target.files[0] === undefined || event.target.files[0] === null) {
+    if (event.target.files[0] === undefined || event.target.files[0] === null) {
       this.fc.rubricFile.setValue(null);
       this.fc.rubricFileText.setValue(null);
     } else {
       const file: File = await event.target.files[0];
-      if(file && file.type === MimeTypesEnum.JSON) {
+      if (file && file.type === MimeTypesEnum.JSON) {
 
         const reader = new FileReader();
 
@@ -76,16 +77,16 @@ export class RubricImportComponent implements OnInit {
           try {
             const json: IRubric = JSON.parse(reader.result.toString()) as IRubric;
 
-            if(Mapping.isTypeOf(json, Rubric)) {
+            if (Mapping.isTypeOf(json, Rubric)) {
               let isError: boolean = false;
-              for(let i = 0; i < json.criterias.length; i++) {
-                if(!Mapping.isTypeOf(json.criterias[i], RubricCriteria) || !Mapping.isCollectionTypeOf(json.criterias[i].levels, RubricCriteriaLevels)) {
-                  isError  = true;
+              for (let i = 0; i < json.criterias.length; i++) {
+                if (!Mapping.isTypeOf(json.criterias[i], RubricCriteria) || !Mapping.isCollectionTypeOf(json.criterias[i].levels, RubricCriteriaLevels)) {
+                  isError = true;
                   break;
                 }
               }
 
-              if(!isError) {
+              if (!isError) {
                 this.fc.rubricFile.setErrors(null);
                 this.fc.rubricFileText.setValue(file.name);
                 this.fc.rubricName.setValue(this.getRubricNameFromFilename(file.name));
@@ -124,10 +125,10 @@ export class RubricImportComponent implements OnInit {
   }
 
   deleteRubric(rubricName: string) {
-    let data  = { rubricName: rubricName};
+    let data = {rubricName: rubricName};
     this.appService.isLoading$.next(true);
     this.importService.deleteRubricCheck(data).subscribe((isFound: boolean) => {
-      if(isFound) {
+      if (isFound) {
         const config = new MatDialogConfig();
         config.width = "400px";
         config.maxWidth = "400px";
@@ -136,7 +137,7 @@ export class RubricImportComponent implements OnInit {
           message: "This rubric is in use, are your sure you want to delete it?"
         };
         const shouldDeleteFn = (shouldDelete: boolean) => {
-          if(shouldDelete) {
+          if (shouldDelete) {
             this.deleteRubricImpl(rubricName, shouldDelete);
           }
         };
@@ -152,7 +153,7 @@ export class RubricImportComponent implements OnInit {
   }
 
   private deleteRubricImpl(rubricName: string, confirmation: boolean) {
-    let newData = { rubricName: rubricName, confirmation: confirmation };
+    let newData = {rubricName: rubricName, confirmation: confirmation};
     this.importService.deleteRubric(newData).subscribe((rubrics: IRubric[]) => {
       this.populateRubrics(rubrics);
       this.appService.isLoading$.next(false);
@@ -178,7 +179,7 @@ export class RubricImportComponent implements OnInit {
 
   onSubmit(event) {
     this.alertService.clear();
-    if(this.rubricForm.invalid) {
+    if (this.rubricForm.invalid) {
       this.alertService.error("Please fill in the correct details!");
       return;
     }
@@ -207,9 +208,9 @@ export class RubricImportComponent implements OnInit {
   private openRubricModal(rubricName: string) {
 
     //console.log("Open Rubric name = " + rubricName);
-    let data  = { rubricName: rubricName };
+    let data = {rubricName: rubricName};
     //console.log(data);
-    this.importService.getRubricContents(data).subscribe((rubric: IRubric)  => {
+    this.importService.getRubricContents(data).subscribe((rubric: IRubric) => {
       this.openRubricModalDialog(rubric);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, "Rubric View Opened");
@@ -218,6 +219,7 @@ export class RubricImportComponent implements OnInit {
       this.appService.isLoading$.next(false)
     });
   }
+
   private openRubricModalDialog(rubric: IRubric) {
     const config = new MatDialogConfig();
     config.disableClose = false;
@@ -227,6 +229,6 @@ export class RubricImportComponent implements OnInit {
       rubric: rubric
     };
 
-    this.appService.createDialog(RubricViewModalComponent, config);  }
-
+    this.appService.createDialog(RubricViewModalComponent, config);
+  }
 }

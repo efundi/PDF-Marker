@@ -1,7 +1,8 @@
 <ng-container autoscroll="true">
-  <h4>{{rubric?.name}}{{ (isMarkingRubricPage) ? " - " + totalTally:"" }}</h4>
+  <h4>{{rubric?.name}}</h4>
+  <div><p>{{ (isMarkingRubricPage) ?  totalTally +" / " + maxScore :""}} </p></div>
   <table border="1">
     <pdf-marker-rubric-criteria [selectedCriteriaLevel]="getSelectionIndex(criteriaIndex)" [isMarkingRubricPage]="isMarkingRubricPage" *ngFor="let criteria of rubric.criterias; let criteriaIndex = index" [criteria]="criteria" (selectedCriteriaLevelIndex)="selectedCriteria($event, criteriaIndex)"></pdf-marker-rubric-criteria>
   </table>
-  <p>Max Score: {{ maxScore }}</p>
+  <p>{{ (isMarkingRubricPage) ? "" : "Max Score: "+ maxScore }}</p>
 </ng-container>

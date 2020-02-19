@@ -8,6 +8,7 @@
         <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{ (rubric.name) ? rubric?.name:'No Rubric' }}</mat-option>
       </mat-select>
     </form>
+    <button mat-button mat-icon-button matTooltip="View Rubric" (click)="viewRubric()"><mat-icon>visibility</mat-icon></button>
     <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon>unarchive</mat-icon></button>
   </div>
 

@@ -9,6 +9,7 @@ import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {Router} from "@angular/router";
 import {AppService} from "@coreModule/services/app.service";
 import {IRubric} from "@coreModule/utils/rubric.class";
+import {isNullOrUndefined} from "util";
 
 @Injectable({
   providedIn: 'root'
@@ -35,7 +36,7 @@ export class AssignmentService {
     const transferKey: StateKey<string> = makeStateKey<string>('ListAssignments');
     if (isPlatformServer(this.platformId)) {
       this.assignmentList((err, assignmentList) => {
-        if(err) {
+        if (err) {
           console.log("Error ", err);
         } else {
           this.assignments = assignmentList;
@@ -67,8 +68,8 @@ export class AssignmentService {
   }
 
   getAssignmentSettings(assignmentName: string = null): Observable<AssignmentSettingsInfo> {
-    if(!assignmentName)
-      assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0]:"");
+    if (!assignmentName)
+      assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0] : "");
 
     const body = {
       location: assignmentName
@@ -90,21 +91,21 @@ export class AssignmentService {
       'Content-Type': MimeTypesEnum.JSON,
       'Accept': MimeTypesEnum.JSON
     });
-    const body = { location: pdfFileLocation };
+    const body = {location: pdfFileLocation};
     return this.http.post<Blob>("/api/pdf/file", body, {headers, responseType: 'blob' as 'json'});
   }
 
   configure(pdfLocation: string, blobData: Blob) {
     const blob = new Blob([blobData], {type: MimeTypesEnum.PDF});
     const fileUrl = URL.createObjectURL(blob);
-    const assignmentName = ((pdfLocation && pdfLocation.split("/").length > 0) ? pdfLocation.split("/")[0]:"");
+    const assignmentName = ((pdfLocation && pdfLocation.split("/").length > 0) ? pdfLocation.split("/")[0] : "");
     this.getAssignmentSettings(assignmentName).subscribe((assignmentSettingsInfo: AssignmentSettingsInfo) => {
       this.setAssignmentSettings(assignmentSettingsInfo);
       this.setSelectedPdfURL(fileUrl, pdfLocation);
       this.setSelectedPdfBlob(blob);
       if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER && assignmentSettingsInfo.rubric === null)
         this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER]);
-      else if(this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC && assignmentSettingsInfo.rubric !== null)
+      else if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC && assignmentSettingsInfo.rubric !== null)
         this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER_RUBRIC]);
     }, error => {
       this.appService.isLoading$.next(false);
@@ -224,7 +225,7 @@ export class AssignmentService {
       reportProgress: true,
       observe: 'events',
       headers,
-      responseType: 'blob' as 'json'
+      responseType: 'blob' as 'json',
     });
   }
 
@@ -243,5 +244,22 @@ export class AssignmentService {
     };
 
     return this.http.post<IRubric>("/api/assignment/rubric/update", body);
+  }
+
+  finalizeAndExportRubric(assignmentName: string, assignmentRubric: IRubric) {
+    const body = {
+      location: assignmentName,
+      rubricName: assignmentRubric.name
+    };
+    const headers = new HttpHeaders({
+      'Content-Type': MimeTypesEnum.JSON,
+      'Accept': MimeTypesEnum.JSON
+    });
+    return this.http.post<Blob>("/api/assignment/finalize/rubric", body, {
+      reportProgress: true,
+      observe: 'events',
+      headers,
+      responseType: 'blob' as 'json',
+    });
   }
 }

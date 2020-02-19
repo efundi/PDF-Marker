@@ -40,9 +40,12 @@ export class RubricComponent implements OnInit, OnChanges {
 
   getHighestScore(rubric: IRubric) {
     this.rubric.criterias.forEach((value, index) => {
+      let curHighest = -1;
       value.levels.forEach((value1, index1, array) => {
-        this.maxScore = this.maxScore + parseFloat(value1.score.toString());
+        if (value1.score > curHighest)
+          curHighest = value1.score;
       })
+      this.maxScore = this.maxScore + parseFloat(curHighest.toString());
     })
   }
 
