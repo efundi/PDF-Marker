@@ -58,14 +58,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   private assignmentSettings: AssignmentSettingsInfo;
   private previouslyEmitted: string;
   isSettings: boolean;
-  isCreated: boolean;
   private selectedRubric: string = null;
   rubrics: IRubricName[] = [];
   rubricForm: FormGroup;
-
-  readonly menuItems = [
-    { title: "Add/remove Student Submissions", icon: "exposure", href: RoutesEnum.ASSIGNMENT_UPLOAD },
-  ];
 
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
@@ -80,8 +75,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.initForm();
     this.subscription = this.assignmentService.selectedAssignmentChanged().subscribe((selectedAssignment) => {
-      this.hierarchyModel = selectedAssignment;
-      this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0]:'');
+      if(selectedAssignment !== null) {
+        this.hierarchyModel = selectedAssignment;
+        this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '');
+      }
     }, error => {
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(false, "Unable to read selected assignment");
@@ -122,7 +119,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   private getAssignmentSettings(assignmentName: string) {
     this.assignmentService.getAssignmentSettings(assignmentName).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
       this.assignmentSettings = assignmentSettings;
-      this.isCreated = this.assignmentSettings.isCreated;
       if(this.assignmentSettings.rubric) {
         this.selectedRubric = this.assignmentSettings.rubric.name;
         this.rubricForm.controls.rubric.setValue(this.assignmentSettings.rubric.name);
@@ -306,5 +302,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if(!this.subscription.closed)
       this.subscription.unsubscribe();
+
+    console.log(this.router);
+    if(this.router.url.endsWith(RoutesEnum.ASSIGNMENT_UPLOAD))
+      this.assignmentService.setSelectedAssignment(null);
   }
 }

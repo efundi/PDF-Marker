@@ -19,6 +19,8 @@ export class AppService {
 
   public readonly client_id: string = "PDF_MARKER";
 
+  private readonly appName: string = "PDF-MARKER"
+
   constructor(private dialog: MatDialog, private snackBar: MatSnackBar) { }
 
   initializeScrollPosition() {

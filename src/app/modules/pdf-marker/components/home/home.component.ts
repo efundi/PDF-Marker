@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {ActivatedRoute, NavigationEnd, PRIMARY_OUTLET, Router} from "@angular/router";
 import {filter, map} from "rxjs/operators";
@@ -12,6 +12,9 @@ import {RoutesEnum} from "@coreModule/utils/routes.enum";
   providers: [AssignmentService]
 })
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
+  readonly title = 'PDF Marker';
+  isLoading$ = this.appService.isLoading$;
+
   breadcrumbs: any;
   isMarkingPage: boolean;
   routeList: string[] = [];
@@ -20,7 +23,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   content: ElementRef;
   constructor(private router: Router,
               private activatedRoute: ActivatedRoute,
-              private appService: AppService) {
+              private appService: AppService,
+              private cdRef: ChangeDetectorRef) {
   }
 
   ngOnInit() {
@@ -61,6 +65,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.appService.setContainerElement(this.content);
+    //this.cdRef.detectChanges();
   }
 
   ngOnDestroy(): void {
