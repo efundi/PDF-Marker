@@ -1,5 +1,11 @@
 <ng-container>
   <pdf-marker-alert></pdf-marker-alert>
+  <mat-menu #menu="matMenu">
+    <ng-template matMenuContent *ngIf="isCreated">
+      <a [routerLink]="[menuItem.href , assignmentName]" *ngFor="let menuItem of menuItems" mat-menu-item><mat-icon>{{ menuItem.icon }}</mat-icon>{{ menuItem.title }}</a>
+    </ng-template>
+  </mat-menu>
+
   <div class="pdf-marker-assignment-overview-assignment-header">
     <h1 class="pdf-marker-assignment-overview-assignment-name">{{ assignmentName }}</h1>
     <span class="pdf-marker-fill-space"></span>
@@ -8,8 +14,9 @@
         <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{ (rubric.name) ? rubric?.name:'No Rubric' }}</mat-option>
       </mat-select>
     </form>
-    <button mat-button mat-icon-button matTooltip="View Rubric" (click)="viewRubric()"><mat-icon>visibility</mat-icon></button>
     <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon>unarchive</mat-icon></button>
+    &nbsp;&nbsp;
+    <button [disabled]="!isCreated" mat-button mat-icon-button matTooltip="Assignment Settings" [matMenuTriggerFor]="menu"><mat-icon [class.pdf-icon-disabled]="!isCreated">settings</mat-icon></button>
   </div>
 
   <table mat-table [dataSource]="dataSource">

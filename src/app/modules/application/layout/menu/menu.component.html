@@ -2,8 +2,7 @@
   <mat-menu #menu="matMenu">
     <ng-template matMenuContent>
       <ng-container *ngFor="let menuItem of menuItems">
-        <a *ngIf="menuItem.id !== editAssignment" [routerLink]="menuItem.href"  mat-menu-item><mat-icon>{{ menuItem.icon }}</mat-icon>{{ menuItem.title }}</a>
-        <a *ngIf="menuItem.id === editAssignment && isCreated" [routerLink]="[menuItem.href, assignmentName]"  mat-menu-item><mat-icon>{{ menuItem.icon }}</mat-icon>{{ menuItem.title }}</a>
+        <a [routerLink]="menuItem.href"  mat-menu-item><mat-icon>{{ menuItem.icon }}</mat-icon>{{ menuItem.title }}</a>
       </ng-container>
 
     </ng-template>
