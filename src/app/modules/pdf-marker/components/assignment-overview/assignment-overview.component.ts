@@ -66,7 +66,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   rubricForm: FormGroup;
 
   readonly menuItems = [
-    { title: "Add/remove Student Submissions", icon: "exposure", href: RoutesEnum.ASSIGNMENT_UPLOAD },
+    { title: "Add/Remove Submissions", icon: "exposure", href: RoutesEnum.ASSIGNMENT_UPLOAD },
   ];
 
   constructor(private assignmentService: AssignmentService,
@@ -242,6 +242,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     this.appService.isLoading$.next(true);
     this.assignmentService.updateAssignmentRubric(rubricName, this.assignmentName).subscribe((rubric: IRubric) => {
       this.selectedRubric = (rubric) ? rubric.name:null;
+      this.isRubric = !this.isNullOrUndefined(this.selectedRubric);
       this.appService.openSnackBar(true, "Successfully updated rubric");
       this.appService.isLoading$.next(false);
     }, error => {
