@@ -9,6 +9,10 @@
     flex-direction: column;
     width: 200px;
     background: #eee;
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: 1px solid #d3d3d3;
+    margin-left: -1px;
   }
 }
 
@@ -17,7 +21,6 @@
 }
 .rubric-criteria-block-header {
   text-align: center;
-  font-size: 2em;
   font-weight: bold !important;
 }
 

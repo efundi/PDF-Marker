@@ -202,6 +202,10 @@ const isFunction = (functionToCheck) => {
 const isNullOrUndefined = (object: any): boolean => {
   return (object === null || object === undefined);
 };
+
+const isNullOrUndefinedOrEmpty = (object: string): boolean => {
+  return (object === null || object === undefined || object === "");
+};
 /*END HELPER FUNCTIONS*/
 
 const settingsPost = (req, res) => {
@@ -1539,22 +1543,151 @@ app.post("/api/assignment/finalize/rubric", [
   check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], finalizeAssignmentRubric);
 
+
 const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRubric) => {
   const file = readFileSync(filePath);
   let pdfDoc = await PDFDocument.load(file);
   let totalMark = 0;
   let resultsPage = pdfDoc.addPage([841.89,595.28]);
   //841 pixels x 595.28 pixels
-  let y: number =resultsPage.getHeight() - 15;
-  const xPosition: number = 25;
+  let yPosition: number =resultsPage.getHeight() - 15;
+  let xPosition: number = 25;
   const headerSize: number = 14;
-  const textSize: number = 12;
-  const borderColor = {red: 0.71, green: 0.71, blue: 0.71};
+  const criteriaHeaderSize: number = 10;
+  const rubricTextSize: number = 8;
+  const borderColor = {red: 0.21, green: 0.21, blue: 0.21};
+  const rubricCriteriaBackGround = {red: 0.93, green: 0.93, blue: 0.93};
+  const rubricCriteriaLevelBackground = {red: 1.0, green: 1.0, blue: 1.0};
+  const rubricCriteriaLevelBackgroundSelected = {red: 0.93, green: 0.93, blue: 0.93};
+ // console.log(marks.toString());
+  let criteriaColors =  {red: 1.0, green: 1.0, blue: 1.0};
+  let maxScore = 0;
+  rubric.criterias.forEach((value, index) => {
+    let curHighest = -1;
+    let critSelected = marks[index];
+   // console.log(critSelected);
+    value.levels.forEach((value1, index1, array) => {
+      if (critSelected == index1)
+      {
+        totalMark = totalMark + parseFloat(value1.score.toString());
+      }
+      if (value1.score > curHighest)
+        curHighest = value1.score;
+    })
+    maxScore = maxScore + parseFloat(curHighest.toString());
+  })
 
-  resultsPage.drawText(rubric.name.toString(), {x: resultsPage.getWidth()/ 2, y: y, size: headerSize});
-  y = adjustPointsForResults(y);
-  resultsPage.drawText("total Goes here", {x: resultsPage.getWidth()/ 2, y: y, size: headerSize});
+  //841 pixels x 595.28 pixels
+  resultsPage.drawText(rubric.name.toString(), {x: xPosition, y: yPosition, size: headerSize});
+  yPosition = adjustPointsForResults(yPosition, 15); //y = 580
+  resultsPage.drawText("Total Mark: " + totalMark +" / " + maxScore, {x: xPosition, y: yPosition, size: headerSize});
 
+  yPosition = adjustPointsForResults(yPosition, 20); //spacing between header and blocks.
+
+  //Rubric - loop for criterias
+  let criteriaCount = 0;
+  rubric.criterias.forEach((value, criteriaIndex) => {
+    criteriaCount++;
+    yPosition = adjustPointsForResults(yPosition, 130);
+    resultsPage.drawRectangle({x: xPosition, y: yPosition, width: 130, height: 130, borderWidth: 1, color: rgb(rubricCriteriaBackGround.red, rubricCriteriaBackGround.green, rubricCriteriaBackGround.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
+   // console.log("Criteria "+criteriaIndex+" : (x,y) - ("+xPosition+","+yPosition+") "+ rubric.criterias[criteriaIndex].name);
+    resultsPage.drawText(rubric.criterias[criteriaIndex].name, {x: (xPosition+3), y: (yPosition+110), size: rubricTextSize});
+    let critSelected = marks[criteriaIndex];
+    let splitDesc = (rubric.criterias[criteriaIndex].description.split(" "));
+    let criteriaDescriptionX = xPosition + 1;
+    let criteriaDescriptionY = yPosition + 90; // remember + is upwards, - is down, and function minues by default.
+    //Rubric - loop for criteria-Descriptions -- start
+    for (let index = 0; index <= splitDesc.length; index=index +3)
+    {
+      let curString = "";
+      if (!isNullOrUndefinedOrEmpty(splitDesc[index])) {
+        curString = curString + splitDesc[index]+" ";
+      }
+      if (!isNullOrUndefinedOrEmpty(splitDesc[index+1])) {
+        curString = curString + splitDesc[index+1]+" ";
+      }
+      if (!isNullOrUndefinedOrEmpty(splitDesc[index+2])) {
+        curString = curString + splitDesc[index+2]+" ";
+      }
+      resultsPage.drawText(curString, {x: (criteriaDescriptionX+3), y: (criteriaDescriptionY), size: rubricTextSize});
+      criteriaDescriptionY = criteriaDescriptionY - 10;
+    }
+    let criteriaLevelX = xPosition;
+    let criteriaLevelY = yPosition;
+
+    rubric.criterias[criteriaIndex].levels.forEach((level, levelIndex) =>
+    {
+      //check selected here against marks.
+      if ( critSelected == levelIndex) {
+        criteriaColors   = rubricCriteriaLevelBackgroundSelected;
+        critSelected = -1;
+      } else {
+        criteriaColors =  rubricCriteriaLevelBackground;
+      }
+
+      criteriaLevelX = criteriaLevelX + 130;
+      resultsPage.drawRectangle({x: criteriaLevelX, y: criteriaLevelY, width: 130, height: 130, borderWidth: 1, color: rgb(criteriaColors.red, criteriaColors.green, criteriaColors.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
+      resultsPage.drawText(level.label+" - Marks: "+ level.score, {x: (criteriaLevelX+3), y: (criteriaLevelY+120), size: rubricTextSize});
+
+      let splitDesc = (level.description.replace('\n', "").split(" "));
+      //let splitDesc = (level.description.replace('\n', "").split(""));
+      let levelDescriptionX = criteriaLevelX + 1;
+      let levelDescriptionY = criteriaLevelY + 110; // remember + is upwards, - is down, and function minues by default.
+      //Rubric - loop for criteria-Descriptions -- start
+      let lineCount = 0;
+      for (let index = 0; index <= splitDesc.length; index=index+5) {
+        let curString = "";
+        if (!isNullOrUndefinedOrEmpty(splitDesc[index])) {
+          curString = curString + splitDesc[index].replace('\n', "")+" ";
+        }
+        if (!isNullOrUndefinedOrEmpty(splitDesc[index+1])) {
+          curString = curString + splitDesc[index+1].replace('\n', "")+" ";
+        }
+        if (!isNullOrUndefinedOrEmpty(splitDesc[index+2])) {
+          curString = curString + splitDesc[index+2].replace('\n', "")+" ";
+        }
+        if (!isNullOrUndefinedOrEmpty(splitDesc[index+3])) {
+          curString = curString + splitDesc[index+3].replace('\n', "")+" ";
+        }
+        if (curString.length < 42)
+        {
+        if (!isNullOrUndefinedOrEmpty(splitDesc[index+4])) {
+          curString = curString + splitDesc[index+4].replace('\n', "")+" ";
+        } } else {
+          index--;
+        }
+        lineCount++;
+        if (lineCount === 12 && !isNullOrUndefinedOrEmpty(curString)) {
+          curString = curString + "..."
+          index = splitDesc.length+1;
+          lineCount = 0;
+        }
+        resultsPage.drawText(curString, {x: (levelDescriptionX+1), y: (levelDescriptionY), size: rubricTextSize-2});
+        levelDescriptionY = levelDescriptionY - 10;
+      }
+      //Rubric - loop for level descripotion -- end
+    })
+
+  })
+  //check for max pages. Maybe use dimnesnsions rather?
+  if ((criteriaCount === 4) &&  (rubric.criterias.length > criteriaCount)){
+    pdfDoc.save();
+    resultsPage = pdfDoc.addPage([841.89,595.28]);
+    yPosition =resultsPage.getHeight() - 15;
+    xPosition= 25;
+    criteriaCount = 0;
+  }
+//  console.log("Criteria 1 Text: (x,y) - (50,525)");
+  //level test
+ // xPosition = adjustPointsForResults(xPosition, -130);
+  //yPosition = adjustPointsForResults(yPosition, 115); //y = 350
+ // resultsPage.drawRectangle({x: xPosition, y: yPosition+20, width: 130, height: 120, borderWidth: 1, color: rgb(rubricCriteriaLevelBackground.red, rubricCriteriaLevelBackground.green, rubricCriteriaLevelBackground.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
+ // console.log("Level 1 : (x,y) - ("+xPosition+","+yPosition+")");
+
+
+  //criteria test
+  //resultsPage.drawRectangle({x: 25, y: 345.28, width: 100, height: 100, borderWidth: 1, color: rgb(rubricCriteriaBackGround.red, rubricCriteriaBackGround.green, rubricCriteriaBackGround.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
+  //console.log("Criteria 2: (x,y) - (25,345.28)");
   const newPdfBytes = await pdfDoc.save();
   return Promise.resolve({pdfBytes: newPdfBytes, totalMark: totalMark});
 }
@@ -1648,18 +1781,18 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   const borderColor = {red: 0.71, green: 0.71, blue: 0.71};
 
   resultsPage.drawText('Results', {x: resultsPage.getWidth() / 2, y: y, size: headerSize});
-  y = adjustPointsForResults(y);
-  y = adjustPointsForResults(y);
+  y = adjustPointsForResults(y, 15);
+  y = adjustPointsForResults(y, 15);
   resultsPage.drawText('_______________________________________', {
     x: xPosition,
     y: 775,
     color: rgb(borderColor.red, borderColor.green, borderColor.blue),
     size: textSize
   });
-  y = adjustPointsForResults(y);
+  y = adjustPointsForResults(y, 15);
 
   for (let i = 0; i < sectionMarks.length; i++) {
-    y = adjustPointsForResults(y);
+    y = adjustPointsForResults(y, 15);
     resultsPage.drawText(sectionMarks[i] + '', {x: xPosition, y: y, size: textSize});
     resultsPage.drawText('', {x: xPosition, y: y, size: textSize});
 
@@ -1668,25 +1801,25 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
       y = 800;
     }
   }
-  y = adjustPointsForResults(y);
+  y = adjustPointsForResults(y, 15);
   resultsPage.drawText('General Marks = ' + generalMarks, {x: xPosition, y: y, size: textSize});
-  y = adjustPointsForResults(y);
+  y = adjustPointsForResults(y, 15);
   resultsPage.drawText('_______________________________________', {
     x: xPosition,
     y: y,
     color: rgb(borderColor.red, borderColor.green, borderColor.blue),
     size: textSize
   });
-  y = adjustPointsForResults(y);
+  y = adjustPointsForResults(y, 15);
   resultsPage.drawText('', {x: xPosition, y: y, size: textSize});
-  y = adjustPointsForResults(y);
+  y = adjustPointsForResults(y, 15);
   resultsPage.drawText('Total = ' + totalMark, {x: xPosition, y: y, size: textSize});
   const newPdfBytes = await pdfDoc.save();
   return Promise.resolve({pdfBytes: newPdfBytes, totalMark: totalMark});
 };
 
-const adjustPointsForResults = (yCoordinate: number): number => {
-  return yCoordinate - 15;
+const adjustPointsForResults = (coordinate: number, change: number): number => {
+  return coordinate - (change);
 };
 
 const createAssignment = (req, res) => {
