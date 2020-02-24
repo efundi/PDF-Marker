@@ -12,6 +12,13 @@ mat-toolbar {
       font-weight: 800;
     }
 
+    #pdf-marker-version {
+      font-family: 'opensans-light', Helvetica, Roboto, "Helvetica Neue", sans-serif;
+      font-size: 10px;
+      vertical-align: super;
+      font-weight: bolder;
+    }
+
     img {
       width: 140px;
       margin-left: -3px;

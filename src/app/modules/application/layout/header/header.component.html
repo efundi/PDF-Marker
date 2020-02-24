@@ -1,7 +1,7 @@
 <mat-toolbar>
   <span class="pdf-marker-brand">
     <img src="assets/logo.png" alt="">
-    <span class="pdf-marker-title">{{ appName }}</span>
+    <span class="pdf-marker-title">{{ appName }} <span id="pdf-marker-version" *ngIf="appVersion"><span id="pdf-marker-version-prefix">v</span><span id="pdf-marker-version-number">{{ appVersion.version }}</span></span></span>
   </span>
   <span class="pdf-marker-fill-space"></span>
   <pdf-marker-menu></pdf-marker-menu>
