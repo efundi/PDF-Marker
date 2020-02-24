@@ -1,3 +1,5 @@
+$hightlight-color: #d1c9ff;
+
 ul {
   list-style-type: none;
   padding: 0;
@@ -21,7 +23,7 @@ ul {
 }
 
 .file-name-selected {
-  color: #2962ff !important;
+  background-color: $hightlight-color !important;
 }
 
 .file {
@@ -43,10 +45,11 @@ ul {
 .folder-name {
   white-space: nowrap !important;
   color: #444;
+  width: 100%;
 }
 
 .selected-assignment {
-  background: #2b72a1 !important;
+  background: $hightlight-color !important;
   color: #fff !important;
 }
 
@@ -90,12 +93,14 @@ mat-expansion-panel {
   padding: 5px 0;
   display: inline-block;
 
+
   mat-expansion-panel-header {
     padding: 0;
     height: fit-content !important;
 
-    &:hover {
-      background: transparent !important;
+
+    :hover {
+      background: $hightlight-color !important;
     }
 
     .mat-content {
@@ -117,3 +122,9 @@ mat-expansion-panel {
     display: none !important;
   }
 }
+
+.mat-menu-item-highlighted-hover:hover {
+  background-color: #d1c9ff;
+}
+
+

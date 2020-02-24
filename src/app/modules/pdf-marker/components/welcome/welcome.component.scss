@@ -17,3 +17,28 @@
 .boundary::-webkit-scrollbar-thumb {
   background: #888;
 }
+$pdf-marker-primary: #6f327a;
+
+.pdf-marker-icons-svg-class {
+  stroke: $pdf-marker-primary;
+  stroke-width: 0;
+}
+
+.mat-expansion-panel-welcome {
+  width: 100%;
+  background-color: #fff!important;
+  padding: 15px!important;
+}
+
+mat-expansion-panel-header {
+  font-weight: 500;
+}
+
+
+.pdf-spacer {
+  margin: 10px 0 10px 0
+}
+
+tr {
+  padding: 3px;
+}

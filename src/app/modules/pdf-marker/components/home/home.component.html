@@ -12,11 +12,13 @@
         mat-icon-button (click)="drawer.toggle()">
         <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
       </button>
+      <!--
       <div class="pdf-marker-breadcrumbs">
         <span *ngFor="let route of routeList; let last = last">
           <span class="pdf-marker-route" *ngIf="route !== ''">{{ route }}<span *ngIf="!last">&nbsp;<mat-icon>arrow_right</mat-icon>&nbsp;</span></span>
         </span>
       </div>
+      -->
     </mat-toolbar>
     <div class="pdf-marker-content-container">
       <router-outlet></router-outlet>
