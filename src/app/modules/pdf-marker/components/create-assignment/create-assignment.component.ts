@@ -47,6 +47,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private assignmentSettings: AssignmentSettingsInfo;
 
+  private readonly studentDetails:any[] = [];
+
   constructor(private fb: FormBuilder,
               private alertService: AlertService,
               private assignmentService: AssignmentService,
@@ -166,7 +168,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private newFormGroupRowFromData(data: AssignmentDetails): FormGroup {
     const studentNameSplit = data.studentName.split(",");
-
+    this.populateSavedState(data);
     return this.fb.group({
       studentId: [data.studentNumber, [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
       studentName:[(studentNameSplit.length == 2) ? studentNameSplit[1].trim():"N/A", Validators.required],
@@ -176,6 +178,20 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       readonly: [true],
       shouldDelete: [false]
     });
+  }
+
+  private populateSavedState(data: AssignmentDetails) {
+    const studentNameSplit = data.studentName.split(",");
+
+    const studentDetails = {
+      studentId: data.studentNumber,
+      studentName: (studentNameSplit.length == 2) ? studentNameSplit[1].trim():"N/A",
+      studentSurname: (studentNameSplit.length == 2) ? studentNameSplit[0].trim():"N/A",
+      studentSubmission: data.assignment,
+      shouldDelete: false
+    };
+
+    this.studentDetails.push(studentDetails);
   }
 
   addNewRow() {
@@ -240,6 +256,17 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       return;
     }
 
+    let selectedStudentId: string = this.studentFormGroupAtIndex(studentIndex).controls.studentId.value;
+    console.log("Selected Student Id = " + selectedStudentId);
+    let found: boolean = false;
+    for(let i = 0; i < this.studentDetails.length; i++) {
+      if(selectedStudentId === this.studentDetails[i].studentId) {
+        this.studentDetails[i].shouldDelete = true;
+        found = true;
+        break;
+      }
+    }
+    console.log(this.studentDetails);
     this.studentRow.controls.splice(studentIndex, 1);
     this.studentFiles.splice(studentIndex, 1);
     this.studentRow.updateValueAndValidity();
@@ -251,9 +278,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.alertService.error("Please fill in the correct details!");
       this.appService.openSnackBar(false, "Please fill in the correct details!");
       return;
-    } else if(this.isEdit && this.studentRow.length == 1) {
-      this.deletionErrorMessage();
-      return;
     }
 
     if(this.isEdit)
@@ -264,27 +288,43 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private onEdit() {
     const formValue: any = this.createAssignmentForm.value;
+    const savedState: any[] = this.studentDetails;
     let formData: FormData = new FormData();
     const studentData: any= [];
-    let count = 0;
+    let savedCount = 0;
     let foundItemsToDelete: boolean = false;
     let foundItemsCount = 0;
 
+    savedState.forEach((studentDetail: any) => {
+      let student: any = {};
+      student.studentId = studentDetail.studentId.trim();
+      student.studentName = studentDetail.studentName.trim();
+      student.studentSurname = studentDetail.studentSurname.trim();
+      if(studentDetail.shouldDelete) {
+        student.remove = true;
+        foundItemsToDelete = true;
+        foundItemsCount++;
+        formData.append('file' + savedCount, new File([""], studentDetail.studentSubmission));
+      } else {
+        formData.append('file' + savedCount, this.studentFiles[savedCount]);
+      }
+      studentData.push(student);
+      savedCount++;
+    });
+
+    let count = 0;
     formValue.studentRow.map((studentRow: any) => {
       let student: any = {};
       student.studentId = studentRow.studentId.trim();
       student.studentName = studentRow.studentName.trim();
       student.studentSurname = studentRow.studentSurname.trim();
-      if(this.isEdit && studentRow.shouldDelete) {
-        student.remove = true;
-        foundItemsToDelete = true;
-        foundItemsCount++;
-      }
-      formData.append('file' + count, this.studentFiles[count]);
+      formData.append('file' + savedCount++, this.studentFiles[count]);
       studentData.push(student);
       count++;
     });
 
+    console.log(foundItemsCount + " === " + studentData.length);
+    console.log(JSON.stringify(studentData));
     if(foundItemsCount == studentData.length) {
       this.deletionErrorMessage(foundItemsCount);
       return;

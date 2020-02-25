@@ -53,14 +53,14 @@
               <div class="pdf-marker-file-upload" [class.pdf-marker-file-upload-error]="(studentInfo.get('studentSubmission')?.errors && studentInfo.get('studentSubmission')?.touched && studentInfo.get('studentSubmission')?.dirty)">
                 <button type="button" [disabled]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value" mat-raised-button>Browse<input formControlName="studentSubmission" [class.button-visibility]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value" type="file" class="pdf-marker-upload" [accept]="MimeTypesEnum.PDF" required (change)="onFileChange(studentIndex, $event)"></button>
                 &nbsp;&nbsp;
-                <input type="text" formControlName="studentSubmissionText" id="pdf-marker-upload-display" readonly placeholder="Choose PDF File">
+                <input type="text" formControlName="studentSubmissionText" class="pdf-marker-upload-display" readonly placeholder="Choose PDF File">
               </div>
               <span class="pdf-marker-create-assignment-tooltip-error" *ngIf="studentInfo.get('studentSubmission')?.errors?.file">must be a PDF file!</span>
             </td>
             <td>
-              <mat-checkbox [class.button-visibility]="!isEdit" [disabled]="!studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value || (studentRow.length) === 1" formControlName="shouldDelete" color="primary">Delete</mat-checkbox>
+              <!--<mat-checkbox [class.button-visibility]="!isEdit" [disabled]="!studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value || (studentRow.length) === 1" formControlName="shouldDelete" color="primary">Delete</mat-checkbox>-->
               <button [disabled]="studentFormGroupAtIndex(studentIndex).invalid || (studentRow.length) - 1 !== studentIndex" [class.pdf-marker-create-assignment-disabled]="studentFormGroupAtIndex(studentIndex).invalid || (studentRow.length) - 1 !== studentIndex" type="button" matTooltip="Add" mat-button mat-icon-button (click)="addNewRow()"><mat-icon [class.pdf-marker-create-assignment-add]="(studentRow.length) - 1 === studentIndex && !studentFormGroupAtIndex(studentIndex).invalid" [class.pdf-icon-disabled]="(studentRow.length) - 1 !== studentIndex || studentFormGroupAtIndex(studentIndex)">add_circle</mat-icon></button>
-              <button [disabled]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value || studentRow.length == 1" [class.pdf-marker-create-assignment-disabled]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value || studentRow.length == 1" type="button" matTooltip="Remove" mat-button mat-icon-button (click)="onStudentInfoRemove(studentIndex)"><mat-icon [class.pdf-marker-create-assignment-remove]="!(studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value || studentRow.length == 1)" [class.pdf-icon-disabled]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value || studentRow.length == 1">remove_circle</mat-icon></button>
+              <button [disabled]="studentRow.length == 1" [class.pdf-marker-create-assignment-disabled]="studentRow.length == 1" type="button" matTooltip="Remove" mat-button mat-icon-button (click)="onStudentInfoRemove(studentIndex)"><mat-icon [class.pdf-marker-create-assignment-remove]="!(studentRow.length == 1)" [class.pdf-icon-disabled]="studentRow.length == 1">remove_circle</mat-icon></button>
             </td>
           </tr>
         </tbody>
