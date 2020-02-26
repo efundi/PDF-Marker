@@ -66,7 +66,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   rubricForm: FormGroup;
 
   readonly menuItems = [
-    { title: "Add/Remove Submissions", icon: "person", href: RoutesEnum.ASSIGNMENT_UPLOAD },
+    { title: "Add/Remove Submissions", icon: "exposure", href: RoutesEnum.ASSIGNMENT_UPLOAD },
   ];
 
   constructor(private assignmentService: AssignmentService,

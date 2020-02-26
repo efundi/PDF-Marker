@@ -1,9 +1,7 @@
 <h4>Welcome to PDF Marker.</h4>
 <p>The on screen pdf marking application.</p>
-<mat-expansion-panel class="mat-expansion-panel-welcome">
-  <mat-expansion-panel-header>
+<div>
     <mat-panel-title>Application Icons and Tools</mat-panel-title>
-  </mat-expansion-panel-header>
 <table>
   <tr>
     <td><mat-icon>archive</mat-icon></td>
@@ -17,8 +15,9 @@
     <td><mat-icon>settings</mat-icon></td>
     <td>Application Settings and Rubric Settings.</td>
   </tr>
+
 </table>
-</mat-expansion-panel>
+</div>
 
 <div class="pdf-spacer" style="border: 1px solid #F5F5F5"></div>
 
@@ -29,26 +28,30 @@
   <p>Access the assignment overview by clicking on the assignment name.</p>
   <table>
     <tr>
-      <td><mat-icon>visibility</mat-icon></td>
-      <td>View selected rubric.</td>
-    </tr>
-    <tr>
-      <td><mat-icon>delete</mat-icon></td>
-      <td>Delete single item.</td>
+      <td><mat-icon>apps</mat-icon></td>
+      <td>View and change selected rubric.</td>
     </tr>
     <tr>
       <td><mat-icon>unarchive</mat-icon></td>
-      <td>Finalize marking and zip up assignment for uploading to LMS.</td>
+      <td>Finalize and export assignment to zip.</td>
+    </tr>
+    <tr>
+      <td><mat-icon>person</mat-icon></td>
+      <td>Add or remove students from a PDF Marker created assignment.</td>
     </tr>
   </table>
 </mat-expansion-panel>
-
 <div class="pdf-spacer" style="border: 1px solid #F5F5F5"></div>
-
 <mat-expansion-panel class="mat-expansion-panel-welcome">
   <mat-expansion-panel-header>
     <mat-panel-title>Marking Icons and Tools</mat-panel-title>
   </mat-expansion-panel-header>
+  <div class="pdf-spacer" style="border: 1px solid #F5F5F5"></div>
+  <p>
+    Assessors can either mark with a rubric or with a set of marking tools as listed below.
+    Rubrics are enabled when you import or create an assignment
+  </p>
+  <div class="pdf-spacer" style="border: 1px solid #F5F5F5"></div>
 <table>
   <tr>
     <td><mat-icon>check</mat-icon></td>

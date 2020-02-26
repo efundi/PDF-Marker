@@ -115,10 +115,6 @@ try {
     logger.error(err);
   });
 
-  ipcMain.on('get_app_version', (event) => {
-    event.sender.send('on_get_app_version', { version: app.getVersion() });
-  });
-
 } catch (e) {
   // Catch Error
   // throw e;

@@ -4,8 +4,6 @@ import {ActivatedRoute, NavigationEnd, PRIMARY_OUTLET, Router} from "@angular/ro
 import {filter, map} from "rxjs/operators";
 import {AppService} from "@coreModule/services/app.service";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
-import {ElectronService} from "@coreModule/services/electron.service";
-import {AppVersionInfo} from "@coreModule/info-objects/app-version.info";
 
 @Component({
   selector: 'pdf-marker-home',
@@ -15,7 +13,6 @@ import {AppVersionInfo} from "@coreModule/info-objects/app-version.info";
 })
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly title = 'PDF Marker';
-  version: AppVersionInfo;
   isLoading$ = this.appService.isLoading$;
 
   breadcrumbs: any;
@@ -27,15 +24,10 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(private router: Router,
               private activatedRoute: ActivatedRoute,
               private appService: AppService,
-              private electronService: ElectronService,
               private cdRef: ChangeDetectorRef) {
   }
 
   ngOnInit() {
-    this.electronService.getAppVersionObservable().subscribe((appVersionInfo: AppVersionInfo) => {
-      console.log(appVersionInfo);
-      this.version = appVersionInfo;
-    });
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .pipe(map(() => this.activatedRoute))
