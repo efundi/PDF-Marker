@@ -1,4 +1,4 @@
-$hightlight-color: #d1c9ff;
+$hightlight-color: #DDDDDD;
 
 ul {
   list-style-type: none;
@@ -18,12 +18,13 @@ ul {
 }*/
 
 .folder {
-  color: #F7D775 !important;
+  color: #888888 !important;
   vertical-align: bottom;
 }
 
 .file-name-selected {
   background-color: $hightlight-color !important;
+  width:100%;
 }
 
 .file {

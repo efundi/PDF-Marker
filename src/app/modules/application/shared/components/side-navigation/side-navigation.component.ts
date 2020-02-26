@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {AppService} from "@coreModule/services/app.service";
+import {RoutesEnum} from "@coreModule/utils/routes.enum";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'pdf-marker-side-navigation',
@@ -10,7 +12,8 @@ import {AppService} from "@coreModule/services/app.service";
 export class SideNavigationComponent implements OnInit {
 
   constructor(private assignmentService: AssignmentService,
-              private appService: AppService) { }
+              private appService: AppService,
+              private router: Router,) { }
 
   ngOnInit() {
   }
@@ -27,4 +30,7 @@ export class SideNavigationComponent implements OnInit {
     });
   }
 
+  goHome() {
+    this.router.navigate([RoutesEnum.MARKER]);
+  }
 }

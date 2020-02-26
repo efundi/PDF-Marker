@@ -1617,7 +1617,7 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
   })
 
   //841 pixels x 595.28 pixels
-  resultsPage.drawText(rubric.name.toString(), {x: xPosition, y: yPosition, size: headerSize});
+  resultsPage.drawText("Results", {x: xPosition, y: yPosition, size: headerSize});
   yPosition = adjustPointsForResults(yPosition, 15); //y = 580
   resultsPage.drawText("Total Mark: " + totalMark +" / " + maxScore, {x: xPosition, y: yPosition, size: headerSize});
 
@@ -1628,7 +1628,7 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
   rubric.criterias.forEach((value, criteriaIndex) => {
     criteriaCount++;
     yPosition = adjustPointsForResults(yPosition, 130);
-    resultsPage.drawRectangle({x: xPosition, y: yPosition, width: 130, height: 130, borderWidth: 1, color: rgb(rubricCriteriaBackGround.red, rubricCriteriaBackGround.green, rubricCriteriaBackGround.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
+    resultsPage.drawRectangle({x: xPosition, y: yPosition, width: 130, height: 130, borderWidth: 1, color: rgb(rubricCriteriaLevelBackground.red, rubricCriteriaLevelBackground.green, rubricCriteriaLevelBackground.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
    // console.log("Criteria "+criteriaIndex+" : (x,y) - ("+xPosition+","+yPosition+") "+ rubric.criterias[criteriaIndex].name);
     resultsPage.drawText(rubric.criterias[criteriaIndex].name, {x: (xPosition+3), y: (yPosition+110), size: rubricTextSize});
     let critSelected = marks[criteriaIndex];
