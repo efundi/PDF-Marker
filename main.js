@@ -100,6 +100,9 @@ try {
         logger.error('AutoUpdater error');
         logger.error(err);
     });
+    electron_1.ipcMain.on('get_app_version', function (event) {
+        event.sender.send('on_get_app_version', { version: electron_1.app.getVersion() });
+    });
 }
 catch (e) {
     // Catch Error

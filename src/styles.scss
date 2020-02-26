@@ -75,7 +75,7 @@ ng2-pdfjs-viewer {
 }
 
 pdf-marker-header {
-  height: 10% !important;
+  /*height: 10% !important;*/
   display: block;
 }
 
@@ -189,8 +189,6 @@ button {
   mat-toolbar {
     font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
   }
-
-
 }
 
 .mat-expansion-panel {

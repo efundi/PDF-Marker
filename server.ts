@@ -377,6 +377,8 @@ const zipFileUploadCallback = (req, res, data, err) => {
                   return sendResponse(req, res, 200, EXTRACTED_ZIP);
                 });
             }).catch((error) => {
+              if(existsSync(config.defaultPath + sep + newFolder))
+                deleteFolderRecursive(config.defaultPath + sep + newFolder);
               return sendResponse(req, res, 501, error.message);
             });
           } else {
@@ -393,6 +395,8 @@ const zipFileUploadCallback = (req, res, data, err) => {
                   return sendResponse(req, res, 200, EXTRACTED_ZIP);
                 });
             }).catch((error) => {
+              if(existsSync(config.defaultPath + sep + oldPath))
+                deleteFolderRecursive(config.defaultPath + sep + oldPath);
               return sendResponse(req, res, 501, error.message);
             });
           }
@@ -802,7 +806,42 @@ const assignmentRubricUpdateFn = (req, res) => {
 
               return writeToFile(req, res, config.defaultPath + sep + assignmentName + sep + SETTING_FILE,
                 JSON.stringify(assignmentSettingsInfo), null, null, () => {
-                  return sendResponseData(req, res, 200, assignmentSettingsInfo.rubric);
+
+                  //return sendResponseData(req, res, 200, assignmentSettingsInfo.rubric);
+                  return checkAccess(req, res, config.defaultPath + sep + assignmentName + sep + GRADES_FILE, () => {
+                    return csvtojson().fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
+                      .then((gradesJSON) => {
+                        let changed = false;
+                        let assignmentHeader;
+                        for (let i = 0; i < gradesJSON.length; i++) {
+                          if (i == 0) {
+                            const keys = Object.keys(gradesJSON[i]);
+                            if (keys.length > 0)
+                              assignmentHeader = keys[0];
+                          } else if (!isNullOrUndefined(assignmentHeader)) {
+                            gradesJSON[i].field5 = 0;
+                            changed = true;
+                            json2csv(gradesJSON, (err, csv) => {
+                              if (err)
+                                return sendResponse(req, res, 400, "Failed to convert json to csv!");
+
+                              return writeToFile(req, res, config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csv, "Successfully saved marks!", "Failed to save marks to " + GRADES_FILE + " file!", () => {
+                                return sendResponseData(req, res, 200, assignmentSettingsInfo.rubric);
+                              });
+                            }, {emptyFieldValue: ''});
+                            break;
+                          }
+                        }
+
+                        if (changed) {
+                          // more logic to save new JSON to CSV
+                        } else
+                          return sendResponse(req, res, 400, "Failed to save mark");
+                      })
+                      .catch(reason => {
+                        return sendResponse(req, res, 400, reason);
+                      })
+                  });
                 });
             });
           } catch (e) {
