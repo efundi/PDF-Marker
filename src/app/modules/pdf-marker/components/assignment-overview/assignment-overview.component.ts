@@ -65,10 +65,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   rubrics: IRubricName[] = [];
   rubricForm: FormGroup;
 
-  readonly menuItems = [
-    { title: "Add/Remove Submissions", icon: "person", href: RoutesEnum.ASSIGNMENT_UPLOAD },
-  ];
-
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
               private router: Router,
@@ -339,14 +335,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldFinalizeAndExportFn);
   }
 
-
-
-  ngOnDestroy(): void {
-    if(!this.subscription.closed)
-      this.subscription.unsubscribe();
-
-    if(this.router.url.endsWith(RoutesEnum.ASSIGNMENT_UPLOAD))
-      this.assignmentService.setSelectedAssignment(null);
+  manageStudents() {
+    this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD, this.assignmentName]);
   }
 
   viewRubric() {
@@ -374,5 +364,13 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     };
 
     this.appService.createDialog(RubricViewModalComponent, config);
+  }
+
+  ngOnDestroy(): void {
+    if(!this.subscription.closed)
+      this.subscription.unsubscribe();
+
+    if(this.router.url.endsWith(RoutesEnum.ASSIGNMENT_UPLOAD))
+      this.assignmentService.setSelectedAssignment(null);
   }
 }

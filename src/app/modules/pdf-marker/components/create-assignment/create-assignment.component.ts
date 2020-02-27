@@ -34,6 +34,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   isEdit: boolean = false;
 
+  title: string = "Upload PDF Files";
+
   readonly MimeTypesEnum = MimeTypesEnum;
 
   readonly regEx = /(.*)\((.+)\)/;
@@ -47,7 +49,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private assignmentSettings: AssignmentSettingsInfo;
 
-  private readonly studentDetails:any[] = [];
+  private studentDetails:any[] = [];
 
   constructor(private fb: FormBuilder,
               private alertService: AlertService,
@@ -63,6 +65,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     this.activatedRoute.params.subscribe(params => {
       let id = params['id'];
       if(id && !!this.assignmentService.getSelectedAssignment()) {
+        this.title = "Manage Students";
         const fields = ["assignmentName", "noRubric", "rubric"];
         this.assignmentId = id;
         this.isEdit = true;
@@ -130,7 +133,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.studentFiles.push(new File([""], studentDetails[i].assignment));
       //this.disableFields(studentFormGroup, fields);
     }
-    this.addNewRow();
+    //this.addNewRow();
   }
 
   private disableField(formGroup: FormGroup, fieldName: string) {
@@ -259,17 +262,43 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     let selectedStudentId: string = this.studentFormGroupAtIndex(studentIndex).controls.studentId.value;
     console.log("Selected Student Id = " + selectedStudentId);
     let found: boolean = false;
+    let foundIndex: number;
     for(let i = 0; i < this.studentDetails.length; i++) {
       if(selectedStudentId === this.studentDetails[i].studentId) {
-        this.studentDetails[i].shouldDelete = true;
+        foundIndex = i;
+        //this.studentDetails[i].shouldDelete = true;
         found = true;
         break;
       }
     }
-    console.log(this.studentDetails);
-    this.studentRow.controls.splice(studentIndex, 1);
-    this.studentFiles.splice(studentIndex, 1);
-    this.studentRow.updateValueAndValidity();
+
+    if(found) {
+      const config = new MatDialogConfig();
+      config.width = "400px";
+      config.maxWidth = "400px";
+      config.data = {
+        title: "Confirmation",
+        message: "This record was previously saved, are you sure you want to continue?"
+      };
+
+      const shouldContinueFn = (shouldContinue: boolean) => {
+        if(shouldContinue) {
+          console.log(this.studentDetails);
+          this.studentDetails[foundIndex].shouldDelete = true;
+          this.studentRow.controls.splice(studentIndex, 1);
+          this.studentFiles.splice(studentIndex, 1);
+          this.studentRow.updateValueAndValidity();
+        } else {
+          return;
+        }
+      };
+
+      this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldContinueFn);
+    } else {
+      this.studentRow.controls.splice(studentIndex, 1);
+      this.studentFiles.splice(studentIndex, 1);
+      this.studentRow.updateValueAndValidity();
+    }
   }
 
   onSubmit(event) {
@@ -334,7 +363,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     formData.append('isEdit', 'true');
     formData.append('assignmentName', this.assignmentId);
 
-    if(foundItemsToDelete) {
+    this.performUpdate(formData);
+    /*if(foundItemsToDelete) {
       const config = new MatDialogConfig();
       config.width = "400px";
       config.maxWidth = "400px";
@@ -345,16 +375,17 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
       const shouldContinueFn = (shouldContinue: boolean) => {
         if(shouldContinue) {
-          this.performUpdate(formData);
+
         } else {
           return;
         }
       };
       // Create Dialog
+      this.performUpdate(formData);
       this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldContinueFn);
     } else {
       this.performUpdate(formData);
-    }
+    }*/
   }
 
   private onCreate() {
@@ -402,6 +433,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   private performUpdate(formData: FormData) {
     this.assignmentService.updateAssignment(formData).subscribe(model => {
       this.assignmentService.getAssignments().subscribe((assignments) => {
+        this.isEdit = false;
         this.assignmentService.setSelectedAssignment(model);
         this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]).then(() => this.assignmentService.update(assignments));
         this.appService.isLoading$.next(false);
@@ -417,6 +449,21 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     for(let i = 0; i < count; i++)
       this.studentFormGroupAtIndex(i).controls.shouldDelete.setValue(false);
     return;
+  }
+
+  hasUnsavedChanges() {
+    if(this.isEdit) {
+      let found: boolean = false;
+      for (let i = 0; i < this.studentDetails.length; i++) {
+        if (this.studentDetails[i].shouldDelete) {
+          found = true;
+          break;
+        }
+      }
+
+      return found || this.studentRow.length > this.studentDetails.length;
+    }
+    return false;
   }
 
   ngOnDestroy(): void {
