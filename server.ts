@@ -64,7 +64,7 @@ const GRADES_FILE = 'grades.csv';
 const RUBRICS_FILE = 'rubrics.json';
 const SUBMISSION_FOLDER = 'Submission attachment(s)';
 const FEEDBACK_FOLDER = 'Feedback Attachment(s)';
-const CONFIG_DIR = '.' + sep + 'pdf-config' + sep;
+const CONFIG_DIR = process.env.APPDATA + sep + 'pdf-config' + sep;
 const UPLOADS_DIR = '.' + sep + 'uploads';
 
 /*COMMON MESSAGES*/
