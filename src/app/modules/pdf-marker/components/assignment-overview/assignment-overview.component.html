@@ -12,7 +12,7 @@
     <button [disabled]="!isRubric" mat-button mat-icon-button matTooltip="View Rubric" (click)="viewRubric()"><mat-icon [class.pdf-icon-disabled]="!isRubric">visibility</mat-icon></button>
     <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon>unarchive</mat-icon></button>
     &nbsp;&nbsp;
-    <button [disabled]="!isCreated" mat-button mat-icon-button matTooltip="Manage Students" (click)="manageStudents()"><mat-icon [class.pdf-icon-disabled]="!isCreated">settings</mat-icon></button>
+    <button [disabled]="!isCreated" mat-button mat-icon-button matTooltip="Manage Students" (click)="manageStudents()"><mat-icon [class.pdf-icon-disabled]="!isCreated">person</mat-icon></button>
   </div>
 
   <table mat-table [dataSource]="dataSource">
