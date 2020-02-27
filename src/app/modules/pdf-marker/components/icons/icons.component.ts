@@ -61,15 +61,15 @@ export class IconsComponent implements OnInit, OnChanges {
     { icon: 'comment', type: IconTypeEnum.NUMBER, toolTip: 'Comment and Mark'},
 
   ];
-
-  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
+  constructor(private fb: FormBuilder) {}
+ /** constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
     this.matIconRegistry
       .addSvgIcon("halfTick", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/halftick.svg"))
       .addSvgIcon("layout-expand-left", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-left.svg"))
       .addSvgIcon("layout-expand-right", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-right.svg"))
       .addSvgIcon("layout-default", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-default.svg"));
   }
-
+*/
   ngOnInit() {
     this.initForm();
   }
