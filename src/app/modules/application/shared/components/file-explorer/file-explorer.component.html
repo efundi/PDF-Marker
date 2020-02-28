@@ -6,7 +6,7 @@
       <mat-accordion>
         <mat-expansion-panel style="margin: 0" (opened)="element.value = true;" (closed)="element.value = false;" [expanded]="((first && filePath) ? filePath.startsWith(object):(!first && filePath) ? filePath.startsWith(parent + '/' + object):false)">
           <mat-expansion-panel-header>
-            <span class="file-name-text" class="folder-name file-name-selected-hover"><mat-icon class="folder">{{ (element.value) ? 'keyboard_arrow_down':'keyboard_arrow_right' }}</mat-icon><span (click)="onAssignment(hierarchyModel)"> {{ object }}</span> </span>
+            <span class="file-name-text" class="folder-name file-name-selected-hover"><mat-icon class="folder">{{ (element.value) ? 'keyboard_arrow_down':'keyboard_arrow_right' }}</mat-icon><span (click)="onAssignment(hierarchyModel, $event)"> {{ object }}</span> </span>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <div class="folder-content" [class.hide]="!element.value">

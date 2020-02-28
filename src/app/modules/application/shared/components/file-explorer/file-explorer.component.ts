@@ -57,13 +57,15 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
     }
   }
 
-  onAssignment(hierarchyModel) {
+  onAssignment(hierarchyModel, $event) {
     if(this.first) {
       this.appService.isLoading$.next(true);
       this.assignmentService.setSelectedAssignment(hierarchyModel);
       if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW)
         this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
+      $event.stopImmediatePropagation();
     } else {}
+
   }
 
   scrollToFile() {
