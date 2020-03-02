@@ -1,6 +1,6 @@
 <mat-toolbar>
   <mat-list>
-    <mat-list-item ><a style="text-decoration: none; cursor: pointer;" (click)="goHome()"><mat-icon >home</mat-icon></a></mat-list-item>
+    <mat-list-item ><button mat-button mat-icon-button (click)="goHome()"><mat-icon matTooltip="Home">home</mat-icon></button></mat-list-item>
   </mat-list>
   <div class="pdf-marker-fill-space"></div>
   <button matTooltip="Refresh Assignment List" mat-button mat-icon-button (click)="onRefresh($event)"><mat-icon>refresh</mat-icon></button>
