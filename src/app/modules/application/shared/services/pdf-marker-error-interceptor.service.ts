@@ -4,6 +4,7 @@ import {Observable, throwError} from "rxjs";
 import {AlertService} from "@coreModule/services/alert.service";
 import {catchError} from "rxjs/operators";
 import {AppService} from "@coreModule/services/app.service";
+import { environment } from "../../../../../environments/environment.prod";
 
 @Injectable()
 export class PdfMarkerErrorInterceptorService implements HttpInterceptor {
@@ -19,7 +20,7 @@ export class PdfMarkerErrorInterceptorService implements HttpInterceptor {
         client_id: appService.client_id
       },
       // This is needed for electron.
-      url: (req.url.startsWith("/api")) ? "http://localhost:4200" + req.url:req.url
+      url: (req.url.startsWith(environment.apiPrefix)) ? environment.baseUrl + req.url:req.url
     });
     return next.handle(request).pipe(
       catchError((response: any) => {

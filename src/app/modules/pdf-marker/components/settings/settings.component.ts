@@ -6,7 +6,6 @@ import {AlertService} from "@coreModule/services/alert.service";
 import {ElectronService} from "@coreModule/services/electron.service";
 import {AppWorkingDirectoryInfo} from "@coreModule/info-objects/app-working-directory.info";
 import {AssignmentService} from "@sharedModule/services/assignment.service";
-import {ZipService} from "@coreModule/services/zip.service";
 
 @Component({
   selector: 'pdf-marker-settings',
@@ -25,8 +24,7 @@ export class SettingsComponent implements OnInit {
               private appService: AppService,
               private alertService: AlertService,
               private electronService: ElectronService,
-              private assignmentService: AssignmentService,
-              private zipService: ZipService) {
+              private assignmentService: AssignmentService) {
   }
 
   ngOnInit() {
@@ -70,7 +68,7 @@ export class SettingsComponent implements OnInit {
       this.assignmentService.getAssignments().subscribe(assignments => {
         this.assignmentService.update(assignments);
       });
-      this.alertService.success(response.message);
+      this.appService.openSnackBar(true, response.message);
       this.isLoading$.next(false);
     }, error => {
       this.isLoading$.next(false);
