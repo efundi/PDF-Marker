@@ -108,7 +108,7 @@ export class SakaiService {
     return pathList.indexOf(fileOrDir) == -1;
   }
 
-  getassignmentRootFiles() {
+  getAssignmentRootFiles() {
     return this.assignmentRootFiles;
   }
 }

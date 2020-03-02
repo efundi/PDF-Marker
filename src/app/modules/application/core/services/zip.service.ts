@@ -74,7 +74,7 @@ export class ZipService {
         this.jszip.loadAsync(file)
         .then((zip) => {
           const filePaths = Object.keys(zip.files);
-          const fileNames = this.sakaiService.getassignmentRootFiles();
+          const fileNames = this.sakaiService.getAssignmentRootFiles();
           let count = 0;
           for(let filePath of filePaths) {
             let path = filePath.split("/");
@@ -94,6 +94,17 @@ export class ZipService {
           subscription.complete();
         })
     });
+  }
 
+  isValidAssignmentObject(assignmentHierarchy: object): boolean {
+    const filePaths = Object.keys(assignmentHierarchy);
+    const fileNames = this.sakaiService.getAssignmentRootFiles();
+    let found: boolean = false;
+    for(let filePath of filePaths) {
+      if(fileNames.indexOf(filePath) !== -1)
+        return true;
+    }
+
+    return false;
   }
 }

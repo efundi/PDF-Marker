@@ -9,7 +9,7 @@ import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {Router} from "@angular/router";
 import {AppService} from "@coreModule/services/app.service";
 import {IRubric} from "@coreModule/utils/rubric.class";
-import {isNullOrUndefined} from "util";
+import {ZipService} from "@coreModule/services/zip.service";
 
 @Injectable({
   providedIn: 'root'
@@ -31,7 +31,8 @@ export class AssignmentService {
               @Inject(PLATFORM_ID) private platformId: any,
               private transferState: TransferState,
               private router: Router,
-              private appService: AppService) {
+              private appService: AppService,
+              private zipService: ZipService) {
 
     const transferKey: StateKey<string> = makeStateKey<string>('ListAssignments');
     if (isPlatformServer(this.platformId)) {
@@ -114,7 +115,18 @@ export class AssignmentService {
   }
 
   update(assignments: object[]) {
-    this.assignments = assignments;
+    const assignmentsHierarchy = [];
+    assignments.forEach(folderOrFile => {
+      let folderOrFileKeys = Object.keys(folderOrFile);
+      if(folderOrFileKeys.length > 0) {
+        let assignmentName: string = folderOrFileKeys[0];
+        if(assignmentName) {
+          if (this.zipService.isValidAssignmentObject(folderOrFile[assignmentName]))
+            assignmentsHierarchy.push(folderOrFile);
+        }
+      }
+    });
+    this.assignments = assignmentsHierarchy;
     this.assignmentListSource$.next(this.assignments);
   }
 

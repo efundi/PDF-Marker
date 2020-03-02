@@ -65,7 +65,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     this.activatedRoute.params.subscribe(params => {
       let id = params['id'];
       if(id && !!this.assignmentService.getSelectedAssignment()) {
-        this.title = "Manage Students";
+        this.title = "Manage Submissions";
         const fields = ["assignmentName", "noRubric", "rubric"];
         this.assignmentId = id;
         this.isEdit = true;
@@ -105,7 +105,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     let values: AssignmentDetails[] = [];
     if(hierarchyModel[this.assignmentId]) {
       Object.keys(hierarchyModel[this.assignmentId]).forEach(key => {
-        if (this.regEx.test(key) && this.sakaiService.getassignmentRootFiles().indexOf(key) === -1) {
+        if (this.regEx.test(key) && this.sakaiService.getAssignmentRootFiles().indexOf(key) === -1) {
           let value: AssignmentDetails = {
             studentName: '',
             studentNumber: '',

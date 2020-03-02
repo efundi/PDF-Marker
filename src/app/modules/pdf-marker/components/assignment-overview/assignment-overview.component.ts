@@ -160,7 +160,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     this.assignmentName = (Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0]:'';
     if(this.hierarchyModel[this.assignmentName]) {
       Object.keys(this.hierarchyModel[this.assignmentName]).forEach(key => {
-        if (this.regEx.test(key) && this.sakaiService.getassignmentRootFiles().indexOf(key) === -1) {
+        if (this.regEx.test(key) && this.sakaiService.getAssignmentRootFiles().indexOf(key) === -1) {
           let value: AssignmentDetails = {
             studentName: '',
             studentNumber: '',

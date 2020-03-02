@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen, ipcMain } from 'electron';
+import { app, BrowserWindow, screen, ipcMain, dialog  } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
@@ -118,6 +118,18 @@ try {
   ipcMain.on('get_app_version', (event) => {
     event.sender.send('on_get_app_version', { version: app.getVersion() });
   });
+
+  ipcMain.on('get_working_directory', (event) => {
+    dialog.showOpenDialog(mainWindow, {
+      title: "Select Working Folder",
+      properties: ["openDirectory", "promptToCreate"]
+    }).then((data) => {
+      if(data.canceled)
+        event.sender.send('on_get_working_directory', { selectedDirectory: null });
+      else
+        event.sender.send('on_get_working_directory', { selectedDirectory: data.filePaths[0] });
+    })
+  })
 
 } catch (e) {
   // Catch Error

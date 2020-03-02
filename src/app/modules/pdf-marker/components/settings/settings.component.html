@@ -4,6 +4,12 @@
     <h1><mat-icon>settings</mat-icon>&nbsp;Settings</h1>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
+    <div class="pdf-marker-file-upload">
+      <button type="button" mat-raised-button (click)="setWorkingDirectory($event)">Browse</button>
+      &nbsp;&nbsp;
+      <input type="text" formControlName="defaultPath" id="pdf-marker-upload-display" readonly placeholder="Workspace">
+    </div>
+    <div class="pdf-spacer"><hr></div>
     <mat-form-field class="settings-halfWidth">
       <mat-label>LMS Selection:</mat-label>
       <mat-select placeholder="Sakai" formControlName="lmsSelection" #lmsSelection id="lmsSelection" required>
@@ -12,11 +18,6 @@
         </mat-option>
       </mat-select>
     </mat-form-field><br>
-    <div class="pdf-spacer"></div>
-    <mat-form-field class="settings-halfWidth">
-      <mat-label>Default Path</mat-label>
-      <input formControlName="defaultPath" type="text" placeholder="C:\documents" matInput required [autocomplete]="false">
-    </mat-form-field>
     <div class="pdf-spacer"></div>
     <div>
       <button type="button" mat-raised-button color="" [disabled]="settingsForm.invalid" (click)="onSubmit($event)">Save</button>

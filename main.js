@@ -103,6 +103,17 @@ try {
     electron_1.ipcMain.on('get_app_version', function (event) {
         event.sender.send('on_get_app_version', { version: electron_1.app.getVersion() });
     });
+    electron_1.ipcMain.on('get_working_directory', function (event) {
+        electron_1.dialog.showOpenDialog(mainWindow, {
+            title: "Select Working Folder",
+            properties: ["openDirectory", "promptToCreate"]
+        }).then(function (data) {
+            if (data.canceled)
+                event.sender.send('on_get_working_directory', { selectedDirectory: null });
+            else
+                event.sender.send('on_get_working_directory', { selectedDirectory: data.filePaths[0] });
+        });
+    });
 }
 catch (e) {
     // Catch Error

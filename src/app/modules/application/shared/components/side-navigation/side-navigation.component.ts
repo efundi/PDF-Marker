@@ -3,6 +3,7 @@ import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {AppService} from "@coreModule/services/app.service";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {Router} from "@angular/router";
+import {ZipService} from "@coreModule/services/zip.service";
 
 @Component({
   selector: 'pdf-marker-side-navigation',
@@ -13,7 +14,8 @@ export class SideNavigationComponent implements OnInit {
 
   constructor(private assignmentService: AssignmentService,
               private appService: AppService,
-              private router: Router,) { }
+              private router: Router,
+              private zipService: ZipService) { }
 
   ngOnInit() {
   }

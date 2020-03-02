@@ -3,6 +3,10 @@ import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {SettingsService} from "@pdfMarkerModule/services/settings.service";
 import {AppService} from "@coreModule/services/app.service";
 import {AlertService} from "@coreModule/services/alert.service";
+import {ElectronService} from "@coreModule/services/electron.service";
+import {AppWorkingDirectoryInfo} from "@coreModule/info-objects/app-working-directory.info";
+import {AssignmentService} from "@sharedModule/services/assignment.service";
+import {ZipService} from "@coreModule/services/zip.service";
 
 @Component({
   selector: 'pdf-marker-settings',
@@ -19,7 +23,10 @@ export class SettingsComponent implements OnInit {
   constructor(private fb: FormBuilder,
               private settingsService: SettingsService,
               private appService: AppService,
-              private  alertService: AlertService) {
+              private alertService: AlertService,
+              private electronService: ElectronService,
+              private assignmentService: AssignmentService,
+              private zipService: ZipService) {
   }
 
   ngOnInit() {
@@ -41,6 +48,14 @@ export class SettingsComponent implements OnInit {
     });
   }
 
+  setWorkingDirectory(event) {
+    this.electronService.getAppWorkingDirectory();
+    this.electronService.getAppWorkingDirectoryOb().subscribe((appWorkingDirectoryInfo: AppWorkingDirectoryInfo) => {
+      if(appWorkingDirectoryInfo && appWorkingDirectoryInfo.selectedDirectory)
+        this.settingsForm.controls.defaultPath.setValue((appWorkingDirectoryInfo.selectedDirectory) ? appWorkingDirectoryInfo.selectedDirectory:null);
+    });
+  }
+
   onSubmit(event) {
     this.alertService.clear();
     if(this.settingsForm.invalid) {
@@ -52,6 +67,9 @@ export class SettingsComponent implements OnInit {
     // Call Service to handle rest calls... also use interceptors
     this.isLoading$.next(true);
     this.settingsService.saveConfigurations(this.settingsForm.value).subscribe((response) => {
+      this.assignmentService.getAssignments().subscribe(assignments => {
+        this.assignmentService.update(assignments);
+      });
       this.alertService.success(response.message);
       this.isLoading$.next(false);
     }, error => {
