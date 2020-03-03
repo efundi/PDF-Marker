@@ -1,5 +1,5 @@
-import { app, BrowserWindow, screen, ipcMain, dialog  } from 'electron';
-import { autoUpdater } from 'electron-updater';
+import {app, BrowserWindow, dialog, ipcMain, screen} from 'electron';
+import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
 
@@ -119,17 +119,32 @@ try {
     event.sender.send('on_get_app_version', { version: app.getVersion() });
   });
 
-  ipcMain.on('get_working_directory', (event) => {
+  ipcMain.on('get_folder', (event) => {
     dialog.showOpenDialog(mainWindow, {
-      title: "Select Working Folder",
+      title: "Select Folder",
       properties: ["openDirectory", "promptToCreate"]
     }).then((data) => {
       if(data.canceled)
-        event.sender.send('on_get_working_directory', { selectedDirectory: null });
+        event.sender.send('on_get_folder', { selectedPath: null });
       else
-        event.sender.send('on_get_working_directory', { selectedDirectory: data.filePaths[0] });
+        event.sender.send('on_get_folder', { selectedPath: data.filePaths[0] });
     })
-  })
+  });
+
+  ipcMain.on('get_file', (event, args) => {
+    dialog.showOpenDialog(mainWindow, {
+      title: "Select File",
+      filters: [
+        { name: args.name, extensions: args.extension }
+      ],
+      properties: ["openFile"]
+    }).then((data) => {
+      if(data.canceled)
+        event.sender.send('on_get_file', { selectedPath: null });
+      else
+        event.sender.send('on_get_file', { selectedPath: data.filePaths[0] });
+    })
+  });
 
 } catch (e) {
   // Catch Error

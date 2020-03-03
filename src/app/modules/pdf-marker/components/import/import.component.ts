@@ -9,7 +9,10 @@ import {AppService} from "../../../application/core/services/app.service";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {HttpEventType} from '@angular/common/http';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
-import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
+import {IRubricName} from "@coreModule/utils/rubric.class";
+import {AppSelectedPathInfo} from "@coreModule/info-objects/app-selected-path.info";
+import {ElectronService} from "@coreModule/services/electron.service";
+import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -46,6 +49,8 @@ export class ImportComponent implements OnInit {
 
   rubrics: IRubricName[];
 
+  private actualFilePath: string;
+
   constructor(private fb: FormBuilder,
               private zipService: ZipService,
               private dialog: MatDialog,
@@ -53,7 +58,8 @@ export class ImportComponent implements OnInit {
               private sakaiService: SakaiService,
               private appService: AppService,
               private importService: ImportService,
-              private assignmentService: AssignmentService) { }
+              private assignmentService: AssignmentService,
+              private electronService: ElectronService) { }
 
   ngOnInit() {
     this.hierarchyModel$.subscribe(value => {
@@ -75,7 +81,9 @@ export class ImportComponent implements OnInit {
           this.isModalOpened = !this.isModalOpened;
         };
 
-        this.appService.createDialog(FileExplorerModalComponent, config, isModalOpenedFn);
+        const reference = this.appService.createDialog(FileExplorerModalComponent, config, isModalOpenedFn);
+        reference.beforeClosed().subscribe(() => {
+        })
       }
     });
 
@@ -93,7 +101,6 @@ export class ImportComponent implements OnInit {
 
   private initForm() {
     this.importForm = this.fb.group({
-      assignmentZipFile: [null, Validators.required],
       assignmentZipFileText: [null],
       assignmentName: [null],
       noRubric: [this.noRubricDefaultValue],
@@ -101,10 +108,36 @@ export class ImportComponent implements OnInit {
     });
   }
 
-  onFileChange(event) {
-    if(event.target.files[0] !== undefined) {
-      this.appService.isLoading$.next(true);
-      this.file = event.target.files[0];
+  async selectFile() {
+    this.electronService.getFile({ name: 'Zip Files', extension: ['zip'] });
+    this.electronService.getFileOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+      this.showLoading(true);
+      if(appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
+        fetch('file:///' + appSelectedPathInfo.selectedPath)
+          .then(response => {
+            response.blob().then(async (blob: Blob) => {
+              const pathSplit = appSelectedPathInfo.selectedPath.split("\\");
+              this.file = await new File([blob], pathSplit[pathSplit.length - 1], { type: MimeTypesEnum.ZIP });
+              this.actualFilePath = appSelectedPathInfo.selectedPath;
+              this.onFileChange();
+            }).catch(error => {
+              this.showErrorMessage(error);
+              this.showLoading(false);
+            })
+          })
+          .catch(error => {
+            this.showErrorMessage(error);
+            this.showLoading(false);
+          });
+      } else {
+        this.file = undefined;
+        this.onFileChange();
+      }
+    });
+  }
+
+  onFileChange() {
+    if(this.file !== undefined) {
       this.validMime = this.isValidMimeType(this.file.type);
       this.setFileDetailsAndAssignmentName(this.file);
     } else {
@@ -117,14 +150,17 @@ export class ImportComponent implements OnInit {
         this.isValidFormat = isValidFormat;
         if(!this.isValidFormat)
           this.alertService.error(this.sakaiService.formatErrorMessage);
-        else
-          this.alertService.clear();
-        this.appService.isLoading$.next(false);
+        else {
+          this.clearError();
+        }
         this.isFileLoaded = true;
+        this.showLoading(false);
       }, error => {
-        this.alertService.error(error);
-        this.appService.isLoading$.next(false);
+        this.showErrorMessage(error);
+        this.showLoading(false);
       })
+    } else {
+      this.showLoading(false);
     }
   }
 
@@ -164,7 +200,6 @@ export class ImportComponent implements OnInit {
       this.fc.rubric.updateValueAndValidity();
       this.fc.rubric.enable();
     }
-
     this.importForm.updateValueAndValidity();
   }
 
@@ -175,9 +210,9 @@ export class ImportComponent implements OnInit {
   }
 
   onSubmit(event) {
-    this.alertService.clear();
+    this.clearError();
     if(this.importForm.invalid || !this.validMime || !this.isValidFormat) {
-      this.alertService.error("Please fill in the correct details!");
+      this.showErrorMessage("Please fill in the correct details!");
       return;
     }
 
@@ -186,12 +221,9 @@ export class ImportComponent implements OnInit {
       rubric
     } = this.importForm.value;
 
-    const formData: FormData = new FormData();
-    formData.append('file', this.file);
-    formData.append('noRubric', noRubric);
-    formData.append('rubric', rubric);
+    const importData = {file: this.actualFilePath, 'noRubric': noRubric, 'rubric': rubric };
     this.appService.isLoading$.next(true);
-    this.importService.importAssignmentFile(formData).subscribe((events) => {
+    this.importService.importAssignmentFile(importData).subscribe((events) => {
 
       if(events.type === HttpEventType.UploadProgress) {
 
@@ -202,6 +234,18 @@ export class ImportComponent implements OnInit {
         this.resetForm();
       }
     }, error => this.appService.isLoading$.next(false));
+  }
+
+  private showLoading(isLoading: boolean) {
+    this.appService.isLoading$.next(isLoading);
+  }
+
+  private showErrorMessage(errorMessage: string) {
+    this.alertService.error(errorMessage);
+  }
+
+  private clearError() {
+    this.alertService.clear();
   }
 
   private resetForm() {

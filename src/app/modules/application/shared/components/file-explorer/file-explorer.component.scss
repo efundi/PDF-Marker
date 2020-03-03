@@ -44,8 +44,15 @@ ul {
 }
 
 .folder-name {
+  display: flex;
+  align-items: center;
   white-space: nowrap !important;
   color: #444;
+  width: 100%;
+}
+
+.folder-content {
+  padding-top: 4px;
   width: 100%;
 }
 

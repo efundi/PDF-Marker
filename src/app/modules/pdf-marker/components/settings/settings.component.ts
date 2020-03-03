@@ -4,7 +4,7 @@ import {SettingsService} from "@pdfMarkerModule/services/settings.service";
 import {AppService} from "@coreModule/services/app.service";
 import {AlertService} from "@coreModule/services/alert.service";
 import {ElectronService} from "@coreModule/services/electron.service";
-import {AppWorkingDirectoryInfo} from "@coreModule/info-objects/app-working-directory.info";
+import {AppSelectedPathInfo} from "@coreModule/info-objects/app-selected-path.info";
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 
 @Component({
@@ -47,10 +47,10 @@ export class SettingsComponent implements OnInit {
   }
 
   setWorkingDirectory(event) {
-    this.electronService.getAppWorkingDirectory();
-    this.electronService.getAppWorkingDirectoryOb().subscribe((appWorkingDirectoryInfo: AppWorkingDirectoryInfo) => {
-      if(appWorkingDirectoryInfo && appWorkingDirectoryInfo.selectedDirectory)
-        this.settingsForm.controls.defaultPath.setValue((appWorkingDirectoryInfo.selectedDirectory) ? appWorkingDirectoryInfo.selectedDirectory:null);
+    this.electronService.getFolder();
+    this.electronService.getFolderOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+      if(appSelectedPathInfo && appSelectedPathInfo.selectedPath)
+        this.settingsForm.controls.defaultPath.setValue((appSelectedPathInfo.selectedPath) ? appSelectedPathInfo.selectedPath:null);
     });
   }
 

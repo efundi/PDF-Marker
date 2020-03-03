@@ -4,12 +4,15 @@
     <h1><mat-icon>settings</mat-icon>&nbsp;Settings</h1>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
-    <div class="pdf-marker-file-upload">
-      <button type="button" mat-raised-button (click)="setWorkingDirectory($event)">Browse</button>
-      &nbsp;&nbsp;
-      <input type="text" formControlName="defaultPath" id="pdf-marker-upload-display" readonly placeholder="Workspace">
-    </div>
-    <div class="pdf-spacer"><hr></div>
+    <mat-form-field floatLabel="always">
+      <mat-label>Default Workspace</mat-label>
+      <div class="pdf-marker-file-upload">
+        <button type="button" mat-raised-button (click)="setWorkingDirectory($event)">Browse</button>
+        &nbsp;&nbsp;
+        <input type="text" matInput formControlName="defaultPath" id="pdf-marker-upload-display" readonly placeholder="Workspace">
+      </div>
+    </mat-form-field>
+    <div class="pdf-spacer"></div>
     <mat-form-field class="settings-halfWidth">
       <mat-label>LMS Selection:</mat-label>
       <mat-select placeholder="Sakai" formControlName="lmsSelection" #lmsSelection id="lmsSelection" required>

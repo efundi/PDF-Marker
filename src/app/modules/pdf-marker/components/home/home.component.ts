@@ -27,13 +27,13 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(private router: Router,
               private activatedRoute: ActivatedRoute,
               private appService: AppService,
-              private electronService: ElectronService,
-              private cdRef: ChangeDetectorRef) {
+              private electronService: ElectronService) {
   }
 
   ngOnInit() {
     this.electronService.getAppVersionObservable().subscribe((appVersionInfo: AppVersionInfo) => {
-      this.version = appVersionInfo;
+      if(appVersionInfo && appVersionInfo.version)
+        this.version = appVersionInfo;
     });
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
@@ -72,7 +72,6 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.appService.setContainerElement(this.content);
-    //this.cdRef.detectChanges();
   }
 
   ngOnDestroy(): void {

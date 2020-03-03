@@ -22,7 +22,7 @@ export class SakaiService {
     errors: false
   };
 
-  private readonly studentDirecoryRules = {
+  private readonly studentDirectoryRules = {
     studentFolder: this.studentDetailsRegEx,
     directories: this.studentDirectories,
     files: this.studentFiles,
@@ -60,11 +60,11 @@ export class SakaiService {
       if(pathArray.length == 4) {
         if(i == 0 || i == pathArray.length - 1)
           continue;
-        if(!this.studentDirecoryRules.studentFolder.test(data) && i == 1) {
+        if(!this.studentDirectoryRules.studentFolder.test(data) && i == 1) {
           console.log(data);
           error = true;
           break;
-        } else if(this.doesNotExist(this.studentDirecoryRules.directories, data) && i == 2) {
+        } else if(this.doesNotExist(this.studentDirectoryRules.directories, data) && i == 2) {
           console.log(data);
           error = true;
           break;
@@ -72,10 +72,10 @@ export class SakaiService {
       } else if(pathArray.length == 3) {
         if(i == 0)
           continue;
-        if(!this.studentDirecoryRules.studentFolder.test(data) && i == 1) {
+        if(!this.studentDirectoryRules.studentFolder.test(data) && i == 1) {
           error = true;
           break;
-        } else if(this.doesNotExist(this.studentDirecoryRules.files, data) && i == 2) {
+        } else if(this.doesNotExist(this.studentDirectoryRules.files, data) && i == 2) {
           console.log(data);
           error = true;
           break;

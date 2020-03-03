@@ -26,7 +26,8 @@ function createWindow() {
         width: size.width,
         height: size.height,
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            experimentalFeatures: true
         }
     });
     if (serve) {
@@ -103,15 +104,29 @@ try {
     electron_1.ipcMain.on('get_app_version', function (event) {
         event.sender.send('on_get_app_version', { version: electron_1.app.getVersion() });
     });
-    electron_1.ipcMain.on('get_working_directory', function (event) {
+    electron_1.ipcMain.on('get_folder', function (event) {
         electron_1.dialog.showOpenDialog(mainWindow, {
-            title: "Select Working Folder",
+            title: "Select Folder",
             properties: ["openDirectory", "promptToCreate"]
         }).then(function (data) {
             if (data.canceled)
-                event.sender.send('on_get_working_directory', { selectedDirectory: null });
+                event.sender.send('on_get_folder', { selectedPath: null });
             else
-                event.sender.send('on_get_working_directory', { selectedDirectory: data.filePaths[0] });
+                event.sender.send('on_get_folder', { selectedPath: data.filePaths[0] });
+        });
+    });
+    electron_1.ipcMain.on('get_file', function (event, args) {
+        electron_1.dialog.showOpenDialog(mainWindow, {
+            title: "Select File",
+            filters: [
+                { name: args.name, extensions: args.extension }
+            ],
+            properties: ["openFile"]
+        }).then(function (data) {
+            if (data.canceled)
+                event.sender.send('on_get_file', { selectedPath: null });
+            else
+                event.sender.send('on_get_file', { selectedPath: data.filePaths[0] });
         });
     });
 }
