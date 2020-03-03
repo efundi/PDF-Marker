@@ -4,12 +4,9 @@
   <div class="pdf-marker-assignment-overview-assignment-header">
     <h1 class="pdf-marker-assignment-overview-assignment-name">{{ assignmentName }}</h1>
     <span class="pdf-marker-fill-space"></span>
-    <form [formGroup]="rubricForm">
-      <mat-select formControlName="rubric" placeholder="No rubric">
-        <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{ (rubric.name) ? rubric?.name:'No Rubric' }}</mat-option>
-      </mat-select>
-    </form>
-    <button [disabled]="!isRubric" mat-button mat-icon-button matTooltip="View Rubric" (click)="viewRubric()"><mat-icon [class.pdf-icon-disabled]="!isRubric">visibility</mat-icon></button>
+
+    <mat-label><span style="font-weight: 400;">Rubric: </span> {{selectedRubric}}</mat-label>
+    <button [disabled]="!isRubric" mat-button mat-icon-button matTooltip="Manage Rubric" (click)="viewRubric()"><mat-icon>apps</mat-icon></button>
     <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon>unarchive</mat-icon></button>
     &nbsp;&nbsp;
     <button [disabled]="!isCreated" mat-button mat-icon-button matTooltip="Manage Submissions" (click)="manageStudents()"><mat-icon [class.pdf-icon-disabled]="!isCreated">person</mat-icon></button>

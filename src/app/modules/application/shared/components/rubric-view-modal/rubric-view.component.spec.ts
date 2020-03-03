@@ -12,7 +12,7 @@ describe('RubricViewModalComponent', () => {
     TestBed.configureTestingModule({
       declarations: [ RubricViewModalComponent ]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

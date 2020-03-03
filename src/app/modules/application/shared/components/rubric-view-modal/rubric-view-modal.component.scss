@@ -1,3 +1,5 @@
+$pdf-marker-primary: #6f327a;
+
 table {
   width: 100%;
 }
@@ -40,3 +42,37 @@ h5 {
  .closeButton {
    float: right;
  }
+.pdf-marker-yes-and-no-confirmation-dialog-content {
+  font-size: 16px;
+  font-family: 'opensans-light', Helvetica, Roboto, "Helvetica Neue", sans-serif;
+  text-align: justify;
+}
+
+.pdf-marker-yes-and-no-confirmation-dialog-actions {
+  button {
+    font-family: 'opensans-light', Helvetica, Roboto, "Helvetica Neue", sans-serif;
+    color: #fff;
+  }
+}
+
+.pdf-marker-yes-and-no-confirmation-dialog-yes {
+  background: #71C341;
+}
+
+.pdf-marker-yes-and-no-confirmation-dialog-no {
+  background: #BD362F;
+}
+
+.pdf-marker-form-labels {
+  font-weight: 500;
+}
+
+
+.pdf-marker-rubric-container {
+  padding-top: 20px;
+
+  .mat-form-field {
+    flex: 1;
+    flex-grow: unset;
+  }
+}

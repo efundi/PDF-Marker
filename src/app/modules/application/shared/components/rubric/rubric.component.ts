@@ -1,4 +1,12 @@
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import {IRubric, IRubricCriteria} from "@coreModule/utils/rubric.class";
 import {Router} from "@angular/router";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
@@ -8,7 +16,7 @@ import {AppService} from "@coreModule/services/app.service";
 @Component({
   selector: 'pdf-marker-rubric',
   templateUrl: './rubric.component.html',
-  styleUrls: ['./rubric.component.scss']
+  styleUrls: ['./rubric.component.scss'],
 })
 export class RubricComponent implements OnInit, OnChanges {
 

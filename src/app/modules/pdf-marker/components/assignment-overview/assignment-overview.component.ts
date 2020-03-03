@@ -61,7 +61,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   isSettings: boolean;
   isCreated: boolean;
   isRubric: boolean;
-  private selectedRubric: string = null;
+  selectedRubric: string = null;
   rubrics: IRubricName[] = [];
   rubricForm: FormGroup;
 
@@ -345,7 +345,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       let data = {rubricName: this.selectedRubric};
       //console.log(data);
       this.importService.getRubricContents(data).subscribe((rubric: IRubric) => {
-        this.openRubricModalDialog(rubric);
+        this.openRubricModalDialog(rubric, this.assignmentSettings);
         this.appService.isLoading$.next(false);
         this.appService.openSnackBar(true, "Rubric View Opened");
       }, error => {
@@ -354,13 +354,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       });
     }
   }
-  private openRubricModalDialog(rubric: IRubric) {
+  private openRubricModalDialog(rubric: IRubric, assignmentSettingsInfo: AssignmentSettingsInfo) {
     const config = new MatDialogConfig();
     config.disableClose = false;
     config.width = "1500px";
     config.height = "750px";
     config.data = {
-      rubric: rubric
+      rubric: rubric,
+      assignmentSettingsInfo: assignmentSettingsInfo,
+      assignmentName: this.assignmentName
     };
 
     this.appService.createDialog(RubricViewModalComponent, config);

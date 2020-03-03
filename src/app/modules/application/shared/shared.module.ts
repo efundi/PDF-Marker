@@ -18,7 +18,7 @@ import {MatListModule} from '@angular/material/list';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatInputModule} from '@angular/material/input';
 import {MatCheckboxModule} from '@angular/material/checkbox';
-import {MatSelectModule} from '@angular/material/select';
+import {MatSelect, MatSelectModule} from '@angular/material/select';
 import {MatExpansionModule} from '@angular/material/expansion';
 import {MatDialogModule} from '@angular/material/dialog';
 import {MatProgressBarModule} from '@angular/material/progress-bar';
@@ -39,6 +39,7 @@ import {RubricViewModalComponent} from "@sharedModule/components/rubric-view-mod
 import {RubricViewMarkingComponent} from './components/rubric-view-marking/rubric-view-marking.component';
 import {RubricCriteriaComponent} from './components/rubric-criteria/rubric-criteria.component';
 import { RubricComponent } from './components/rubric/rubric.component';
+import {MatOption, MatOptionModule} from "@angular/material/core";
 
 
 const SHARED_MODULES = [
@@ -83,6 +84,8 @@ const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, Al
     FormsModule,
     ReactiveFormsModule,
     MatInputModule,
+    MatOptionModule,
+    MatSelectModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true },

@@ -1,7 +1,26 @@
 <ng-container autoscroll="true">
+  <div *ngIf="overviewPage" class="pdf-marker-rubric-container">
+    <ng-container>
+      <br>
+      <form [formGroup]="rubricForm">
+      <mat-form-field>
+        <mat-label class="pdf-marker-form-labels">Select Rubric</mat-label>
+        <mat-select formControlName="rubric">
+          <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{ (rubric.name) ? rubric?.name:'No Rubric' }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      </form>
+    </ng-container>
+  <div  mat-dialog-actions class="pdf-marker-yes-and-no-confirmation-dialog-actions">
+    <button type="button" class="pdf-marker-yes-and-no-confirmation-dialog-yes" mat-button color="" (click)="saveRubricChangeClick()">Save</button>&nbsp;&nbsp;
+    <button type="button" class="pdf-marker-yes-and-no-confirmation-dialog-no" mat-button color="" (click)="onCancel()">Cancel</button>
+  </div>
+    <div class="pdf-spacer"></div>
+  </div>
   <span class="pdf-marker-fill-space"></span>
   <button class="closeButton" type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
+  <ng-container #rubricContainer>
   <pdf-marker-rubric [rubric]="rubricMarking"></pdf-marker-rubric>
+  </ng-container>
   <span class="pdf-marker-fill-space"></span>
- <!--<p>Total Score: {{ totalScore }}</p>-->
 </ng-container>
