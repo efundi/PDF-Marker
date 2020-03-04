@@ -1,5 +1,7 @@
 <ng-container autoscroll="true">
+  <button class="closeButton" type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
   <div *ngIf="overviewPage" class="pdf-marker-rubric-container">
+    <span class="pdf-marker-fill-space"></span>
     <ng-container>
       <br>
       <form [formGroup]="rubricForm">
@@ -10,15 +12,15 @@
         </mat-select>
       </mat-form-field>
       </form>
+      <span class="pdf-marker-fill-space"></span>
     </ng-container>
   <div  mat-dialog-actions class="pdf-marker-yes-and-no-confirmation-dialog-actions">
-    <button type="button" class="pdf-marker-yes-and-no-confirmation-dialog-yes" mat-button color="" (click)="saveRubricChangeClick()">Save</button>&nbsp;&nbsp;
+    <button type="button" class="pdf-marker-yes-and-no-confirmation-dialog-yes" mat-button color="" (click)="saveRubricChangeClick()">Submit</button>&nbsp;&nbsp;
     <button type="button" class="pdf-marker-yes-and-no-confirmation-dialog-no" mat-button color="" (click)="onCancel()">Cancel</button>
   </div>
     <div class="pdf-spacer"></div>
   </div>
   <span class="pdf-marker-fill-space"></span>
-  <button class="closeButton" type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
   <ng-container #rubricContainer>
   <pdf-marker-rubric [rubric]="rubricMarking"></pdf-marker-rubric>
   </ng-container>

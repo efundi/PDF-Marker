@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {SakaiService} from "@coreModule/services/sakai.service";
 import {Router} from "@angular/router";
@@ -73,7 +73,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
               private fileSaverService: FileSaverService,
               private settingsService: SettingsService,
               private importService: ImportService,
-              private fb: FormBuilder) { }
+              private fb: FormBuilder,
+              private ref: ChangeDetectorRef) { }
 
   ngOnInit() {
     this.initForm();
@@ -203,48 +204,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     this.rubricForm.valueChanges.subscribe(value => {
       if(value.rubric !== this.previouslyEmitted && value.rubric !== this.selectedRubric) {
         this.previouslyEmitted = value.rubric;
-        this.confirmWithUser();
       }
     })
-  }
-
-  private confirmWithUser() {
-    const config = new MatDialogConfig();
-    config.width = "400px";
-    config.maxWidth = "400px";
-    config.data = {
-      title: "Confirmation",
-      message: "Changing or attaching a rubric to an assignment will erase previously marked assignment submission, do you wish to continue?",
-    };
-
-    const shouldChangeRubricFn = (shouldChangeRubric: boolean) => {
-      if(shouldChangeRubric) {
-        const {
-          rubric
-        } = this.rubricForm.value;
-
-        this.updateAssignmentRubric(rubric);
-      } else {
-        this.rubricForm.controls.rubric.setValue(this.selectedRubric);
-        this.isRubric = true;
-      }
-      this.previouslyEmitted = undefined;
-    };
-
-    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldChangeRubricFn);
-  }
-
-  private updateAssignmentRubric(rubricName: string) {
-    this.appService.isLoading$.next(true);
-    this.assignmentService.updateAssignmentRubric(rubricName, this.assignmentName).subscribe((rubric: IRubric) => {
-      this.selectedRubric = (rubric) ? rubric.name:null;
-      this.isRubric = !this.isNullOrUndefined(this.selectedRubric);
-      this.appService.openSnackBar(true, "Successfully updated rubric");
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(false, "Unable to update rubric");
-    });
   }
 
   onSelectedPdf(pdfFileLocation: string) {
@@ -340,9 +301,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   }
 
   viewRubric() {
-    if (this.selectedRubric != null) {
-      console.log("Open Rubric name = " + this.selectedRubric);
-      let data = {rubricName: this.selectedRubric};
+    if (this.assignmentSettings.rubric.name != null) {
+      console.log("Open Rubric name = " + this.assignmentSettings.rubric.name);
+      let data = {rubricName: this.assignmentSettings.rubric.name};
       //console.log(data);
       this.importService.getRubricContents(data).subscribe((rubric: IRubric) => {
         this.openRubricModalDialog(rubric, this.assignmentSettings);
@@ -365,7 +326,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       assignmentName: this.assignmentName
     };
 
-    this.appService.createDialog(RubricViewModalComponent, config);
+    let dialogRef = this.appService.createDialog(RubricViewModalComponent, config);
+    dialogRef.afterClosed().subscribe(result => {
+      this.getAssignmentSettings(this.assignmentName);
+    });
   }
 
   ngOnDestroy(): void {

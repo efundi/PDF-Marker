@@ -41,9 +41,11 @@ export class RubricViewModalComponent implements OnInit {
     if (config != null) {
       if (config.assignmentSettingsInfo != null) {
         this.assignmentSettingsInfo = config.assignmentSettingsInfo;
-        this.rubricMarking = config.rubric;
+        this.rubricMarking =config.assignmentSettingsInfo.rubric;
         this.assignmentName = config.assignmentName;
         this.overviewPage = true;
+
+
       } else {
         if (config.rubric != null) {
           this.rubricMarking = config.rubric;
