@@ -64,9 +64,9 @@
     "csvtojson": "2.0.0",
     "electron-log": "^4.0.0",
     "electron-updater": "^4.2.0",
+    "etl": "^0.6.12",
     "express": "^4.15.2",
     "express-validator": "^6.2.0",
-    "extract-zip": "^1.6.7",
     "file-saver": "^2.0.2",
     "hammerjs": "^2.0.8",
     "hex-rgb": "^4.1.0",
@@ -80,6 +80,7 @@
     "pdf-lib": "^1.2.1",
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
+    "unzipper": "^0.10.10",
     "zip-dir": "^1.0.2",
     "zone.js": "~0.9.1"
   },

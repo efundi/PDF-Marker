@@ -25,6 +25,7 @@ import {
   constants,
   copyFileSync,
   createReadStream,
+  createWriteStream,
   existsSync,
   mkdir,
   mkdirSync,
@@ -47,10 +48,11 @@ import {AssignmentSettingsInfo} from "./src/app/modules/pdf-marker/info-objects/
 
 const zipDir = require('zip-dir');
 var JSZip = require("jszip");
+const unzipper = require('unzipper');
+const etl = require('etl');
 
 const {check, validationResult} = require('express-validator');
 const multer = require('multer');
-const extract = require('extract-zip');
 const glob = require('glob');
 const csvtojson = require('csvtojson');
 const hexRgb = require('hex-rgb');
@@ -354,7 +356,7 @@ const zipFileUploadCallback = (req, res, data) => {
           const settings: AssignmentSettingsInfo = {defaultColour: "#6F327A", rubric: rubric, isCreated: false};
           if (foundCount != 0) {
             newFolder = oldPath + " (" + (foundCount + 1) + ")" + "/";
-            extractZip(req.body.file, config.defaultPath + sep, false, newFolder, oldPath + "/", res).then(() => {
+            extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + "/").then(() => {
               return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                 EXTRACTED_ZIP,
                 null, () => {
@@ -372,23 +374,24 @@ const zipFileUploadCallback = (req, res, data) => {
               return sendResponse(req, res, 501, error.message);
             });
           } else {
-            extractZip(req.body.file, config.defaultPath + sep, false, "", "", res).then(() => {
-              return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
-                EXTRACTED_ZIP,
-                null, () => {
-                  if (!isNullOrUndefined(rubricName)) {
-                    rubrics[rubricIndex].inUse = true;
-                    return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
-                      EXTRACTED_ZIP,
-                      EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
-                  }
-                  return sendResponse(req, res, 200, EXTRACTED_ZIP);
-                });
-            }).catch((error) => {
-              if(existsSync(config.defaultPath + sep + oldPath))
-                deleteFolderRecursive(config.defaultPath + sep + oldPath);
-              return sendResponse(req, res, 501, error.message);
-            });
+            extractZipFile(req.body.file, config.defaultPath + sep, "", "")
+              .then(() => {
+                return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
+                  EXTRACTED_ZIP,
+                  null, () => {
+                    if (!isNullOrUndefined(rubricName)) {
+                      rubrics[rubricIndex].inUse = true;
+                      return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
+                        EXTRACTED_ZIP,
+                        EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
+                    }
+                    return sendResponse(req, res, 200, EXTRACTED_ZIP);
+                  });
+              }).catch((error) => {
+                if(existsSync(config.defaultPath + sep + oldPath))
+                  deleteFolderRecursive(config.defaultPath + sep + oldPath);
+                return sendResponse(req, res, 501, error.message);
+              });
           }
         } else {
           return sendResponse(req, res, 501, "Zip Object contains no entries!");
@@ -2095,33 +2098,24 @@ const isJson = (str) => {
   return true;
 };
 
-const extractZip = (file, destination, deleteSource, newFolder, oldFolder, res = null) => {
-  return new Promise((resolve, reject) => extract(file, {
-    dir: destination,
-    onEntry: (entry, zipFile) => entry.fileName = entry.fileName.replace(oldFolder, newFolder)
-  }, (err) => {
-    if (!err) {
-      if (deleteSource) unlinkSync(file);
-      nestedExtract(destination, extractZip);
-      if (res)
-        resolve(true);
-    } else {
-      reject(new Error('Error occurred while extracting file to disk!'));
-    }
-  }));
-};
-
-const nestedExtract = (dir, zipExtractor) => {
-  readdirSync(dir).forEach((file) => {
-    if (statSync(join(dir, file)).isFile()) {
-      if (extname(file) === '.zip') {
-        // deleteSource = true to avoid infinite loops caused by extracting same file
-        zipExtractor(join(dir, file), dir, true);
+const extractZipFile = async (file, destination, newFolder, oldFolder) => {
+  return await createReadStream(file)
+    .pipe(unzipper.Parse())
+    .pipe(etl.map(async entry => {
+      if(entry.type === 'File') {
+        const content = await entry.buffer();
+        entry.path = entry.path.replace(oldFolder, newFolder);
+        const directory = pathinfo(destination + entry.path.replace("/", sep), 1);
+        if(!existsSync(directory))
+          mkdirSync(directory, { recursive: true });
+        await writeFileSync(destination + entry.path.replace("/", sep),  content);
+      } else {
+        const directory = destination + entry.path.replace("/", sep);
+        if(!existsSync(directory))
+          mkdirSync(directory, { recursive: true });
+        entry.autodrain();
       }
-    } else {
-      nestedExtract(join(dir, file), zipExtractor);
-    }
-  });
+    })).promise();
 };
 
 const hierarchyModel = (pathInfos, configFolder) => {
