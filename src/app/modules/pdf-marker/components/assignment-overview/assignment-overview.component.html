@@ -7,7 +7,7 @@
 
     <button [disabled]="!isCreated" mat-button mat-icon-button matTooltip="Manage Submissions" (click)="manageStudents()"><mat-icon [class.pdf-icon-disabled]="!isCreated">person</mat-icon></button>
     <button [disabled]="!isRubric" mat-button mat-icon-button matTooltip="Manage Rubric" (click)="viewRubric()"><mat-icon [class.pdf-icon-disabled]="!isRubric">apps</mat-icon></button>
-    <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon >unarchive</mat-icon></button>
+    <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon >archive</mat-icon></button>
   </div>
 
   <table mat-table [dataSource]="dataSource">

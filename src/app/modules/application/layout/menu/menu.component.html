@@ -1,6 +1,7 @@
 <span class="pdf-marker-menu">
   <mat-menu #menu="matMenu">
     <ng-template matMenuContent>
+
       <ng-container *ngFor="let menuItem of menuItems">
         <a [routerLink]="menuItem.href"  mat-menu-item><mat-icon>{{ menuItem.icon }}</mat-icon>{{ menuItem.title }}</a>
       </ng-container>

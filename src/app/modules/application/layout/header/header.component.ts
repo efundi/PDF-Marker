@@ -1,5 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {AppVersionInfo} from "@coreModule/info-objects/app-version.info";
+import {RoutesEnum} from "@coreModule/utils/routes.enum";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'pdf-marker-header',
@@ -7,6 +9,9 @@ import {AppVersionInfo} from "@coreModule/info-objects/app-version.info";
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent implements OnInit {
+
+  constructor(private router: Router) {
+  }
 
   @Input()
   appName: string;
@@ -16,5 +21,7 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit() {
   }
-
+  goHome() {
+    this.router.navigate([RoutesEnum.MARKER]);
+  }
 }

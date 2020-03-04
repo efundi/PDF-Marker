@@ -1,5 +1,5 @@
 <mat-toolbar>
-  <span class="pdf-marker-brand">
+  <span class="pdf-marker-brand" (click)="goHome()">
     <img src="assets/logo.png" alt="">
     <span class="pdf-marker-title">{{ appName }} <span id="pdf-marker-version" *ngIf="appVersion"><span id="pdf-marker-version-prefix">v</span><span id="pdf-marker-version-number">{{ appVersion.version }}</span></span></span>
   </span>

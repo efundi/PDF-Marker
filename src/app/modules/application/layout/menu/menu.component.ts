@@ -10,7 +10,8 @@ export class MenuComponent implements OnInit {
   readonly settings: string = "Settings";
 
   readonly toolbarMenu = [
-    { title: "Import", toolTip: "Import Zip from default LMS", icon: "archive", href: RoutesEnum.ASSIGNMENT_IMPORT },
+    { id: "Home",  toolTip: "Home", icon: "home", href: RoutesEnum.MARKER },
+    { title: "Import", toolTip: "Import Zip from default LMS", icon: "unarchive", href: RoutesEnum.ASSIGNMENT_IMPORT },
     { title: "Upload", toolTip: "Upload PDF file(s)", icon: "picture_as_pdf", href: RoutesEnum.ASSIGNMENT_UPLOAD },
     { title: "Settings", toolTip: "Settings", icon: "settings"},
   ];

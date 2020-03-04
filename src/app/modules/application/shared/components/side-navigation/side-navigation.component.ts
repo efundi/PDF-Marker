@@ -14,7 +14,6 @@ export class SideNavigationComponent implements OnInit {
 
   constructor(private assignmentService: AssignmentService,
               private appService: AppService,
-              private router: Router,
               private zipService: ZipService) { }
 
   ngOnInit() {
@@ -30,9 +29,5 @@ export class SideNavigationComponent implements OnInit {
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(false, "Could not refresh list");
     });
-  }
-
-  goHome() {
-    this.router.navigate([RoutesEnum.MARKER]);
   }
 }
