@@ -809,23 +809,21 @@ const assignmentRubricUpdateFn = (req, res) => {
                             const keys = Object.keys(gradesJSON[i]);
                             if (keys.length > 0)
                               assignmentHeader = keys[0];
-                          } else if (!isNullOrUndefined(assignmentHeader)) {
+                          } else if (i > 1) {
                             gradesJSON[i].field5 = 0;
                             changed = true;
-                            json2csv(gradesJSON, (err, csv) => {
-                              if (err)
-                                return sendResponse(req, res, 400, "Failed to convert json to csv!");
-
-                              return writeToFile(req, res, config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csv, "Successfully saved marks!", "Failed to save marks to " + GRADES_FILE + " file!", () => {
-                                return sendResponseData(req, res, 200, assignmentSettingsInfo.rubric);
-                              });
-                            }, {emptyFieldValue: ''});
-                            break;
                           }
                         }
 
                         if (changed) {
-                          // more logic to save new JSON to CSV
+                          return json2csv(gradesJSON, (err, csv) => {
+                            if (err)
+                              return sendResponse(req, res, 400, "Failed to convert json to csv!");
+
+                            return writeToFile(req, res, config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csv, "Successfully saved marks!", "Failed to save marks to " + GRADES_FILE + " file!", () => {
+                              return sendResponseData(req, res, 200, assignmentSettingsInfo.rubric);
+                            });
+                          }, {emptyFieldValue: ''});
                         } else
                           return sendResponse(req, res, 400, "Failed to save mark");
                       })
