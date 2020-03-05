@@ -2110,6 +2110,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder) => {
           mkdirSync(directory, { recursive: true });
         await writeFileSync(destination + entry.path.replace("/", sep),  content);
       } else {
+        entry.path = entry.path.replace(oldFolder, newFolder);
         const directory = destination + entry.path.replace("/", sep);
         if(!existsSync(directory))
           mkdirSync(directory, { recursive: true });
