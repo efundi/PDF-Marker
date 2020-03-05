@@ -247,8 +247,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
             if(events.type === HttpEventType.Response) {
               this.alertService.success("Successfully exported assignment. You can now upload it to " + this.settings.lmsSelection + ".");
               let zipFileBuffer: Blob = events.body;
-              let blob = new Blob([zipFileBuffer], { type: "application/zip"});
-              this.fileSaverService.save(blob, this.assignmentName + ".zip");
+              let blob = new Blob([zipFileBuffer], { type: "application/zip" });
+              const fileName: string = this.assignmentName + ".zip";
+              console.log("Filename: " + fileName);
+              console.log("File Type: " + blob.type);
+              this.fileSaverService.save(blob, fileName);
               this.appService.isLoading$.next(false);
             }
           }, (responseError) => {
@@ -272,7 +275,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
               this.alertService.success("Successfully exported assignment. You can now upload it to " + this.settings.lmsSelection + ".");
               let zipFileBuffer: Blob = events.body;
               let blob = new Blob([zipFileBuffer], { type: "application/zip"});
-              this.fileSaverService.save(blob, this.assignmentName + ".zip");
+              const fileName: string = this.assignmentName + ".zip";
+              console.log("Filename: " + fileName);
+              console.log("File Type: " + blob.type);
+              this.fileSaverService.save(blob, fileName);
               this.appService.isLoading$.next(false);
             }
           }, (responseError) => {
