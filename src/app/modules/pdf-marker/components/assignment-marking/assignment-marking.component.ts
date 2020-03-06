@@ -448,6 +448,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
                       markComponents.destroy();
                     });
                     this.markDetailsRawData = [];
+                    this.appService.openSnackBar(false, "Successfully cleared marks!");
                   } else {
                     this.markDetailsComponents[page].map(markComponent => markComponent.instance.setIsDeleted(false));
                     this.appService.openSnackBar(false, "Could not clear marks!");
