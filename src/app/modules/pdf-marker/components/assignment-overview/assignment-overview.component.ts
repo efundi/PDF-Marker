@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {SakaiService} from "@coreModule/services/sakai.service";
 import {Router} from "@angular/router";
@@ -19,6 +19,9 @@ import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
 import {FormBuilder, FormGroup} from "@angular/forms";
 import {RubricViewModalComponent} from "@sharedModule/components/rubric-view-modal/rubric-view-modal.component";
+import {ElectronService} from "@coreModule/services/electron.service";
+import {file} from "@rxweb/reactive-form-validators";
+import {AppSelectedPathInfo} from "@coreModule/info-objects/app-selected-path.info";
 
 export interface AssignmentDetails {
   studentName: string;
@@ -74,7 +77,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
               private settingsService: SettingsService,
               private importService: ImportService,
               private fb: FormBuilder,
-              private ref: ChangeDetectorRef) { }
+              private electronService: ElectronService) { }
 
   ngOnInit() {
     this.initForm();
@@ -244,62 +247,59 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         this.appService.isLoading$.next(true);
         if (!(this.isNullOrUndefined(this.assignmentSettings.rubric))) {
           this.assignmentService.finalizeAndExportRubric(this.assignmentName, this.assignmentSettings.rubric).subscribe((events: any) => {
-            if(events.type === HttpEventType.Response) {
-              this.alertService.success("Successfully exported assignment. You can now upload it to " + this.settings.lmsSelection + ".");
-              let zipFileBuffer: Blob = events.body;
-              let blob = new Blob([zipFileBuffer], { type: "application/zip" });
-              const fileName: string = this.assignmentName + ".zip";
-              console.log("Filename: " + fileName);
-              console.log("File Type: " + blob.type);
-              this.fileSaverService.save(blob, fileName);
-              this.appService.isLoading$.next(false);
-            }
+            if(events.type === HttpEventType.Response)
+              this.onSuccessfulExport(events);
           }, (responseError) => {
-            let blob = new Blob([responseError.error], { type: "text/plain"});
-            const reader = new FileReader();
-            reader.addEventListener('loadend', (e) => {
-              try {
-                const error = JSON.parse(reader.result.toString());
-                this.alertService.error(error.message);
-                this.appService.isLoading$.next(false);
-              } catch (e) {
-                this.alertService.error("Unexpected error occurred!");
-                this.appService.isLoading$.next(false);
-              }
-            });
-            reader.readAsText(blob);
+            this.onUnsuccessfulExport(responseError);
           })
         } else {
           this.assignmentService.finalizeAndExport(this.assignmentName).subscribe((events: any) => {
-            if(events.type === HttpEventType.Response) {
-              this.alertService.success("Successfully exported assignment. You can now upload it to " + this.settings.lmsSelection + ".");
-              let zipFileBuffer: Blob = events.body;
-              let blob = new Blob([zipFileBuffer], { type: "application/zip"});
-              const fileName: string = this.assignmentName + ".zip";
-              console.log("Filename: " + fileName);
-              console.log("File Type: " + blob.type);
-              this.fileSaverService.save(blob, fileName);
-              this.appService.isLoading$.next(false);
-            }
+            if(events.type === HttpEventType.Response)
+              this.onSuccessfulExport(events);
           }, (responseError) => {
-            let blob = new Blob([responseError.error], { type: "text/plain"});
-            const reader = new FileReader();
-            reader.addEventListener('loadend', (e) => {
-              try {
-                const error = JSON.parse(reader.result.toString());
-                this.alertService.error(error.message);
-                this.appService.isLoading$.next(false);
-              } catch (e) {
-                this.alertService.error("Unexpected error occurred!");
-                this.appService.isLoading$.next(false);
-              }
-            });
-            reader.readAsText(blob);
+            this.onUnsuccessfulExport(responseError);
           })
         }
       }
     };
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldFinalizeAndExportFn);
+  }
+
+  private onSuccessfulExport(events) {
+    this.alertService.clear();
+    const reader = new FileReader();
+    reader.addEventListener("loadend", () => {
+      const fileName: string = this.assignmentName;
+      this.electronService.saveFile({ filename: fileName, buffer: reader.result, name: 'Zip File', extension: ["zip"]});
+      this.electronService.saveFileOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+        if(appSelectedPathInfo.selectedPath) {
+          this.alertService.success(`Successfully exported ${fileName}. You can now upload it to ${this.settings.lmsSelection}.`);
+        }
+
+        this.appService.isLoading$.next(false);
+      }, error => {
+        this.appService.openSnackBar(false, "Error exporting assignment");
+        this.appService.isLoading$.next(false);
+      });
+    });
+
+    reader.readAsArrayBuffer(events.body);
+  }
+
+  private onUnsuccessfulExport(responseError) {
+    let blob = new Blob([responseError.error], { type: "text/plain"});
+    const reader = new FileReader();
+    reader.addEventListener('loadend', (e) => {
+      try {
+        const error = JSON.parse(reader.result.toString());
+        this.alertService.error(error.message);
+        this.appService.isLoading$.next(false);
+      } catch (e) {
+        this.alertService.error("Unexpected error occurred!");
+        this.appService.isLoading$.next(false);
+      }
+    });
+    reader.readAsText(blob);
   }
 
   manageStudents() {

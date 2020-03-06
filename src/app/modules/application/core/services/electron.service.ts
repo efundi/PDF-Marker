@@ -15,9 +15,11 @@ export class ElectronService {
 
   private appVersionSource$: Subject<AppVersionInfo> = new Subject<AppVersionInfo>();
 
-  private fileSource$: Subject<any> = new Subject<any>();
+  private fileSource$: Subject<AppSelectedPathInfo> = new Subject<AppSelectedPathInfo>();
 
   private folderSource$: Subject<AppSelectedPathInfo> = new Subject<AppSelectedPathInfo>();
+
+  private saveSource$: Subject<AppSelectedPathInfo>  = new Subject<AppSelectedPathInfo>();
 
   constructor(private zone: NgZone) {
     this.electronCommunication('get_app_version', 'on_get_app_version', this.appVersionSource$);
@@ -39,9 +41,20 @@ export class ElectronService {
     this.electronCommunication('get_file', 'on_get_file', this.fileSource$, fileFilter);
   }
 
-  getFileOb(): Observable<any> {
+  getFileOb(): Observable<AppSelectedPathInfo> {
     return this.fileSource$.asObservable().pipe(first());
   }
+
+  saveFile(fileFilter: FileFilterInfo) {
+    if(!fileFilter.filename)
+      fileFilter.filename = "download";
+    this.electronCommunication('save_file', 'on_save_file', this.saveSource$, fileFilter);
+  }
+
+  saveFileOb(): Observable<AppSelectedPathInfo> {
+    return this.saveSource$.asObservable().pipe(first());;
+  }
+
 
   private electronCommunication(sentMessage: string, receivedMessage: string, observableSource: Subject<any>, fileFilter: FileFilterInfo = null) {
     if((<any>window).require) {
@@ -52,8 +65,17 @@ export class ElectronService {
         this.ipc.send(sentMessage, fileFilter);
       this.ipc.once(receivedMessage, (event, response: any) => {
         this.ipc.removeAllListeners(receivedMessage);
+        this.ipc.removeAllListeners('on_error');
         this.zone.run(() => {
           observableSource.next(response);
+        });
+      });
+
+      this.ipc.once('on_error', (event, response: any) => {
+        this.ipc.removeAllListeners('on_error');
+        this.ipc.removeAllListeners(receivedMessage);
+        this.zone.run(() => {
+          observableSource.error(response);
         });
       });
     } else {
