@@ -2,6 +2,8 @@ import {app, BrowserWindow, dialog, ipcMain, screen} from 'electron';
 import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
+import {writeFile, writeFileSync} from "fs";
+import {buffer} from "rxjs/operators";
 
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
@@ -128,7 +130,9 @@ try {
         event.sender.send('on_get_folder', { selectedPath: null });
       else
         event.sender.send('on_get_folder', { selectedPath: data.filePaths[0] });
-    })
+    }).catch((reason => {
+      event.sender.send('on_error', reason);
+    }));
   });
 
   ipcMain.on('get_file', (event, args) => {
@@ -143,7 +147,30 @@ try {
         event.sender.send('on_get_file', { selectedPath: null });
       else
         event.sender.send('on_get_file', { selectedPath: data.filePaths[0] });
-    })
+    }).catch((reason => {
+      event.sender.send('on_error', reason);
+    }));
+  });
+
+  ipcMain.on('save_file', async (event, args) => {
+    const filePath: string = dialog.showSaveDialogSync(mainWindow, {
+      defaultPath: args.filename,
+      title: "Save",
+      filters: [
+        { name: args.name, extensions: args.extension }
+      ]
+    });
+
+    if(filePath) {
+      try {
+        writeFileSync(filePath, new Buffer(args.buffer));
+        event.sender.send('on_save_file', { selectedPath: filePath });
+      } catch (e) {
+        event.sender.send('on_error', e.message);
+      }
+    } else {
+      event.sender.send('on_save_file', { selectedPath: null });
+    }
   });
 
 } catch (e) {
