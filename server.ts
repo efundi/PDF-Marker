@@ -1374,8 +1374,9 @@ const finalizeAssignment = async (req, res) => {
                   return await annotatePdfFile(res, submission, marks);
                 };
 
+                let fileName = pathinfo(submission, 'PATHINFO_FILENAME');
                 await annotateFN().then(async (data) => {
-                  const fileName = pathinfo(submission, 'PATHINFO_FILENAME') + "_MARK";
+                  fileName += "_MARK";
                   writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + ".pdf", data.pdfBytes);
                   accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
                   let changed = false;
@@ -1407,7 +1408,7 @@ const finalizeAssignment = async (req, res) => {
                   }
                 }, (error) => {
                   failed = true;
-                  return sendResponse(req, res, 400, "Error annotating marks to PDF [" + error.message + "]");
+                  return sendResponse(req, res, 400, "Error annotating marks to PDF '" + fileName + "' [" + error.message + "]");
                 });
               }
             } catch (e) {
