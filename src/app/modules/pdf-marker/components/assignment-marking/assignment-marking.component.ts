@@ -442,11 +442,16 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
               this.markDetailsComponents[page].map(markComponent => markComponent.instance.setIsDeleted(true));
               const markDetails = this.getMarksToSave();
               this.saveMarks(markDetails)
-                .then(() => {
-                  this.markDetailsComponents[page].forEach(markComponents => {
-                    markComponents.destroy();
-                  });
-                  this.markDetailsRawData = [];
+                .then((result: boolean) => {
+                  if(result) {
+                    this.markDetailsComponents[page].forEach(markComponents => {
+                      markComponents.destroy();
+                    });
+                    this.markDetailsRawData = [];
+                  } else {
+                    this.markDetailsComponents[page].map(markComponent => markComponent.instance.setIsDeleted(false));
+                    this.appService.openSnackBar(false, "Could not clear marks!");
+                  }
                 });
             }
           });
