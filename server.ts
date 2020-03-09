@@ -326,9 +326,10 @@ const zipFileUploadCallback = (req, res, data) => {
     const folders = glob.sync(config.defaultPath + '/*');
 
     let folderCount = 0;
-    folders.forEach(folder => {
+    folders.forEach(folder => {  if(lstatSync(folder).isDirectory()) {
       folders[folderCount] = pathinfo(folder, 'PATHINFO_FILENAME');
       folderCount++;
+    }
     });
 
     let zip = new JSZip();
