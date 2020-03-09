@@ -1891,13 +1891,14 @@ const createAssignment = (req, res) => {
 
         let foundCount = 0;
         for (let i = 0; i < folders.length; i++) {
-          if (lstatSync(folders[i]).isDirectory()) {
+          if (lstatSync(folders[i].toLowerCase()).isDirectory()) {
             if (assignmentName.toLowerCase() === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
               foundCount++;
             else if ((assignmentName.toLowerCase() + " (" + (foundCount + 1) + ")") === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
               foundCount++;
           }
         }
+
         if (foundCount > 0)
           assignmentName = assignmentName + " (" + (foundCount + 1) + ")";
 
