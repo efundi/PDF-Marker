@@ -327,7 +327,7 @@ const zipFileUploadCallback = (req, res, data) => {
 
     let folderCount = 0;
     folders.forEach(folder => {
-      if(lstatSync(folder).isDirectory()) {
+      if(isFolder(folder)) {
         folders[folderCount] = pathinfo(folder, 'PATHINFO_FILENAME');
         folderCount++;
       }
@@ -1891,7 +1891,7 @@ const createAssignment = (req, res) => {
 
         let foundCount = 0;
         for (let i = 0; i < folders.length; i++) {
-          if (lstatSync(folders[i].toLowerCase()).isDirectory()) {
+          if (isFolder(folders[i].toLowerCase())) {
             if (assignmentName.toLowerCase() === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
               foundCount++;
             else if ((assignmentName.toLowerCase() + " (" + (foundCount + 1) + ")") === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
@@ -2155,7 +2155,7 @@ const deleteFolderRecursive = (path) => {
   if (existsSync(path)) {
     readdirSync(path).forEach(function (file, index) {
       const curPath = path + "/" + file;
-      if (lstatSync(curPath).isDirectory()) { // recurse
+      if (isFolder(curPath)) { // recurse
         deleteFolderRecursive(curPath);
       } else { // delete file
         unlinkSync(curPath);
@@ -2163,4 +2163,8 @@ const deleteFolderRecursive = (path) => {
     });
     rmdirSync(path);
   }
+};
+
+function isFolder(curPath: string){
+return lstatSync(curPath).isDirectory();
 };
