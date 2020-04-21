@@ -13,6 +13,8 @@ export class ElectronService {
 
   private ipc: IpcRenderer;
 
+  private observableSource$: Subject<any> = new Subject<any>();
+
   private appVersionSource$: Subject<AppVersionInfo> = new Subject<AppVersionInfo>();
 
   private fileSource$: Subject<AppSelectedPathInfo> = new Subject<AppSelectedPathInfo>();
@@ -55,14 +57,20 @@ export class ElectronService {
     return this.saveSource$.asObservable().pipe(first());;
   }
 
+  getObservable(): Observable<any> {
+    return this.observableSource$.asObservable();
+  }
 
-  private electronCommunication(sentMessage: string, receivedMessage: string, observableSource: Subject<any>, fileFilter: FileFilterInfo = null) {
+  openExternalLink(externalResource: string) {
+    this.electronCommunication('open_external_link', 'on_open_external_link', this.observableSource$, { resource: externalResource });
+  }
+  private electronCommunication(sentMessage: string, receivedMessage: string, observableSource: Subject<any>, args: any = null,) {
     if((<any>window).require) {
       this.ipc = (<any>window).require('electron').ipcRenderer;
-      if(fileFilter === null)
+      if(args === null)
         this.ipc.send(sentMessage);
       else
-        this.ipc.send(sentMessage, fileFilter);
+        this.ipc.send(sentMessage, args);
       this.ipc.once(receivedMessage, (event, response: any) => {
         this.ipc.removeAllListeners(receivedMessage);
         this.ipc.removeAllListeners('on_error');

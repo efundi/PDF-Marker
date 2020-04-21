@@ -140,6 +140,13 @@ try {
     electron_1.ipcMain.on('get_app_version', function (event) {
         event.sender.send('on_get_app_version', { version: electron_1.app.getVersion() });
     });
+    electron_1.ipcMain.on('open_external_link', function (event, args) {
+        electron_1.shell.openExternal(args.resource).then(function () {
+            event.sender.send('on_open_external_link', { results: true });
+        })["catch"](function (reason) {
+            event.sender.send('on_error', reason);
+        });
+    });
     electron_1.ipcMain.on('get_folder', function (event) {
         electron_1.dialog.showOpenDialog(mainWindow, {
             title: "Select Folder",

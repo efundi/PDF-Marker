@@ -1,5 +1,23 @@
 $pdf-marker-primary: #6f327a;
 
+h1 {
+  margin-bottom: 0;
+}
+
+#external-rubric-tool {
+  color: #888;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin-left: 34px;
+  display: block;
+  font-size: 14px;
+}
+
+.externalLink {
+  cursor: pointer;
+  color: #0000EE !important;
+}
+
 .rubric-setup {
   display: flex;
 }

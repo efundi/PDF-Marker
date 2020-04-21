@@ -1,4 +1,4 @@
-import {app, BrowserWindow, dialog, ipcMain, screen} from 'electron';
+import {app, BrowserWindow, dialog, ipcMain, screen, shell} from 'electron';
 import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
@@ -119,6 +119,14 @@ try {
 
   ipcMain.on('get_app_version', (event) => {
     event.sender.send('on_get_app_version', { version: app.getVersion() });
+  });
+
+  ipcMain.on('open_external_link', (event, args) => {
+    shell.openExternal(args.resource).then(() => {
+      event.sender.send('on_open_external_link', { results: true });
+    }).catch((reason) => {
+      event.sender.send('on_error', reason);
+    })
   });
 
   ipcMain.on('get_folder', (event) => {

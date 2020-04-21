@@ -10,6 +10,7 @@ import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
 import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
 import {RubricViewModalComponent} from "@sharedModule/components/rubric-view-modal/rubric-view-modal.component";
+import {ElectronService} from "@coreModule/services/electron.service";
 
 @Component({
   selector: 'pdf-marker-rubric-import',
@@ -21,6 +22,7 @@ export class RubricImportComponent implements OnInit {
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
   private file: File;
   private fileContents: IRubric;
+  readonly externalLink: string = "https://rubric.nwu.ac.za";
 
   config: MatDialogConfig;
 
@@ -33,7 +35,8 @@ export class RubricImportComponent implements OnInit {
   constructor(private fb: FormBuilder,
               private alertService: AlertService,
               private appService: AppService,
-              private importService: ImportService) {
+              private importService: ImportService,
+              private electronService: ElectronService) {
   }
 
   ngOnInit() {
@@ -122,6 +125,17 @@ export class RubricImportComponent implements OnInit {
   showRubric(rubricName: string) {
     this.openRubricModal(rubricName);
     //console.log("Show Rubric at index = " + rubricName);
+  }
+
+  openExternalResource() {
+    this.appService.isLoading$.next(true);
+    this.electronService.openExternalLink(this.externalLink);
+    this.electronService.getObservable().subscribe(() => {
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to open resource link");
+      this.appService.isLoading$.next(false);
+    });
   }
 
   deleteRubric(rubricName: string) {
