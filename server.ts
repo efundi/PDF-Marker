@@ -1747,6 +1747,9 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   let totalMark = 0;
   let generalMarks = 0;
   let sectionMarks: string[] = [];
+  let commentPointers: string[] = [];
+  let commentPointer: number = 1;
+  let commentErrorFound: boolean = false;
   const file = readFileSync(filePath);
   const pdfFactory = new AnnotationFactory(file);
   let pdfDoc = await PDFDocument.load(file);
@@ -1761,7 +1764,9 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
           try {
             pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], markObj.comment, markObj.sectionLabel + " = " + markObj.totalMark);
           } catch (e) {
-
+            commentErrorFound = true;
+            commentPointers.push("*" + commentPointer + ": " + markObj.comment);
+            commentPointer++;
           }
           sectionMarks.push(markObj.sectionLabel + ' = ' + markObj.totalMark);
         }
@@ -1771,6 +1776,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   });
 
   pageCount = 1;
+  commentPointer = 1;
   pdfDoc = await PDFDocument.load(pdfFactory.write());
   pdfPages = await pdfDoc.getPages();
   pdfPages.forEach((pdfPage: PDFPage) => {
@@ -1803,6 +1809,32 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
             pdfPage.drawSvgPath(IconSvgEnum.CROSS_SVG, options);
           } else if (mark.iconType === IconTypeEnum.ACK_MARK) {
             pdfPage.drawSvgPath(IconSvgEnum.ACK_MARK_SVG, options);
+          }
+        } else {
+          if(commentErrorFound) {
+            const markOption = {
+              x: (coords.x * 72 / 96) + 8,
+              y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 20,
+              size: 10,
+              color: rgb(1, 1, 1)
+            };
+
+            const textOption = {
+              x: (coords.x * 72 / 96) + 12,
+              y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 5,
+              size: 10
+            };
+
+            const circleOptions = {
+              x: (coords.x * 72 / 96) + 16,
+              y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 16,
+              size: 10,
+            };
+
+            pdfPage.drawCircle(circleOptions);
+            pdfPage.drawText(mark.totalMark + '', markOption);
+            pdfPage.drawText('*' + commentPointer, textOption);
+            commentPointer++;
           }
         }
       });
@@ -1851,6 +1883,34 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   resultsPage.drawText('', {x: xPosition, y: y, size: textSize});
   y = adjustPointsForResults(y, 15);
   resultsPage.drawText('Total = ' + totalMark, {x: xPosition, y: y, size: textSize});
+
+  if(commentErrorFound) {
+    let feedbackPage = pdfDoc.addPage(PageSizes.A4);
+    y = 800;
+
+    feedbackPage.drawText('Feedback', {x: resultsPage.getWidth() / 2, y: y, size: headerSize});
+    y = adjustPointsForResults(y, 15);
+    y = adjustPointsForResults(y, 15);
+    feedbackPage.drawText('_______________________________________', {
+      x: xPosition,
+      y: 775,
+      color: rgb(borderColor.red, borderColor.green, borderColor.blue),
+      size: textSize
+    });
+    y = adjustPointsForResults(y, 15);
+
+    for (let i = 0; i < commentPointers.length; i++) {
+      y = adjustPointsForResults(y, 15);
+      feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y: y, size: textSize});
+      feedbackPage.drawText('', {x: xPosition, y: y, size: textSize});
+
+      if (y <= 5) {
+        feedbackPage = pdfDoc.addPage(PageSizes.A4);
+        y = 800;
+      }
+    }
+  }
+
   const newPdfBytes = await pdfDoc.save();
   return Promise.resolve({pdfBytes: newPdfBytes, totalMark: totalMark});
 };
