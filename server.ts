@@ -1903,7 +1903,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     y = adjustPointsForResults(y, 15);
 
     for (let i = 0; i < commentPointers.length; i++) {
-      const feedback = wrap(commentPointers[i], { width: 100 });
+      const feedback = wrap(commentPointers[i], { width: 80 });
       const splitFeedback = feedback.split("\n");
       if(splitFeedback.length > 0) {
         for (let j = 0; j < splitFeedback.length; j++) {
