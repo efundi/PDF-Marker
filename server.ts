@@ -56,6 +56,7 @@ const glob = require('glob');
 const csvtojson = require('csvtojson');
 const hexRgb = require('hex-rgb');
 const pathinfo = require('locutus/php/filesystem/pathinfo');
+const wrap = require('word-wrap');
 
 
 const CONFIG_FILE = 'config.json';
@@ -1900,13 +1901,26 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     y = adjustPointsForResults(y, 15);
 
     for (let i = 0; i < commentPointers.length; i++) {
-      y = adjustPointsForResults(y, 15);
-      feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y: y, size: textSize});
-      feedbackPage.drawText('', {x: xPosition, y: y, size: textSize});
+      const feedback = wrap(commentPointers[i], { width: 100 });
+      const splitFeedback = feedback.split("\n");
+      if(splitFeedback.length > 0) {
+        for (let j = 0; j < splitFeedback.length; j++) {
+          y = adjustPointsForResults(y, 15);
+          feedbackPage.drawText(splitFeedback[j] + '', {x: xPosition, y: y, size: textSize});
 
-      if (y <= 5) {
-        feedbackPage = pdfDoc.addPage(PageSizes.A4);
-        y = 800;
+          if (y <= 5) {
+            feedbackPage = pdfDoc.addPage(PageSizes.A4);
+            y = 800;
+          }
+        }
+      } else {
+        y = adjustPointsForResults(y, 15);
+        feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y: y, size: textSize});
+
+        if (y <= 5) {
+          feedbackPage = pdfDoc.addPage(PageSizes.A4);
+          y = 800;
+        }
       }
     }
   }

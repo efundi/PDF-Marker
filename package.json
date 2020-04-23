@@ -1,6 +1,6 @@
 {
   "name": "pdf-marker",
-  "version": "1.0.8",
+  "version": "1.0.35",
   "description": "PDF Marker",
   "homepage": "https://github.com/efundi/PDF-Marker",
   "main": "main.js",
@@ -81,6 +81,7 @@
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
     "unzipper": "^0.10.10",
+    "word-wrap": "^1.2.3",
     "zip-dir": "^1.0.2",
     "zone.js": "~0.9.1"
   },
