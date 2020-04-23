@@ -1830,6 +1830,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
               x: (coords.x * 72 / 96) + 16,
               y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 16,
               size: 10,
+              color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue))
             };
 
             pdfPage.drawCircle(circleOptions);
@@ -1853,12 +1854,13 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   resultsPage.drawText('Results', {x: resultsPage.getWidth() / 2, y: y, size: headerSize});
   y = adjustPointsForResults(y, 15);
   y = adjustPointsForResults(y, 15);
-  resultsPage.drawText('_______________________________________', {
-    x: xPosition,
-    y: 775,
-    color: rgb(borderColor.red, borderColor.green, borderColor.blue),
-    size: textSize
-  });
+
+  resultsPage.drawText('_________________________________________________________________________________',
+    {
+      x: xPosition,
+      y: 775,
+      color: rgb(borderColor.red, borderColor.green, borderColor.blue),
+      size: textSize});
   y = adjustPointsForResults(y, 15);
 
   for (let i = 0; i < sectionMarks.length; i++) {
@@ -1874,7 +1876,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   y = adjustPointsForResults(y, 15);
   resultsPage.drawText('General Marks = ' + generalMarks, {x: xPosition, y: y, size: textSize});
   y = adjustPointsForResults(y, 15);
-  resultsPage.drawText('_______________________________________', {
+  resultsPage.drawText('_________________________________________________________________________________', {
     x: xPosition,
     y: y,
     color: rgb(borderColor.red, borderColor.green, borderColor.blue),
@@ -1892,7 +1894,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     feedbackPage.drawText('Feedback', {x: resultsPage.getWidth() / 2, y: y, size: headerSize});
     y = adjustPointsForResults(y, 15);
     y = adjustPointsForResults(y, 15);
-    feedbackPage.drawText('_______________________________________', {
+    feedbackPage.drawText('_________________________________________________________________________________', {
       x: xPosition,
       y: 775,
       color: rgb(borderColor.red, borderColor.green, borderColor.blue),
