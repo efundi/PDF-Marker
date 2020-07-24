@@ -1,3 +1,4 @@
 export interface AppSelectedPathInfo {
-  selectedPath: string
+  selectedPath: string;
+  contents?: string;
 }

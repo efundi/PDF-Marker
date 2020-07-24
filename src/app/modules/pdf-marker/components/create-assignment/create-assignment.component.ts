@@ -23,7 +23,9 @@ import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-
 export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   createAssignmentForm: FormGroup;
+
   private readonly noRubricDefaultValue: boolean = false;
+
   private studentFiles: File[] = [];
 
   isRubric: boolean = true;
@@ -61,7 +63,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
               private sakaiService: SakaiService) {}
 
   ngOnInit() {
-    this.initForm();
     this.activatedRoute.params.subscribe(params => {
       let id = params['id'];
       if(id && !!this.assignmentService.getSelectedAssignment()) {
@@ -72,7 +73,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         this.fc.assignmentName.setValue(this.assignmentId);
         this.assignmentService.getAssignmentSettings(id).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
           this.assignmentSettings = assignmentSettings;
-          if(this.assignmentSettings.rubric) {
+          if (this.assignmentSettings.rubric) {
             this.selectedRubric = this.assignmentSettings.rubric;
             this.fc.noRubric.setValue(this.noRubricDefaultValue);
             this.fc.rubric.setValue(this.assignmentSettings.rubric.name);
@@ -95,6 +96,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.appService.isLoading$.next(false);
     });
 
+    this.initForm();
     if(!this.isEdit)
       this.addNewRow();
   }
@@ -102,11 +104,11 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   private generateStudentDetailsFromModel() {
     const hierarchyModel = this.assignmentService.getSelectedAssignment();
 
-    let values: AssignmentDetails[] = [];
+    const values: AssignmentDetails[] = [];
     if(hierarchyModel[this.assignmentId]) {
       Object.keys(hierarchyModel[this.assignmentId]).forEach(key => {
         if (this.regEx.test(key) && this.sakaiService.getAssignmentRootFiles().indexOf(key) === -1) {
-          let value: AssignmentDetails = {
+          const value: AssignmentDetails = {
             studentName: '',
             studentNumber: '',
             assignment: '',
@@ -131,9 +133,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       const studentFormGroup: FormGroup = this.newFormGroupRowFromData(studentDetails[i]);
       (this.fc.studentRow as FormArray).push(studentFormGroup);
       this.studentFiles.push(new File([""], studentDetails[i].assignment));
-      //this.disableFields(studentFormGroup, fields);
     }
-    //this.addNewRow();
   }
 
   private disableField(formGroup: FormGroup, fieldName: string) {
@@ -143,7 +143,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   private disableFields(formGroup: FormGroup, fields: string[]) {
     fields.forEach(fieldName => {
       formGroup.get(fieldName).disable();
-    })
+    });
   }
 
   private initForm() {
@@ -160,7 +160,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   private newFormGroupRow(): FormGroup {
     return this.fb.group({
       studentId: [null, [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
-      studentName:[null, Validators.required],
+      studentName: [null, Validators.required],
       studentSurname: [null, Validators.required],
       studentSubmission: [null, Validators.required],
       studentSubmissionText: [null],
@@ -212,7 +212,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   studentFormGroupAtIndex(index: number): FormGroup {
-    return (this.studentRow.controls[index] as FormGroup)
+    return (this.studentRow.controls[index] as FormGroup);
   }
 
   onRubricChange() {

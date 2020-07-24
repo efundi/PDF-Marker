@@ -47,6 +47,7 @@ var args = process.argv.slice(1);
 serve = args.some(function (val) { return val === '--serve'; });
 var server = require('./dist/server');
 var logger = require('electron-log');
+var excelParser = new (require('simple-excel-to-json').XlsParser)();
 function createWindow() {
     var electronScreen = electron_1.screen;
     var size = electronScreen.getPrimaryDisplay().workAreaSize;
@@ -96,7 +97,7 @@ try {
     // Some APIs can only be used after this event occurs.
     electron_1.app.on('ready', function () {
         if (process.platform === 'win32') {
-            electron_1.app.setAppUserModelId("za.ac.nwu.PDF-Marker"); // set appId from package.json or electron-builder.yml?
+            electron_1.app.setAppUserModelId('za.ac.nwu.PDF-Marker'); // set appId from package.json or electron-builder.yml?
         }
         createWindow();
         mainWindow.webContents.on('did-finish-load', function () {
@@ -149,60 +150,131 @@ try {
     });
     electron_1.ipcMain.on('get_folder', function (event) {
         electron_1.dialog.showOpenDialog(mainWindow, {
-            title: "Select Folder",
-            properties: ["openDirectory", "promptToCreate"]
+            title: 'Select Folder',
+            properties: ['openDirectory', 'promptToCreate']
         }).then(function (data) {
-            if (data.canceled)
+            if (data.canceled) {
                 event.sender.send('on_get_folder', { selectedPath: null });
-            else
+            }
+            else {
                 event.sender.send('on_get_folder', { selectedPath: data.filePaths[0] });
+            }
         })["catch"]((function (reason) {
             event.sender.send('on_error', reason);
         }));
     });
     electron_1.ipcMain.on('get_file', function (event, args) {
         electron_1.dialog.showOpenDialog(mainWindow, {
-            title: "Select File",
+            title: 'Select File',
             filters: [
                 { name: args.name, extensions: args.extension }
             ],
-            properties: ["openFile"]
+            properties: ['openFile']
         }).then(function (data) {
-            if (data.canceled)
+            if (data.canceled) {
                 event.sender.send('on_get_file', { selectedPath: null });
-            else
+            }
+            else {
                 event.sender.send('on_get_file', { selectedPath: data.filePaths[0] });
+            }
         })["catch"]((function (reason) {
             event.sender.send('on_error', reason);
         }));
     });
-    electron_1.ipcMain.on('save_file', function (event, args) { return __awaiter(_this, void 0, void 0, function () {
-        var filePath;
-        return __generator(this, function (_a) {
-            filePath = electron_1.dialog.showSaveDialogSync(mainWindow, {
-                defaultPath: args.filename,
-                title: "Save",
-                filters: [
-                    { name: args.name, extensions: args.extension }
-                ]
+    // tslint:disable-next-line:no-shadowed-variable
+    electron_1.ipcMain.on('get_excel_to_json', function (event, args) {
+        electron_1.dialog.showOpenDialog(mainWindow, {
+            title: 'Select File',
+            filters: [
+                { name: args.name, extensions: args.extension }
+            ],
+            properties: ['openFile']
+        }).then(function (data) { return __awaiter(_this, void 0, void 0, function () {
+            var doc, docInJSON, count_1, rubric_1, standardLevelCount;
+            return __generator(this, function (_a) {
+                if (data.canceled) {
+                    event.sender.send('on_excel_to_json', { selectedPath: null, blob: null });
+                }
+                else {
+                    doc = excelParser.parseXls2Json(data.filePaths[0], { isNested: true });
+                    docInJSON = doc[0] || [];
+                    if (docInJSON.length === 0) {
+                        event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(docInJSON) });
+                    }
+                    else {
+                        count_1 = 0;
+                        rubric_1 = {
+                            criterias: []
+                        };
+                        standardLevelCount = 0;
+                        docInJSON.forEach(function (criteriaData) {
+                            if (count_1 > 1) {
+                                var levels = [];
+                                for (var i = 1; i <= 4; i++) {
+                                    var achievementMark = 'Achievement_level_' + i + '_mark';
+                                    var achievementFeedback = 'Achievement_level_' + i + '_feedback';
+                                    var achievementTitle = 'Achievement_level_' + i + '_title';
+                                    var defaultLevels = {
+                                        score: null,
+                                        description: null,
+                                        label: null
+                                    };
+                                    if (!isBlank(criteriaData[achievementMark]) &&
+                                        !isBlank(criteriaData[achievementFeedback]) &&
+                                        !isBlank(criteriaData[achievementTitle])) {
+                                        levels[i - 1] = {
+                                            score: criteriaData[achievementMark],
+                                            description: criteriaData[achievementFeedback],
+                                            label: criteriaData[achievementTitle]
+                                        };
+                                    }
+                                    else {
+                                        levels[i - 1] = defaultLevels;
+                                    }
+                                }
+                                rubric_1.criterias.push({
+                                    description: isBlank(criteriaData.Criterion_description) ? null : criteriaData.Criterion_description,
+                                    name: isBlank(criteriaData.Criterion_name) ? null : criteriaData.Criterion_name,
+                                    levels: levels
+                                });
+                            }
+                            count_1++;
+                        });
+                        event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric_1) });
+                    }
+                }
+                return [2 /*return*/];
             });
-            if (filePath) {
-                try {
-                    fs_1.writeFileSync(filePath, new Buffer(args.buffer));
-                    event.sender.send('on_save_file', { selectedPath: filePath });
-                }
-                catch (e) {
-                    event.sender.send('on_error', e.message);
-                }
-            }
-            else {
-                event.sender.send('on_save_file', { selectedPath: null });
-            }
-            return [2 /*return*/];
+        }); })["catch"]((function (reason) {
+            event.sender.send('on_error', reason);
+        }));
+    });
+    electron_1.ipcMain.on('save_file', function (event, args) {
+        var filePath = electron_1.dialog.showSaveDialogSync(mainWindow, {
+            defaultPath: args.filename,
+            title: 'Save',
+            filters: [
+                { name: args.name, extensions: args.extension }
+            ]
         });
-    }); });
+        if (filePath) {
+            try {
+                fs_1.writeFileSync(filePath, new Buffer(args.buffer));
+                event.sender.send('on_save_file', { selectedPath: filePath });
+            }
+            catch (e) {
+                event.sender.send('on_error', e.message);
+            }
+        }
+        else {
+            event.sender.send('on_save_file', { selectedPath: null });
+        }
+    });
 }
 catch (e) {
     // Catch Error
     // throw e;
+}
+function isBlank(data) {
+    return (data === '' || data === null || data === undefined);
 }

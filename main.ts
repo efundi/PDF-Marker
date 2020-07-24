@@ -2,8 +2,8 @@ import {app, BrowserWindow, dialog, ipcMain, screen, shell} from 'electron';
 import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
-import {writeFile, writeFileSync} from "fs";
-import {buffer} from "rxjs/operators";
+import {writeFile, writeFileSync} from 'fs';
+import {buffer} from 'rxjs/operators';
 
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
@@ -11,6 +11,7 @@ const args = process.argv.slice(1);
 serve = args.some(val => val === '--serve');
 const server = require('./dist/server');
 const logger = require('electron-log');
+const excelParser = new (require('simple-excel-to-json').XlsParser)();
 
 function createWindow() {
 
@@ -67,7 +68,7 @@ try {
   app.on('ready', () => {
 
     if (process.platform === 'win32') {
-      app.setAppUserModelId("za.ac.nwu.PDF-Marker"); // set appId from package.json or electron-builder.yml?
+      app.setAppUserModelId('za.ac.nwu.PDF-Marker'); // set appId from package.json or electron-builder.yml?
     }
     createWindow();
 
@@ -126,18 +127,19 @@ try {
       event.sender.send('on_open_external_link', { results: true });
     }).catch((reason) => {
       event.sender.send('on_error', reason);
-    })
+    });
   });
 
   ipcMain.on('get_folder', (event) => {
     dialog.showOpenDialog(mainWindow, {
-      title: "Select Folder",
-      properties: ["openDirectory", "promptToCreate"]
+      title: 'Select Folder',
+      properties: ['openDirectory', 'promptToCreate']
     }).then((data) => {
-      if(data.canceled)
-        event.sender.send('on_get_folder', { selectedPath: null });
-      else
-        event.sender.send('on_get_folder', { selectedPath: data.filePaths[0] });
+      if (data.canceled) {
+        event.sender.send('on_get_folder', {selectedPath: null});
+      } else {
+        event.sender.send('on_get_folder', {selectedPath: data.filePaths[0]});
+      }
     }).catch((reason => {
       event.sender.send('on_error', reason);
     }));
@@ -145,31 +147,104 @@ try {
 
   ipcMain.on('get_file', (event, args) => {
     dialog.showOpenDialog(mainWindow, {
-      title: "Select File",
+      title: 'Select File',
       filters: [
         { name: args.name, extensions: args.extension }
       ],
-      properties: ["openFile"]
+      properties: ['openFile']
     }).then((data) => {
-      if(data.canceled)
-        event.sender.send('on_get_file', { selectedPath: null });
-      else
-        event.sender.send('on_get_file', { selectedPath: data.filePaths[0] });
+      if (data.canceled) {
+        event.sender.send('on_get_file', {selectedPath: null});
+      } else {
+        event.sender.send('on_get_file', {selectedPath: data.filePaths[0]});
+      }
     }).catch((reason => {
       event.sender.send('on_error', reason);
     }));
   });
 
-  ipcMain.on('save_file', async (event, args) => {
+  // tslint:disable-next-line:no-shadowed-variable
+  ipcMain.on('get_excel_to_json', (event, args) => {
+    dialog.showOpenDialog(mainWindow, {
+      title: 'Select File',
+      filters: [
+        { name: args.name, extensions: args.extension }
+      ],
+      properties: ['openFile']
+    }).then(async (data) => {
+      if (data.canceled) {
+        event.sender.send('on_excel_to_json', {selectedPath: null, blob: null});
+      } else {
+        const doc = excelParser.parseXls2Json(data.filePaths[0], { isNested: true });
+        const docInJSON = doc[0] || [];
+
+        if (docInJSON.length === 0) {
+          event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(docInJSON) });
+        } else {
+          let count = 0;
+          const rubric = {
+            criterias: []
+          };
+
+          let standardLevelCount = 0;
+          docInJSON.forEach(criteriaData => {
+            if (count > 1) {
+
+              const levels = [];
+
+              for (let i = 1; i <= 4; i++) {
+                const achievementMark = 'Achievement_level_'  + i + '_mark';
+                const achievementFeedback = 'Achievement_level_'  + i + '_feedback';
+                const achievementTitle = 'Achievement_level_'  + i + '_title';
+
+                const defaultLevels = {
+                  score: null,
+                  description: null,
+                  label: null
+                };
+
+                if (
+                  !isBlank(criteriaData[achievementMark]) &&
+                  !isBlank(criteriaData[achievementFeedback]) &&
+                  !isBlank(criteriaData[achievementTitle])) {
+                  levels[i - 1] = {
+                    score: criteriaData[achievementMark],
+                    description: criteriaData[achievementFeedback],
+                    label: criteriaData[achievementTitle],
+                  };
+                } else {
+                  levels[i - 1] = defaultLevels;
+                }
+              }
+
+              rubric.criterias.push({
+                description: isBlank(criteriaData.Criterion_description) ? null : criteriaData.Criterion_description,
+                name: isBlank(criteriaData.Criterion_name) ? null : criteriaData.Criterion_name,
+                levels
+              });
+            }
+            count++;
+          });
+
+          event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) });
+        }
+      }
+
+    }).catch((reason => {
+      event.sender.send('on_error', reason);
+    }));
+  });
+
+  ipcMain.on('save_file', (event, args) => {
     const filePath: string = dialog.showSaveDialogSync(mainWindow, {
       defaultPath: args.filename,
-      title: "Save",
+      title: 'Save',
       filters: [
         { name: args.name, extensions: args.extension }
       ]
     });
 
-    if(filePath) {
+    if (filePath) {
       try {
         writeFileSync(filePath, new Buffer(args.buffer));
         event.sender.send('on_save_file', { selectedPath: filePath });
@@ -184,4 +259,8 @@ try {
 } catch (e) {
   // Catch Error
   // throw e;
+}
+
+function isBlank(data) {
+  return (data === '' || data === null || data === undefined);
 }

@@ -38,7 +38,7 @@ export interface IRubricCriteria {
 
   name: string;
 
-  levels: IRubricCriteriaLevels[]
+  levels: IRubricCriteriaLevels[];
 }
 
 

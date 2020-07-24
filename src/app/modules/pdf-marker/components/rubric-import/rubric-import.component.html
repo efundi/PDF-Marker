@@ -12,10 +12,10 @@
         </div>
       </mat-form-field>
       <div class="pdf-marker-file-upload" [class.pdf-marker-file-upload-error]="(rubricForm.get('rubricFile')?.errors && rubricForm.get('rubricFile')?.touched && rubricForm.get('rubricFile')?.dirty)">
-        <button type="button" [class.pdf-marker-rubric-import-hide]="rubricForm.invalid" (click)="onResetpreviousUpload(); fileElement.value = null" mat-button mat-icon-button><mat-icon class="pdf-marker-file-upload-remove">close</mat-icon></button>
-        <button type="button" mat-raised-button>Browse<input formControlName="rubricFile" #fileElement type="file" class="pdf-marker-upload" [accept]="MimeTypesEnum.JSON" required (click)="fileElement.value = null" (change)="onFileChange($event)"></button>
+        <button type="button" [class.pdf-marker-rubric-import-hide]="rubricForm.invalid" (click)="onResetPreviousUpload();" mat-button mat-icon-button><mat-icon class="pdf-marker-file-upload-remove">close</mat-icon></button>
+        <button type="button" mat-raised-button (click)="selectFile()">Browse<!--<input formControlName="rubricFile" #fileElement type="file" class="pdf-marker-upload" [accept]="MimeTypesEnum.XLSX" required (click)="fileElement.value = null" (change)="onFileChange($event)">--></button>
         &nbsp;&nbsp;
-        <input type="text" formControlName="rubricFileText" id="pdf-marker-upload-display" readonly placeholder="Choose JSON File">
+        <input type="text" formControlName="rubricFileText" id="pdf-marker-upload-display" readonly placeholder="Choose Excel File">
       </div>
     </div>
     <div [class.pdf-marker-rubric-import-hide]="rubricForm.invalid">
