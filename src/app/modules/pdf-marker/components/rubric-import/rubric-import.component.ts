@@ -218,6 +218,14 @@ export class RubricImportComponent implements OnInit, OnDestroy {
           errorFound = true;
         }
 
+
+        if (isNaN(level.score)) {
+          errorMessage = this.joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}_score is not a valid number`);
+          errorFound = true;
+        }
+
+        level.score = parseInt('' + level.score, 10);
+
         if (this.isBlank(level.label)) {
           errorMessage = this.joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}_title ${notProvided}`);
           errorFound = true;

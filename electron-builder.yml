@@ -3,7 +3,7 @@ appId: za.ac.nwu.PDF-Marker
 
 publish:
   provider: github
-  token: 
+  token:
 
 directories:
   output: "release"
