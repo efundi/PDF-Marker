@@ -180,7 +180,7 @@ try {
           const docInJSON = doc[0] || [];
 
           if (docInJSON.length === 0) {
-            event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(docInJSON) });
+            event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: `No criteria(s) provided` } });
           } else {
             let rowCount = 4;
             let errorMessage: string;
@@ -276,7 +276,11 @@ try {
               }
             }
 
-            event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) });
+            if (rubric.criterias.length === 0) {
+              event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: `No criteria(s) provided` } });
+            } else {
+              event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) });
+            }
           }
         } catch (reason) {
           event.sender.send('on_excel_to_json', { selectedPath: null, error: reason });

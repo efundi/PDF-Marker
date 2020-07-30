@@ -200,7 +200,7 @@ try {
                         doc = excelParser.parseXls2Json(data.filePaths[0], { isNested: true });
                         docInJSON = doc[0] || [];
                         if (docInJSON.length === 0) {
-                            event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(docInJSON) });
+                            event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: "No criteria(s) provided" } });
                         }
                         else {
                             rowCount = 4;
@@ -270,8 +270,6 @@ try {
                                         };
                                     }
                                     if (index !== 2 && levels.length !== validLevelLength) {
-                                        console.log(JSON.stringify(levels));
-                                        console.log("Valid length " + validLevelLength + " , but you provided " + levels.length);
                                         errorMessage = joinError(errorMessage, "" + startMessagePrefix + rowCount + startMessageSuffix + " The provided number of achievement levels do not match first row achievement levels");
                                         return [2 /*return*/, event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: errorMessage } })];
                                     }
@@ -283,12 +281,15 @@ try {
                                     rowCount++;
                                 }
                             }
-                            console.log(JSON.stringify(rubric));
-                            event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) });
+                            if (rubric.criterias.length === 0) {
+                                event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: "No criteria(s) provided" } });
+                            }
+                            else {
+                                event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) });
+                            }
                         }
                     }
                     catch (reason) {
-                        console.log(reason);
                         event.sender.send('on_excel_to_json', { selectedPath: null, error: reason });
                     }
                 }
