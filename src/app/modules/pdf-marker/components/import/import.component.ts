@@ -111,27 +111,32 @@ export class ImportComponent implements OnInit {
   async selectFile() {
     this.electronService.getFile({ name: 'Zip Files', extension: ['zip'] });
     this.electronService.getFileOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-      this.showLoading(true);
-      if(appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
-        fetch('file:///' + appSelectedPathInfo.selectedPath)
-          .then(response => {
-            response.blob().then(async (blob: Blob) => {
-              const pathSplit = appSelectedPathInfo.selectedPath.split("\\");
-              this.file = await new File([blob], pathSplit[pathSplit.length - 1], { type: MimeTypesEnum.ZIP });
-              this.actualFilePath = appSelectedPathInfo.selectedPath;
-              this.onFileChange();
-            }).catch(error => {
+      this.showLoading(false);
+      if (appSelectedPathInfo.selectedPath) {
+        if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
+          this.showLoading(true);
+          fetch('file:///' + appSelectedPathInfo.selectedPath)
+            .then(response => {
+              response.blob().then(async (blob: Blob) => {
+                const pathSplit = appSelectedPathInfo.selectedPath.split('\\');
+                this.file = await new File([blob], pathSplit[pathSplit.length - 1], { type: MimeTypesEnum.ZIP });
+                this.actualFilePath = appSelectedPathInfo.selectedPath;
+                this.onFileChange();
+              }).catch(error => {
+                this.showErrorMessage(error);
+                this.showLoading(false);
+              });
+            })
+            .catch(error => {
               this.showErrorMessage(error);
               this.showLoading(false);
-            })
-          })
-          .catch(error => {
-            this.showErrorMessage(error);
-            this.showLoading(false);
-          });
-      } else {
-        this.file = undefined;
-        this.onFileChange();
+            });
+        } else {
+          this.file = undefined;
+          this.onFileChange();
+        }
+      } else if (appSelectedPathInfo.error) {
+        this.alertService.error(appSelectedPathInfo.error.message);
       }
     });
   }

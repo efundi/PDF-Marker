@@ -89,46 +89,33 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   async selectFile() {
     this.alertService.clear();
     this.electronService.getExcelToJSONOb().subscribe(async (appSelectedPathInfo: AppSelectedPathInfo) => {
-      this.appService.isLoading$.next(true);
-      if (appSelectedPathInfo && appSelectedPathInfo.selectedPath && appSelectedPathInfo.contents) {
-        const pathSplit = appSelectedPathInfo.selectedPath.split('\\');
+      this.appService.isLoading$.next(false);
+      if (appSelectedPathInfo.selectedPath) {
+        if (appSelectedPathInfo && appSelectedPathInfo.selectedPath && appSelectedPathInfo.contents) {
+          const pathSplit = appSelectedPathInfo.selectedPath.split('\\');
 
-        try {
-          const rubric: IRubric = this.validateRubricContents(JSON.parse(appSelectedPathInfo.contents));
-          if (rubric) {
-            const blob: Blob = new Blob([JSON.stringify(rubric)], {type: MimeTypesEnum.JSON});
-            this.file = await new File(
-              [blob], pathSplit[pathSplit.length - 1], {type: MimeTypesEnum.JSON}
-            );
-            this.onFileChange();
-          } else {
+          try {
+            const rubric: IRubric = JSON.parse(appSelectedPathInfo.contents);
+            if (rubric) {
+              const blob: Blob = new Blob([JSON.stringify(rubric)], {type: MimeTypesEnum.JSON});
+              this.file = await new File(
+                [blob], pathSplit[pathSplit.length - 1], {type: MimeTypesEnum.JSON}
+              );
+              this.onFileChange();
+            } else {
+              this.appService.isLoading$.next(false);
+            }
+          } catch (e) {
             this.appService.isLoading$.next(false);
+            this.alertService.error(e);
           }
-        } catch (e) {
-          this.appService.isLoading$.next(false);
-          this.alertService.error(e);
         }
-
-        /*// Validate Returned Json
-        const rubric: IRubric = this.validateRubricContents(appSelectedPathInfo.contents);
-        try {
-          const blob: Blob = new Blob([appSelectedPathInfo.contents], { type: MimeTypesEnum.JSON });
-          this.file = await new File(
-            [blob], pathSplit[pathSplit.length - 1], { type: MimeTypesEnum.JSON }
-          );
-        } catch (e) {
-          this.setErrorMessage(this.file, 'Could not convert Excel file to JSON!');
-          this.appService.isLoading$.next(false);
-        }
-        this.onFileChange();
       } else {
         this.appService.isLoading$.next(false);
-        this.file = undefined;
-        this.onFileChange();
-      } */
+        this.alertService.error(appSelectedPathInfo.error.message);
       }
     });
-    this.electronService.getExcelToJSON({ name: 'Custom Files', extension: ['xlsx'] });
+    this.electronService.getExcelToJSON({ name: 'Custom Files', extension: ['xlsx', 'xls'] });
   }
 
   private validateRubricJSON() {
@@ -168,107 +155,6 @@ export class RubricImportComponent implements OnInit, OnDestroy {
     });
 
     reader.readAsText(this.file);
-  }
-
-  private validateRubricContents(rubric: IRubric): IRubric {
-    const newCriterias: IRubricCriteria[] = [];
-    let rowCount = 4;
-    let errorMessage: string;
-    let errorFound: boolean;
-    let validLevelLength = 0;
-    const startMessagePrefix = `Error[row = `;
-    const startMessageSuffix = `]: achievement_level`;
-    const notProvided = `is not provided`;
-
-    for (let index = 0; index < rubric.criterias.length; index++) {
-
-      const newCriteria: IRubricCriteria = {
-        name: null,
-        description: null,
-        levels: []
-      };
-
-
-      errorMessage = '';
-      errorFound = false;
-
-      if (this.isBlank(rubric.criterias[index].name)) {
-        errorMessage = this.joinError(errorMessage, `Criteria name ${notProvided}`);
-        errorFound = true;
-      }
-
-      if (this.isBlank(rubric.criterias[index].description)) {
-        errorMessage = this.joinError(errorMessage, `Criteria description ${notProvided}`);
-        errorFound = true;
-      }
-
-      if (errorFound) {
-        this.alertService.error(errorMessage);
-        return null;
-      }
-
-      newCriteria.name = rubric.criterias[index].name.trim();
-      newCriteria.description = rubric.criterias[index].description.trim();
-
-      for (let i = 0; i < ((validLevelLength === 0) ? rubric.criterias[index].levels.length : validLevelLength); i++) {
-
-        const level: IRubricCriteriaLevels = rubric.criterias[index].levels[i];
-        if (this.isBlank(level.score)) {
-          errorMessage = this.joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}_score ${notProvided}`);
-          errorFound = true;
-        }
-
-
-        if (isNaN(level.score)) {
-          errorMessage = this.joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}_score is not a valid number`);
-          errorFound = true;
-        }
-
-        level.score = parseInt('' + level.score, 10);
-
-        if (this.isBlank(level.label)) {
-          errorMessage = this.joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}_title ${notProvided}`);
-          errorFound = true;
-        }
-
-        if (this.isBlank(level.description)) {
-          errorMessage = this.joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}_feedback ${notProvided}`);
-          errorFound = true;
-        }
-
-        if (errorFound && i === 0) {
-          this.alertService.error(errorMessage);
-          return null;
-        } else if (errorFound && i > 0) {
-          break;
-        } else if (rowCount === 4 && (i === rubric.criterias[index].levels.length - 1)) {
-          validLevelLength = rubric.criterias[index].levels.length;
-        }
-
-        newCriteria.levels.push({
-          score: level.score,
-          label: level.label,
-          description: level.description
-        });
-      }
-
-      if (rowCount !== 4 && newCriteria.levels.length !== validLevelLength) {
-        errorMessage = this.joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix} do not match first row achievement levels`);
-        this.alertService.error(errorMessage);
-        return null;
-      }
-
-      newCriterias.push(newCriteria);
-      rowCount++;
-    }
-
-    if (newCriterias.length === 0) {
-      this.alertService.error(this.joinError(errorMessage, `No criterias have been set!`));
-      return null;
-    }
-
-    rubric = { criterias: newCriterias };
-    return rubric;
   }
 
   private setErrorMessage(file: File, errorMsg: string) {

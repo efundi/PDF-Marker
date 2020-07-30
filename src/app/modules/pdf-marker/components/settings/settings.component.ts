@@ -49,8 +49,10 @@ export class SettingsComponent implements OnInit {
   setWorkingDirectory(event) {
     this.electronService.getFolder();
     this.electronService.getFolderOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-      if(appSelectedPathInfo && appSelectedPathInfo.selectedPath)
-        this.settingsForm.controls.defaultPath.setValue((appSelectedPathInfo.selectedPath) ? appSelectedPathInfo.selectedPath:null);
+      if (appSelectedPathInfo && appSelectedPathInfo.selectedPath)
+        this.settingsForm.controls.defaultPath.setValue((appSelectedPathInfo.selectedPath) ? appSelectedPathInfo.selectedPath : null);
+      else if (appSelectedPathInfo.error)
+        this.alertService.error(appSelectedPathInfo.error.message);
     });
   }
 

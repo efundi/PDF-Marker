@@ -272,14 +272,12 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       const fileName: string = this.assignmentName;
       this.electronService.saveFile({ filename: fileName, buffer: reader.result, name: 'Zip File', extension: ["zip"]});
       this.electronService.saveFileOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        if(appSelectedPathInfo.selectedPath) {
+        this.appService.isLoading$.next(false);
+        if (appSelectedPathInfo.selectedPath) {
           this.alertService.success(`Successfully exported ${fileName}. You can now upload it to ${this.settings.lmsSelection}.`);
+        } else if (appSelectedPathInfo.error) {
+          this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
         }
-
-        this.appService.isLoading$.next(false);
-      }, error => {
-        this.appService.openSnackBar(false, "Error exporting assignment");
-        this.appService.isLoading$.next(false);
       });
     });
 
