@@ -249,6 +249,8 @@ try {
                   if (errorFound && i === 1) {
                     return event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: errorMessage } });
                   } else if (errorFound && i > 1) {
+                    if (index === 2)
+                      validLevelLength = i - 1;
                     break;
                   } else if ((index === 2) && (i === 4)) {
                     validLevelLength = 4;
