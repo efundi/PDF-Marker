@@ -63,6 +63,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
               private sakaiService: SakaiService) {}
 
   ngOnInit() {
+    this.initForm();
     this.activatedRoute.params.subscribe(params => {
       let id = params['id'];
       if(id && !!this.assignmentService.getSelectedAssignment()) {
@@ -96,7 +97,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.appService.isLoading$.next(false);
     });
 
-    this.initForm();
     if(!this.isEdit)
       this.addNewRow();
   }

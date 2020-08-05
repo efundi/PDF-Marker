@@ -233,7 +233,6 @@ try {
                                         return [2 /*return*/, event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) })];
                                     }
                                     levels = [];
-                                    console.log("Valid length for row " + rowCount + " is " + validLevelLength);
                                     for (i = 1; ((validLevelLength === 0) ? 4 : validLevelLength); i++) {
                                         achievementMark = 'Achievement_level_' + i + '_mark';
                                         achievementFeedback = 'Achievement_level_' + i + '_feedback';
