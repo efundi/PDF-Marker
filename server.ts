@@ -1593,13 +1593,11 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
   const rubricCriteriaBackGround = {red: 0.93, green: 0.93, blue: 0.93};
   const rubricCriteriaLevelBackground = {red: 1.0, green: 1.0, blue: 1.0};
   const rubricCriteriaLevelBackgroundSelected = {red: 0.93, green: 0.93, blue: 0.93};
- // console.log(marks.toString());
   let criteriaColors =  {red: 1.0, green: 1.0, blue: 1.0};
   let maxScore = 0;
   rubric.criterias.forEach((value, index) => {
     let curHighest = -1;
     let critSelected = marks[index];
-   // console.log(critSelected);
     value.levels.forEach((value1, index1, array) => {
       if (critSelected == index1)
       {
@@ -1624,7 +1622,7 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
     criteriaCount++;
     yPosition = adjustPointsForResults(yPosition, 130);
     resultsPage.drawRectangle({x: xPosition, y: yPosition, width: 130, height: 130, borderWidth: 1, color: rgb(rubricCriteriaLevelBackground.red, rubricCriteriaLevelBackground.green, rubricCriteriaLevelBackground.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
-   // console.log("Criteria "+criteriaIndex+" : (x,y) - ("+xPosition+","+yPosition+") "+ rubric.criterias[criteriaIndex].name);
+
     resultsPage.drawText(rubric.criterias[criteriaIndex].name, {x: (xPosition+3), y: (yPosition+110), size: rubricTextSize});
     let critSelected = marks[criteriaIndex];
     let splitDesc = (rubric.criterias[criteriaIndex].description.split(" "));
@@ -1711,17 +1709,7 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
     xPosition= 25;
     criteriaCount = 0;
   }
-//  console.log("Criteria 1 Text: (x,y) - (50,525)");
-  //level test
- // xPosition = adjustPointsForResults(xPosition, -130);
-  //yPosition = adjustPointsForResults(yPosition, 115); //y = 350
- // resultsPage.drawRectangle({x: xPosition, y: yPosition+20, width: 130, height: 120, borderWidth: 1, color: rgb(rubricCriteriaLevelBackground.red, rubricCriteriaLevelBackground.green, rubricCriteriaLevelBackground.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
- // console.log("Level 1 : (x,y) - ("+xPosition+","+yPosition+")");
 
-
-  //criteria test
-  //resultsPage.drawRectangle({x: 25, y: 345.28, width: 100, height: 100, borderWidth: 1, color: rgb(rubricCriteriaBackGround.red, rubricCriteriaBackGround.green, rubricCriteriaBackGround.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
-  //console.log("Criteria 2: (x,y) - (25,345.28)");
   const newPdfBytes = await pdfDoc.save();
   return Promise.resolve({pdfBytes: newPdfBytes, totalMark: totalMark});
 }
@@ -2076,11 +2064,11 @@ const updateAssignment = (req, res) => {
   const receivedParams = Object.keys(req.body);
   let isInvalidKey: boolean = false;
   let invalidParam: string;
-  uploadFiles(req, res, function (err) {
+  uploadFiles(req, res, async function (err) {
     if (err) {
       return sendResponse(req, res, 400, 'Error uploading PDF files!');
     } else {
-      for (let receivedParam of receivedParams) {
+      for (const receivedParam of receivedParams) {
         if (acceptedParams.indexOf(receivedParam)) {
           isInvalidKey = true;
           invalidParam = receivedParam;
@@ -2094,7 +2082,7 @@ const updateAssignment = (req, res) => {
       if (req.body.assignmentName.legnth < 5)
         return sendResponse(req, res, 400, `Assignment must be > 5 characters`);
 
-      let assignmentName: string = req.body.assignmentName.trim();
+      const assignmentName: string = req.body.assignmentName.trim();
       const isEdit: boolean = (req.body.isEdit && req.body.isEdit === 'true');
 
       try {
@@ -2123,6 +2111,8 @@ const updateAssignment = (req, res) => {
         if (studentDetails.length !== req.files.length)
           return sendResponse(req, res, 400, `Student details is not equal to number of files sent!`);
 
+        const grades = await csvtojson().fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE);
+
         let count = 0;
         const headers = `"${assignmentName}","SCORE_GRADE_TYPE"\n`;
         const line = `""\n`;
@@ -2133,17 +2123,26 @@ const updateAssignment = (req, res) => {
           const studentFolder = studentInfo.studentSurname.toUpperCase() + ", " + studentInfo.studentName.toUpperCase() + "(" + studentInfo.studentId.toUpperCase() + ")";
           const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
           const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
-          const csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},"","",""\n`;
-          csvString += csvData;
+          let csvData = '';
 
           if (existsSync(config.defaultPath + sep + assignmentName + sep + studentFolder)) {
-            if (studentInfo.remove)
+            if (studentInfo.remove) {
               deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder);
+            } else {
+              const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
+              if (studentRecord) {
+                csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},${studentRecord.field5},"",""\n`;
+              } else {
+                csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},"","",""\n`;
+              }
+            }
           } else {
             mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
             mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
             copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
+            csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},"","",""\n`;
           }
+          csvString += csvData;
           count++;
         });
 

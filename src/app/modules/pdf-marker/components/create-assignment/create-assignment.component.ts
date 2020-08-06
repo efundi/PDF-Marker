@@ -260,7 +260,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     }
 
     let selectedStudentId: string = this.studentFormGroupAtIndex(studentIndex).controls.studentId.value;
-    console.log("Selected Student Id = " + selectedStudentId);
     let found: boolean = false;
     let foundIndex: number;
     for(let i = 0; i < this.studentDetails.length; i++) {
@@ -283,7 +282,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
       const shouldContinueFn = (shouldContinue: boolean) => {
         if(shouldContinue) {
-          console.log(this.studentDetails);
           this.studentDetails[foundIndex].shouldDelete = true;
           this.studentRow.controls.splice(studentIndex, 1);
           this.studentFiles.splice(studentIndex, 1);
@@ -343,17 +341,25 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
     let count = 0;
     formValue.studentRow.map((studentRow: any) => {
-      let student: any = {};
-      student.studentId = studentRow.studentId.trim();
-      student.studentName = studentRow.studentName.trim();
-      student.studentSurname = studentRow.studentSurname.trim();
-      formData.append('file' + savedCount++, this.studentFiles[count]);
-      studentData.push(student);
+      const foundStudent = studentData.find(stud => (stud.studentId  === studentRow.studentId.trim()));
+      if (foundStudent && foundStudent.remove) {
+        const student: any = {};
+        student.studentId = studentRow.studentId.trim();
+        student.studentName = studentRow.studentName.trim();
+        student.studentSurname = studentRow.studentSurname.trim();
+        formData.append('file' + savedCount++, this.studentFiles[count]);
+        studentData.push(student);
+      } else if (!foundStudent) {
+        const student: any = {};
+        student.studentId = studentRow.studentId.trim();
+        student.studentName = studentRow.studentName.trim();
+        student.studentSurname = studentRow.studentSurname.trim();
+        formData.append('file' + savedCount++, this.studentFiles[count]);
+        studentData.push(student);
+      }
       count++;
     });
 
-    console.log(foundItemsCount + " === " + studentData.length);
-    console.log(JSON.stringify(studentData));
     if(foundItemsCount == studentData.length) {
       this.deletionErrorMessage(foundItemsCount);
       return;
