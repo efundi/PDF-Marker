@@ -2189,9 +2189,18 @@ const extractZipFile = async (file, destination, newFolder, oldFolder) => {
         const content = await entry.buffer();
         entry.path = entry.path.replace(oldFolder, newFolder);
         const directory = pathinfo(destination + entry.path.replace("/", sep), 1);
+        const extension = pathinfo(destination + entry.path.replace("/", sep), 'PATHINFO_EXTENSION');
         if(!existsSync(directory))
           mkdirSync(directory, { recursive: true });
-        await writeFileSync(destination + entry.path.replace("/", sep),  content);
+
+        if(entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
+          // await writeFileSync(destination + entry.path.replace("/", sep),  content);
+          const pdfDoc = await PDFDocument.load(content);
+          const pdfBytes = await pdfDoc.save();
+          await writeFileSync(destination + entry.path.replace("/", sep),  pdfBytes);
+        } else {
+          await writeFileSync(destination + entry.path.replace("/", sep),  content);
+        }
       } else {
         entry.path = entry.path.replace(oldFolder, newFolder);
         const directory = destination + entry.path.replace("/", sep);
