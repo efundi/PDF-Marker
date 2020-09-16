@@ -1928,11 +1928,11 @@ const createAssignment = (req, res) => {
   const receivedParams = Object.keys(req.body);
   let isInvalidKey: boolean = false;
   let invalidParam: string;
-  uploadFiles(req, res, function (err) {
+  uploadFiles(req, res, async function (err) {
     if (err) {
       return sendResponse(req, res, 400, 'Error uploading PDF files!');
     } else {
-      for (let receivedParam of receivedParams) {
+      for (const receivedParam of receivedParams) {
         if (acceptedParams.indexOf(receivedParam)) {
           isInvalidKey = true;
           invalidParam = receivedParam;
@@ -2028,8 +2028,8 @@ const createAssignment = (req, res) => {
         const line = `""\n`;
         const subheaders = `"Display ID","ID","Last Name","First Name","Mark","Submission date","Late submission"\n`;
         let csvString = headers + line + subheaders;
-        studentDetails.forEach((studentInfo: any) => {
-          let file: any = req.files[count];
+        for (const studentInfo of studentDetails) {
+          const file: any = req.files[count];
           const studentFolder = studentInfo.studentSurname.toUpperCase() + ", " + studentInfo.studentName.toUpperCase() + "(" + studentInfo.studentId.toUpperCase() + ")";
           const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
           const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
@@ -2038,10 +2038,15 @@ const createAssignment = (req, res) => {
 
           mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
           mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
-          copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
-          //unlinkSync(file.path);
+
+          const content = readFileSync(file.path);
+          const pdfDoc = await PDFDocument.load(content);
+          const pdfBytes = await pdfDoc.save();
+          await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
+          // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
+          // unlinkSync(file.path);
           count++;
-        });
+        }
 
         writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
         writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
@@ -2118,8 +2123,8 @@ const updateAssignment = (req, res) => {
         const line = `""\n`;
         const subheaders = `"Display ID","ID","Last Name","First Name","Mark","Submission date","Late submission"\n`;
         let csvString = headers + line + subheaders;
-        studentDetails.forEach((studentInfo: any) => {
-          let file: any = req.files[count];
+        for (const studentInfo of studentDetails) {
+          const file: any = req.files[count];
           const studentFolder = studentInfo.studentSurname.toUpperCase() + ", " + studentInfo.studentName.toUpperCase() + "(" + studentInfo.studentId.toUpperCase() + ")";
           const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
           const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
@@ -2139,12 +2144,17 @@ const updateAssignment = (req, res) => {
           } else {
             mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
             mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
-            copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
+
+            const content = readFileSync(file.path);
+            const pdfDoc = await PDFDocument.load(content);
+            const pdfBytes = await pdfDoc.save();
+            await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
+            // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
             csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},"","",""\n`;
           }
           csvString += csvData;
           count++;
-        });
+        }
 
         writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
         const files = glob.sync(config.defaultPath + sep + assignmentName + sep + "/**");
