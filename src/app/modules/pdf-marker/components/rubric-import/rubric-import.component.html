@@ -2,7 +2,7 @@
   <pdf-marker-alert></pdf-marker-alert>
   <form [formGroup]="rubricForm">
     <h1><mat-icon>apps</mat-icon>&nbsp;Rubric</h1>
-    <span id="external-rubric-tool">Create your rubrics to be imported at: <span class="externalLink" (click)="openExternalResource()">{{ externalLink }}</span></span>
+    <span id="external-rubric-tool">Create your rubrics to be imported at: <span class="externalLink" (click)="downloadFile()">{{ rubricTemplateFile }}</span></span>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
     <div id="pdf-marker-file-upload-wrapper">
