@@ -284,7 +284,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         if(shouldContinue) {
           this.studentDetails[foundIndex].shouldDelete = true;
           this.studentRow.controls.splice(studentIndex, 1);
-          this.studentFiles.splice(studentIndex, 1);
+          // this.studentFiles.splice(studentIndex, 1);
           this.studentRow.updateValueAndValidity();
         } else {
           return;
@@ -360,7 +360,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       count++;
     });
 
-    if(foundItemsCount == studentData.length) {
+    if(foundItemsCount === studentData.length) {
       this.deletionErrorMessage(foundItemsCount);
       return;
     }
