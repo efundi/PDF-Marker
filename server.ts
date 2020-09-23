@@ -1582,7 +1582,7 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
   const file = readFileSync(filePath);
   let pdfDoc = await PDFDocument.load(file);
   let totalMark = 0;
-  let resultsPage = pdfDoc.addPage([841.89,595.28]);
+  let resultsPage = pdfDoc.addPage([1200.89,595.28]);
   //841 pixels x 595.28 pixels
   let yPosition: number =resultsPage.getHeight() - 15;
   let xPosition: number = 25;

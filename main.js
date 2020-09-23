@@ -190,7 +190,7 @@ try {
             ],
             properties: ['openFile']
         }).then(function (data) { return __awaiter(_this, void 0, void 0, function () {
-            var doc, docInJSON, rowCount, errorMessage, errorFound, validLevelLength, startMessagePrefix, startMessageSuffix, notProvided, rubric, index, criteriaData, levels, i, achievementMark, achievementFeedback, achievementTitle;
+            var doc, docInJSON, rowCount, levelCount, errorMessage, errorFound, validLevelLength, startMessagePrefix, startMessageSuffix, notProvided, rubric, index, criteriaData, levels, i, achievementMark, achievementFeedback, achievementTitle;
             return __generator(this, function (_a) {
                 if (data.canceled) {
                     event.sender.send('on_excel_to_json', { selectedPath: null, blob: null });
@@ -204,6 +204,7 @@ try {
                         }
                         else {
                             rowCount = 4;
+                            levelCount = 6;
                             errorMessage = void 0;
                             errorFound = void 0;
                             validLevelLength = 0;
@@ -233,7 +234,7 @@ try {
                                         return [2 /*return*/, event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) })];
                                     }
                                     levels = [];
-                                    for (i = 1; ((validLevelLength === 0) ? 4 : validLevelLength); i++) {
+                                    for (i = 1; ((validLevelLength === 0) ? levelCount : validLevelLength); i++) {
                                         achievementMark = 'Achievement_level_' + i + '_mark';
                                         achievementFeedback = 'Achievement_level_' + i + '_feedback';
                                         achievementTitle = 'Achievement_level_' + i + '_title';
@@ -262,8 +263,8 @@ try {
                                                 validLevelLength = i - 1;
                                             break;
                                         }
-                                        else if ((index === 2) && (i === 4)) {
-                                            validLevelLength = 4;
+                                        else if ((index === 2) && (i === levelCount)) {
+                                            validLevelLength = levelCount;
                                         }
                                         levels[i - 1] = {
                                             score: criteriaData[achievementMark],
