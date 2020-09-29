@@ -805,7 +805,7 @@ const assignmentRubricUpdateFn = (req, res) => {
 
                   //return sendResponseData(req, res, 200, assignmentSettingsInfo.rubric);
                   return checkAccess(req, res, config.defaultPath + sep + assignmentName + sep + GRADES_FILE, () => {
-                    return csvtojson().fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
+                    return csvtojson({ noheader: true, trim: false }).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
                       .then((gradesJSON) => {
                         let changed = false;
                         let assignmentHeader;
@@ -954,7 +954,7 @@ const savingMarks = (req, res) => {
         const assignmentFolder = dirname(studentFolder);
 
         return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
-          return csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE)
+          return csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE)
             .then((gradesJSON) => {
               let changed = false;
               let assignmentHeader;
@@ -963,7 +963,7 @@ const savingMarks = (req, res) => {
                   const keys = Object.keys(gradesJSON[i]);
                   if (keys.length > 0)
                     assignmentHeader = keys[0];
-                } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
                   gradesJSON[i].field5 = totalMark;
                   changed = true;
                   json2csv(gradesJSON, (err, csv) => {
@@ -1045,7 +1045,7 @@ const savingRubricMarks = (req, res) => {
 
           const studentNumber = matches[2];
           return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
-            return csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE)
+            return csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE)
               .then((gradesJSON) => {
                 let changed = false;
                 let assignmentHeader;
@@ -1054,7 +1054,7 @@ const savingRubricMarks = (req, res) => {
                     const keys = Object.keys(gradesJSON[i]);
                     if (keys.length > 0)
                       assignmentHeader = keys[0];
-                  } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                  } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
                     gradesJSON[i].field5 = totalMark;
                     changed = true;
                     json2csv(gradesJSON, (err, csv) => {
@@ -1245,7 +1245,7 @@ const getGrades = (req, res) => {
     const assignmentFolder = config.defaultPath + sep + loc;
 
     return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
-      return csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE)
+      return csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE)
         .then((gradesJSON) => {
           return sendResponseData(req, res, 200, gradesJSON);
         })
@@ -1338,7 +1338,7 @@ const finalizeAssignment = async (req, res) => {
     const loc = req.body.location.replace(/\//g, sep);
     const assignmentFolder = config.defaultPath + sep + loc;
     const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_FILENAME');
-    const gradesJSON = await csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE);
+    const gradesJSON = await csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE);
     const files = glob.sync(assignmentFolder + sep + "/*");
 
     const start = async () => {
@@ -1389,7 +1389,7 @@ const finalizeAssignment = async (req, res) => {
                       if (keys.length > 0) {
                         assignmentHeader = keys[0];
                       }
-                    } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
                       gradesJSON[i].field5 = data.totalMark;
                       changed = true;
                       await json2csvAsync(gradesJSON, {emptyFieldValue: ''})
@@ -1463,7 +1463,7 @@ const finalizeAssignmentRubric = async (req, res) => {
     const loc = req.body.location.replace(/\//g, sep);
     const assignmentFolder = config.defaultPath + sep + loc;
     const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_FILENAME');
-    const gradesJSON = await csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE);
+    const gradesJSON = await csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE);
     const files = glob.sync(assignmentFolder + sep + "/*");
     const assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
     if (!isJson(assignmentSettingsBuffer))
@@ -1527,7 +1527,7 @@ const finalizeAssignmentRubric = async (req, res) => {
                       if (keys.length > 0) {
                         assignmentHeader = keys[0];
                       }
-                    } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
                       gradesJSON[i].field5 = data.totalMark;
                       changed = true;
                       await json2csvAsync(gradesJSON, {emptyFieldValue: ''})
@@ -2116,7 +2116,7 @@ const updateAssignment = (req, res) => {
         if (studentDetails.length !== req.files.length)
           return sendResponse(req, res, 400, `Student details is not equal to number of files sent!`);
 
-        const grades = await csvtojson().fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE);
+        const grades = await csvtojson({ noheader: true, trim: false }).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE);
 
         let count = 0;
         const headers = `"${assignmentName}","SCORE_GRADE_TYPE"\n`;
