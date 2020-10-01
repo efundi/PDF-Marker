@@ -52,6 +52,7 @@
       "timeEnd",
       "trace"
     ],
+    "curly": ["true", "as-needed"],
     "no-empty": false,
     "no-inferrable-types": [
       true,
