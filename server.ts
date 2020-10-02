@@ -334,7 +334,7 @@ const zipFileUploadCallback = (req, res, data) => {
     let folderCount = 0;
     folders.forEach(folder => {
       if (isFolder(folder)) {
-        folders[folderCount] = pathinfo(folder, 'PATHINFO_FILENAME');
+        folders[folderCount] = pathinfo(folder, 'PATHINFO_BASENAME');
         folderCount++;
       }
     });
@@ -952,7 +952,7 @@ const savingMarks = (req, res) => {
       return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
         const matches = regEx.exec(pathSplit[1]);
 
-        const studentNumber = matches[2];
+        const studentNumber = matches[2] + '';
         const assignmentFolder = dirname(studentFolder);
 
         return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
@@ -1429,6 +1429,7 @@ const finalizeAssignment = async (req, res) => {
       return zipDir(config.defaultPath, {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(config.defaultPath + sep + assignmentName)) ? true : (path.startsWith(config.defaultPath + sep + assignmentName + sep))))}, (err, buffer) => {
         if (err)
           return sendResponse(req, res, 400, 'Could not export assignment');
+        console.log(buffer);
         return sendResponseData(req, res, 200, buffer);
       });
     }
@@ -2032,7 +2033,7 @@ const createAssignment = (req, res) => {
           const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
           const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
           const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
-          const csvData = `'${studentInfo.studentId.toUpperCase()}','${studentInfo.studentId.toUpperCase()}','${studentInfo.studentSurname.toUpperCase()}',${studentInfo.studentName.toUpperCase()},'','',''\n`;
+          const csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
           csvString += csvData;
 
           mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
@@ -2133,9 +2134,9 @@ const updateAssignment = (req, res) => {
             } else {
               const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
               if (studentRecord) {
-                csvData = `'${studentInfo.studentId.toUpperCase()}','${studentInfo.studentId.toUpperCase()}','${studentInfo.studentSurname.toUpperCase()}',${studentInfo.studentName.toUpperCase()},${studentRecord.field5},'',''\n`;
+                csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},${studentRecord.field5},,\n`;
               } else {
-                csvData = `'${studentInfo.studentId.toUpperCase()}','${studentInfo.studentId.toUpperCase()}','${studentInfo.studentSurname.toUpperCase()}',${studentInfo.studentName.toUpperCase()},'','',''\n`;
+                csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
               }
             }
           } else {
@@ -2147,7 +2148,7 @@ const updateAssignment = (req, res) => {
             const pdfBytes = await pdfDoc.save();
             await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
             // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
-            csvData = `'${studentInfo.studentId.toUpperCase()}','${studentInfo.studentId.toUpperCase()}','${studentInfo.studentSurname.toUpperCase()}',${studentInfo.studentName.toUpperCase()},'','',''\n`;
+            csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
           }
           csvString += csvData;
           count++;
