@@ -1429,7 +1429,6 @@ const finalizeAssignment = async (req, res) => {
       return zipDir(config.defaultPath, {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(config.defaultPath + sep + assignmentName)) ? true : (path.startsWith(config.defaultPath + sep + assignmentName + sep))))}, (err, buffer) => {
         if (err)
           return sendResponse(req, res, 400, 'Could not export assignment');
-        console.log(buffer);
         return sendResponseData(req, res, 200, buffer);
       });
     }
