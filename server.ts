@@ -37,16 +37,16 @@ import {
   writeFileSync,
   rmdirSync, lstatSync
 } from 'fs';
-import {json2csv, json2csvAsync} from "json-2-csv";
+import {json2csv, json2csvAsync} from 'json-2-csv';
 import {PageSizes, PDFDocument, PDFPage, rgb} from 'pdf-lib';
 import {AnnotationFactory} from 'annotpdf';
-import {IconTypeEnum} from "./src/app/modules/pdf-marker/info-objects/icon-type.enum";
-import {IconSvgEnum} from "./src/app/modules/pdf-marker/info-objects/icon-svg.enum";
-import {IRubric, IRubricName} from "./src/app/modules/application/core/utils/rubric.class";
-import {AssignmentSettingsInfo} from "./src/app/modules/pdf-marker/info-objects/assignment-settings.info";
+import {IconTypeEnum} from './src/app/modules/pdf-marker/info-objects/icon-type.enum';
+import {IconSvgEnum} from './src/app/modules/pdf-marker/info-objects/icon-svg.enum';
+import {IRubric, IRubricName} from './src/app/modules/application/core/utils/rubric.class';
+import {AssignmentSettingsInfo} from './src/app/modules/pdf-marker/info-objects/assignment-settings.info';
 
 const zipDir = require('zip-dir');
-var JSZip = require("jszip");
+const JSZip = require('jszip');
 const unzipper = require('unzipper');
 const etl = require('etl');
 
@@ -55,6 +55,7 @@ const multer = require('multer');
 const glob = require('glob');
 const csvtojson = require('csvtojson');
 const hexRgb = require('hex-rgb');
+const rgbHex = require('rgb-hex');
 const pathinfo = require('locutus/php/filesystem/pathinfo');
 const wrap = require('word-wrap');
 
@@ -70,18 +71,19 @@ const CONFIG_DIR = process.env.APPDATA + sep + 'pdf-config' + sep;
 const UPLOADS_DIR = '.' + sep + 'uploads';
 
 /*COMMON MESSAGES*/
-const INVALID_RUBRIC_JSON_FILE = "Rubric file is not a valid JSON file!";
-const COULD_NOT_CREATE_RUBRIC_FILE = "Failed to read rubric file!";
-const COULD_NOT_READ_RUBRIC_LIST = "Could not read list of rubrics!";
-const NOT_PROVIDED_RUBRIC = "Rubric must be provided!";
-const FORBIDDEN_RESOURCE = "Forbidden access to resource!";
-const COULD_NOT_CREATE_CONFIG_DIRECTORY = "Failed to create configuration directory!";
-const NOT_CONFIGURED_CONFIG_DIRECTORY = "Configure default location to extract files to on the settings page!";
-const EXTRACTED_ZIP = "Successfully extracted assignment to default folder!";
-const EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC = "Successfully extracted assignment to default folder! But Failed to write to rubrics file!";
-const NOT_PROVIDED_ASSIGNMENT_LOCATION = "Assignment location not provided!";
-const INVALID_PATH_PROVIDED = "Invalid path provided!";
-const INVALID_STUDENT_FOLDER = "Invalid student folder";
+const INVALID_RUBRIC_JSON_FILE = 'Rubric file is not a valid JSON file!';
+const COULD_NOT_CREATE_RUBRIC_FILE = 'Failed to read rubric file!';
+const COULD_NOT_READ_RUBRIC_LIST = 'Could not read list of rubrics!';
+const NOT_PROVIDED_RUBRIC = 'Rubric must be provided!';
+const FORBIDDEN_RESOURCE = 'Forbidden access to resource!';
+const COULD_NOT_CREATE_CONFIG_DIRECTORY = 'Failed to create configuration directory!';
+const NOT_CONFIGURED_CONFIG_DIRECTORY = 'Configure default location to extract files to on the settings page!';
+const EXTRACTED_ZIP = 'Successfully extracted assignment to default folder!';
+const EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC = 'Successfully extracted assignment to default folder! ' +
+  'But Failed to write to rubrics file!';
+const NOT_PROVIDED_ASSIGNMENT_LOCATION = 'Assignment location not provided!';
+const INVALID_PATH_PROVIDED = 'Invalid path provided!';
+const INVALID_STUDENT_FOLDER = 'Invalid student folder';
 /**/
 
 const assignmentList = (callback) => {
@@ -102,9 +104,9 @@ const assignmentList = (callback) => {
           const files = glob.sync(config.defaultPath + '/' + folder + '/**');
           files.sort((a, b) => (a > b) ? 1 : -1);
           folderModels.push(hierarchyModel(files, config.defaultPath));
-          if (folderModels.length == folderCount)
+          if (folderModels.length === folderCount)
             callback(null, folderModels);
-        })
+        });
       } else {
         callback(null, folderModels);
       }
@@ -149,7 +151,7 @@ const store = multer.diskStorage({
     if (!existsSync(UPLOADS_DIR)) {
       mkdir(UPLOADS_DIR, err => cb(err, UPLOADS_DIR));
     } else {
-      cb(null, UPLOADS_DIR)
+      cb(null, UPLOADS_DIR);
     }
   },
   filename: (req, file, cb) => {
@@ -164,14 +166,18 @@ const uploadFile = multer({storage: store}).single('file');
 const readFromFile = (req, res, filePath: string, callback = null, errorMessage: string = null) => {
   return readFile(filePath, (err, data) => {
     if (err)
-      return sendResponse(req, res, 500, (errorMessage) ? errorMessage:err.message);
+      return sendResponse(req, res, 500, (errorMessage) ? errorMessage : err.message);
 
     if (callback && isFunction(callback))
       callback(data);
-  })
+  });
 };
 
-const writeToFile = (req, res, filePath: string, data: Uint8Array | string, customSuccessMsg: string = null, customFailureMsg: string = null, callback = null) => {
+const writeToFile = (req, res, filePath: string,
+                     data: Uint8Array | string,
+                     customSuccessMsg: string = null,
+                     customFailureMsg: string = null,
+                     callback = null) => {
   writeFile(filePath, data, (err) => {
     if (err)
       return sendResponse(req, res, 500, (customFailureMsg) ? customFailureMsg : err.message);
@@ -194,7 +200,7 @@ const checkAccess = (req, res, filePath: string, callback = null) => {
 };
 
 const checkClient = (req, res) => {
-  return (req.headers.client_id && req.headers.client_id === "PDF_MARKER");
+  return (req.headers.client_id && req.headers.client_id === 'PDF_MARKER');
 };
 
 const isFunction = (functionToCheck) => {
@@ -206,7 +212,7 @@ const isNullOrUndefined = (object: any): boolean => {
 };
 
 const isNullOrUndefinedOrEmpty = (object: string): boolean => {
-  return (object === null || object === undefined || object === "");
+  return (object === null || object === undefined || object === '');
 };
 /*END HELPER FUNCTIONS*/
 
@@ -259,13 +265,13 @@ app.get('/api/settings', settingsGet);
 /*IMPORT API*/
 
 const zipFileUploadCallback = (req, res, data) => {
-  const acceptedParams = ["file", "noRubric", "rubric"];
+  const acceptedParams = ['file', 'noRubric', 'rubric'];
   const receivedParams = Object.keys(req.body);
-  let isInvalidKey: boolean = false;
+  let isInvalidKey = false;
   let invalidParam: string;
 
-  for (let receivedParam of receivedParams) {
-    if (acceptedParams.indexOf(receivedParam) == -1) {
+  for (const receivedParam of receivedParams) {
+    if (acceptedParams.indexOf(receivedParam) === -1) {
       isInvalidKey = true;
       invalidParam = receivedParam;
       break;
@@ -275,7 +281,7 @@ const zipFileUploadCallback = (req, res, data) => {
   if (isInvalidKey)
     return sendResponse(req, res, 400, `Invalid parameter ${invalidParam} found in request`);
 
-  if(isNullOrUndefined(req.body.file))
+  if (isNullOrUndefined(req.body.file))
     return sendResponse(req, res, 400, 'No file selected!');
 
   return readFromFile(req, res, req.body.file, (zipFile) => {
@@ -302,7 +308,7 @@ const zipFileUploadCallback = (req, res, data) => {
           rubrics = JSON.parse(rubricData.toString());
 
           if (Array.isArray(rubrics)) {
-            let index: number = -1;
+            let index = -1;
             for (let i = 0; i < rubrics.length; i++) {
               if (rubrics[i].name === rubricName) {
                 index = i;
@@ -310,7 +316,7 @@ const zipFileUploadCallback = (req, res, data) => {
               }
             }
 
-            if (index != -1) {
+            if (index !== -1) {
               rubric = rubrics[index];
               rubricIndex = index;
             }
@@ -327,38 +333,38 @@ const zipFileUploadCallback = (req, res, data) => {
 
     let folderCount = 0;
     folders.forEach(folder => {
-      if(isFolder(folder)) {
-        folders[folderCount] = pathinfo(folder, 'PATHINFO_FILENAME');
+      if (isFolder(folder)) {
+        folders[folderCount] = pathinfo(folder, 'PATHINFO_BASENAME');
         folderCount++;
       }
     });
 
-    let zip = new JSZip();
+    const zip = new JSZip();
     return zip.loadAsync(new Uint8Array(zipFile))
       .then((zipObject) => {
-        let entry: string = "";
+        let entry = '';
         zipObject.forEach((relativePath, zipEntry) => {
-          if (entry === "") {
+          if (entry === '') {
             entry = zipEntry.name;
           }
         });
 
-        const entryPath = entry.split("/");
+        const entryPath = entry.split('/');
         if (entryPath.length > 0) {
           let newFolder;
-          let oldPath = entryPath[0];
-          let foundCount: number = 0;
+          const oldPath = entryPath[0];
+          let foundCount = 0;
           for (let i = 0; i < folders.length; i++) {
-            if (oldPath.toLowerCase() + "/" === folders[i].toLowerCase() + "/")
+            if (oldPath.toLowerCase() + '/' === folders[i].toLowerCase() + '/')
               foundCount++;
-            else if ((oldPath.toLowerCase() + " (" + (foundCount + 1) + ")" + "/") === folders[i].toLowerCase() + "/")
+            else if ((oldPath.toLowerCase() + ' (' + (foundCount + 1) + ')' + '/') === folders[i].toLowerCase() + '/')
               foundCount++;
           }
 
-          const settings: AssignmentSettingsInfo = {defaultColour: "#6F327A", rubric: rubric, isCreated: false};
-          if (foundCount != 0) {
-            newFolder = oldPath + " (" + (foundCount + 1) + ")" + "/";
-            extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + "/").then(() => {
+          const settings: AssignmentSettingsInfo = {defaultColour: '#6F327A', rubric, isCreated: false};
+          if (foundCount !== 0) {
+            newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
+            extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + '/').then(() => {
               return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                 EXTRACTED_ZIP,
                 null, () => {
@@ -371,12 +377,12 @@ const zipFileUploadCallback = (req, res, data) => {
                   return sendResponse(req, res, 200, EXTRACTED_ZIP);
                 });
             }).catch((error) => {
-              if(existsSync(config.defaultPath + sep + newFolder))
+              if (existsSync(config.defaultPath + sep + newFolder))
                 deleteFolderRecursive(config.defaultPath + sep + newFolder);
               return sendResponse(req, res, 501, error.message);
             });
           } else {
-            extractZipFile(req.body.file, config.defaultPath + sep, "", "")
+            extractZipFile(req.body.file, config.defaultPath + sep, '', '')
               .then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
@@ -390,13 +396,13 @@ const zipFileUploadCallback = (req, res, data) => {
                     return sendResponse(req, res, 200, EXTRACTED_ZIP);
                   });
               }).catch((error) => {
-                if(existsSync(config.defaultPath + sep + oldPath))
+                if (existsSync(config.defaultPath + sep + oldPath))
                   deleteFolderRecursive(config.defaultPath + sep + oldPath);
                 return sendResponse(req, res, 501, error.message);
               });
           }
         } else {
-          return sendResponse(req, res, 501, "Zip Object contains no entries!");
+          return sendResponse(req, res, 501, 'Zip Object contains no entries!');
         }
       })
       .catch(error => {
@@ -434,17 +440,16 @@ const rubricFileUpload = (req, res, err) => {
   if (!req.file)
     return sendResponse(req, res, 404, 'No file uploaded!');
 
-  const mimeTypes = ["application/json"];
+  const mimeTypes = ['application/json'];
 
   const rubricName = req.body.rubricName.trim();
 
-  if (mimeTypes.indexOf(req.file.mimetype) == -1)
+  if (mimeTypes.indexOf(req.file.mimetype) === -1)
     return sendResponse(req, res, 400, 'Not a valid JSON file. Please select a file with a .json extension!');
 
   return readFile(UPLOADS_DIR + sep + req.file.originalname, (err, data) => {
-    if (err) {
+    if (err)
       return sendResponse(req, res, 500, COULD_NOT_CREATE_RUBRIC_FILE);
-    }
 
     if (!isJson(data))
       return sendResponse(req, res, 400, INVALID_RUBRIC_JSON_FILE);
@@ -471,7 +476,7 @@ const rubricFileUpload = (req, res, err) => {
 
           const rubrics: IRubric[] = JSON.parse(data.toString());
           if (Array.isArray(rubrics)) {
-            let foundCount: number = 0;
+            let foundCount = 0;
 
             const clonedRubrics = [...rubrics];
             clonedRubrics.sort((a, b) => (a.name > b.name) ? 1 : -1);
@@ -479,13 +484,12 @@ const rubricFileUpload = (req, res, err) => {
             for (let i = 0; i < clonedRubrics.length; i++) {
               if (clonedRubrics[i].name.toLowerCase() === rubricName.toLowerCase())
                 foundCount++;
-              else if (clonedRubrics[i].name.toLowerCase() === (rubricName.toLowerCase() + " (" + (foundCount + 1) + ")"))
+              else if (clonedRubrics[i].name.toLowerCase() === (rubricName.toLowerCase() + ' (' + (foundCount + 1) + ')'))
                 foundCount++;
             }
 
-
             if (foundCount !== 0) {
-              uploadedRubric.name = rubricName + " (" + (foundCount + 1) + ")";
+              uploadedRubric.name = rubricName + ' (' + (foundCount + 1) + ')';
             } else {
               uploadedRubric.name = rubricName;
             }
@@ -495,7 +499,7 @@ const rubricFileUpload = (req, res, err) => {
           }
 
           return sendResponse(req, res, 400, COULD_NOT_READ_RUBRIC_LIST);
-        })
+        });
       } else {
         uploadedRubric.name = rubricName;
         return writeRubricFile(req, res, [uploadedRubric]);
@@ -506,7 +510,7 @@ const rubricFileUpload = (req, res, err) => {
 
 const deleteUploadedFile = (req) => {
   if (req.file && existsSync(UPLOADS_DIR + sep + req.file.originalname))
-    unlinkSync(UPLOADS_DIR + sep + req.file.originalname)
+    unlinkSync(UPLOADS_DIR + sep + req.file.originalname);
 };
 
 const deleteMultipleFiles = (req) => {
@@ -520,9 +524,8 @@ const deleteMultipleFiles = (req) => {
 
 const writeRubricFile = (req, res, rubricData: IRubric[]) => {
   return writeFile(CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubricData), (err) => {
-    if (err) {
+    if (err)
       return sendResponse(req, res, 500, COULD_NOT_CREATE_RUBRIC_FILE);
-    }
 
     return getRubricNames(req, res, rubricData);
   });
@@ -547,7 +550,7 @@ const rubricUploadFn = async (req, res) => {
 
   return uploadFile(req, res, (err) => {
     if (err)
-      return sendResponse(req, res, 500, "Error uploading rubric file");
+      return sendResponse(req, res, 500, 'Error uploading rubric file');
 
     rubricFileUpload(req, res, err);
   });
@@ -582,7 +585,7 @@ const getRubricsFn = (req, res) => {
         if (Array.isArray(rubrics))
           return sendResponseData(req, res, 200, rubrics);
         return writeRubricFile(req, res, []);
-      })
+      });
     } else {
       return writeRubricFile(req, res, []);
     }
@@ -639,8 +642,8 @@ const deleteRubricsFn = (req, res) => {
     const config = JSON.parse(data.toString());
 
     try {
-      const folders: string[] = glob.sync(config.defaultPath + sep + "*");
-      let found: boolean = false;
+      const folders: string[] = glob.sync(config.defaultPath + sep + '*');
+      let found = false;
       folders.forEach(folder => {
         const settingFileContents = readFileSync(folder + sep + SETTING_FILE);
 
@@ -681,7 +684,7 @@ const deleteRubricConfirmation = (req, res) => {
 
       const rubrics: IRubric[] = JSON.parse(data.toString());
       if (Array.isArray(rubrics)) {
-        let indexFound: number = -1;
+        let indexFound = -1;
 
         for (let i = 0; i < rubrics.length; i++) {
           if (rubrics[i].name.toLowerCase() === rubricName.toLowerCase()) {
@@ -690,7 +693,7 @@ const deleteRubricConfirmation = (req, res) => {
           }
         }
 
-        if (indexFound == -1)
+        if (indexFound === -1)
           return sendResponse(req, res, 404, 'Could not find rubric');
         else
           rubrics.splice(indexFound, 1);
@@ -720,7 +723,7 @@ const getRubricContentsFn = (req, res) => {
         return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
       const rubrics: IRubric[] = JSON.parse(data.toString());
       if (Array.isArray(rubrics)) {
-        let indexFound: number = -1;
+        let indexFound = -1;
 
         for (let i = 0; i < rubrics.length; i++) {
           if (rubrics[i].name.toLowerCase() === rubricName.toLowerCase()) {
@@ -729,7 +732,7 @@ const getRubricContentsFn = (req, res) => {
           }
         }
 
-        if (indexFound == -1)
+        if (indexFound === -1)
           return res.status(404).send({message: 'Could not find rubric'});
         else {
           return res.status(200).send(rubrics[indexFound]);
@@ -766,7 +769,7 @@ const assignmentRubricUpdateFn = (req, res) => {
       let rubric: IRubric;
       if (Array.isArray(rubrics)) {
         if (rubricName) {
-          let indexFound: number = -1;
+          let indexFound = -1;
 
           for (let i = 0; i < rubrics.length; i++) {
             if (rubrics[i].name.toLowerCase() === rubricName.toLowerCase()) {
@@ -775,7 +778,7 @@ const assignmentRubricUpdateFn = (req, res) => {
             }
           }
 
-          if (indexFound == -1)
+          if (indexFound === -1)
             return res.status(404).send({message: 'Could not find rubric'});
 
           rubric = rubrics[indexFound];
@@ -789,13 +792,13 @@ const assignmentRubricUpdateFn = (req, res) => {
 
           const config = JSON.parse(data.toString());
           try {
-            const markFiles = glob.sync(config.defaultPath + sep + assignmentName + sep + "/**/" + MARK_FILE);
+            const markFiles = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**/' + MARK_FILE);
             markFiles.forEach(markFile => {
               unlinkSync(markFile);
             });
             return readFromFile(req, res, config.defaultPath + sep + assignmentName + sep + SETTING_FILE, (data) => {
               if (!isJson(data))
-                return sendResponse(req, res, 400, "invalid assignment settings");
+                return sendResponse(req, res, 400, 'invalid assignment settings');
 
               const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(data);
               assignmentSettingsInfo.rubric = rubric;
@@ -803,14 +806,13 @@ const assignmentRubricUpdateFn = (req, res) => {
               return writeToFile(req, res, config.defaultPath + sep + assignmentName + sep + SETTING_FILE,
                 JSON.stringify(assignmentSettingsInfo), null, null, () => {
 
-                  //return sendResponseData(req, res, 200, assignmentSettingsInfo.rubric);
                   return checkAccess(req, res, config.defaultPath + sep + assignmentName + sep + GRADES_FILE, () => {
-                    return csvtojson().fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
+                    return csvtojson({ noheader: true, trim: false }).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
                       .then((gradesJSON) => {
                         let changed = false;
                         let assignmentHeader;
                         for (let i = 0; i < gradesJSON.length; i++) {
-                          if (i == 0) {
+                          if (i === 0) {
                             const keys = Object.keys(gradesJSON[i]);
                             if (keys.length > 0)
                               assignmentHeader = keys[0];
@@ -821,20 +823,20 @@ const assignmentRubricUpdateFn = (req, res) => {
                         }
 
                         if (changed) {
-                          return json2csv(gradesJSON, (err, csv) => {
+                          return json2csv(gradesJSON,  (err, csv) => {
                             if (err)
-                              return sendResponse(req, res, 400, "Failed to convert json to csv!");
+                              return sendResponse(req, res, 400, 'Failed to convert json to csv!');
 
-                            return writeToFile(req, res, config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csv, "Successfully saved marks!", "Failed to save marks to " + GRADES_FILE + " file!", () => {
+                            return writeToFile(req, res, config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', () => {
                               return sendResponseData(req, res, 200, assignmentSettingsInfo.rubric);
                             });
-                          }, {emptyFieldValue: ''});
+                          }, {emptyFieldValue: '', prependHeader: false});
                         } else
-                          return sendResponse(req, res, 400, "Failed to save mark");
+                          return sendResponse(req, res, 400, 'Failed to save mark');
                       })
                       .catch(reason => {
                         return sendResponse(req, res, 400, reason);
-                      })
+                      });
                   });
                 });
             });
@@ -871,9 +873,9 @@ const getAssignments = (req, res) => {
           const files = glob.sync(config.defaultPath + '/' + folder + '/**');
           files.sort((a, b) => (a > b) ? 1 : -1);
           folderModels.push(hierarchyModel(files, config.defaultPath));
-          if (folderModels.length == folderCount)
+          if (folderModels.length === folderCount)
             return sendResponseData(req, res, 200, folderModels);
-        })
+        });
       } else {
         return sendResponseData(req, res, 200, []);
       }
@@ -950,28 +952,28 @@ const savingMarks = (req, res) => {
       return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
         const matches = regEx.exec(pathSplit[1]);
 
-        const studentNumber = matches[2];
+        const studentNumber = matches[2] + '';
         const assignmentFolder = dirname(studentFolder);
 
         return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
-          return csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE)
+          return csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE)
             .then((gradesJSON) => {
               let changed = false;
               let assignmentHeader;
               for (let i = 0; i < gradesJSON.length; i++) {
-                if (i == 0) {
+                if (i === 0) {
                   const keys = Object.keys(gradesJSON[i]);
                   if (keys.length > 0)
                     assignmentHeader = keys[0];
-                } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
                   gradesJSON[i].field5 = totalMark;
                   changed = true;
                   json2csv(gradesJSON, (err, csv) => {
                     if (err)
-                      return sendResponse(req, res, 400, "Failed to convert json to csv!");
+                      return sendResponse(req, res, 400, 'Failed to convert json to csv!');
 
-                    return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, "Successfully saved marks!", "Failed to save marks to " + GRADES_FILE + " file!", null);
-                  }, {emptyFieldValue: ''});
+                    return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', null);
+                  }, {emptyFieldValue: '', prependHeader: false});
                   break;
                 }
               }
@@ -979,18 +981,18 @@ const savingMarks = (req, res) => {
               if (changed) {
                 // more logic to save new JSON to CSV
               } else
-                return sendResponse(req, res, 400, "Failed to save mark");
+                return sendResponse(req, res, 400, 'Failed to save mark');
             })
             .catch(reason => {
               return sendResponse(req, res, 400, reason);
-            })
+            });
         });
-      })
-    })
+      });
+    });
   });
 };
 
-app.post("/api/assignment/marks/save", savingMarks);
+app.post('/api/assignment/marks/save', savingMarks);
 
 const savingRubricMarks = (req, res) => {
   if (!checkClient(req, res))
@@ -1024,19 +1026,19 @@ const savingRubricMarks = (req, res) => {
 
     return readFromFile(req, res, assignmentFolder + sep + SETTING_FILE, (data) => {
       if (!isJson(data))
-        return sendResponse(req, res, 400, "Could not read assignment settings");
+        return sendResponse(req, res, 400, 'Could not read assignment settings');
 
       const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(data.toString());
 
       if (isNullOrUndefined(assignmentSettingsInfo.rubric))
-        return sendResponse(req, res, 400, "Assignment's settings does not contain a rubric!");
+        return sendResponse(req, res, 400, 'Assignment\'s settings does not contain a rubric!');
       else if (assignmentSettingsInfo.rubric.name !== rubricName)
-        return sendResponse(req, res, 400, "Assignment's settings rubric does not match provided!");
+        return sendResponse(req, res, 400, 'Assignment\'s settings rubric does not match provided!');
 
       let totalMark = 0;
       marks.forEach((levelIndex: number, index: number) => {
         if (levelIndex !== null)
-          totalMark += parseFloat("" + assignmentSettingsInfo.rubric.criterias[index].levels[levelIndex].score);
+          totalMark += parseFloat('' + assignmentSettingsInfo.rubric.criterias[index].levels[levelIndex].score);
       });
 
       return checkAccess(req, res, studentFolder, () => {
@@ -1045,24 +1047,24 @@ const savingRubricMarks = (req, res) => {
 
           const studentNumber = matches[2];
           return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
-            return csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE)
+            return csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE)
               .then((gradesJSON) => {
                 let changed = false;
                 let assignmentHeader;
                 for (let i = 0; i < gradesJSON.length; i++) {
-                  if (i == 0) {
+                  if (i === 0) {
                     const keys = Object.keys(gradesJSON[i]);
                     if (keys.length > 0)
                       assignmentHeader = keys[0];
-                  } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                  } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
                     gradesJSON[i].field5 = totalMark;
                     changed = true;
                     json2csv(gradesJSON, (err, csv) => {
                       if (err)
-                        return sendResponse(req, res, 400, "Failed to convert json to csv!");
+                        return sendResponse(req, res, 400, 'Failed to convert json to csv!');
 
-                      return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, "Successfully saved marks!", "Failed to save marks to " + GRADES_FILE + " file!", null);
-                    }, {emptyFieldValue: ''});
+                      return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', null);
+                    }, {emptyFieldValue: '', prependHeader: false});
                     break;
                   }
                 }
@@ -1070,19 +1072,19 @@ const savingRubricMarks = (req, res) => {
                 if (changed) {
                   // more logic to save new JSON to CSV
                 } else
-                  return sendResponse(req, res, 400, "Failed to save mark");
+                  return sendResponse(req, res, 400, 'Failed to save mark');
               })
               .catch(reason => {
                 return sendResponse(req, res, 400, reason);
-              })
+              });
           });
-        })
+        });
       });
     });
   });
 };
 
-app.post("/api/assignment/rubric/marks/save", savingRubricMarks);
+app.post('/api/assignment/rubric/marks/save', savingRubricMarks);
 
 const getMarks = (req, res) => {
   if (!checkClient(req, res))
@@ -1121,7 +1123,7 @@ const getMarks = (req, res) => {
   });
 };
 
-app.post("/api/assignment/marks/fetch", [
+app.post('/api/assignment/marks/fetch', [
   check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getMarks);
 
@@ -1139,7 +1141,7 @@ const assignmentSettings = (req, res) => {
     return res.status(200).send();
 
   // Check object compliance
-  const keys = ["defaultColour", "isCreated", "rubric", " rubricId"];
+  const keys = ['defaultColour', 'isCreated', 'rubric', ' rubricId'];
   const assignmentSettingsKeys = Object.keys(assignmentSettings);
   let invalidKeyFound = false;
   assignmentSettingsKeys.forEach(key => {
@@ -1170,14 +1172,14 @@ const assignmentSettings = (req, res) => {
         if (!isJson(data))
           return sendResponse(req, res, 400, 'Assignment settings file corrupt!');
 
-        let settings: AssignmentSettingsInfo = JSON.parse(data);
+        const settings: AssignmentSettingsInfo = JSON.parse(data);
         settings.defaultColour = (assignmentSettings.defaultColour) ? assignmentSettings.defaultColour : settings.defaultColour;
         const buffer = new Uint8Array(Buffer.from(JSON.stringify(settings)));
 
-        return writeToFile(req, res, assignmentFolder + sep + SETTING_FILE, buffer, null, "Failed to save assignment settings!", () => {
+        return writeToFile(req, res, assignmentFolder + sep + SETTING_FILE, buffer, null, 'Failed to save assignment settings!', () => {
           return sendResponseData(req, res, 200, assignmentSettings);
-        })
-      })
+        });
+      });
     });
   });
 };
@@ -1200,7 +1202,7 @@ const getAssignmentSettings = (req, res) => {
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location;
-    if (isNullOrUndefined(loc) || loc == "")
+    if (isNullOrUndefined(loc) || loc === '')
       return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
 
     const assignmentFolder = config.defaultPath + sep + loc;
@@ -1217,7 +1219,7 @@ const getAssignmentSettings = (req, res) => {
   });
 };
 
-app.post("/api/assignment/settings/fetch", [
+app.post('/api/assignment/settings/fetch', [
   check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getAssignmentSettings);
 
@@ -1229,7 +1231,7 @@ const getGrades = (req, res) => {
   if (!errors.isEmpty())
     return sendResponseData(req, res, 400, {errors: errors.array()});
 
-  const keys = ["location"];
+  const keys = ['location'];
   const bodyKeys = Object.keys(req.body);
 
   if (validateRequest(keys, bodyKeys))
@@ -1245,18 +1247,18 @@ const getGrades = (req, res) => {
     const assignmentFolder = config.defaultPath + sep + loc;
 
     return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
-      return csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE)
+      return csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE)
         .then((gradesJSON) => {
           return sendResponseData(req, res, 200, gradesJSON);
         })
         .catch(reason => {
           return sendResponse(req, res, 400, reason);
-        })
+        });
     });
   });
 };
 
-app.post("/api/assignment/grade", [
+app.post('/api/assignment/grade', [
   check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getGrades);
 
@@ -1267,7 +1269,7 @@ const getAssignmentGlobalSettings = (req, res) => {
   if (!errors.isEmpty())
     return res.status(400).json({errors: errors.array()});
 
-  const keys = ["location"];
+  const keys = ['location'];
   const bodyKeys = Object.keys(req.body);
 
   if (validateRequest(keys, bodyKeys))
@@ -1285,22 +1287,22 @@ const getAssignmentGlobalSettings = (req, res) => {
 
     const assignmentFolder = config.defaultPath + sep + loc;
 
-    return access(assignmentFolder + sep + ".settings.json", constants.F_OK, (err) => {
+    return access(assignmentFolder + sep + '.settings.json', constants.F_OK, (err) => {
       if (err)
         return res.status(200).send({message: 'Could not read settings file'});
-      return (assignmentFolder + sep + ".settings.json");
+      return (assignmentFolder + sep + '.settings.json');
     });
   });
 };
 
-app.post("/api/assignment/globalSettings/fetch", [
+app.post('/api/assignment/globalSettings/fetch', [
   check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getAssignmentGlobalSettings);
 
 const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
   let invalidKeyFound = false;
-  for (let key of recievedKeys) {
-    if (requiredKeys.indexOf(key) == -1) {
+  for (const key of recievedKeys) {
+    if (requiredKeys.indexOf(key) === -1) {
       invalidKeyFound = true;
       break;
     }
@@ -1315,7 +1317,7 @@ const asyncForEach = async (array, callback) => {
 };
 
 const finalizeAssignment = async (req, res) => {
-  let failed: boolean = false;
+  let failed = false;
   if (!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
 
@@ -1323,7 +1325,7 @@ const finalizeAssignment = async (req, res) => {
   if (!errors.isEmpty())
     return sendResponseData(req, res, 400, {errors: errors.array()});
 
-  const keys = ["location"];
+  const keys = ['location'];
   const bodyKeys = Object.keys(req.body);
 
   if (validateRequest(keys, bodyKeys))
@@ -1337,9 +1339,9 @@ const finalizeAssignment = async (req, res) => {
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
     const assignmentFolder = config.defaultPath + sep + loc;
-    const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_FILENAME');
-    const gradesJSON = await csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE);
-    const files = glob.sync(assignmentFolder + sep + "/*");
+    const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_BASENAME');
+    const gradesJSON = await csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE);
+    const files = glob.sync(assignmentFolder + sep + '/*');
 
     const start = async () => {
       await asyncForEach(files, async (file) => {
@@ -1347,12 +1349,13 @@ const finalizeAssignment = async (req, res) => {
           const regEx = /(.*)\((.+)\)$/;
           if (!regEx.test(file)) {
             failed = true;
-            return sendResponse(req, res, 500, INVALID_STUDENT_FOLDER + " " + basename(file));
+            return sendResponse(req, res, 500, INVALID_STUDENT_FOLDER + ' ' + basename(file));
           }
 
           const matches = regEx.exec(file);
 
-          const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + "/*");
+          const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
+
           await asyncForEach(submissionFiles, async (submission) => {
             try {
               accessSync(submission, constants.F_OK);
@@ -1378,21 +1381,21 @@ const finalizeAssignment = async (req, res) => {
 
                 let fileName = pathinfo(submission, 'PATHINFO_FILENAME');
                 await annotateFN().then(async (data) => {
-                  fileName += "_MARK";
-                  writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + ".pdf", data.pdfBytes);
+                  fileName += '_MARK';
+                  writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
                   accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
                   let changed = false;
                   let assignmentHeader;
                   for (let i = 0; i < gradesJSON.length; i++) {
-                    if (i == 0) {
+                    if (i === 0) {
                       const keys = Object.keys(gradesJSON[i]);
                       if (keys.length > 0) {
                         assignmentHeader = keys[0];
                       }
-                    } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
                       gradesJSON[i].field5 = data.totalMark;
                       changed = true;
-                      await json2csvAsync(gradesJSON, {emptyFieldValue: ''})
+                      await json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
                         .then(csv => {
                           writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
                         })
@@ -1406,11 +1409,11 @@ const finalizeAssignment = async (req, res) => {
                   }
                   if (!changed) {
                     failed = true;
-                    return sendResponse(req, res, 400, "Failed to save mark");
+                    return sendResponse(req, res, 400, 'Failed to save mark');
                   }
                 }, (error) => {
                   failed = true;
-                  return sendResponse(req, res, 400, "Error annotating marks to PDF '" + fileName + "' [" + error.message + "]");
+                  return sendResponse(req, res, 400, 'Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
                 });
               }
             } catch (e) {
@@ -1423,24 +1426,24 @@ const finalizeAssignment = async (req, res) => {
     };
     await start();
     if (!failed) {
-      return zipDir(config.defaultPath, {filter: (path: string, stat) => (!(/\.marks\.json|.settings.json$/.test(path)) && ((path.endsWith(config.defaultPath + sep + assignmentName)) ? true : (path.startsWith(config.defaultPath + sep + assignmentName + sep))))}, (err, buffer) => {
+      return zipDir(config.defaultPath, {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(config.defaultPath + sep + assignmentName)) ? true : (path.startsWith(config.defaultPath + sep + assignmentName + sep))))}, (err, buffer) => {
         if (err)
-          return sendResponse(req, res, 400, "Could not export assignment");
+          return sendResponse(req, res, 400, 'Could not export assignment');
         return sendResponseData(req, res, 200, buffer);
-      })
+      });
     }
   } catch (e) {
     return sendResponse(req, res, 500, e.message);
   }
 };
 
-app.post("/api/assignment/finalize", [
+app.post('/api/assignment/finalize', [
   check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], finalizeAssignment);
 
 // rubircFinalize
 const finalizeAssignmentRubric = async (req, res) => {
-  let failed: boolean = false;
+  let failed = false;
   if (!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
 
@@ -1448,7 +1451,7 @@ const finalizeAssignmentRubric = async (req, res) => {
   if (!errors.isEmpty())
     return sendResponseData(req, res, 400, {errors: errors.array()});
 
-  const keys = ["location", "rubricName"];
+  const keys = ['location', 'rubricName'];
   const bodyKeys = Object.keys(req.body);
 
   if (validateRequest(keys, bodyKeys))
@@ -1462,12 +1465,12 @@ const finalizeAssignmentRubric = async (req, res) => {
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
     const assignmentFolder = config.defaultPath + sep + loc;
-    const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_FILENAME');
-    const gradesJSON = await csvtojson().fromFile(assignmentFolder + sep + GRADES_FILE);
-    const files = glob.sync(assignmentFolder + sep + "/*");
+    const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_BASENAME');
+    const gradesJSON = await csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE);
+    const files = glob.sync(assignmentFolder + sep + '/*');
     const assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
     if (!isJson(assignmentSettingsBuffer))
-      return sendResponse(req, res, 400, "Invalid assignment settings file!");
+      return sendResponse(req, res, 400, 'Invalid assignment settings file!');
 
     const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
 
@@ -1477,18 +1480,18 @@ const finalizeAssignmentRubric = async (req, res) => {
           const regEx = /(.*)\((.+)\)$/;
           if (!regEx.test(file)) {
             failed = true;
-            return sendResponse(req, res, 500, INVALID_STUDENT_FOLDER + " " + basename(file));
+            return sendResponse(req, res, 500, INVALID_STUDENT_FOLDER + ' ' + basename(file));
           }
 
           const matches = regEx.exec(file);
 
-          const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + "/*");
+          const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
           const rubricName = req.body.rubricName.trim();
 
           if (isNullOrUndefined(assignmentSettingsInfo.rubric))
-            return sendResponse(req, res, 400, "Assignment's settings does not contain a rubric!");
+            return sendResponse(req, res, 400, 'Assignment\'s settings does not contain a rubric!');
           else if (assignmentSettingsInfo.rubric.name !== rubricName)
-            return sendResponse(req, res, 400, "Assignment's settings rubric does not match provided!");
+            return sendResponse(req, res, 400, 'Assignment\'s settings rubric does not match provided!');
 
           const rubric = assignmentSettingsInfo.rubric;
 
@@ -1516,21 +1519,21 @@ const finalizeAssignmentRubric = async (req, res) => {
                 };
 
                 await annotateRubricFN().then(async (data) => {
-                  const fileName = pathinfo(submission, 'PATHINFO_FILENAME') + "_MARK";
-                  writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + ".pdf", data.pdfBytes);
+                  const fileName = pathinfo(submission, 'PATHINFO_FILENAME') + '_MARK';
+                  writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
                   accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
                   let changed = false;
                   let assignmentHeader;
                   for (let i = 0; i < gradesJSON.length; i++) {
-                    if (i == 0) {
+                    if (i === 0) {
                       const keys = Object.keys(gradesJSON[i]);
                       if (keys.length > 0) {
                         assignmentHeader = keys[0];
                       }
-                    } else if (!isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
                       gradesJSON[i].field5 = data.totalMark;
                       changed = true;
-                      await json2csvAsync(gradesJSON, {emptyFieldValue: ''})
+                      await json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
                         .then(csv => {
                           writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
                         })
@@ -1544,11 +1547,11 @@ const finalizeAssignmentRubric = async (req, res) => {
                   }
                   if (!changed) {
                     failed = true;
-                    return sendResponse(req, res, 400, "Failed to save mark");
+                    return sendResponse(req, res, 400, 'Failed to save mark');
                   }
                 }, (error) => {
                   failed = true;
-                  return sendResponse(req, res, 400, "Error annotating marks to PDF [" + error.message + "]");
+                  return sendResponse(req, res, 400, 'Error annotating marks to PDF [' + error.message + ']');
                 });
               }
             } catch (e) {
@@ -1561,18 +1564,18 @@ const finalizeAssignmentRubric = async (req, res) => {
     };
     await start();
     if (!failed) {
-      return zipDir(config.defaultPath, {filter: (path: string, stat) => (!(/\.marks\.json|.settings.json$/.test(path)) && ((path.endsWith(config.defaultPath + sep + assignmentName)) ? true : (path.startsWith(config.defaultPath + sep + assignmentName + sep))))}, (err, buffer) => {
+      return zipDir(config.defaultPath, {filter: (path: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(path)) && ((path.endsWith(config.defaultPath + sep + assignmentName)) ? true : (path.startsWith(config.defaultPath + sep + assignmentName + sep))))}, (err, buffer) => {
         if (err)
-          return sendResponse(req, res, 400, "Could not export assignment");
+          return sendResponse(req, res, 400, 'Could not export assignment');
         return sendResponseData(req, res, 200, buffer);
-      })
+      });
     }
   } catch (e) {
     return sendResponse(req, res, 500, e.message);
   }
 };
 
-app.post("/api/assignment/finalize/rubric", [
+app.post('/api/assignment/finalize/rubric', [
   check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION),
   check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], finalizeAssignmentRubric);
@@ -1580,77 +1583,70 @@ app.post("/api/assignment/finalize/rubric", [
 
 const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRubric) => {
   const file = readFileSync(filePath);
-  let pdfDoc = await PDFDocument.load(file);
+  const pdfDoc = await PDFDocument.load(file);
   let totalMark = 0;
-  let resultsPage = pdfDoc.addPage([1200.89,595.28]);
-  //841 pixels x 595.28 pixels
-  let yPosition: number =resultsPage.getHeight() - 15;
-  let xPosition: number = 25;
-  const headerSize: number = 14;
-  const criteriaHeaderSize: number = 10;
-  const rubricTextSize: number = 8;
+  let resultsPage = pdfDoc.addPage([1200.89, 595.28]);
+  let yPosition: number = resultsPage.getHeight() - 15;
+  let xPosition = 25;
+  const headerSize = 14;
+  const rubricTextSize = 8;
   const borderColor = {red: 0.21, green: 0.21, blue: 0.21};
-  const rubricCriteriaBackGround = {red: 0.93, green: 0.93, blue: 0.93};
   const rubricCriteriaLevelBackground = {red: 1.0, green: 1.0, blue: 1.0};
   const rubricCriteriaLevelBackgroundSelected = {red: 0.93, green: 0.93, blue: 0.93};
   let criteriaColors =  {red: 1.0, green: 1.0, blue: 1.0};
   let maxScore = 0;
   rubric.criterias.forEach((value, index) => {
     let curHighest = -1;
-    let critSelected = marks[index];
+    const critSelected = marks[index];
     value.levels.forEach((value1, index1, array) => {
-      if (critSelected == index1)
-      {
+      if (critSelected === index1)
         totalMark = totalMark + parseFloat(value1.score.toString());
-      }
       if (value1.score > curHighest)
         curHighest = value1.score;
-    })
+    });
     maxScore = maxScore + parseFloat(curHighest.toString());
-  })
+  });
 
-  //841 pixels x 595.28 pixels
-  resultsPage.drawText("Results", {x: xPosition, y: yPosition, size: headerSize});
-  yPosition = adjustPointsForResults(yPosition, 15); //y = 580
-  resultsPage.drawText("Total Mark: " + totalMark +" / " + maxScore, {x: xPosition, y: yPosition, size: headerSize});
+  // 841 pixels x 595.28 pixels
+  resultsPage.drawText('Results', {x: xPosition, y: yPosition, size: headerSize});
+  yPosition = adjustPointsForResults(yPosition, 15); // y = 580
+  resultsPage.drawText('Total Mark: ' + totalMark + ' / ' + maxScore, {x: xPosition, y: yPosition, size: headerSize});
 
-  yPosition = adjustPointsForResults(yPosition, 20); //spacing between header and blocks.
+  yPosition = adjustPointsForResults(yPosition, 20); // spacing between header and blocks.
 
-  //Rubric - loop for criterias
+  // Rubric - loop for criterias
   let criteriaCount = 0;
   rubric.criterias.forEach((value, criteriaIndex) => {
     criteriaCount++;
     yPosition = adjustPointsForResults(yPosition, 130);
     resultsPage.drawRectangle({x: xPosition, y: yPosition, width: 130, height: 130, borderWidth: 1, color: rgb(rubricCriteriaLevelBackground.red, rubricCriteriaLevelBackground.green, rubricCriteriaLevelBackground.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
 
-    resultsPage.drawText(rubric.criterias[criteriaIndex].name, {x: (xPosition+3), y: (yPosition+110), size: rubricTextSize});
+    resultsPage.drawText(rubric.criterias[criteriaIndex].name, {x: (xPosition + 3), y: (yPosition + 110), size: rubricTextSize});
     let critSelected = marks[criteriaIndex];
-    let splitDesc = (rubric.criterias[criteriaIndex].description.split(" "));
-    let criteriaDescriptionX = xPosition + 1;
+    const splitDesc = (rubric.criterias[criteriaIndex].description.split(' '));
+    const criteriaDescriptionX = xPosition + 1;
     let criteriaDescriptionY = yPosition + 90; // remember + is upwards, - is down, and function minues by default.
-    //Rubric - loop for criteria-Descriptions -- start
-    for (let index = 0; index <= splitDesc.length; index=index +3)
-    {
-      let curString = "";
+    // Rubric - loop for criteria-Descriptions -- start
+    for (let index = 0; index <= splitDesc.length; index = index + 3) {
+      let curString = '';
       if (!isNullOrUndefinedOrEmpty(splitDesc[index])) {
-        curString = curString + splitDesc[index]+" ";
+        curString = curString + splitDesc[index] + ' ';
       }
-      if (!isNullOrUndefinedOrEmpty(splitDesc[index+1])) {
-        curString = curString + splitDesc[index+1]+" ";
+      if (!isNullOrUndefinedOrEmpty(splitDesc[index + 1])) {
+        curString = curString + splitDesc[index + 1] + ' ';
       }
-      if (!isNullOrUndefinedOrEmpty(splitDesc[index+2])) {
-        curString = curString + splitDesc[index+2]+" ";
+      if (!isNullOrUndefinedOrEmpty(splitDesc[index + 2])) {
+        curString = curString + splitDesc[index + 2] + ' ';
       }
-      resultsPage.drawText(curString, {x: (criteriaDescriptionX+3), y: (criteriaDescriptionY), size: rubricTextSize});
+      resultsPage.drawText(curString, {x: (criteriaDescriptionX + 3), y: (criteriaDescriptionY), size: rubricTextSize});
       criteriaDescriptionY = criteriaDescriptionY - 10;
     }
     let criteriaLevelX = xPosition;
-    let criteriaLevelY = yPosition;
+    const criteriaLevelY = yPosition;
 
-    rubric.criterias[criteriaIndex].levels.forEach((level, levelIndex) =>
-    {
-      //check selected here against marks.
-      if ( critSelected == levelIndex) {
+    rubric.criterias[criteriaIndex].levels.forEach((level, levelIndex) => {
+      // check selected here against marks.
+      if ( critSelected === levelIndex) {
         criteriaColors   = rubricCriteriaLevelBackgroundSelected;
         critSelected = -1;
       } else {
@@ -1659,67 +1655,65 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
 
       criteriaLevelX = criteriaLevelX + 130;
       resultsPage.drawRectangle({x: criteriaLevelX, y: criteriaLevelY, width: 130, height: 130, borderWidth: 1, color: rgb(criteriaColors.red, criteriaColors.green, criteriaColors.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
-      resultsPage.drawText(level.label+" - Marks: "+ level.score, {x: (criteriaLevelX+3), y: (criteriaLevelY+120), size: rubricTextSize});
+      resultsPage.drawText(level.label + ' - Marks: ' + level.score, {x: (criteriaLevelX + 3), y: (criteriaLevelY + 120), size: rubricTextSize});
 
-      let splitDesc = (level.description.replace('\n', "").split(" "));
-      //let splitDesc = (level.description.replace('\n', "").split(""));
-      let levelDescriptionX = criteriaLevelX + 1;
+      const splitDesc = (level.description.replace('\n', '').split(' '));
+      // let splitDesc = (level.description.replace('\n', '').split(''));
+      const levelDescriptionX = criteriaLevelX + 1;
       let levelDescriptionY = criteriaLevelY + 110; // remember + is upwards, - is down, and function minues by default.
-      //Rubric - loop for criteria-Descriptions -- start
+      // Rubric - loop for criteria-Descriptions -- start
       let lineCount = 0;
-      for (let index = 0; index <= splitDesc.length; index=index+5) {
-        let curString = "";
+      for (let index = 0; index <= splitDesc.length; index += 5) {
+        let curString = '';
         if (!isNullOrUndefinedOrEmpty(splitDesc[index])) {
-          curString = curString + splitDesc[index].replace('\n', "")+" ";
+          curString = curString + splitDesc[index].replace('\n', '') + ' ';
         }
-        if (!isNullOrUndefinedOrEmpty(splitDesc[index+1])) {
-          curString = curString + splitDesc[index+1].replace('\n', "")+" ";
+        if (!isNullOrUndefinedOrEmpty(splitDesc[index + 1])) {
+          curString = curString + splitDesc[index + 1].replace('\n', '') + ' ';
         }
-        if (!isNullOrUndefinedOrEmpty(splitDesc[index+2])) {
-          curString = curString + splitDesc[index+2].replace('\n', "")+" ";
+        if (!isNullOrUndefinedOrEmpty(splitDesc[index + 2])) {
+          curString = curString + splitDesc[index + 2].replace('\n', '') + ' ';
         }
-        if (!isNullOrUndefinedOrEmpty(splitDesc[index+3])) {
-          curString = curString + splitDesc[index+3].replace('\n', "")+" ";
+        if (!isNullOrUndefinedOrEmpty(splitDesc[index + 3])) {
+          curString = curString + splitDesc[index + 3].replace('\n', '') + ' ';
         }
-        if (curString.length < 42)
-        {
-        if (!isNullOrUndefinedOrEmpty(splitDesc[index+4])) {
-          curString = curString + splitDesc[index+4].replace('\n', "")+" ";
-        } } else {
+        if (curString.length < 42) {
+          if (!isNullOrUndefinedOrEmpty(splitDesc[index + 4])) {
+            curString = curString + splitDesc[index + 4].replace('\n', '') + ' ';
+          }
+        } else {
           index--;
         }
         lineCount++;
         if (lineCount === 12 && !isNullOrUndefinedOrEmpty(curString)) {
-          curString = curString + "..."
-          index = splitDesc.length+1;
+          curString = curString + '...';
+          index = splitDesc.length + 1;
           lineCount = 0;
         }
-        resultsPage.drawText(curString, {x: (levelDescriptionX+1), y: (levelDescriptionY), size: rubricTextSize-2});
+        resultsPage.drawText(curString, {x: (levelDescriptionX + 1), y: (levelDescriptionY), size: rubricTextSize - 2});
         levelDescriptionY = levelDescriptionY - 10;
       }
-      //Rubric - loop for level descripotion -- end
-    })
-
-  })
-  //check for max pages. Maybe use dimnesnsions rather?
-  if ((criteriaCount === 4) &&  (rubric.criterias.length > criteriaCount)){
+      // Rubric - loop for level descripotion -- end
+    });
+  });
+  // check for max pages. Maybe use dimnesnsions rather?
+  if ((criteriaCount === 4) &&  (rubric.criterias.length > criteriaCount)) {
     pdfDoc.save();
-    resultsPage = pdfDoc.addPage([841.89,595.28]);
-    yPosition =resultsPage.getHeight() - 15;
-    xPosition= 25;
+    resultsPage = pdfDoc.addPage([841.89, 595.28]);
+    yPosition = resultsPage.getHeight() - 15;
+    xPosition = 25;
     criteriaCount = 0;
   }
 
   const newPdfBytes = await pdfDoc.save();
-  return Promise.resolve({pdfBytes: newPdfBytes, totalMark: totalMark});
-}
+  return Promise.resolve({pdfBytes: newPdfBytes, totalMark});
+};
 // rubricFinalize
-
 
 const sendResponse = (req, res, statusCode: number, message: string) => {
   deleteUploadedFile(req);
   deleteMultipleFiles(req);
-  return res.status(statusCode).send({message: message});
+  return res.status(statusCode).send({ message });
 };
 
 const sendResponseData = (req, res, statusCode: number, data: any) => {
@@ -1729,21 +1723,21 @@ const sendResponseData = (req, res, statusCode: number, data: any) => {
 };
 
 const getRgbScale = (rgbValue: number): number => {
-  return +parseFloat(((rgbValue / 255) + "")).toFixed(2);
+  return +parseFloat(((rgbValue / 255) + '')).toFixed(2);
 };
 
 const annotatePdfFile = async (res, filePath: string, marks = []) => {
   let totalMark = 0;
   let generalMarks = 0;
-  let sectionMarks: string[] = [];
-  let commentPointers: string[] = [];
-  let commentPointer: number = 1;
-  let commentErrorFound: boolean = false;
+  const sectionMarks: string[] = [];
+  const commentPointers: string[] = [];
+  let commentPointer = 1;
+  let commentErrorFound = false;
   const file = readFileSync(filePath);
   const pdfFactory = new AnnotationFactory(file);
   let pdfDoc = await PDFDocument.load(file);
   let pdfPages: PDFPage[] = await pdfDoc.getPages();
-  let pageCount: number = 1;
+  let pageCount = 1;
   pdfPages.forEach((pdfPage: PDFPage) => {
     if (Array.isArray(marks[pageCount - 1])) {
       marks[pageCount - 1].forEach(markObj => {
@@ -1751,10 +1745,10 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
         if (markObj.iconType === IconTypeEnum.NUMBER) {
           totalMark += (markObj.totalMark) ? markObj.totalMark : 0;
           try {
-            pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], markObj.comment, markObj.sectionLabel + " = " + markObj.totalMark);
+            pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], markObj.comment, markObj.sectionLabel + ' = ' + markObj.totalMark);
           } catch (e) {
             commentErrorFound = true;
-            commentPointers.push("*" + commentPointer + ": " + markObj.comment);
+            commentPointers.push('*' + commentPointer + ': ' + markObj.comment);
             commentPointer++;
           }
           sectionMarks.push(markObj.sectionLabel + ' = ' + markObj.totalMark);
@@ -1771,7 +1765,12 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   pdfPages.forEach((pdfPage: PDFPage) => {
     if (Array.isArray(marks[pageCount - 1])) {
       marks[pageCount - 1].forEach(mark => {
-        const colours = hexRgb(mark.colour);
+        let colours = hexRgb('#6F327A');
+        if (mark.colour.startsWith('#')) {
+          colours = hexRgb(mark.colour);
+        } else if (mark.colour.startsWith('rgb')) {
+          colours = hexRgb('#' + rgbHex(mark.colour));
+        }
         const coords = mark.coordinates;
         const options = {
           x: (coords.x * 72 / 96) + 4,
@@ -1800,7 +1799,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
             pdfPage.drawSvgPath(IconSvgEnum.ACK_MARK_SVG, options);
           }
         } else {
-          if(commentErrorFound) {
+          if (commentErrorFound) {
             const markOption = {
               x: (coords.x * 72 / 96) + 8,
               y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 20,
@@ -1833,13 +1832,13 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   });
 
   let resultsPage = pdfDoc.addPage(PageSizes.A4);
-  let y: number = 800;
-  const xPosition: number = 25;
-  const headerSize: number = 14;
-  const textSize: number = 12;
+  let y = 800;
+  const xPosition = 25;
+  const headerSize = 14;
+  const textSize = 12;
   const borderColor = {red: 0.71, green: 0.71, blue: 0.71};
 
-  resultsPage.drawText('Results', {x: resultsPage.getWidth() / 2, y: y, size: headerSize});
+  resultsPage.drawText('Results', {x: resultsPage.getWidth() / 2, y, size: headerSize});
   y = adjustPointsForResults(y, 15);
   y = adjustPointsForResults(y, 15);
 
@@ -1853,8 +1852,8 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
 
   for (let i = 0; i < sectionMarks.length; i++) {
     y = adjustPointsForResults(y, 15);
-    resultsPage.drawText(sectionMarks[i] + '', {x: xPosition, y: y, size: textSize});
-    resultsPage.drawText('', {x: xPosition, y: y, size: textSize});
+    resultsPage.drawText(sectionMarks[i] + '', {x: xPosition, y, size: textSize});
+    resultsPage.drawText('', {x: xPosition, y, size: textSize});
 
     if (y <= 5) {
       resultsPage = pdfDoc.addPage(PageSizes.A4);
@@ -1862,24 +1861,24 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     }
   }
   y = adjustPointsForResults(y, 15);
-  resultsPage.drawText('General Marks = ' + generalMarks, {x: xPosition, y: y, size: textSize});
+  resultsPage.drawText('General Marks = ' + generalMarks, {x: xPosition, y, size: textSize});
   y = adjustPointsForResults(y, 15);
   resultsPage.drawText('_________________________________________________________________________________', {
     x: xPosition,
-    y: y,
+    y,
     color: rgb(borderColor.red, borderColor.green, borderColor.blue),
     size: textSize
   });
   y = adjustPointsForResults(y, 15);
-  resultsPage.drawText('', {x: xPosition, y: y, size: textSize});
+  resultsPage.drawText('', {x: xPosition, y, size: textSize});
   y = adjustPointsForResults(y, 15);
-  resultsPage.drawText('Total = ' + totalMark, {x: xPosition, y: y, size: textSize});
+  resultsPage.drawText('Total = ' + totalMark, {x: xPosition, y, size: textSize});
 
-  if(commentErrorFound) {
+  if (commentErrorFound) {
     let feedbackPage = pdfDoc.addPage(PageSizes.A4);
     y = 800;
 
-    feedbackPage.drawText('Feedback', {x: resultsPage.getWidth() / 2, y: y, size: headerSize});
+    feedbackPage.drawText('Feedback', {x: resultsPage.getWidth() / 2, y, size: headerSize});
     y = adjustPointsForResults(y, 15);
     y = adjustPointsForResults(y, 15);
     feedbackPage.drawText('_________________________________________________________________________________', {
@@ -1892,11 +1891,11 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
 
     for (let i = 0; i < commentPointers.length; i++) {
       const feedback = wrap(commentPointers[i], { width: 80 });
-      const splitFeedback = feedback.split("\n");
-      if(splitFeedback.length > 0) {
+      const splitFeedback = feedback.split('\n');
+      if (splitFeedback.length > 0) {
         for (let j = 0; j < splitFeedback.length; j++) {
           y = adjustPointsForResults(y, 15);
-          feedbackPage.drawText(splitFeedback[j] + '', {x: xPosition, y: y, size: textSize});
+          feedbackPage.drawText(splitFeedback[j] + '', {x: xPosition, y, size: textSize});
 
           if (y <= 5) {
             feedbackPage = pdfDoc.addPage(PageSizes.A4);
@@ -1905,7 +1904,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
         }
       } else {
         y = adjustPointsForResults(y, 15);
-        feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y: y, size: textSize});
+        feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y, size: textSize});
 
         if (y <= 5) {
           feedbackPage = pdfDoc.addPage(PageSizes.A4);
@@ -1916,7 +1915,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   }
 
   const newPdfBytes = await pdfDoc.save();
-  return Promise.resolve({pdfBytes: newPdfBytes, totalMark: totalMark});
+  return Promise.resolve({pdfBytes: newPdfBytes, totalMark});
 };
 
 const adjustPointsForResults = (coordinate: number, change: number): number => {
@@ -1924,9 +1923,9 @@ const adjustPointsForResults = (coordinate: number, change: number): number => {
 };
 
 const createAssignment = (req, res) => {
-  const acceptedParams = ["assignmentName", "noRubric", "rubric", "studentDetails"];
+  const acceptedParams = ['assignmentName', 'noRubric', 'rubric', 'studentDetails'];
   const receivedParams = Object.keys(req.body);
-  let isInvalidKey: boolean = false;
+  let isInvalidKey = false;
   let invalidParam: string;
   uploadFiles(req, res, async function (err) {
     if (err) {
@@ -1961,13 +1960,13 @@ const createAssignment = (req, res) => {
           if (isFolder(folders[i].toLowerCase())) {
             if (assignmentName.toLowerCase() === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
               foundCount++;
-            else if ((assignmentName.toLowerCase() + " (" + (foundCount + 1) + ")") === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
+            else if ((assignmentName.toLowerCase() + ' (' + (foundCount + 1) + ')') === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
               foundCount++;
           }
         }
 
         if (foundCount > 0)
-          assignmentName = assignmentName + " (" + (foundCount + 1) + ")";
+          assignmentName = assignmentName + ' (' + (foundCount + 1) + ')';
 
         const isRubric: boolean = (req.body.noRubric === 'true');
         let rubricName: string;
@@ -1989,7 +1988,7 @@ const createAssignment = (req, res) => {
               rubrics = JSON.parse(rubricData.toString());
 
               if (Array.isArray(rubrics)) {
-                let index: number = -1;
+                let index = -1;
                 for (let i = 0; i < rubrics.length; i++) {
                   if (rubrics[i].name === rubricName) {
                     index = i;
@@ -1997,7 +1996,7 @@ const createAssignment = (req, res) => {
                   }
                 }
 
-                if (index != -1) {
+                if (index !== -1) {
                   rubric = rubrics[index];
                   rubricIndex = index;
                 }
@@ -2021,19 +2020,19 @@ const createAssignment = (req, res) => {
         if (studentDetails.length !== req.files.length)
           return sendResponse(req, res, 400, `Student details is not equal to number of files sent!`);
 
-        const settings: AssignmentSettingsInfo = {defaultColour: "#6F327A", rubric: rubric, isCreated: true};
+        const settings: AssignmentSettingsInfo = {defaultColour: '#6F327A', rubric, isCreated: true};
 
         let count = 0;
-        const headers = `"${assignmentName}","SCORE_GRADE_TYPE"\n`;
-        const line = `""\n`;
-        const subheaders = `"Display ID","ID","Last Name","First Name","Mark","Submission date","Late submission"\n`;
+        const headers = `'${assignmentName}','SCORE_GRADE_TYPE'\n`;
+        const line = `''\n`;
+        const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
         let csvString = headers + line + subheaders;
         for (const studentInfo of studentDetails) {
           const file: any = req.files[count];
-          const studentFolder = studentInfo.studentSurname.toUpperCase() + ", " + studentInfo.studentName.toUpperCase() + "(" + studentInfo.studentId.toUpperCase() + ")";
+          const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
           const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
           const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
-          const csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},"","",""\n`;
+          const csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
           csvString += csvData;
 
           mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
@@ -2043,14 +2042,12 @@ const createAssignment = (req, res) => {
           const pdfDoc = await PDFDocument.load(content);
           const pdfBytes = await pdfDoc.save();
           await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
-          // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
-          // unlinkSync(file.path);
           count++;
         }
 
         writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
         writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
-        const files = glob.sync(config.defaultPath + sep + assignmentName + sep + "/**");
+        const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
         files.sort((a, b) => (a > b) ? 1 : -1);
         const folderModel = hierarchyModel(files, config.defaultPath);
         return sendResponseData(req, res, 200, folderModel);
@@ -2060,14 +2057,14 @@ const createAssignment = (req, res) => {
     }
   });
 };
-app.post("/api/assignment/create", [
+app.post('/api/assignment/create', [
   check('assignmentName').not().isEmpty().withMessage('Assignment name must be provided!')
 ], createAssignment);
 
 const updateAssignment = (req, res) => {
-  const acceptedParams = ["assignmentName", "studentDetails", "isEdit"];
+  const acceptedParams = ['assignmentName', 'studentDetails', 'isEdit'];
   const receivedParams = Object.keys(req.body);
-  let isInvalidKey: boolean = false;
+  let isInvalidKey = false;
   let invalidParam: string;
   uploadFiles(req, res, async function (err) {
     if (err) {
@@ -2099,11 +2096,11 @@ const updateAssignment = (req, res) => {
 
         const assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
         if (!isJson(assignmentSettingsBuffer))
-          return sendResponse(req, res, 400, "Invalid assignment settings file!");
+          return sendResponse(req, res, 400, 'Invalid assignment settings file!');
 
         const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
         if (!assignmentSettingsInfo.isCreated)
-          return sendResponse(req, res, 400, "Operation not permitted on this type of assignment!");
+          return sendResponse(req, res, 400, 'Operation not permitted on this type of assignment!');
 
         if (!isJson(req.body.studentDetails))
           return sendResponse(req, res, 400, `Student details not valid`);
@@ -2116,16 +2113,16 @@ const updateAssignment = (req, res) => {
         if (studentDetails.length !== req.files.length)
           return sendResponse(req, res, 400, `Student details is not equal to number of files sent!`);
 
-        const grades = await csvtojson().fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE);
+        const grades = await csvtojson({ noheader: true, trim: false }).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE);
 
         let count = 0;
-        const headers = `"${assignmentName}","SCORE_GRADE_TYPE"\n`;
-        const line = `""\n`;
-        const subheaders = `"Display ID","ID","Last Name","First Name","Mark","Submission date","Late submission"\n`;
+        const headers = `'${assignmentName}','SCORE_GRADE_TYPE'\n`;
+        const line = `''\n`;
+        const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
         let csvString = headers + line + subheaders;
         for (const studentInfo of studentDetails) {
           const file: any = req.files[count];
-          const studentFolder = studentInfo.studentSurname.toUpperCase() + ", " + studentInfo.studentName.toUpperCase() + "(" + studentInfo.studentId.toUpperCase() + ")";
+          const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
           const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
           const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
           let csvData = '';
@@ -2136,9 +2133,9 @@ const updateAssignment = (req, res) => {
             } else {
               const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
               if (studentRecord) {
-                csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},${studentRecord.field5},"",""\n`;
+                csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},${studentRecord.field5},,\n`;
               } else {
-                csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},"","",""\n`;
+                csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
               }
             }
           } else {
@@ -2150,14 +2147,14 @@ const updateAssignment = (req, res) => {
             const pdfBytes = await pdfDoc.save();
             await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
             // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
-            csvData = `"${studentInfo.studentId.toUpperCase()}","${studentInfo.studentId.toUpperCase()}","${studentInfo.studentSurname.toUpperCase()}",${studentInfo.studentName.toUpperCase()},"","",""\n`;
+            csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
           }
           csvString += csvData;
           count++;
         }
 
         writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
-        const files = glob.sync(config.defaultPath + sep + assignmentName + sep + "/**");
+        const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
         files.sort((a, b) => (a > b) ? 1 : -1);
         const folderModel = hierarchyModel(files, config.defaultPath);
 
@@ -2168,7 +2165,7 @@ const updateAssignment = (req, res) => {
     }
   });
 };
-app.put("/api/assignment/update", [
+app.put('/api/assignment/update', [
   check('assignmentName').not().isEmpty().withMessage('Assignment name must be provided!')
 ], updateAssignment);
 
@@ -2198,22 +2195,22 @@ const extractZipFile = async (file, destination, newFolder, oldFolder) => {
       if(entry.type === 'File') {
         const content = await entry.buffer();
         entry.path = entry.path.replace(oldFolder, newFolder);
-        const directory = pathinfo(destination + entry.path.replace("/", sep), 1);
-        const extension = pathinfo(destination + entry.path.replace("/", sep), 'PATHINFO_EXTENSION');
+        const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
+        const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
         if(!existsSync(directory))
           mkdirSync(directory, { recursive: true });
 
         if(entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
-          // await writeFileSync(destination + entry.path.replace("/", sep),  content);
+          // await writeFileSync(destination + entry.path.replace('/', sep),  content);
           const pdfDoc = await PDFDocument.load(content);
           const pdfBytes = await pdfDoc.save();
-          await writeFileSync(destination + entry.path.replace("/", sep),  pdfBytes);
+          await writeFileSync(destination + entry.path.replace('/', sep),  pdfBytes);
         } else {
-          await writeFileSync(destination + entry.path.replace("/", sep),  content);
+          await writeFileSync(destination + entry.path.replace('/', sep),  content);
         }
       } else {
         entry.path = entry.path.replace(oldFolder, newFolder);
-        const directory = destination + entry.path.replace("/", sep);
+        const directory = destination + entry.path.replace('/', sep);
         if(!existsSync(directory))
           mkdirSync(directory, { recursive: true });
         entry.autodrain();
@@ -2224,12 +2221,12 @@ const extractZipFile = async (file, destination, newFolder, oldFolder) => {
 const hierarchyModel = (pathInfos, configFolder) => {
   const pattern = /\\/g;
   configFolder = configFolder.replace(pattern, '/');
-  let model = pathInfos.reduce((hier, pathInfo) => {
-    let stat = statSync(pathInfo);
-    let path = pathInfo.replace(configFolder + '/', '');
+  const model = pathInfos.reduce((hier, pathInfo) => {
+    const stat = statSync(pathInfo);
+    const path = pathInfo.replace(configFolder + '/', '');
     let pathObject: any = hier;
-    let pathSplit = path.split("/");
-    path.split("/").forEach((item) => {
+    const pathSplit = path.split('/');
+    path.split('/').forEach((item) => {
       if (!pathObject[item]) {
         pathObject[item] = {};
       }
@@ -2238,7 +2235,7 @@ const hierarchyModel = (pathInfos, configFolder) => {
 
     if (stat.isFile()) {
       pathObject.path = path;
-      pathObject.basename = path.split("/").pop();
+      pathObject.basename = path.split('/').pop();
       if (pathSplit.indexOf(SUBMISSION_FOLDER) > -1)
         pathObject.isPdf = true;
     }
@@ -2251,7 +2248,7 @@ const hierarchyModel = (pathInfos, configFolder) => {
 const deleteFolderRecursive = (path) => {
   if (existsSync(path)) {
     readdirSync(path).forEach(function (file, index) {
-      const curPath = path + "/" + file;
+      const curPath = path + '/' + file;
       if (isFolder(curPath)) { // recurse
         deleteFolderRecursive(curPath);
       } else { // delete file
@@ -2262,6 +2259,6 @@ const deleteFolderRecursive = (path) => {
   }
 };
 
-function isFolder(curPath: string){
+function isFolder(curPath: string) {
 return lstatSync(curPath).isDirectory();
-};
+}

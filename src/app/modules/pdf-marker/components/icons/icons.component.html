@@ -20,7 +20,7 @@
   <button [disabled]="!containsRubric" matTooltip="Display Rubric Only" mat-button mat-icon-button (click)="onControl($event, 'showRubric')"><mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-expand-right"></mat-icon></button>
   <span class="pdf-marker-fill-space"></span>
   <div class="pdf-marker-assignment-marking-settings-color">
-    <button [disabled]="containsRubric" [style.border-color]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour" class="pdf-marker-assignment-marking-settings-color-pallette" mat-button mat-icon-button [(colorPicker)]="selectedColour" (colorPickerChange)="onColourChange($event)" (colorPickerClose)="onColourPickerClose($event)">
+    <button [disabled]="containsRubric" [style.border-color]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour" class="pdf-marker-assignment-marking-settings-color-pallette" mat-button mat-icon-button [cpAlphaChannel] ="'disabled'" [cpOutputFormat]="'hex'" [(colorPicker)]="selectedColour" (colorPickerChange)="onColourChange($event)" (colorPickerClose)="onColourPickerClose($event)">
       <mat-icon [style.color]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour" [class.pdf-icon-disabled]="containsRubric">palette</mat-icon>
     </button>
     <span [style.background]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour" [style.border-color]="((containsRubric) ? 'rgba(0,0,0,.26)':selectedColour)" class="pdf-marker-assignment-marking-settings-color-choice"></span>
