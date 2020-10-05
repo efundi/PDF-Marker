@@ -5,15 +5,7 @@ import {MatDialogConfig} from '@angular/material/dialog';
 import {AlertService} from '@coreModule/services/alert.service';
 import {AppService} from '@coreModule/services/app.service';
 import {Mapping} from '@coreModule/utils/mapping.class';
-import {
-  IRubric,
-  IRubricCriteria,
-  IRubricCriteriaLevels,
-  IRubricName,
-  Rubric,
-  RubricCriteria,
-  RubricCriteriaLevels
-} from '@coreModule/utils/rubric.class';
+import {IRubric, IRubricName, Rubric, RubricCriteria, RubricCriteriaLevels} from '@coreModule/utils/rubric.class';
 import {ImportService} from '@pdfMarkerModule/services/import.service';
 import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
@@ -32,7 +24,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
   private file: File;
   private fileContents: IRubric;
-  readonly externalLink: string = 'https://rubric.nwu.ac.za';
+  readonly rubricTemplateFile: string = 'Rubric_template.xlsx';
 
   config: MatDialogConfig;
 
@@ -175,13 +167,45 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
   openExternalResource() {
     this.appService.isLoading$.next(true);
-    this.electronService.openExternalLink(this.externalLink);
+    this.electronService.openExternalLink(this.rubricTemplateFile);
     this.electronService.getObservable().subscribe(() => {
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.openSnackBar(false, 'Unable to open resource link');
       this.appService.isLoading$.next(false);
     });
+  }
+
+  downloadFile() {
+    this.alertService.clear();
+    this.appService.isLoading$.next(true);
+    fetch('assets/' + this.rubricTemplateFile)
+      .then(response => {
+        response.blob().then(async (blob: Blob) => {
+          const reader = new FileReader();
+          reader.addEventListener('loadend', () => {
+            this.electronService.saveFile({ filename: this.rubricTemplateFile, buffer: reader.result, name: 'Excel File', extension: ["xlsx"]});
+            this.electronService.saveFileOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+              this.appService.isLoading$.next(false);
+              if (appSelectedPathInfo.selectedPath) {
+                this.alertService.success(`File saved to downloads folder`);
+              } else if (appSelectedPathInfo.error) {
+                this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
+              }
+            });
+            this.appService.isLoading$.next(false);
+          });
+
+          reader.readAsArrayBuffer(blob);
+        }).catch(error => {
+          this.alertService.error(error.message);
+          this.appService.isLoading$.next(false);
+        });
+      })
+      .catch(error => {
+        this.alertService.error(error.message);
+        this.appService.isLoading$.next(false);
+      });
   }
 
   deleteRubric(rubricName: string) {

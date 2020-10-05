@@ -183,6 +183,7 @@ try {
             event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: `No criteria(s) provided` } });
           } else {
             let rowCount = 4;
+            const levelCount = 6;
             let errorMessage: string;
             let errorFound: boolean;
             let validLevelLength = 0;
@@ -219,7 +220,7 @@ try {
 
                 const levels = [];
 
-                for (let i = 1; ((validLevelLength === 0) ? 4 : validLevelLength); i++) {
+                for (let i = 1; ((validLevelLength === 0) ? levelCount : validLevelLength); i++) {
                   const achievementMark = 'Achievement_level_'  + i + '_mark';
                   const achievementFeedback = 'Achievement_level_'  + i + '_feedback';
                   const achievementTitle = 'Achievement_level_'  + i + '_title';
@@ -252,8 +253,8 @@ try {
                     if (index === 2)
                       validLevelLength = i - 1;
                     break;
-                  } else if ((index === 2) && (i === 4)) {
-                    validLevelLength = 4;
+                  } else if ((index === 2) && (i === levelCount)) {
+                    validLevelLength = levelCount;
                   }
 
                   levels[i - 1] = {
