@@ -50,6 +50,11 @@ export class ImportComponent implements OnInit {
   rubrics: IRubricName[];
 
   private actualFilePath: string;
+  assignmentTypeID = "Assignment";
+  assignmentTypes = [
+    { 'name' : 'Assignment'},
+    { 'name' : 'Generic'},]
+  selectedType: string;
 
   constructor(private fb: FormBuilder,
               private zipService: ZipService,
@@ -101,6 +106,7 @@ export class ImportComponent implements OnInit {
 
   private initForm() {
     this.importForm = this.fb.group({
+      assignmentType: [null],
       assignmentZipFileText: [null],
       assignmentName: [null],
       noRubric: [this.noRubricDefaultValue],
@@ -149,25 +155,30 @@ export class ImportComponent implements OnInit {
       this.validMime = false;
       this.setFileDetailsAndAssignmentName(undefined);
     }
+    this.selectedType = this.fc.assignmentType.value;
+      if(this.validMime &&  this.selectedType === "Assignment") {
+      // Is zip, then checks structure.
+              this.zipService.isValidZip(this.fc.assignmentName.value, this.file).subscribe((isValidFormat: boolean) => {
+          this.isValidFormat = isValidFormat;
+          if (!this.isValidFormat)
+            this.alertService.error(this.sakaiService.formatErrorMessage);
+          else {
+            this.clearError();
+          }
+          this.isFileLoaded = true;
+          this.showLoading(false);
+        }, error => {
+          this.showErrorMessage(error);
+          this.showLoading(false);
+        })
+      }
+   else  if(this.validMime &&  this.selectedType === "Generic") {
+      this.isValidFormat = true;
+      this.isFileLoaded = true;
 
-    if(this.validMime) {
-      this.zipService.isValidZip(this.fc.assignmentName.value, this.file).subscribe((isValidFormat: boolean) => {
-        this.isValidFormat = isValidFormat;
-        if(!this.isValidFormat)
-          this.alertService.error(this.sakaiService.formatErrorMessage);
-        else {
-          this.clearError();
-        }
-        this.isFileLoaded = true;
-        this.showLoading(false);
-      }, error => {
-        this.showErrorMessage(error);
-        this.showLoading(false);
-      })
-    } else {
+    }  else
       this.showLoading(false);
     }
-  }
 
   private setFileDetailsAndAssignmentName(file: File) {
     this.file = file;
@@ -208,6 +219,11 @@ export class ImportComponent implements OnInit {
     this.importForm.updateValueAndValidity();
   }
 
+  onAssignmentTypeChange(event) {
+    this.selectedType = this.fc.assignmentType.value;
+    this.fc.assignmentType.updateValueAndValidity();
+  }
+
   onPreview() {
     this.appService.isLoading$.next(true);
     this.zipService.getEntries(this.file, true).subscribe();
@@ -226,7 +242,7 @@ export class ImportComponent implements OnInit {
       rubric
     } = this.importForm.value;
 
-    const importData = {file: this.actualFilePath, 'noRubric': noRubric, 'rubric': rubric };
+    const importData = {file: this.actualFilePath, 'noRubric': noRubric, 'rubric': rubric, 'assignmentType': this.selectedType };
     this.appService.isLoading$.next(true);
     this.importService.importAssignmentFile(importData).subscribe((events) => {
 
@@ -261,6 +277,7 @@ export class ImportComponent implements OnInit {
     this.isModalOpened = false;
     this.validMime = false;
     this.isValidFormat = false;
+    this.selectedType = undefined;
     this.fc.noRubric.setValue(this.noRubricDefaultValue);
     this.fc.rubric.enable();
     this.initForm();

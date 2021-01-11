@@ -4,8 +4,23 @@
     <h1><mat-icon>archive</mat-icon>&nbsp;Import from a zip file</h1>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
+    <mat-form-field>
+      <div class="pdf-spacer"></div>
+      <mat-label>Select Assignment Type</mat-label>
+      <div class="pdf-spacer"></div>
+      <div class="pdf-marker-assignmentType-container">
+        <mat-select formControlName="assignmentType"  class="form-control select" ngModel (change)="onAssignmentTypeChange($event)" readonly placeholder="Choose Assignment Type">
+          <mat-option *ngFor="let assignmentType of assignmentTypes" [value]="assignmentType.name" >
+            {{ assignmentType.name }}
+          </mat-option>
+        </mat-select>
+      </div>
+    </mat-form-field>
+    <div class="pdf-spacer"></div>
     <mat-form-field floatLabel="always">
+      <div class="pdf-spacer"></div>
       <mat-label>Select File</mat-label>
+      <div class="pdf-spacer"></div>
       <div class="pdf-marker-file-upload">
         <button type="button" mat-raised-button (click)="selectFile()">Browse</button>
         &nbsp;&nbsp;
