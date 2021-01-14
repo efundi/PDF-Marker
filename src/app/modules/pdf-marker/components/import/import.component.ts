@@ -176,6 +176,7 @@ export class ImportComponent implements OnInit {
       this.isValidFormat = true;
       this.isFileLoaded = true;
 
+
     }  else
       this.showLoading(false);
     }
@@ -232,7 +233,7 @@ export class ImportComponent implements OnInit {
 
   onSubmit(event) {
     this.clearError();
-    if(this.importForm.invalid || !this.validMime || !this.isValidFormat) {
+    if (this.importForm.invalid || !this.validMime || !this.isValidFormat) {
       this.showErrorMessage("Please fill in the correct details!");
       return;
     }
@@ -242,21 +243,26 @@ export class ImportComponent implements OnInit {
       rubric
     } = this.importForm.value;
 
-    const importData = {file: this.actualFilePath, 'noRubric': noRubric, 'rubric': rubric, 'assignmentType': this.selectedType };
+    const importData = {
+      file: this.actualFilePath,
+      'noRubric': noRubric,
+      'rubric': rubric,
+      'assignmentType': this.selectedType
+    };
     this.appService.isLoading$.next(true);
     this.importService.importAssignmentFile(importData).subscribe((events) => {
 
-      if(events.type === HttpEventType.UploadProgress) {
+        if (events.type === HttpEventType.UploadProgress) {
 
-      } else if(events.type === HttpEventType.Response) {
-        this.appService.isLoading$.next(false);
-        let response: any = events.body;
-        this.alertService.success(response.message);
-        this.resetForm();
+        } else if (events.type === HttpEventType.Response) {
+          this.appService.isLoading$.next(false);
+          let response: any = events.body;
+          this.alertService.success(response.message);
+          this.resetForm();
+        }
       }
-    }, error => this.appService.isLoading$.next(false));
+      , error => this.appService.isLoading$.next(false));
   }
-
   private showLoading(isLoading: boolean) {
     this.appService.isLoading$.next(isLoading);
   }

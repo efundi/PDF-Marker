@@ -17,6 +17,13 @@ export class ImportService {
     });
   }
 
+  importGenericFile(data: any) {
+    return this.http.post('/api/importGeneric', data, {
+      reportProgress: true,
+      observe: 'events'
+    });
+  }
+
   importRubricFile(data: FormData): Observable<IRubric[]> {
     return this.http.post<IRubric[]>('/api/rubric/import', data);
   }

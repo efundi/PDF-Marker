@@ -35,7 +35,9 @@ import {
   unlinkSync,
   writeFile,
   writeFileSync,
-  rmdirSync, lstatSync
+  rmdirSync,
+  lstatSync,
+  readdir,
 } from 'fs';
 import {json2csv, json2csvAsync} from 'json-2-csv';
 import {PageSizes, PDFDocument, PDFPage, rgb} from 'pdf-lib';
@@ -49,6 +51,8 @@ const zipDir = require('zip-dir');
 const JSZip = require('jszip');
 const unzipper = require('unzipper');
 const etl = require('etl');
+
+const fs = require('fs');
 
 const {check, validationResult} = require('express-validator');
 const multer = require('multer');
@@ -265,7 +269,270 @@ app.get('/api/settings', settingsGet);
 /*IMPORT API*/
 
 const zipFileUploadCallback = (req, res, data) => {
-  const acceptedParams = ['file', 'noRubric', 'rubric'];
+  const acceptedParams = ['file', 'noRubric', 'rubric', 'assignmentType'];
+  const receivedParams = Object.keys(req.body);
+  let isInvalidKey = false;
+  let invalidParam: string;
+
+  for (const receivedParam of receivedParams) {
+    if (acceptedParams.indexOf(receivedParam) === -1) {
+      isInvalidKey = true;
+      invalidParam = receivedParam;
+      break;
+    }
+  }
+
+  if (isInvalidKey)
+    return sendResponse(req, res, 400, `Invalid parameter ${invalidParam} found in request`);
+
+  if (isNullOrUndefined(req.body.file))
+    return sendResponse(req, res, 400, 'No file selected!');
+
+  return readFromFile(req, res, req.body.file, (zipFile) => {
+    const config = JSON.parse(data.toString());
+
+    const isRubric: boolean = req.body.noRubric;
+    let rubricName: string;
+    let rubric: IRubric = null;
+    let rubricIndex: number;
+    let rubrics: IRubric[];
+
+    if (!isRubric) {
+      if (isNullOrUndefined(req.body.rubric))
+        return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
+
+      rubricName = req.body.rubric.trim();
+      if (!isNullOrUndefined(rubricName)) {
+        try {
+          const rubricData = readFileSync(CONFIG_DIR + RUBRICS_FILE);
+
+          if (!isJson(rubricData))
+            return sendResponse(req, res, 400, INVALID_RUBRIC_JSON_FILE);
+
+          rubrics = JSON.parse(rubricData.toString());
+
+          if (Array.isArray(rubrics)) {
+            let index = -1;
+            for (let i = 0; i < rubrics.length; i++) {
+              if (rubrics[i].name === rubricName) {
+                index = i;
+                break;
+              }
+            }
+
+            if (index !== -1) {
+              rubric = rubrics[index];
+              rubricIndex = index;
+            }
+          } else {
+            return sendResponse(req, res, 400, COULD_NOT_READ_RUBRIC_LIST);
+          }
+        } catch (e) {
+          return sendResponse(req, res, 500, e.message);
+        }
+      }
+    }
+
+    const folders = glob.sync(config.defaultPath + '/*');
+
+    let folderCount = 0;
+    folders.forEach(folder => {
+      if (isFolder(folder)) {
+        folders[folderCount] = pathinfo(folder, 'PATHINFO_BASENAME');
+        folderCount++;
+      }
+    });
+
+    const zip = new JSZip();
+    return zip.loadAsync(new Uint8Array(zipFile))
+      .then(async (zipObject) => {
+        let entry = '';
+        zipObject.forEach((relativePath, zipEntry) => {
+          if (entry === '') {
+            entry = zipEntry.name;
+          }
+        });
+        const entryPath = entry.split('/');
+        if (entryPath.length > 0) {
+          let newFolder;
+          const oldPath = entryPath[0];
+          let foundCount = 0;
+          for (let i = 0; i < folders.length; i++) {
+            if (oldPath.toLowerCase() + '/' === folders[i].toLowerCase() + '/')
+              foundCount++;
+            else if ((oldPath.toLowerCase() + ' (' + (foundCount + 1) + ')' + '/') === folders[i].toLowerCase() + '/')
+              foundCount++;
+          }
+
+          const settings: AssignmentSettingsInfo = {defaultColour: '#6F327A', rubric, isCreated: false};
+          if (foundCount !== 0) {
+            newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
+
+            extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
+              return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
+                EXTRACTED_ZIP,
+                null, () => {
+                  if (!isNullOrUndefined(rubricName)) {
+                    rubrics[rubricIndex].inUse = true;
+                    return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
+                      EXTRACTED_ZIP,
+                      EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
+                  }
+                  return sendResponse(req, res, 200, EXTRACTED_ZIP);
+                });
+            }).catch((error) => {
+              if (existsSync(config.defaultPath + sep + newFolder))
+                deleteFolderRecursive(config.defaultPath + sep + newFolder);
+              return sendResponse(req, res, 501, error.message);
+            });
+            /**
+            const studentData: any= [];
+            let count = 0;
+            let fileName = 'Unset';
+            console.log(config.defaultPath + sep + newFolder);
+            getDirectories(config.defaultPath + sep +newFolder, (err, files) => {
+              console.log(files);
+              files.forEach(file => {
+                console.log(file);
+                let student: any = {};
+                student.studentName = file.substring(0,file.indexOf("_"));
+                student.studentSurname= file.substring(file.indexOf("_"),file.indexOf("_")+1);
+                student.studentId = file.substring(file.indexOf("_")+1,file.indexOf("_")+2);
+                fileName = file.substring(file.indexOf("_")+2,file.toString().length);
+                student.file = file;
+                studentData.push(student);
+                count++;
+              });
+            });
+            console.log("Before Folders creation");
+            mkdirSync(config.defaultPath + sep + fileName + sep +FEEDBACK_FOLDER);
+            let fileCount = 0;
+            const headers = `'${fileName}','SCORE_GRADE_TYPE'\n`;
+            const line = `''\n`;
+            const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
+            let csvString = headers + line + subheaders;
+            for (const studentInfo of studentData) {
+              const file: any = req.files[fileCount];
+              const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
+              const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
+              const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
+              const csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
+              csvString += csvData;
+              mkdirSync(config.defaultPath + sep + fileName + sep + studentFolder, {recursive: true});
+              mkdirSync(config.defaultPath + sep + fileName + sep + feedbackFolder, {recursive: true});
+              mkdirSync(config.defaultPath + sep + fileName + sep + submissionFolder, {recursive: true});
+
+              const content = readFileSync(file.path);
+              const pdfDoc = await PDFDocument.load(content);
+              const pdfBytes = await pdfDoc.save();
+              await writeFileSync(config.defaultPath + sep + fileName + sep + submissionFolder + sep + file,  pdfBytes);
+              fileCount++;
+            }
+**/
+          } else {
+            extractZipFile(req.body.file, config.defaultPath + sep, '', '', req.body.assignmentType)
+              .then(async () => {
+                return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
+                  EXTRACTED_ZIP,
+                  null, () => {
+                    if (!isNullOrUndefined(rubricName)) {
+                      rubrics[rubricIndex].inUse = true;
+                      return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
+                        EXTRACTED_ZIP,
+                        EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
+                    }
+                    return sendResponse(req, res, 200, EXTRACTED_ZIP);
+                  });
+              }).catch((error) => {
+              if (existsSync(config.defaultPath + sep + oldPath))
+                deleteFolderRecursive(config.defaultPath + sep + oldPath);
+              return sendResponse(req, res, 501, error.message);
+            });
+          }
+          /**
+            const studentData: any= [];
+            let count = 0;
+            let fileName = 'Unset';
+            console.log(config.defaultPath + sep + oldPath);
+            getDirectories(config.defaultPath + sep +oldPath, (err, files) => {
+              console.log(files);
+              files.forEach(file => {
+                console.log(file);
+                let student: any = {};
+                student.studentName = file.substring(0,file.indexOf("_"));
+                student.studentSurname= file.substring(file.indexOf("_"),file.indexOf("_")+1);
+                student.studentId = file.substring(file.indexOf("_")+1,file.indexOf("_")+2);
+                fileName = file.substring(file.indexOf("_")+2,file.toString().length);
+               student.file = file;
+                studentData.push(student);
+                count++;
+              });
+            });
+            console.log("Before Folders creation");
+            mkdirSync(config.defaultPath + sep + fileName + sep +FEEDBACK_FOLDER);
+            let fileCount = 0;
+            const headers = `'${fileName}','SCORE_GRADE_TYPE'\n`;
+            const line = `''\n`;
+            const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
+            let csvString = headers + line + subheaders;
+            for (const studentInfo of studentData) {
+              const file: any = req.files[fileCount];
+              const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
+              const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
+              const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
+              const csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
+              csvString += csvData;
+              mkdirSync(config.defaultPath + sep + fileName + sep + studentFolder, {recursive: true});
+              mkdirSync(config.defaultPath + sep + fileName + sep + feedbackFolder, {recursive: true});
+              mkdirSync(config.defaultPath + sep + fileName + sep + submissionFolder, {recursive: true});
+
+              const content = readFileSync(file.path);
+              const pdfDoc = await PDFDocument.load(content);
+              const pdfBytes = await pdfDoc.save();
+              await writeFileSync(config.defaultPath + sep + fileName + sep + submissionFolder + sep + file,  pdfBytes);
+              fileCount++;
+            }
+**/
+        } else {
+          return sendResponse(req, res, 501, 'Zip Object contains no entries!');
+        }
+      })
+      .catch(error => {
+        return sendResponse(req, res, 501, error.message);
+      });
+  }, 'File not uploaded!');
+};
+
+function getDirectories(path, callback) {
+  fs.readdirSync(path, function (err, content) {
+    if (err) return callback(err)
+    callback(null, content)
+  })
+}
+
+const uploadFn = (req, res, next) => {
+  if (!checkClient(req, res))
+    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
+    if (!isJson(data))
+      return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+
+    return zipFileUploadCallback(req, res, data);
+    /*return uploadFile(req, res, (err) => {
+      return zipFileUploadCallback(req, res, data, err);
+    });*/
+  });
+};
+
+app.post('/api/import', uploadFn);
+
+/*END IMPORT API*/
+
+/*GENERIC IMPORT API*/
+
+const genericZipFileUploadCallback = (req, res, data) => {
+  const acceptedParams = ['file', 'noRubric', 'rubric', 'assignmentType'];
   const receivedParams = Object.keys(req.body);
   let isInvalidKey = false;
   let invalidParam: string;
@@ -364,7 +631,8 @@ const zipFileUploadCallback = (req, res, data) => {
           const settings: AssignmentSettingsInfo = {defaultColour: '#6F327A', rubric, isCreated: false};
           if (foundCount !== 0) {
             newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
-            extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + '/').then(() => {
+            // @ts-ignore
+            extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + '/', "Generic").then(() => {
               return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                 EXTRACTED_ZIP,
                 null, () => {
@@ -382,7 +650,8 @@ const zipFileUploadCallback = (req, res, data) => {
               return sendResponse(req, res, 501, error.message);
             });
           } else {
-            extractZipFile(req.body.file, config.defaultPath + sep, '', '')
+
+            extractZipFile(req.body.file, config.defaultPath + sep, '', '', "Generic")
               .then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
@@ -395,11 +664,12 @@ const zipFileUploadCallback = (req, res, data) => {
                     }
                     return sendResponse(req, res, 200, EXTRACTED_ZIP);
                   });
+
               }).catch((error) => {
-                if (existsSync(config.defaultPath + sep + oldPath))
-                  deleteFolderRecursive(config.defaultPath + sep + oldPath);
-                return sendResponse(req, res, 501, error.message);
-              });
+              if (existsSync(config.defaultPath + sep + oldPath))
+                deleteFolderRecursive(config.defaultPath + sep + oldPath);
+              return sendResponse(req, res, 501, error.message);
+            });
           }
         } else {
           return sendResponse(req, res, 501, 'Zip Object contains no entries!');
@@ -411,7 +681,7 @@ const zipFileUploadCallback = (req, res, data) => {
   }, 'File not uploaded!');
 };
 
-const uploadFn = (req, res, next) => {
+const uploadGenericFn = (req, res, next) => {
   if (!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
 
@@ -426,9 +696,10 @@ const uploadFn = (req, res, next) => {
   });
 };
 
-app.post('/api/import', uploadFn);
+app.post('/api/importGeneric', uploadGenericFn);
 
-/*END IMPORT API*/
+/*END GENERIC IMPORT API*/
+
 
 /*RUBRIC IMPORT API*/
 
@@ -2188,7 +2459,11 @@ const isJson = (str) => {
   return true;
 };
 
-const extractZipFile = async (file, destination, newFolder, oldFolder) => {
+const extractZipFile = async (file, destination, newFolder, oldFolder, assignmentType) => {
+
+  console.log("Here!");
+  console.log(assignmentType);
+
   return await createReadStream(file)
     .pipe(unzipper.Parse())
     .pipe(etl.map(async entry => {
@@ -2200,13 +2475,26 @@ const extractZipFile = async (file, destination, newFolder, oldFolder) => {
         if(!existsSync(directory))
           mkdirSync(directory, { recursive: true });
 
-        if(entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
+        if(assignmentType === 'Generic') {
+          const pdfDoc = await PDFDocument.load(content);
+          let file = content;
+          var fileName = entry.name;
+          var studentName = fileName.substring(0,file.indexOf("_"));
+          var studentSurname= fileName.substring(file.indexOf("_"),file.indexOf("_")+1);
+          var studentId = fileName.substring(file.indexOf("_")+1,file.indexOf("_")+2);
+          var studentDirectory = studentSurname+", "+studentName+ "("+studentId+")";
+          mkdirSync(directory + sep + studentDirectory, {recursive: true});
+          mkdirSync(directory + sep + studentDirectory + sep + FEEDBACK_FOLDER, {recursive: true});
+          mkdirSync(directory + sep + studentDirectory + sep + SUBMISSION_FOLDER, {recursive: true});
+          const pdfBytes = await pdfDoc.save();
+          await writeFileSync(directory + sep + studentDirectory + sep + SUBMISSION_FOLDER + sep,  pdfBytes);
+        } else if(assignmentType === 'Assignment' && entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
           // await writeFileSync(destination + entry.path.replace('/', sep),  content);
           const pdfDoc = await PDFDocument.load(content);
           const pdfBytes = await pdfDoc.save();
-          await writeFileSync(destination + entry.path.replace('/', sep),  pdfBytes);
+          await writeFileSync(directory + entry.path.replace('/', sep),  pdfBytes);
         } else {
-          await writeFileSync(destination + entry.path.replace('/', sep),  content);
+          await writeFileSync(directory + entry.path.replace('/', sep),  content);
         }
       } else {
         entry.path = entry.path.replace(oldFolder, newFolder);
