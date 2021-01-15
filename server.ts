@@ -416,13 +416,6 @@ const zipFileUploadCallback = (req, res, data) => {
   }, 'File not uploaded!');
 };
 
-function getDirectories(path, callback) {
-  fs.readdirSync(path, function (err, content) {
-    if (err) return callback(err)
-    callback(null, content)
-  })
-}
-
 const uploadFn = (req, res, next) => {
   if (!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
@@ -441,178 +434,6 @@ const uploadFn = (req, res, next) => {
 app.post('/api/import', uploadFn);
 
 /*END IMPORT API*/
-
-/*GENERIC IMPORT API*/
-
-const genericZipFileUploadCallback = (req, res, data) => {
-  const acceptedParams = ['file', 'noRubric', 'rubric', 'assignmentType'];
-  const receivedParams = Object.keys(req.body);
-  let isInvalidKey = false;
-  let invalidParam: string;
-
-  for (const receivedParam of receivedParams) {
-    if (acceptedParams.indexOf(receivedParam) === -1) {
-      isInvalidKey = true;
-      invalidParam = receivedParam;
-      break;
-    }
-  }
-
-  if (isInvalidKey)
-    return sendResponse(req, res, 400, `Invalid parameter ${invalidParam} found in request`);
-
-  if (isNullOrUndefined(req.body.file))
-    return sendResponse(req, res, 400, 'No file selected!');
-
-  return readFromFile(req, res, req.body.file, (zipFile) => {
-    const config = JSON.parse(data.toString());
-
-    const isRubric: boolean = req.body.noRubric;
-    let rubricName: string;
-    let rubric: IRubric = null;
-    let rubricIndex: number;
-    let rubrics: IRubric[];
-
-    if (!isRubric) {
-      if (isNullOrUndefined(req.body.rubric))
-        return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
-
-      rubricName = req.body.rubric.trim();
-      if (!isNullOrUndefined(rubricName)) {
-        try {
-          const rubricData = readFileSync(CONFIG_DIR + RUBRICS_FILE);
-
-          if (!isJson(rubricData))
-            return sendResponse(req, res, 400, INVALID_RUBRIC_JSON_FILE);
-
-          rubrics = JSON.parse(rubricData.toString());
-
-          if (Array.isArray(rubrics)) {
-            let index = -1;
-            for (let i = 0; i < rubrics.length; i++) {
-              if (rubrics[i].name === rubricName) {
-                index = i;
-                break;
-              }
-            }
-
-            if (index !== -1) {
-              rubric = rubrics[index];
-              rubricIndex = index;
-            }
-          } else {
-            return sendResponse(req, res, 400, COULD_NOT_READ_RUBRIC_LIST);
-          }
-        } catch (e) {
-          return sendResponse(req, res, 500, e.message);
-        }
-      }
-    }
-
-    const folders = glob.sync(config.defaultPath + '/*');
-
-    let folderCount = 0;
-    folders.forEach(folder => {
-      if (isFolder(folder)) {
-        folders[folderCount] = pathinfo(folder, 'PATHINFO_BASENAME');
-        folderCount++;
-      }
-    });
-
-    const zip = new JSZip();
-    return zip.loadAsync(new Uint8Array(zipFile))
-      .then((zipObject) => {
-        let entry = '';
-        zipObject.forEach((relativePath, zipEntry) => {
-          if (entry === '') {
-            entry = zipEntry.name;
-          }
-        });
-
-        const entryPath = entry.split('/');
-        if (entryPath.length > 0) {
-          let newFolder;
-          const oldPath = entryPath[0];
-          let foundCount = 0;
-          for (let i = 0; i < folders.length; i++) {
-            if (oldPath.toLowerCase() + '/' === folders[i].toLowerCase() + '/')
-              foundCount++;
-            else if ((oldPath.toLowerCase() + ' (' + (foundCount + 1) + ')' + '/') === folders[i].toLowerCase() + '/')
-              foundCount++;
-          }
-
-          const settings: AssignmentSettingsInfo = {defaultColour: '#6F327A', rubric, isCreated: false};
-          if (foundCount !== 0) {
-            newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
-            // @ts-ignore
-            extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + '/', "Generic").then(() => {
-              return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
-                EXTRACTED_ZIP,
-                null, () => {
-                  if (!isNullOrUndefined(rubricName)) {
-                    rubrics[rubricIndex].inUse = true;
-                    return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
-                      EXTRACTED_ZIP,
-                      EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
-                  }
-                  return sendResponse(req, res, 200, EXTRACTED_ZIP);
-                });
-            }).catch((error) => {
-              if (existsSync(config.defaultPath + sep + newFolder))
-                deleteFolderRecursive(config.defaultPath + sep + newFolder);
-              return sendResponse(req, res, 501, error.message);
-            });
-          } else {
-
-            extractZipFile(req.body.file, config.defaultPath + sep, '', '', "Generic")
-              .then(() => {
-                return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
-                  EXTRACTED_ZIP,
-                  null, () => {
-                    if (!isNullOrUndefined(rubricName)) {
-                      rubrics[rubricIndex].inUse = true;
-                      return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
-                        EXTRACTED_ZIP,
-                        EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
-                    }
-                    return sendResponse(req, res, 200, EXTRACTED_ZIP);
-                  });
-
-              }).catch((error) => {
-              if (existsSync(config.defaultPath + sep + oldPath))
-                deleteFolderRecursive(config.defaultPath + sep + oldPath);
-              return sendResponse(req, res, 501, error.message);
-            });
-          }
-        } else {
-          return sendResponse(req, res, 501, 'Zip Object contains no entries!');
-        }
-      })
-      .catch(error => {
-        return sendResponse(req, res, 501, error.message);
-      });
-  }, 'File not uploaded!');
-};
-
-const uploadGenericFn = (req, res, next) => {
-  if (!checkClient(req, res))
-    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
-
-  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
-      return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
-
-    return zipFileUploadCallback(req, res, data);
-    /*return uploadFile(req, res, (err) => {
-      return zipFileUploadCallback(req, res, data, err);
-    });*/
-  });
-};
-
-app.post('/api/importGeneric', uploadGenericFn);
-
-/*END GENERIC IMPORT API*/
-
 
 /*RUBRIC IMPORT API*/
 
@@ -2373,10 +2194,6 @@ const isJson = (str) => {
 };
 
 const extractZipFile = async (file, destination, newFolder, oldFolder, assignmentType) => {
-
-  console.log("Here!");
-  console.log(assignmentType);
-
   return await createReadStream(file)
     .pipe(unzipper.Parse())
     .pipe(etl.map(async entry => {
@@ -2409,9 +2226,9 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           // await writeFileSync(destination + entry.path.replace('/', sep),  content);
           const pdfDoc = await PDFDocument.load(content);
           const pdfBytes = await pdfDoc.save();
-          await writeFileSync(directory + entry.path.replace('/', sep),  pdfBytes);
+          await writeFileSync(destination + entry.path.replace('/', sep),  pdfBytes);
         } else {
-          await writeFileSync(directory + entry.path.replace('/', sep),  content);
+          await writeFileSync(destination + entry.path.replace('/', sep),  content);
         }
       } else {
         entry.path = entry.path.replace(oldFolder, newFolder);
