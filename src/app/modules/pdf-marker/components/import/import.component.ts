@@ -175,6 +175,7 @@ export class ImportComponent implements OnInit {
    else  if(this.validMime &&  this.selectedType === "Generic") {
       this.isValidFormat = true;
       this.isFileLoaded = true;
+        this.showLoading(false);
     }  else
       this.showLoading(false);
     }
