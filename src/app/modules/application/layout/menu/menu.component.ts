@@ -11,8 +11,8 @@ export class MenuComponent implements OnInit {
 
   readonly toolbarMenu = [
     { id: "Home",  toolTip: "Home", icon: "home", href: RoutesEnum.MARKER },
-    { title: "Import", toolTip: "Import Zip from default LMS", icon: "unarchive", href: RoutesEnum.ASSIGNMENT_IMPORT },
-    { title: "Upload", toolTip: "Upload PDF file(s)", icon: "picture_as_pdf", href: RoutesEnum.ASSIGNMENT_UPLOAD },
+    { title: "Import", toolTip: "Import Zip File", icon: "unarchive", href: RoutesEnum.ASSIGNMENT_IMPORT },
+    { title: "Upload", toolTip: "Upload PDF File(s)", icon: "picture_as_pdf", href: RoutesEnum.ASSIGNMENT_UPLOAD },
     { title: "Settings", toolTip: "Settings", icon: "settings"},
   ];
 
