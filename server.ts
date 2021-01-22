@@ -266,6 +266,31 @@ const settingsGet = (req, res) => {
 
 app.get('/api/settings', settingsGet);
 
+
+/* New Folder API */
+
+const newFolderPost = (req, res) => {
+  if (!checkClient(req, res))
+    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return sendResponseData(req, res, 400, {errors: errors.array()});
+
+  mkdirSync(req.body.defaultPath + sep + req.body.workingFolders);
+  const configData = readFileSync(CONFIG_DIR + CONFIG_FILE);
+  const config = JSON.parse(configData.toString());
+  //console.log(config);
+  config["folders"].push(req.body.defaultPath + sep + req.body.workingFolders);
+  //console.log(config);
+  return  writeToFile(req, res, CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
+};
+
+app.post('/api/settings/newFolder', [
+  check('workingFolders').not().isEmpty().withMessage('Folder name not provided!'),
+], newFolderPost);
+
+
 /*IMPORT API*/
 
 const zipFileUploadCallback = (req, res, data) => {
@@ -2197,6 +2222,12 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
   return await createReadStream(file)
     .pipe(unzipper.Parse())
     .pipe(etl.map(async entry => {
+
+      const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
+      let csvString = "";
+      let asnTitle = "";
+      let dir = "";
+
       if(entry.type === 'File') {
         const content = await entry.buffer();
         entry.path = entry.path.replace(oldFolder, newFolder);
@@ -2204,25 +2235,30 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
         const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
         if(!existsSync(directory))
           mkdirSync(directory, { recursive: true });
-
         if(assignmentType === 'Generic') {
-          const pdfDoc = await PDFDocument.load(content);
-          var fileName = entry.path;
-          //Submission Test (2)/Bob_Johnson_AA223556_This_is_my_assignment.pdf
-          var tempDetails = fileName.substring((fileName.indexOf("/")+1));
+            const pdfDoc = await PDFDocument.load(content);
+            var fileName = entry.path;
+            //Submission Test (2)/Bob_Johnson_AA223556_This_is_my_assignment.pdf
+            var tempDetails = fileName.substring((fileName.indexOf("/") + 1));
 
-          var splitArray = tempDetails.split("_");
+            var splitArray = tempDetails.split("_");
 
-          var studentName = splitArray[0];
-          var studentSurename = splitArray[1];
-          var studentID = splitArray[2];
-          var studentDirectory = studentSurename+", "+studentName+ " ("+studentID+")";
-          mkdirSync(directory + '/' + studentDirectory, {recursive: true});
-          mkdirSync(directory + '/' + studentDirectory + '/' + FEEDBACK_FOLDER, {recursive: true});
-          mkdirSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER, {recursive: true});
-          const pdfBytes = await pdfDoc.save();
-          writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER+"/"+tempDetails, pdfBytes);
-        } else if(assignmentType === 'Assignment' && entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
+            var studentName = splitArray[1];
+            var studentSurename = splitArray[0];
+            var studentID = splitArray[2];
+           // tempDetails = tempDetails.substring((tempDetails.indexOf(studentID))+1,tempDetails.length);
+            var studentDirectory = studentSurename + ", " + studentName + " (" + studentID + ")";
+
+          const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurename.toUpperCase()},${studentName.toUpperCase()},,,\n`;
+          csvString += csvData;
+          dir = directory;
+            mkdirSync(directory + '/' + studentDirectory, {recursive: true});
+            mkdirSync(directory + '/' + studentDirectory + '/' + FEEDBACK_FOLDER, {recursive: true});
+            mkdirSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER, {recursive: true});
+            const pdfBytes = await pdfDoc.save();
+            writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + "/" + tempDetails, pdfBytes);
+          }
+         else if(assignmentType === 'Assignment' && entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
           // await writeFileSync(destination + entry.path.replace('/', sep),  content);
           const pdfDoc = await PDFDocument.load(content);
           const pdfBytes = await pdfDoc.save();
@@ -2230,7 +2266,14 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
         } else {
           await writeFileSync(destination + entry.path.replace('/', sep),  content);
         }
-      } else {
+      }
+      if(assignmentType === 'Generic') {
+        const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
+        let csvFullString = headers +`''\n` + subheaders;
+        csvFullString = csvFullString + csvString;
+        writeFileSync(dir + sep + GRADES_FILE, csvFullString);
+      }
+      else {
         entry.path = entry.path.replace(oldFolder, newFolder);
         const directory = destination + entry.path.replace('/', sep);
         if(!existsSync(directory))

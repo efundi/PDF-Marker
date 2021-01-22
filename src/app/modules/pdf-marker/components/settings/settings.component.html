@@ -28,13 +28,13 @@
   </form>
 
   <form [formGroup]="createFolderForm">
-    <h1><mat-icon>folder</mat-icon>Create Working Folder</h1>
+    <h1><mat-icon>folder</mat-icon> Create Working Folder</h1>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
     <mat-form-field floatLabel="always">
       <mat-label>Folder Name</mat-label>
       <div class="pdf-marker-file-upload">             &nbsp;&nbsp;
-        <input type="text" matInput formControlName="newFolderName" id="pdf-marker-new-folder" placeholder="New Folder">
+        <input type="text" matInput formControlName="workingFolders" id="pdf-marker-new-folder" placeholder="New Folder">
       </div>
     </mat-form-field>
     <div class="pdf-spacer"></div>
@@ -42,6 +42,10 @@
     <div>
       <button type="button" mat-raised-button color="" [disabled]="createFolderForm.invalid" (click)="onSubmitCreateFolder($event)">Create</button>
     </div>
+
+    <mat-form-field style="visibility:hidden">
+      <input  type="text" matInput formControlName="defaultPath" id="pdf-marker-upload-display-hidden" readonly placeholder="Workspace">
+    </mat-form-field>
   </form>
 
 </ng-container>
