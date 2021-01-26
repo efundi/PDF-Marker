@@ -70,12 +70,12 @@ export class AssignmentService {
 
   getAssignmentSettings(assignmentName: string = null): Observable<AssignmentSettingsInfo> {
     if (!assignmentName)
-      assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0] : "");
+        assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0] : "");
 
     const body = {
       location: assignmentName
     };
-
+    console.log("getAssignmentSettings: " + assignmentName);
     return this.http.post<AssignmentSettingsInfo>('/api/assignment/settings/fetch', body);
   }
 
@@ -99,7 +99,14 @@ export class AssignmentService {
   configure(pdfLocation: string, blobData: Blob) {
     const blob = new Blob([blobData], {type: MimeTypesEnum.PDF});
     const fileUrl = URL.createObjectURL(blob);
-    const assignmentName = ((pdfLocation && pdfLocation.split("/").length > 0) ? pdfLocation.split("/")[0] : "");
+    var assignmentName = "";
+    var count = (pdfLocation.match(new RegExp("/", "g")) || []).length;
+    if (count > 3) {
+      var splitArray = pdfLocation.split("/");
+      assignmentName = splitArray[0] + "/" + splitArray[1];
+    }
+    else
+    assignmentName = ((pdfLocation && pdfLocation.split("/").length > 0) ? pdfLocation.split("/")[0] : "");
     this.getAssignmentSettings(assignmentName).subscribe((assignmentSettingsInfo: AssignmentSettingsInfo) => {
       this.setAssignmentSettings(assignmentSettingsInfo);
       this.setSelectedPdfURL(fileUrl, pdfLocation);

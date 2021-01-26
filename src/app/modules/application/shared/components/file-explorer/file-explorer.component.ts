@@ -80,6 +80,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   onSelectedPdf(pdfFileLocation: string) {
     if((this.router.url !== RoutesEnum.ASSIGNMENT_MARKER && this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC) || this.assignmentService.getSelectedPdfLocation() !== pdfFileLocation) {
+      console.log(pdfFileLocation);
       this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
         this.assignmentService.configure(pdfFileLocation, blobData);
       }, error => {

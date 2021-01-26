@@ -931,7 +931,7 @@ const getPdfFile = (req, res) => {
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
     const actualPath = config.defaultPath + sep + loc;
-
+    console.log("Get PDF: " + actualPath);
     return checkAccess(req, res, actualPath, () => {
       const file = createReadStream(actualPath);
       file.pipe(res);
@@ -1129,15 +1129,23 @@ const getMarks = (req, res) => {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
 
     const config = JSON.parse(data.toString());
-    const loc = req.body.location.replace(/\//g, sep);
-    const pathSplit = loc.split(sep);
+    var loc = "";
+    var count = (req.body.location.match(new RegExp("/", "g")) || []).length;
+    if (count > 3) {
+      var splitArray = req.body.location.split("/");
+      loc = splitArray[0] + "/" + splitArray[1];
+    }
+    else
+    loc = req.body.location.replace(/\//g, sep);
 
-    if (pathSplit.length !== 4)
-      return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
+    console.log("Loc: " +loc);
+    //const pathSplit = loc.split(sep);
+    //if (pathSplit.length !== 4)
+    //  return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
 
-    const regEx = /(.*)\((.+)\)/;
-    if (!regEx.test(pathSplit[1]))
-      return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
+    //const regEx = /(.*)\((.+)\)/;
+    //if (!regEx.test(pathSplit[1]))
+    // return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
 
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
 
@@ -1273,7 +1281,6 @@ const getGrades = (req, res) => {
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
-
     const assignmentFolder = config.defaultPath + sep + loc;
 
     return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
