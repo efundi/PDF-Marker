@@ -965,25 +965,36 @@ const savingMarks = (req, res) => {
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
     if (!isJson(data))
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
-
     const config = JSON.parse(data.toString());
+    console.log("Path Recieved: " + req.body.location);
     const loc = req.body.location.replace(/\//g, sep);
+    console.log("loc after path: "+ loc);
     const pathSplit = loc.split(sep);
-    if (pathSplit.length !== 4)
-      return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
+    console.log("split: "+ pathSplit);
+  //  if (pathSplit.length !== 4)
+    //  return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
+    const pathSplitCount =  pathSplit.length;
 
     const regEx = /(.*)\((.+)\)/;
-    if (!regEx.test(pathSplit[1]))
-      return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
-
+    if (pathSplitCount === 4) {
+      if (!regEx.test(pathSplit[1]))
+        return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
+    } else if (pathSplitCount === 5)
+    {
+      if (!regEx.test(pathSplit[2]))
+        return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
+    }
+console.log("loc before studFolder: "+loc);
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
-
+    console.log("studentFolder: "+ studentFolder);
     return checkAccess(req, res, studentFolder, () => {
       return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
         const matches = regEx.exec(pathSplit[1]);
 
         const studentNumber = matches[2] + '';
+        console.log("studentNumber: "+ studentNumber);
         const assignmentFolder = dirname(studentFolder);
+        console.log("assignmentFolder: "+ assignmentFolder);
 
         return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
           return csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE)
