@@ -38,6 +38,7 @@ import {
   rmdirSync,
   lstatSync,
   readdir,
+  appendFileSync,
 } from 'fs';
 import {json2csv, json2csvAsync} from 'json-2-csv';
 import {PageSizes, PDFDocument, PDFPage, rgb} from 'pdf-lib';
@@ -2241,16 +2242,22 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
     .pipe(unzipper.Parse())
     .pipe(etl.map(async entry => {
 
-      const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
-      let csvString = "";
-      let asnTitle = "";
-      let dir = "";
+
+
+        const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
+        let csvString ="";
+        let asnTitle = "";
+        let dir = "";
+        let isSet = true;
 
       if(entry.type === 'File') {
         const content = await entry.buffer();
         entry.path = entry.path.replace(oldFolder, newFolder);
         const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
         const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
+
+
+
         if(!existsSync(directory))
           mkdirSync(directory, { recursive: true });
         if(assignmentType === 'Generic') {
@@ -2268,7 +2275,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
             var studentDirectory = studentSurename + ", " + studentName + " (" + studentID + ")";
 
           const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurename.toUpperCase()},${studentName.toUpperCase()},,,\n`;
-          csvString += csvData;
+          csvString = csvData;
           dir = directory;
             mkdirSync(directory + '/' + studentDirectory, {recursive: true});
             mkdirSync(directory + '/' + studentDirectory + '/' + FEEDBACK_FOLDER, {recursive: true});
@@ -2286,10 +2293,15 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
         }
       }
       if(assignmentType === 'Generic') {
-        const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
-        let csvFullString = headers +`''\n` + subheaders;
-        csvFullString = csvFullString + csvString;
-        writeFileSync(dir + sep + GRADES_FILE, csvFullString);
+        if(!(existsSync(dir + sep + GRADES_FILE))) {
+          const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
+          let csvFullString = headers +`''\n` + subheaders;
+          csvFullString = csvFullString + csvString;
+          await writeFileSync(dir + sep + GRADES_FILE, csvFullString);
+          console.log("create file")
+        }
+        else
+          await appendFileSync(dir + sep + GRADES_FILE, csvString);
       }
       else {
         entry.path = entry.path.replace(oldFolder, newFolder);
