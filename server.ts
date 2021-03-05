@@ -2199,7 +2199,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder) => {
         const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
         if(!existsSync(directory))
           mkdirSync(directory, { recursive: true });
-
+      try {
         if(entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
           // await writeFileSync(destination + entry.path.replace('/', sep),  content);
           const pdfDoc = await PDFDocument.load(content);
@@ -2208,7 +2208,10 @@ const extractZipFile = async (file, destination, newFolder, oldFolder) => {
         } else {
           await writeFileSync(destination + entry.path.replace('/', sep),  content);
         }
-      } else {
+      }
+      catch(exception) {
+       
+      } } else {
         entry.path = entry.path.replace(oldFolder, newFolder);
         const directory = destination + entry.path.replace('/', sep);
         if(!existsSync(directory))
