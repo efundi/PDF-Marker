@@ -9,6 +9,7 @@ import { CreateAssignmentComponent } from './components/create-assignment/create
 import {RubricImportComponent} from "@pdfMarkerModule/components/rubric-import/rubric-import.component";
 import {AssignmentMarkingRubricComponent} from "@pdfMarkerModule/components/assignment-marking-rubric/assignment-marking-rubric.component";
 import {UnsavedChangesGuard} from "@pdfMarkerModule/guards/unsaved-changes.guard";
+import { AssignmentWorkspaceOverviewComponent } from './components/assignment-workspace-overview/assignment-workspace-overview.component';
 
 
 const routes: Routes = [
@@ -18,6 +19,7 @@ const routes: Routes = [
   { path: 'assignment/upload', component: CreateAssignmentComponent },
   { path: 'assignment/upload/:id', component: CreateAssignmentComponent, canDeactivate: [UnsavedChangesGuard] },
   { path: 'assignment/overview', component: AssignmentOverviewComponent },
+  { path: 'assignment/workspaceOverview', component: AssignmentWorkspaceOverviewComponent },
   { path: 'assignment/marking', component: AssignmentMarkingComponent },
   { path: 'assignment/marking/rubric', component: AssignmentMarkingRubricComponent },
   { path: 'assignment/rubric', component: RubricImportComponent },

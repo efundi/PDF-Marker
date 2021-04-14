@@ -26,6 +26,9 @@ export class AssignmentService {
   private selectedPdfBlob: Blob;
   private assignmentSettingsInfo: AssignmentSettingsInfo;
 
+  private selectedWorkspace: object;
+  private selectedWorkspaceSource$: Subject<object> = new Subject<object>();
+
   constructor(private http: HttpClient,
               @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
               @Inject(PLATFORM_ID) private platformId: any,
@@ -144,6 +147,15 @@ export class AssignmentService {
 
   getSelectedAssignment(): object {
     return this.selectedAssignment;
+  }
+
+  setSelectedWorkspace(selectedAssignment: object) {
+    this.selectedWorkspace = selectedAssignment;
+    this.selectedWorkspaceSource$.next(this.selectedAssignment);
+  }
+
+  getSelectedWorkspace(): object {
+    return this.selectedWorkspace;
   }
 
   dataChanged(): Observable<object[]> {
@@ -280,5 +292,11 @@ export class AssignmentService {
       headers,
       responseType: 'blob' as 'json',
     });
+  }
+
+  getWorkspaces(): Observable<any>{
+    const body = {
+    };
+    return this.http.get("/api/assignment/workspaces", body);
   }
 }

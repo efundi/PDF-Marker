@@ -1,0 +1,50 @@
+<ng-container>
+  <pdf-marker-alert></pdf-marker-alert>
+
+  <div class="pdf-marker-assignment-generic-overview-assignment-header">
+    <h1 class="pdf-marker-assignment-overview-assignment-name">Workspace Overview - WorkspaceTitle</h1>
+    <span class="pdf-marker-fill-space"></span>
+
+    <!--   <button [disabled]="!isCreated" mat-button mat-icon-button matTooltip="Manage Submissions" (click)="manageStudents()"><mat-icon [class.pdf-icon-disabled]="!isCreated">person</mat-icon></button>
+      <button [disabled]="!isRubric" mat-button mat-icon-button matTooltip="Manage Rubric" (click)="viewRubric()"><mat-icon [class.pdf-icon-disabled]="!isRubric">apps</mat-icon></button>
+      <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon >archive</mat-icon></button>
+    -->
+    </div>
+
+    <table mat-table [dataSource]="dataSource">
+      <!-- Assignment Column -->
+    <ng-container matColumnDef="assignmentTitle">
+      <th mat-header-cell *matHeaderCellDef> Assignment Title </th>
+      <td mat-cell *matCellDef="let element">
+        <p class="pdf-marker-assignment-overview-assignment">Assignment Title</p>
+      </td>
+    </ng-container>
+
+    <!-- Submission Count Column -->
+    <ng-container matColumnDef="assignment">
+      <th mat-header-cell *matHeaderCellDef> Submission Count </th>
+      <td mat-cell *matCellDef="let element"><span class="pdf-marker-assignment-overview-select-assignment"><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<p>5</p></span></td>
+    </ng-container>
+
+    <!-- Marked Count Column
+    <ng-container matColumnDef="feedback">
+      <th mat-header-cell *matHeaderCellDef> Mark Count </th>
+      <td mat-cell *matCellDef="let element"><span><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<span class="pdf-marker-assignment-overview-edit">{{element.markedCount}}</span><mat-icon class="assignment-edit">create</mat-icon></span></td>
+    </ng-container> -->
+      <!-- iS Rubric Column -->
+      <ng-container matColumnDef="feedback">
+        <th mat-header-cell *matHeaderCellDef> Uses a Rubric </th>
+        <td mat-cell *matCellDef="let element"><span><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<span class="pdf-marker-assignment-overview-edit">No</span><mat-icon class="assignment-edit">create</mat-icon></span></td>
+      </ng-container>
+
+      <!-- Move Folder Column -->
+      <ng-container matColumnDef="feedback">
+        <th mat-header-cell *matHeaderCellDef> Move Assignment </th>
+        <td mat-cell *matCellDef="let element"><span><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<span class="pdf-marker-assignment-overview-edit"><select><option>option</option></select></span><mat-icon class="assignment-edit">create</mat-icon></span></td>
+      </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+  <mat-paginator [length]="assignmentsLength" [pageSize]="pageSize" [pageSizeOptions]="assignmentPageSizeOptions" showFirstLastButtons></mat-paginator>
+</ng-container>

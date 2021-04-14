@@ -33,6 +33,14 @@
       <mat-label>Assignment Name</mat-label>
       <input formControlName="assignmentName" type="text" [readonly]="isAssignmentName" matInput required>
     </mat-form-field>
+    <div class="pdf-spacer"></div>
+    <mat-label class="pdf-marker-form-labels">Workspace Folder:</mat-label>
+    <mat-form-field *ngIf="isFileLoaded && validMime && isValidFormat">
+      <mat-label>Select Workspace</mat-label>
+      <mat-select formControlName="rubric" required="importForm.get('noRubric').value">
+        <mat-option *ngFor="let workspace of workspaces" [value]="workspace.value">{{workspace.value}}</mat-option>
+      </mat-select>
+    </mat-form-field>
     <mat-label class="pdf-marker-form-labels">Rubric</mat-label>
     <div class="pdf-marker-rubric-container">
       <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange($event)">No Rubric</mat-checkbox>

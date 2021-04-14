@@ -49,6 +49,8 @@ export class ImportComponent implements OnInit {
 
   rubrics: IRubricName[];
 
+  workspaces: String[];
+
   private actualFilePath: string;
   assignmentTypeID = "Assignment";
   assignmentTypes = [
@@ -100,6 +102,13 @@ export class ImportComponent implements OnInit {
       this.appService.openSnackBar(false, "Unable to retrieve rubrics");
       this.appService.isLoading$.next(false);
     });
+    this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
+      this.workspaces = workspaces;
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to retrieve Workspaces");
+      this.appService.isLoading$.next(false);
+    });
     this.initForm();
     this.appService.isLoading$.next(false);
   }
@@ -109,6 +118,7 @@ export class ImportComponent implements OnInit {
       assignmentType: [null],
       assignmentZipFileText: [null],
       assignmentName: [null],
+      workspaceFolder:[null],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required]
     });

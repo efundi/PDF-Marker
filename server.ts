@@ -281,9 +281,9 @@ const newFolderPost = (req, res) => {
   mkdirSync(req.body.defaultPath + sep + req.body.workingFolders);
   const configData = readFileSync(CONFIG_DIR + CONFIG_FILE);
   const config = JSON.parse(configData.toString());
-  //console.log(config);
+  console.log(config);
   config["folders"].push(req.body.defaultPath + sep + req.body.workingFolders);
-  //console.log(config);
+  console.log(config);
   return  writeToFile(req, res, CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
 };
 
@@ -1348,6 +1348,39 @@ app.post('/api/assignment/globalSettings/fetch', [
   check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getAssignmentGlobalSettings);
 
+const getWorkspaces = (req, res) => {
+  console.log("1");
+  if (!checkClient(req, res))
+    return res.status(401).send({message: 'Forbidden access to resource!'});
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return res.status(400).json({errors: errors.array()});
+  console.log("2");
+    readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err)
+      return res.status(500).send({message: 'Failed to read configurations!'});
+
+    if (!isJson(data))
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+
+    const config = JSON.parse(data.toString());
+    const folders = config.folders;
+   // const folders = "test";
+  console.log(folders);
+     return access(folders, (err) => {
+      if (err)
+        return res.status(200).send({message: err});
+      else
+        return sendResponseData(req, res, 200, folders);
+    });
+  });
+};
+
+app.post('/api/assignment/workspaces', [
+  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
+], getWorkspaces);
+
+
 const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
   let invalidKeyFound = false;
   for (const key of recievedKeys) {
@@ -2256,11 +2289,10 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
         const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
         const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
 
-
-
         if(!existsSync(directory))
           mkdirSync(directory, { recursive: true });
         if(assignmentType === 'Generic') {
+          try {
             const pdfDoc = await PDFDocument.load(content);
             var fileName = entry.path;
             //Submission Test (2)/Bob_Johnson_AA223556_This_is_my_assignment.pdf
@@ -2271,25 +2303,34 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
             var studentName = splitArray[1];
             var studentSurename = splitArray[0];
             var studentID = splitArray[2];
-           // tempDetails = tempDetails.substring((tempDetails.indexOf(studentID))+1,tempDetails.length);
+            // tempDetails = tempDetails.subentry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf'string((tempDetails.indexOf(studentID))+1,tempDetails.length);
             var studentDirectory = studentSurename + ", " + studentName + " (" + studentID + ")";
 
-          const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurename.toUpperCase()},${studentName.toUpperCase()},,,\n`;
-          csvString = csvData;
-          dir = directory;
+            const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurename.toUpperCase()},${studentName.toUpperCase()},,,\n`;
+            csvString = csvData;
+            dir = directory;
             mkdirSync(directory + '/' + studentDirectory, {recursive: true});
             mkdirSync(directory + '/' + studentDirectory + '/' + FEEDBACK_FOLDER, {recursive: true});
             mkdirSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER, {recursive: true});
             const pdfBytes = await pdfDoc.save();
             writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + "/" + tempDetails, pdfBytes);
+          } catch (exception) {
+            //todo add an exception message here informing the user that there was an issue with zip or a specific pdf.
           }
-         else if(assignmentType === 'Assignment' && entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
+        }
+         else
+          try {
+          if(assignmentType === 'Assignment' && entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
           // await writeFileSync(destination + entry.path.replace('/', sep),  content);
           const pdfDoc = await PDFDocument.load(content);
           const pdfBytes = await pdfDoc.save();
+
           await writeFileSync(destination + entry.path.replace('/', sep),  pdfBytes);
         } else {
           await writeFileSync(destination + entry.path.replace('/', sep),  content);
+        }
+        } catch (exception) {
+          //todo add an exception message here informing the user that there was an issue with zip or a specific pdf.
         }
       }
       if(assignmentType === 'Generic') {

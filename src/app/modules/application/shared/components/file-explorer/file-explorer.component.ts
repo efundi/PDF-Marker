@@ -20,12 +20,15 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   hierarchyModel;
 
   @Input()
+  workspace;
+
+  @Input()
   hierarchyModelKeys;
 
   hierarchyModelKeys$: Observable<any>;
 
   @Input()
-  first: boolean;
+  assignmentRootFolder: boolean;
 
   private subscription: Subscription;
 
@@ -40,12 +43,14 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   isFileSelected: boolean;
 
+  isWorkspaceFolder: boolean;
+
   constructor(private router: Router,
               public assignmentService: AssignmentService,
               private appService: AppService) { }
 
   ngOnInit() {
-    if(this.first) {
+    if(this.assignmentRootFolder) {
       this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfFile => {
         if(this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + "/"))
           this.filePath = this.assignmentService.getSelectedPdfLocation();
@@ -58,14 +63,23 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   }
 
   onAssignment(hierarchyModel, $event) {
-    if(this.first) {
+
+    const workspaceList = JSON.stringify(this.assignmentService.getWorkspaces());
+  console.log("WorkspaceList:  "+workspaceList);
+     if(workspaceList.includes(hierarchyModel)) {
+   // if("Test" === hierarchyModel) {
+      this.appService.isLoading$.next(true);
+      this.assignmentService.setSelectedWorkspace(hierarchyModel);
+      if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
+        this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);
+      $event.stopImmediatePropagation();
+    } else  if(this.assignmentRootFolder) {
       this.appService.isLoading$.next(true);
       this.assignmentService.setSelectedAssignment(hierarchyModel);
       if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW)
         this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
       $event.stopImmediatePropagation();
-    } else {}
-
+    }
   }
 
   scrollToFile() {
@@ -90,8 +104,15 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
     }
   }
 
+  checkIfWorkspace(hierarchyModel) {
+
+  }
+
   ngOnChanges() {
     this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
     this.hierarchyModelKeys$ = of(Object.keys(this.hierarchyModel));
+    this.checkIfWorkspace(this.hierarchyModel);
   }
+
+
 }
