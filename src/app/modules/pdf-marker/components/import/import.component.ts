@@ -57,6 +57,7 @@ export class ImportComponent implements OnInit {
     { 'name' : 'Assignment'},
     { 'name' : 'Generic'},]
   selectedType: string;
+  selectedWorkspace: string;
 
   constructor(private fb: FormBuilder,
               private zipService: ZipService,
@@ -102,13 +103,18 @@ export class ImportComponent implements OnInit {
       this.appService.openSnackBar(false, "Unable to retrieve rubrics");
       this.appService.isLoading$.next(false);
     });
-    this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
-      this.workspaces = workspaces;
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.openSnackBar(false, "Unable to retrieve Workspaces");
-      this.appService.isLoading$.next(false);
-    });
+      this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
+        this.workspaces = workspaces;
+        for(var x = 0; x < this.workspaces.length; x++) {
+          this.workspaces[x] = this.workspaces[x].substr(this.workspaces[x].lastIndexOf("\\")+1, this.workspaces[x].length);
+        }
+        console.log(this.workspaces);
+        this.appService.isLoading$.next(false);
+      }, error => {
+        this.appService.openSnackBar(false, "Unable to retrieve workspaces");
+        this.appService.isLoading$.next(false);
+      });
+
     this.initForm();
     this.appService.isLoading$.next(false);
   }
@@ -249,11 +255,13 @@ export class ImportComponent implements OnInit {
 
     const {
       noRubric,
-      rubric
+      rubric,
+      workspaceFolder
     } = this.importForm.value;
 
     const importData = {
       file: this.actualFilePath,
+      'workspace': workspaceFolder,
       'noRubric': noRubric,
       'rubric': rubric,
       'assignmentType': this.selectedType

@@ -294,9 +294,13 @@ export class AssignmentService {
     });
   }
 
-  getWorkspaces(): Observable<any>{
+  getWorkspaces(): Observable<any> {
     const body = {
     };
-    return this.http.get("/api/assignment/workspaces", body);
+    const headers = new HttpHeaders({
+      'Content-Type': MimeTypesEnum.JSON,
+      'Accept': MimeTypesEnum.JSON
+    });
+    return this.http.post<String[]>("/api/assignment/workspaces", body);
   }
 }

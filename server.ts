@@ -83,8 +83,8 @@ const NOT_PROVIDED_RUBRIC = 'Rubric must be provided!';
 const FORBIDDEN_RESOURCE = 'Forbidden access to resource!';
 const COULD_NOT_CREATE_CONFIG_DIRECTORY = 'Failed to create configuration directory!';
 const NOT_CONFIGURED_CONFIG_DIRECTORY = 'Configure default location to extract files to on the settings page!';
-const EXTRACTED_ZIP = 'Successfully extracted assignment to default folder!';
-const EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC = 'Successfully extracted assignment to default folder! ' +
+const EXTRACTED_ZIP = 'Successfully extracted assignment to selected workspace!';
+const EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC = 'Successfully extracted assignment to selected workspace! ' +
   'But Failed to write to rubrics file!';
 const NOT_PROVIDED_ASSIGNMENT_LOCATION = 'Assignment location not provided!';
 const INVALID_PATH_PROVIDED = 'Invalid path provided!';
@@ -295,7 +295,7 @@ app.post('/api/settings/newFolder', [
 /*IMPORT API*/
 
 const zipFileUploadCallback = (req, res, data) => {
-  const acceptedParams = ['file', 'noRubric', 'rubric', 'assignmentType'];
+  const acceptedParams = ['file', 'workspace', 'noRubric', 'rubric', 'assignmentType'];
   const receivedParams = Object.keys(req.body);
   let isInvalidKey = false;
   let invalidParam: string;
@@ -394,28 +394,9 @@ const zipFileUploadCallback = (req, res, data) => {
           if (foundCount !== 0) {
             newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
 
-            extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
-              return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
-                EXTRACTED_ZIP,
-                null, () => {
-                  if (!isNullOrUndefined(rubricName)) {
-                    rubrics[rubricIndex].inUse = true;
-                    return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
-                      EXTRACTED_ZIP,
-                      EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
-                  }
-                  return sendResponse(req, res, 200, EXTRACTED_ZIP);
-                });
-            }).catch((error) => {
-              if (existsSync(config.defaultPath + sep + newFolder))
-                deleteFolderRecursive(config.defaultPath + sep + newFolder);
-              return sendResponse(req, res, 501, error.message);
-            });
-
-          } else {
-            extractZipFile(req.body.file, config.defaultPath + sep, '', '', req.body.assignmentType)
-              .then(async () => {
-                return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
+            if (req.body.workspace === "Default") {
+              extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
+                return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
                     if (!isNullOrUndefined(rubricName)) {
@@ -427,12 +408,71 @@ const zipFileUploadCallback = (req, res, data) => {
                     return sendResponse(req, res, 200, EXTRACTED_ZIP);
                   });
               }).catch((error) => {
-              if (existsSync(config.defaultPath + sep + oldPath))
-                deleteFolderRecursive(config.defaultPath + sep + oldPath);
-              return sendResponse(req, res, 501, error.message);
-            });
+                if (existsSync(config.defaultPath + sep + newFolder))
+                  deleteFolderRecursive(config.defaultPath + sep + newFolder);
+                return sendResponse(req, res, 501, error.message);
+              });
+            } else {
+              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
+                return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
+                  EXTRACTED_ZIP,
+                  null, () => {
+                    if (!isNullOrUndefined(rubricName)) {
+                      rubrics[rubricIndex].inUse = true;
+                      return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
+                        EXTRACTED_ZIP,
+                        EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
+                    }
+                    return sendResponse(req, res, 200, EXTRACTED_ZIP);
+                  });
+              }).catch((error) => {
+                if (existsSync(config.defaultPath + sep + newFolder))
+                  deleteFolderRecursive(config.defaultPath + sep + newFolder);
+                return sendResponse(req, res, 501, error.message);
+              });
+            }
+          } else {
+            if (req.body.workspace === "Default") {
+              extractZipFile(req.body.file, config.defaultPath + sep, '', '', req.body.assignmentType)
+                .then(async () => {
+                  return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
+                    EXTRACTED_ZIP,
+                    null, () => {
+                      if (!isNullOrUndefined(rubricName)) {
+                        rubrics[rubricIndex].inUse = true;
+                        return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
+                          EXTRACTED_ZIP,
+                          EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
+                      }
+                      return sendResponse(req, res, 200, EXTRACTED_ZIP);
+                    });
+                }).catch((error) => {
+                if (existsSync(config.defaultPath + sep + oldPath))
+                  deleteFolderRecursive(config.defaultPath + sep + oldPath);
+                return sendResponse(req, res, 501, error.message);
+              });
+            } else {
+              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
+                return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
+                  EXTRACTED_ZIP,
+                  null, () => {
+                    if (!isNullOrUndefined(rubricName)) {
+                      rubrics[rubricIndex].inUse = true;
+                      return writeToFile(req, res, CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubrics),
+                        EXTRACTED_ZIP,
+                        EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, null);
+                    }
+                    return sendResponse(req, res, 200, EXTRACTED_ZIP);
+                  });
+              }).catch((error) => {
+                if (existsSync(config.defaultPath + sep + newFolder))
+                  deleteFolderRecursive(config.defaultPath + sep + newFolder);
+                return sendResponse(req, res, 501, error.message);
+              });
+            }
           }
-           } else {
+        }
+            else {
           return sendResponse(req, res, 501, 'Zip Object contains no entries!');
         }
       })
@@ -1349,13 +1389,11 @@ app.post('/api/assignment/globalSettings/fetch', [
 ], getAssignmentGlobalSettings);
 
 const getWorkspaces = (req, res) => {
-  console.log("1");
   if (!checkClient(req, res))
     return res.status(401).send({message: 'Forbidden access to resource!'});
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({errors: errors.array()});
-  console.log("2");
     readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
       return res.status(500).send({message: 'Failed to read configurations!'});
@@ -1363,21 +1401,13 @@ const getWorkspaces = (req, res) => {
     if (!isJson(data))
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
-    const config = JSON.parse(data.toString());
-    const folders = config.folders;
-   // const folders = "test";
-  console.log(folders);
-     return access(folders, (err) => {
-      if (err)
-        return res.status(200).send({message: err});
-      else
+    const folders = JSON.parse(data.toString()).folders;
         return sendResponseData(req, res, 200, folders);
-    });
+
   });
 };
 
 app.post('/api/assignment/workspaces', [
-  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getWorkspaces);
 
 

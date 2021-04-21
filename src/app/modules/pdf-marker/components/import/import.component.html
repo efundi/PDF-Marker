@@ -35,10 +35,11 @@
     </mat-form-field>
     <div class="pdf-spacer"></div>
     <mat-label class="pdf-marker-form-labels">Workspace Folder:</mat-label>
-    <mat-form-field *ngIf="isFileLoaded && validMime && isValidFormat">
+    <mat-form-field>
       <mat-label>Select Workspace</mat-label>
-      <mat-select formControlName="rubric" required="importForm.get('noRubric').value">
-        <mat-option *ngFor="let workspace of workspaces" [value]="workspace.value">{{workspace.value}}</mat-option>
+      <mat-select formControlName="workspaceFolder" >
+        <mat-option selected>Default Workspace</mat-option>
+        <mat-option *ngFor="let workspace of workspaces" [value]="workspace">{{workspace}}</mat-option>
       </mat-select>
     </mat-form-field>
     <mat-label class="pdf-marker-form-labels">Rubric</mat-label>
