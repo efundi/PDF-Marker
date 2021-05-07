@@ -46,6 +46,9 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private assignmentId :string;
 
+  workspaces: String[];
+  selectedWorkspace: string;
+
   // @ts-ignore
   @ViewChild("assignmentName") assignmentName: ElementRef;
 
@@ -83,6 +86,17 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
           }
           this.disableFields(this.createAssignmentForm, fields);
           this.generateStudentDetailsFromModel();
+        });
+        this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
+          this.workspaces = workspaces;
+          for(var x = 0; x < this.workspaces.length; x++) {
+            this.workspaces[x] = this.workspaces[x].substr(this.workspaces[x].lastIndexOf("\\")+1, this.workspaces[x].length);
+          }
+          console.log(this.workspaces);
+          this.appService.isLoading$.next(false);
+        }, error => {
+          this.appService.openSnackBar(false, "Unable to retrieve workspaces");
+          this.appService.isLoading$.next(false);
         });
       } else {
         this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD]);

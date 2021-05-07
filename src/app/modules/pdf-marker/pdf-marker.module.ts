@@ -27,11 +27,12 @@ import {FileSaverModule} from "ngx-filesaver";
 import {AssignmentSettingsService} from "@pdfMarkerModule/services/assingment-settings.service";
 import { AssignmentMarkingRubricComponent } from './components/assignment-marking-rubric/assignment-marking-rubric.component';
 import { AssignmentWorkspaceOverviewComponent } from './components/assignment-workspace-overview/assignment-workspace-overview.component';
+import { GenericCommentsComponent } from './components/generic-comments/generic-comments.component';
 
 
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, AssignmentWorkspaceOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent, CreateFolderComponent, RubricImportComponent, AssignmentMarkingRubricComponent],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, AssignmentWorkspaceOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent, CreateFolderComponent, RubricImportComponent, AssignmentMarkingRubricComponent, GenericCommentsComponent],
   imports: [
     CommonModule,
     SharedModule,

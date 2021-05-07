@@ -1,6 +1,6 @@
 {
   "name": "pdf-marker",
-  "version": "1.0.44-TestFoldersWithGrading",
+  "version": "1.0.48",
   "description": "PDF Marker",
   "homepage": "https://github.com/efundi/PDF-Marker",
   "main": "main.js",
