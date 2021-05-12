@@ -4,7 +4,7 @@ import { MatTableDataSource } from '@angular/material';
 import { AlertService } from '@coreModule/services/alert.service';
 import { AppService } from '@coreModule/services/app.service';
 import { ElectronService } from '@coreModule/services/electron.service';
-import { ICommentName } from '@coreModule/utils/comment.class';
+import { IComment } from '@coreModule/utils/comment.class';
 import { SettingsService } from '@pdfMarkerModule/services/settings.service';
 import { AssignmentService } from '@sharedModule/services/assignment.service';
 
@@ -20,8 +20,8 @@ export class GenericCommentsComponent implements OnInit {
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
   genericCommentsForm: FormGroup;
 
-  comments: ICommentName[];
-  dataSource: MatTableDataSource<ICommentName>;
+  comments: IComment[];
+  dataSource: MatTableDataSource<IComment>;
 
   constructor(private fb: FormBuilder,
               private settingsService: SettingsService,

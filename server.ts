@@ -35,6 +35,7 @@ import {
   unlinkSync,
   writeFile,
   writeFileSync,
+  unlink,
   rmdirSync,
   lstatSync,
   readdir,
@@ -47,6 +48,7 @@ import {IconTypeEnum} from './src/app/modules/pdf-marker/info-objects/icon-type.
 import {IconSvgEnum} from './src/app/modules/pdf-marker/info-objects/icon-svg.enum';
 import {IRubric, IRubricName} from './src/app/modules/application/core/utils/rubric.class';
 import {AssignmentSettingsInfo} from './src/app/modules/pdf-marker/info-objects/assignment-settings.info';
+import {IComment, ICommentDsc} from './src/app/modules/application/core/utils/comment.class';
 
 const zipDir = require('zip-dir');
 const JSZip = require('jszip');
@@ -74,6 +76,7 @@ const SUBMISSION_FOLDER = 'Submission attachment(s)';
 const FEEDBACK_FOLDER = 'Feedback Attachment(s)';
 const CONFIG_DIR = process.env.APPDATA + sep + 'pdf-config' + sep;
 const UPLOADS_DIR = '.' + sep + 'uploads';
+const COMMENTS_FILE ='comments.json';
 
 /*COMMON MESSAGES*/
 const INVALID_RUBRIC_JSON_FILE = 'Rubric file is not a valid JSON file!';
@@ -500,7 +503,31 @@ const uploadFn = (req, res, next) => {
 app.post('/api/import', uploadFn);
 
 /*END IMPORT API*/
+/* Comments API
 
+const writeCommentFile = (req, res, commentData: IComment[]) => {
+  return writeFile(CONFIG_DIR + COMMENTS_FILE, JSON.stringify(commentData), (err) => {
+    if (err)
+      return sendResponse(req, res, 500, COULD_NOT_CREATE_RUBRIC_FILE);
+
+    return getRubricNames(req, res, commentData);
+  });
+};
+
+const getCommentsNames = (req, res, comments: IComment[]) => {
+  const rubricNames: IRubricName[] = [];
+  if (Array.isArray(comments)) {
+    comments.forEach(rubric => {
+      const comment = {commentDesc: , inUse: (comments.inUse) ? comments.inUse : false};
+      rubricNames.push(rubricName);
+    });
+    return sendResponseData(req, res, 200, rubricNames);
+  }
+
+  return writeRubricFile(req, res, []);
+};
+
+*/
 /*RUBRIC IMPORT API*/
 
 const rubricFileUpload = (req, res, err) => {
@@ -2301,6 +2328,9 @@ const isJson = (str) => {
 };
 
 const extractZipFile = async (file, destination, newFolder, oldFolder, assignmentType) => {
+
+  var skippedFirst = 1;
+
   return await createReadStream(file)
     .pipe(unzipper.Parse())
     .pipe(etl.map(async entry => {
@@ -2312,6 +2342,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
         let asnTitle = "";
         let dir = "";
         let isSet = true;
+
 
       if(entry.type === 'File') {
         const content = await entry.buffer();
@@ -2325,7 +2356,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           try {
             const pdfDoc = await PDFDocument.load(content);
             var fileName = entry.path;
-            console.log(fileName);
+            console.log("### - File Name: " +fileName);
             //Submission Test (2)/Bob_Johnson_AA223556_This_is_my_assignment.pdf
             var tempDetails = fileName.substring((fileName.indexOf("/") + 1));
 
@@ -2340,6 +2371,8 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
             const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurename.toUpperCase()},${studentName.toUpperCase()},,,\n`;
             csvString = csvData;
             dir = directory;
+            console.log("####");
+            console.log(directory);
             mkdirSync(directory + '/' + studentDirectory, {recursive: true});
             mkdirSync(directory + '/' + studentDirectory + '/' + FEEDBACK_FOLDER, {recursive: true});
             mkdirSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER, {recursive: true});
@@ -2364,29 +2397,30 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           //todo add an exception message here informing the user that there was an issue with zip or a specific pdf.
         }
       }
-
-        entry.path = entry.path.replace(oldFolder, newFolder);
-      const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
-        if(!existsSync(directory))
-          mkdirSync(directory, { recursive: true });
-        entry.autodrain();
-
       if(assignmentType === 'Generic') {
-        console.log("start creating file");
-        const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
-        if(!(existsSync(directory +  GRADES_FILE))) {
-          const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
-          let csvFullString = headers +`''\n` + subheaders;
-          csvFullString = csvFullString + csvString;
-          console.log(directory + sep + GRADES_FILE);
-          await writeFileSync(directory + GRADES_FILE, csvFullString, { flag: 'w' });
-          console.log("create file");
+          const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
+        console.log("####");
+          console.log(directory);
+          if (!(existsSync(directory + sep + GRADES_FILE))) {
+            const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
+            let csvFullString = headers + `''\n` + subheaders;
+            csvFullString = csvFullString + csvString;
+            //console.log(csvFullString);
+            console.log(directory + sep + GRADES_FILE);
+            await writeFileSync(directory + sep + GRADES_FILE, csvFullString, {flag: 'w'});
+            console.log("create file")
+            if (skippedFirst == 1) {
+              console.log("Skipping... " + skippedFirst);
+              unlinkSync(directory + sep + GRADES_FILE);
+              skippedFirst++;
+            }
+          }
         }
-        else
+         else if (assignmentType = !'Generic') {
           await appendFileSync(dir + sep + GRADES_FILE, csvString);
+        }
       }
-
-    })).promise();
+    )).promise();
 };
 
 

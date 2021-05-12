@@ -8,58 +8,16 @@ export class Comment implements IComment {
 
 export interface IComment {
   commentID?: number;
-  name?: string;
-  //criterias: IRubricCriteria[];
+  commentDsc?: string;
   inUse?: boolean;
 }
 
-export interface ICommentName {
-  name?: string;
+export class ICommentDsc implements IComment{
+  commentDsc?: string;
   inUse?: boolean;
-}
-/**
-export class RubricCriteria implements IRubricCriteria {
-  description: string;
-
-  name: string;
-
-  levels: IRubricCriteriaLevels[];
 
   constructor() {
-    this.description = "";
-    this.name = "";
-    this.levels = [];
-  }
+  this.commentDsc = "";
 }
 
-export interface IRubricCriteria {
-
-  description: string;
-
-  name: string;
-
-  levels: IRubricCriteriaLevels[];
-}
- **/
-
-export class RubricCriteriaLevels implements IRubricCriteriaLevels {
-  score: number;
-
-  description: string;
-
-  label: string;
-
-  constructor() {
-    this.score = 0;
-    this.description = "";
-    this.label = "";
-  }
-}
-
-export interface IRubricCriteriaLevels {
-  score: number;
-
-  description: string;
-
-  label: string;
 }
