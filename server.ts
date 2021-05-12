@@ -394,9 +394,9 @@ const zipFileUploadCallback = (req, res, data) => {
           if (foundCount !== 0) {
             newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
 
-            if (req.body.workspace === "Default") {
-              extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
-                return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
+            if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+              extractZipFile(req.body.file, config.defaultPath, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
+                return writeToFile(req, res, config.defaultPath + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
                     if (!isNullOrUndefined(rubricName)) {
@@ -432,7 +432,7 @@ const zipFileUploadCallback = (req, res, data) => {
               });
             }
           } else {
-            if (req.body.workspace === "Default") {
+            if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
               extractZipFile(req.body.file, config.defaultPath + sep, '', '', req.body.assignmentType)
                 .then(async () => {
                   return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
@@ -2325,6 +2325,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           try {
             const pdfDoc = await PDFDocument.load(content);
             var fileName = entry.path;
+            console.log(fileName);
             //Submission Test (2)/Bob_Johnson_AA223556_This_is_my_assignment.pdf
             var tempDetails = fileName.substring((fileName.indexOf("/") + 1));
 
@@ -2363,24 +2364,28 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           //todo add an exception message here informing the user that there was an issue with zip or a specific pdf.
         }
       }
+
+        entry.path = entry.path.replace(oldFolder, newFolder);
+      const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
+        if(!existsSync(directory))
+          mkdirSync(directory, { recursive: true });
+        entry.autodrain();
+
       if(assignmentType === 'Generic') {
-        if(!(existsSync(dir + sep + GRADES_FILE))) {
+        console.log("start creating file");
+        const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
+        if(!(existsSync(directory +  GRADES_FILE))) {
           const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
           let csvFullString = headers +`''\n` + subheaders;
           csvFullString = csvFullString + csvString;
-          await writeFileSync(dir + sep + GRADES_FILE, csvFullString);
-          console.log("create file")
+          console.log(directory + sep + GRADES_FILE);
+          await writeFileSync(directory + GRADES_FILE, csvFullString, { flag: 'w' });
+          console.log("create file");
         }
         else
           await appendFileSync(dir + sep + GRADES_FILE, csvString);
       }
-      else {
-        entry.path = entry.path.replace(oldFolder, newFolder);
-        const directory = destination + entry.path.replace('/', sep);
-        if(!existsSync(directory))
-          mkdirSync(directory, { recursive: true });
-        entry.autodrain();
-      }
+
     })).promise();
 };
 

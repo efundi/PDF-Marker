@@ -38,7 +38,6 @@
     <mat-form-field>
       <mat-label>Select Workspace</mat-label>
       <mat-select formControlName="workspaceFolder" >
-        <mat-option selected>Default Workspace</mat-option>
         <mat-option *ngFor="let workspace of workspaces" [value]="workspace">{{workspace}}</mat-option>
       </mat-select>
     </mat-form-field>

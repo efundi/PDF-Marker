@@ -105,7 +105,8 @@ export class ImportComponent implements OnInit {
     });
       this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
         this.workspaces = workspaces;
-        for(var x = 0; x < this.workspaces.length; x++) {
+        this.workspaces[0] = "Default Workspace";
+        for(var x = 1; x < this.workspaces.length +1; x++) {
           this.workspaces[x] = this.workspaces[x].substr(this.workspaces[x].lastIndexOf("\\")+1, this.workspaces[x].length);
         }
         console.log(this.workspaces);
@@ -124,7 +125,7 @@ export class ImportComponent implements OnInit {
       assignmentType: [null],
       assignmentZipFileText: [null],
       assignmentName: [null],
-      workspaceFolder:[null],
+      workspaceFolder:[null, Validators.required],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required]
     });
