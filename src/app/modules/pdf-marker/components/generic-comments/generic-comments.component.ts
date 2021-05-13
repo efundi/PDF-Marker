@@ -5,6 +5,8 @@ import { AlertService } from '@coreModule/services/alert.service';
 import { AppService } from '@coreModule/services/app.service';
 import { ElectronService } from '@coreModule/services/electron.service';
 import { IComment } from '@coreModule/utils/comment.class';
+import { CommentService } from '@pdfMarkerModule/services/comment.service';
+import { ImportService } from '@pdfMarkerModule/services/import.service';
 import { SettingsService } from '@pdfMarkerModule/services/settings.service';
 import { AssignmentService } from '@sharedModule/services/assignment.service';
 
@@ -26,6 +28,7 @@ export class GenericCommentsComponent implements OnInit {
   constructor(private fb: FormBuilder,
               private settingsService: SettingsService,
               private appService: AppService,
+              private commentsService: CommentService,
               private alertService: AlertService,
               private electronService: ElectronService,
               private assignmentService: AssignmentService) {
@@ -44,11 +47,35 @@ export class GenericCommentsComponent implements OnInit {
   deleteComment(comment: string) {
   }
 
+  get fc() {
+    return this.genericCommentsForm.controls;
+  }
+
   onSubmit(event) {
     this.alertService.clear();
     if (this.genericCommentsForm.invalid) {
       this.alertService.error('Please fill in the correct details!');
       return;
     }
+
+    const formData: FormData = new FormData();
+    formData.append('comment', this.fc.commentText.value);
+
+    this.appService.isLoading$.next(true);
+    this.commentsService.saveNewComment(formData).subscribe((comments: IComment[]) => {
+      this.populateComments(comments);
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(true, 'Rubric saved');
+     // this.resetPreviousUpload();
+    }, error => {
+      this.appService.openSnackBar(false, 'Unable to save');
+      this.appService.isLoading$.next(false);
+    });
   }
+
+  private populateComments(comments: IComment[]) {
+    this.comments = comments;
+    this.dataSource = new MatTableDataSource<IComment>(this.comments);
+  }
+
 }
