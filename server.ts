@@ -523,7 +523,7 @@ const saveNewComment = (req, res) => {
   return  writeToFile(req, res, CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
 };
 
-app.post('/api/settings/saveComment', [
+app.post('/api/comments/save', [
   check('comment').not().isEmpty().withMessage('comment not provided!'),
 ], saveNewComment);
 

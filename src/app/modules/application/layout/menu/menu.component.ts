@@ -19,7 +19,7 @@ export class MenuComponent implements OnInit {
   readonly menuItems = [
     { id: "settings", title: "App Settings", icon: "build", href: RoutesEnum.ASSIGNMENT_SETTINGS },
     { id: "rubrics",  title: "Rubrics", icon: "apps", href: RoutesEnum.ASSIGNMENT_RUBRICS },
-    { id: "comments",  title: "Generic Comments", icon: "comment_bank", href: RoutesEnum.ASSIGNMENT_GENERIC_COMMENTS }
+    { id: "comments",  title: "Generic Comments", icon: "comment_bank", href: RoutesEnum.ASSIGNMENT_COMMENTS }
   ];
   constructor() { }
 

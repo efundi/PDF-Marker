@@ -27,7 +27,7 @@ import {FileSaverModule} from "ngx-filesaver";
 import {AssignmentSettingsService} from "@pdfMarkerModule/services/assingment-settings.service";
 import { AssignmentMarkingRubricComponent } from './components/assignment-marking-rubric/assignment-marking-rubric.component';
 import { AssignmentWorkspaceOverviewComponent } from './components/assignment-workspace-overview/assignment-workspace-overview.component';
-import { GenericCommentsComponent } from './components/generic-comments/generic-comments.component';
+import { GenericCommentsComponent } from './components/comments/comments.component';
 
 
 

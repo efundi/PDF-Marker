@@ -1,6 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { GenericCommentsComponent } from './generic-comments.component';
+import { GenericCommentsComponent } from './comments.component';
 
 describe('GenericCommentsComponent', () => {
   let component: GenericCommentsComponent;

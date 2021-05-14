@@ -11,9 +11,9 @@ import { SettingsService } from '@pdfMarkerModule/services/settings.service';
 import { AssignmentService } from '@sharedModule/services/assignment.service';
 
 @Component({
-  selector: 'pdf-marker-generic-comments',
-  templateUrl: './generic-comments.component.html',
-  styleUrls: ['./generic-comments.component.scss']
+  selector: 'pdf-marker-comments',
+  templateUrl: './comments.component.html',
+  styleUrls: ['./comments.component.scss']
 })
 export class GenericCommentsComponent implements OnInit {
 
@@ -65,10 +65,10 @@ export class GenericCommentsComponent implements OnInit {
     this.commentsService.saveComments(formData).subscribe((comments: IComment[]) => {
       this.populateComments(comments);
       this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(true, 'Rubric saved');
+      this.appService.openSnackBar(true, 'Comment saved');
      // this.resetPreviousUpload();
     }, error => {
-      this.appService.openSnackBar(false, 'Unable to save');
+      this.appService.openSnackBar(false, 'Unable to sav comment');
       this.appService.isLoading$.next(false);
     });
   }

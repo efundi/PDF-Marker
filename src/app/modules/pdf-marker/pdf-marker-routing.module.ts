@@ -10,6 +10,7 @@ import {RubricImportComponent} from "@pdfMarkerModule/components/rubric-import/r
 import {AssignmentMarkingRubricComponent} from "@pdfMarkerModule/components/assignment-marking-rubric/assignment-marking-rubric.component";
 import {UnsavedChangesGuard} from "@pdfMarkerModule/guards/unsaved-changes.guard";
 import { AssignmentWorkspaceOverviewComponent } from './components/assignment-workspace-overview/assignment-workspace-overview.component';
+import { GenericCommentsComponent } from './components/comments/comments.component';
 
 
 const routes: Routes = [
@@ -23,6 +24,7 @@ const routes: Routes = [
   { path: 'assignment/marking', component: AssignmentMarkingComponent },
   { path: 'assignment/marking/rubric', component: AssignmentMarkingRubricComponent },
   { path: 'assignment/rubric', component: RubricImportComponent },
+  { path: 'assignment/comments', component: GenericCommentsComponent },
   { path: '**', redirectTo: '', pathMatch: 'full'}
 ];
 
