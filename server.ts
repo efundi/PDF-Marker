@@ -503,31 +503,30 @@ const uploadFn = (req, res, next) => {
 app.post('/api/import', uploadFn);
 
 /*END IMPORT API*/
-/* Comments API
+/* Comments API*/
+/* New Folder API */
 
-const writeCommentFile = (req, res, commentData: IComment[]) => {
-  return writeFile(CONFIG_DIR + COMMENTS_FILE, JSON.stringify(commentData), (err) => {
-    if (err)
-      return sendResponse(req, res, 500, COULD_NOT_CREATE_RUBRIC_FILE);
+const saveNewComment = (req, res) => {
+  if (!checkClient(req, res))
+    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
 
-    return getRubricNames(req, res, commentData);
-  });
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return sendResponseData(req, res, 400, {errors: errors.array()});
+
+  mkdirSync(req.body.defaultPath + sep + req.body.workingFolders);
+  const configData = readFileSync(CONFIG_DIR + COMMENTS_FILE);
+  const config = JSON.parse(configData.toString());
+  console.log(config);
+  config["comments"].push(req.body.comment);
+  console.log(config);
+  return  writeToFile(req, res, CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
 };
 
-const getCommentsNames = (req, res, comments: IComment[]) => {
-  const rubricNames: IRubricName[] = [];
-  if (Array.isArray(comments)) {
-    comments.forEach(rubric => {
-      const comment = {commentDesc: , inUse: (comments.inUse) ? comments.inUse : false};
-      rubricNames.push(rubricName);
-    });
-    return sendResponseData(req, res, 200, rubricNames);
-  }
+app.post('/api/settings/saveComment', [
+  check('comment').not().isEmpty().withMessage('comment not provided!'),
+], saveNewComment);
 
-  return writeRubricFile(req, res, []);
-};
-
-*/
 /*RUBRIC IMPORT API*/
 
 const rubricFileUpload = (req, res, err) => {
@@ -2369,7 +2368,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
             var studentDirectory = studentSurename + ", " + studentName + " (" + studentID + ")";
 
             const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurename.toUpperCase()},${studentName.toUpperCase()},,,\n`;
-            csvString = csvData;
+            csvString = csvString + csvData;
             dir = directory;
             console.log("####");
             console.log(directory);
@@ -2404,16 +2403,20 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           if (!(existsSync(directory + sep + GRADES_FILE))) {
             const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
             let csvFullString = headers + `''\n` + subheaders;
-            csvFullString = csvFullString + csvString;
+          //  csvFullString = csvFullString + csvString;
             //console.log(csvFullString);
             console.log(directory + sep + GRADES_FILE);
-            await writeFileSync(directory + sep + GRADES_FILE, csvFullString, {flag: 'w'});
+            await writeFileSync(directory + sep + GRADES_FILE, csvFullString, {flag: 'a'});
+            await writeFileSync(directory + sep + GRADES_FILE, csvString, {flag: 'a'});
             console.log("create file")
             if (skippedFirst == 1) {
               console.log("Skipping... " + skippedFirst);
               unlinkSync(directory + sep + GRADES_FILE);
               skippedFirst++;
             }
+          } else
+          {
+            await writeFileSync(directory + sep + GRADES_FILE, csvString, {flag: 'a'});
           }
         }
          else if (assignmentType = !'Generic') {

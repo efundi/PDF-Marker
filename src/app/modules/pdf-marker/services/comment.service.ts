@@ -8,8 +8,8 @@ import { IComment } from '@coreModule/utils/comment.class';
 })
 export class CommentService {
 
-  saveNewComment(formData: FormData) {
-      throw new Error('Method not implemented.');
+  saveComments(formData: FormData) {
+    return this.http.post<IComment[]>('/api/comments/save', formData);
   }
 
   constructor(private http: HttpClient) { }

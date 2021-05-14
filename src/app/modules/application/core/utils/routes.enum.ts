@@ -8,5 +8,5 @@ export enum RoutesEnum {
   ASSIGNMENT_MARKER= "/marker/assignment/marking",
   ASSIGNMENT_MARKER_RUBRIC= "/marker/assignment/marking/rubric",
   ASSIGNMENT_WORKSPACE_OVERVIEW ="/marker/assignment/workspaceOverview",
-  ASSIGNMENT_GENERIC_COMMENTS ="/marker/assignment/generic-comments",
+  ASSIGNMENT_GENERIC_COMMENTS ="/marker/assignment/generic/comments",
 }

@@ -62,7 +62,7 @@ export class GenericCommentsComponent implements OnInit {
     formData.append('comment', this.fc.commentText.value);
 
     this.appService.isLoading$.next(true);
-    this.commentsService.saveNewComment(formData).subscribe((comments: IComment[]) => {
+    this.commentsService.saveComments(formData).subscribe((comments: IComment[]) => {
       this.populateComments(comments);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Rubric saved');
