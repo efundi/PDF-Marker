@@ -520,7 +520,7 @@ const saveNewComment = (req, res) => {
   console.log(config);
   config["comments"].push(req.body.comment);
   console.log(config);
-  return  writeToFile(req, res, CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
+  return  writeToFile(req, res, CONFIG_DIR + COMMENTS_FILE, JSON.stringify(config));
 };
 
 app.post('/api/comments/save', [

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material';
 import { AlertService } from '@coreModule/services/alert.service';
 import { AppService } from '@coreModule/services/app.service';
@@ -41,7 +41,9 @@ export class GenericCommentsComponent implements OnInit {
   }
 
   private initForm() {
-
+    this.genericCommentsForm = this.fb.group({
+      commentText: [Validators.required],
+    });
   }
 
   deleteComment(comment: string) {
