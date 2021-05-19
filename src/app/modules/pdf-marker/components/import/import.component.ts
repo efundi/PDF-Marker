@@ -101,14 +101,15 @@ export class ImportComponent implements OnInit {
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.openSnackBar(false, "Unable to retrieve rubrics");
-      this.appService.isLoading$.next(false);
     });
+    this.appService.isLoading$.next(false);
       this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
         this.workspaces = workspaces;
         this.workspaces[0] = "Default Workspace";
-        for(var x = 1; x < this.workspaces.length +1; x++) {
+        for(var x = 1; x < this.workspaces.length+1; x++) {
           this.workspaces[x] = this.workspaces[x].substr(this.workspaces[x].lastIndexOf("\\")+1, this.workspaces[x].length);
         }
+
         console.log(this.workspaces);
         this.appService.isLoading$.next(false);
       }, error => {

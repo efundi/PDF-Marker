@@ -381,7 +381,9 @@ const zipFileUploadCallback = (req, res, data) => {
             entry = zipEntry.name;
           }
         });
+        console.log("entry: " +entry);
         const entryPath = entry.split('/');
+        console.log("entryPath: " +entryPath);
         if (entryPath.length > 0) {
           let newFolder;
           const oldPath = entryPath[0];
@@ -393,13 +395,13 @@ const zipFileUploadCallback = (req, res, data) => {
               foundCount++;
           }
 
-          const settings: AssignmentSettingsInfo = {defaultColour: '#6F327A', rubric, isCreated: false};
+          const settings: AssignmentSettingsInfo = {defaultColour: '#6f327a', rubric, isCreated: false};
           if (foundCount !== 0) {
             newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
 
             if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
-              extractZipFile(req.body.file, config.defaultPath, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
-                return writeToFile(req, res, config.defaultPath + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
+              extractZipFile(req.body.file, config.defaultPath + sep, newFolder + sep, oldPath + '/', req.body.assignmentType).then(() => {
+                return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
                     if (!isNullOrUndefined(rubricName)) {
@@ -416,7 +418,7 @@ const zipFileUploadCallback = (req, res, data) => {
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
-              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
+              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder + sep, oldPath + '/', req.body.assignmentType).then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
@@ -434,7 +436,9 @@ const zipFileUploadCallback = (req, res, data) => {
                 return sendResponse(req, res, 501, error.message);
               });
             }
-          } else {
+          }
+    else {
+
             if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
               extractZipFile(req.body.file, config.defaultPath + sep, '', '', req.body.assignmentType)
                 .then(async () => {
@@ -455,8 +459,8 @@ const zipFileUploadCallback = (req, res, data) => {
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
-              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
-                return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
+              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, '', '', req.body.assignmentType).then(() => {
+                return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + oldPath + sep +SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
                     if (!isNullOrUndefined(rubricName)) {
@@ -2345,7 +2349,11 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
 
       if(entry.type === 'File') {
         const content = await entry.buffer();
-        entry.path = entry.path.replace(oldFolder, newFolder);
+       // console.log("### - File Name First : " + entry.path);
+        //console.log("### - Old Folder : " + oldFolder);
+        //console.log("### - New Folder : " + newFolder);
+          entry.path = entry.path.replace(oldFolder, newFolder);
+
         const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
         const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
 
@@ -2378,7 +2386,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
             const pdfBytes = await pdfDoc.save();
             writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + "/" + tempDetails, pdfBytes);
           } catch (exception) {
-            //todo add an exception message here informing the user that there was an issue with zip or a specific pdf.
+           console.log(exception)
           }
         }
          else
@@ -2393,7 +2401,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           await writeFileSync(destination + entry.path.replace('/', sep),  content);
         }
         } catch (exception) {
-          //todo add an exception message here informing the user that there was an issue with zip or a specific pdf.
+            console.log(exception)
         }
       }
       if(assignmentType === 'Generic') {

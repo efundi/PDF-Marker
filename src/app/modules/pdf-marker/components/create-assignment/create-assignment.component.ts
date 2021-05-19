@@ -89,7 +89,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         });
         this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
           this.workspaces = workspaces;
-          for(var x = 0; x < this.workspaces.length; x++) {
+          this.workspaces[0] = "Default Workspace";
+          for(var x = 1; x < this.workspaces.length+1; x++) {
             this.workspaces[x] = this.workspaces[x].substr(this.workspaces[x].lastIndexOf("\\")+1, this.workspaces[x].length);
           }
           console.log(this.workspaces);
