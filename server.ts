@@ -1212,12 +1212,14 @@ const getMarks = (req, res) => {
 
     const config = JSON.parse(data.toString());
     var loc = "";
+    console.log("req.body.location: " +req.body.location);
     var count = (req.body.location.match(new RegExp("/", "g")) || []).length;
-    if (count > 3) {
-      var splitArray = req.body.location.split("/");
-      loc = splitArray[0] + "/" + splitArray[1];
-    }
-    else
+ //   commented this out for workspace path change, does not seem to affect root assignments either...
+    //   if (count > 3) {
+  //    var splitArray = req.body.location.split("/");
+  //    loc = splitArray[0] + "/" + splitArray[1];
+  //  }
+  //  else
     loc = req.body.location.replace(/\//g, sep);
 
     console.log("Loc: " +loc);
@@ -2065,7 +2067,7 @@ const adjustPointsForResults = (coordinate: number, change: number): number => {
 };
 
 const createAssignment = (req, res) => {
-  const acceptedParams = ['assignmentName', 'noRubric', 'rubric', 'studentDetails'];
+  const acceptedParams = ['assignmentName', 'workspaceFolder', 'noRubric', 'rubric', 'studentDetails'];
   const receivedParams = Object.keys(req.body);
   let isInvalidKey = false;
   let invalidParam: string;
@@ -2080,7 +2082,7 @@ const createAssignment = (req, res) => {
           break;
         }
       }
-
+// if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
       if (isInvalidKey)
         return sendResponse(req, res, 400, `Invalid parameter ${invalidParam} found in request`);
 
@@ -2177,22 +2179,44 @@ const createAssignment = (req, res) => {
           const csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
           csvString += csvData;
 
-          mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
-          mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
-
-          const content = readFileSync(file.path);
-          const pdfDoc = await PDFDocument.load(content);
-          const pdfBytes = await pdfDoc.save();
-          await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
-          count++;
+          if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+            mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
+            mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
+            const content = readFileSync(file.path);
+            const pdfDoc = await PDFDocument.load(content);
+            const pdfBytes = await pdfDoc.save();
+            await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
+            count++;
+          }
+          else {
+            mkdirSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + feedbackFolder, {recursive: true});
+            mkdirSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + submissionFolder, {recursive: true});
+            const content = readFileSync(file.path);
+            const pdfDoc = await PDFDocument.load(content);
+            const pdfBytes = await pdfDoc.save();
+            await writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
+            count++;
+          }
         }
 
-        writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
-        writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
-        const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
-        files.sort((a, b) => (a > b) ? 1 : -1);
-        const folderModel = hierarchyModel(files, config.defaultPath);
-        return sendResponseData(req, res, 200, folderModel);
+        if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+          writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
+          writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
+          const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
+          files.sort((a, b) => (a > b) ? 1 : -1);
+          const folderModel = hierarchyModel(files, config.defaultPath);
+          return sendResponseData(req, res, 200, folderModel);
+        }
+        else {
+          writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + GRADES_FILE, csvString);
+          writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
+          const files = glob.sync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + '/**');
+          files.sort((a, b) => (a > b) ? 1 : -1);
+          const folderModel = hierarchyModel(files, config.defaultPath + sep + req.body.workspace);
+          return sendResponseData(req, res, 200, folderModel);
+        }
+
+
       } catch (e) {
         return sendResponse(req, res, 400, e.message);
       }

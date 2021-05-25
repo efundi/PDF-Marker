@@ -87,18 +87,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
           this.disableFields(this.createAssignmentForm, fields);
           this.generateStudentDetailsFromModel();
         });
-        this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
-          this.workspaces = workspaces;
-          this.workspaces[0] = "Default Workspace";
-          for(var x = 1; x < this.workspaces.length+1; x++) {
-            this.workspaces[x] = this.workspaces[x].substr(this.workspaces[x].lastIndexOf("\\")+1, this.workspaces[x].length);
-          }
-          console.log(this.workspaces);
-          this.appService.isLoading$.next(false);
-        }, error => {
-          this.appService.openSnackBar(false, "Unable to retrieve workspaces");
-          this.appService.isLoading$.next(false);
-        });
       } else {
         this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD]);
       }
@@ -109,6 +97,18 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.openSnackBar(false, "Unable to retrieve rubrics");
+      this.appService.isLoading$.next(false);
+    });
+
+    this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
+      this.workspaces = workspaces;
+      this.workspaces[0] = "Default Workspace";
+      for(var x = 1; x < this.workspaces.length+1; x++) {
+        this.workspaces[x] = this.workspaces[x].substr(this.workspaces[x].lastIndexOf("\\")+1, this.workspaces[x].length);
+      }
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to retrieve workspaces");
       this.appService.isLoading$.next(false);
     });
 
@@ -166,6 +166,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       assignmentName: [null, [Validators.required, Validators.maxLength(50)]],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required],
+      workspaceFolder:[null, Validators.required],
       studentRow: this.fb.array([])
     });
 
@@ -428,11 +429,13 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
     const {
       assignmentName,
+      workspaceFolder,
       noRubric,
       rubric
     } = this.createAssignmentForm.value;
 
     formData.append('assignmentName', assignmentName.trim());
+    formData.append( 'workspace', workspaceFolder);
     formData.append('noRubric', noRubric);
     formData.append('rubric', rubric);
     this.performCreate(formData);

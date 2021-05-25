@@ -45,6 +45,8 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   isWorkspaceFolder: boolean;
 
+  workspaceList: String[];
+
   constructor(private router: Router,
               public assignmentService: AssignmentService,
               private appService: AppService) { }
@@ -64,16 +66,18 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   onAssignment(hierarchyModel, $event) {
 
-    const workspaceList = JSON.stringify(this.assignmentService.getWorkspaces());
-  console.log("WorkspaceList:  "+workspaceList);
-     if(workspaceList.includes(hierarchyModel)) {
-   // if("Test" === hierarchyModel) {
+    this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
+      this.workspaceList = workspaces;
+    });
+    console.log("WorkspaceList Pre");
+    console.log("WorkspaceList:  " + this.workspaceList);
+    if (this.workspaceList.includes(hierarchyModel)) {
       this.appService.isLoading$.next(true);
       this.assignmentService.setSelectedWorkspace(hierarchyModel);
       if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
         this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);
       $event.stopImmediatePropagation();
-    } else  if(this.assignmentRootFolder) {
+    } else if (this.assignmentRootFolder) {
       this.appService.isLoading$.next(true);
       this.assignmentService.setSelectedAssignment(hierarchyModel);
       if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW)
@@ -81,6 +85,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
       $event.stopImmediatePropagation();
     }
   }
+
 
   scrollToFile() {
     this.scrollToElement.scrollIntoView({ block: 'start', behavior: 'smooth'});
