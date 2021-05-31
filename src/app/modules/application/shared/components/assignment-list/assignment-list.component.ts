@@ -22,7 +22,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
 
     this.subscription = this.assignmentService.dataChanged().subscribe(assignments => {
       this.assignments = assignments;
-    })
+    });
 
 }
 

@@ -126,18 +126,25 @@ export class AssignmentService {
 
   update(assignments: object[]) {
     const assignmentsHierarchy = [];
+    const workspacesHierarchy = [];
     assignments.forEach(folderOrFile => {
       let folderOrFileKeys = Object.keys(folderOrFile);
-      if(folderOrFileKeys.length > 0) {
+      if (folderOrFileKeys.length > 0) {
         let assignmentName: string = folderOrFileKeys[0];
-        if(assignmentName) {
-          if (this.zipService.isValidAssignmentObject(folderOrFile[assignmentName]))
+        if (assignmentName) {
+          if (this.zipService.isValidAssignmentObject(folderOrFile[assignmentName])) {
             assignmentsHierarchy.push(folderOrFile);
+          } else {
+            // workspace folder??
+            assignmentsHierarchy.push(folderOrFile);
+
+          }
         }
       }
     });
     this.assignments = assignmentsHierarchy;
     this.assignmentListSource$.next(this.assignments);
+    // this.assignmentListSource$.next(this.assignments);
   }
 
   setSelectedAssignment(selectedAssignment: object) {

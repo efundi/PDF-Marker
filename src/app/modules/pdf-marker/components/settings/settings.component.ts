@@ -65,8 +65,8 @@ export class SettingsComponent implements OnInit {
 
   onSubmit(event) {
     this.alertService.clear();
-    if(this.settingsForm.invalid) {
-      this.alertService.error("Please fill in the correct details!");
+    if (this.settingsForm.invalid) {
+      this.alertService.error('Please fill in the correct details!');
       return;
     }
     this.settingsForm.controls.defaultPath.setValue(this.removeTrailingSlashes(this.settingsForm.controls.defaultPath.value));
@@ -86,7 +86,7 @@ export class SettingsComponent implements OnInit {
   onSubmitCreateFolder(event) {
     this.alertService.clear();
     if (this.createFolderForm.invalid) {
-      this.alertService.error("Please fill in the correct details!");
+      this.alertService.error('Please fill in the correct details!');
       return;
     }
     // Call Service to handle rest calls... also use interceptors
