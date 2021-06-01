@@ -4,8 +4,6 @@
 
     <li *ngIf="hierarchyModel[object].path && !hierarchyModel[object].isPdf"><span class="file-name file-name-selected-hover">
       <mat-icon class="file">insert_drive_file</mat-icon><span class="file-name-text">{{ object }}</span></span></li>
-<!--    <li *ngIf="hierarchyModel[object].path && !hierarchyModel[object].isPdf"><span class="file-name file-name-selected-hover">-->
-<!--      <mat-icon class="file">insert_drive_file</mat-icon><span class="file-name-text">{{ object }}</span></span></li>-->
 
     <li #element *ngIf="!hierarchyModel[object].path" [class.assignmentRootFolder-li]="assignmentRootFolder">
       <mat-accordion>
