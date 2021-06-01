@@ -76,7 +76,7 @@ const SUBMISSION_FOLDER = 'Submission attachment(s)';
 const FEEDBACK_FOLDER = 'Feedback Attachment(s)';
 const CONFIG_DIR = process.env.APPDATA + sep + 'pdf-config' + sep;
 const UPLOADS_DIR = '.' + sep + 'uploads';
-const COMMENTS_FILE ='comments.json';
+const COMMENTS_FILE = 'comments.json';
 
 /*COMMON MESSAGES*/
 const INVALID_RUBRIC_JSON_FILE = 'Rubric file is not a valid JSON file!';
@@ -285,9 +285,12 @@ const newFolderPost = (req, res) => {
   const configData = readFileSync(CONFIG_DIR + CONFIG_FILE);
   const config = JSON.parse(configData.toString());
   console.log(config);
-  config["folders"].push(req.body.defaultPath + sep + req.body.workingFolders);
+  if (isNullOrUndefined(config.folders)) {
+    config.folders = [];
+  }
+  config.folders.push(req.body.defaultPath + sep + req.body.workingFolders);
   console.log(config);
-  return  writeToFile(req, res, CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
+  return writeToFile(req, res, CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
 };
 
 app.post('/api/settings/newFolder', [
@@ -381,9 +384,9 @@ const zipFileUploadCallback = (req, res, data) => {
             entry = zipEntry.name;
           }
         });
-        console.log("entry: " +entry);
+        console.log("entry: " + entry);
         const entryPath = entry.split('/');
-        console.log("entryPath: " +entryPath);
+        console.log("entryPath: " + entryPath);
         if (entryPath.length > 0) {
           let newFolder;
           const oldPath = entryPath[0];
@@ -436,8 +439,7 @@ const zipFileUploadCallback = (req, res, data) => {
                 return sendResponse(req, res, 501, error.message);
               });
             }
-          }
-    else {
+          } else {
 
             if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
               extractZipFile(req.body.file, config.defaultPath + sep, '', '', req.body.assignmentType)
@@ -460,7 +462,7 @@ const zipFileUploadCallback = (req, res, data) => {
               });
             } else {
               extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, '', '', req.body.assignmentType).then(() => {
-                return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + oldPath + sep +SETTING_FILE, JSON.stringify(settings),
+                return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
                     if (!isNullOrUndefined(rubricName)) {
@@ -478,8 +480,7 @@ const zipFileUploadCallback = (req, res, data) => {
               });
             }
           }
-        }
-            else {
+        } else {
           return sendResponse(req, res, 501, 'Zip Object contains no entries!');
         }
       })
@@ -522,9 +523,13 @@ const saveNewComment = (req, res) => {
   const configData = readFileSync(CONFIG_DIR + COMMENTS_FILE);
   const config = JSON.parse(configData.toString());
   console.log(config);
-  config["comments"].push(req.body.comment);
+
+  if (isNullOrUndefined(config.comments)) {
+    config.comments = [];
+  }
+  config.comments.push(req.body.comment);
   console.log(config);
-  return  writeToFile(req, res, CONFIG_DIR + COMMENTS_FILE, JSON.stringify(config));
+  return writeToFile(req, res, CONFIG_DIR + COMMENTS_FILE, JSON.stringify(config));
 };
 
 app.post('/api/comments/save', [
@@ -908,7 +913,7 @@ const assignmentRubricUpdateFn = (req, res) => {
                 JSON.stringify(assignmentSettingsInfo), null, null, () => {
 
                   return checkAccess(req, res, config.defaultPath + sep + assignmentName + sep + GRADES_FILE, () => {
-                    return csvtojson({ noheader: true, trim: false }).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
+                    return csvtojson({noheader: true, trim: false}).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
                       .then((gradesJSON) => {
                         let changed = false;
                         let assignmentHeader;
@@ -924,7 +929,7 @@ const assignmentRubricUpdateFn = (req, res) => {
                         }
 
                         if (changed) {
-                          return json2csv(gradesJSON,  (err, csv) => {
+                          return json2csv(gradesJSON, (err, csv) => {
                             if (err)
                               return sendResponse(req, res, 400, 'Failed to convert json to csv!');
 
@@ -1039,36 +1044,35 @@ const savingMarks = (req, res) => {
     const config = JSON.parse(data.toString());
     console.log("Path Recieved: " + req.body.location);
     const loc = req.body.location.replace(/\//g, sep);
-    console.log("loc after path: "+ loc);
+    console.log("loc after path: " + loc);
     const pathSplit = loc.split(sep);
-    console.log("split: "+ pathSplit);
-  //  if (pathSplit.length !== 4)
+    console.log("split: " + pathSplit);
+    //  if (pathSplit.length !== 4)
     //  return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
-    const pathSplitCount =  pathSplit.length;
+    const pathSplitCount = pathSplit.length;
 
     const regEx = /(.*)\((.+)\)/;
     if (pathSplitCount === 4) {
       if (!regEx.test(pathSplit[1]))
         return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
-    } else if (pathSplitCount === 5)
-    {
+    } else if (pathSplitCount === 5) {
       if (!regEx.test(pathSplit[2]))
         return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
     }
-console.log("loc before studFolder: "+loc);
+    console.log("loc before studFolder: " + loc);
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
-    console.log("studentFolder: "+ studentFolder);
+    console.log("studentFolder: " + studentFolder);
     return checkAccess(req, res, studentFolder, () => {
       return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
         const matches = regEx.exec(pathSplit[1]);
 
         const studentNumber = matches[2] + '';
-        console.log("studentNumber: "+ studentNumber);
+        console.log("studentNumber: " + studentNumber);
         const assignmentFolder = dirname(studentFolder);
-        console.log("assignmentFolder: "+ assignmentFolder);
+        console.log("assignmentFolder: " + assignmentFolder);
 
         return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
-          return csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE)
+          return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
             .then((gradesJSON) => {
               let changed = false;
               let assignmentHeader;
@@ -1159,7 +1163,7 @@ const savingRubricMarks = (req, res) => {
 
           const studentNumber = matches[2];
           return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
-            return csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE)
+            return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
               .then((gradesJSON) => {
                 let changed = false;
                 let assignmentHeader;
@@ -1212,17 +1216,17 @@ const getMarks = (req, res) => {
 
     const config = JSON.parse(data.toString());
     var loc = "";
-    console.log("req.body.location: " +req.body.location);
+    console.log("req.body.location: " + req.body.location);
     var count = (req.body.location.match(new RegExp("/", "g")) || []).length;
- //   commented this out for workspace path change, does not seem to affect root assignments either...
+    //   commented this out for workspace path change, does not seem to affect root assignments either...
     //   if (count > 3) {
-  //    var splitArray = req.body.location.split("/");
-  //    loc = splitArray[0] + "/" + splitArray[1];
-  //  }
-  //  else
+    //    var splitArray = req.body.location.split("/");
+    //    loc = splitArray[0] + "/" + splitArray[1];
+    //  }
+    //  else
     loc = req.body.location.replace(/\//g, sep);
 
-    console.log("Loc: " +loc);
+    console.log("Loc: " + loc);
     //const pathSplit = loc.split(sep);
     //if (pathSplit.length !== 4)
     //  return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
@@ -1368,7 +1372,7 @@ const getGrades = (req, res) => {
     const assignmentFolder = config.defaultPath + sep + loc;
 
     return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
-      return csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE)
+      return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
         .then((gradesJSON) => {
           return sendResponseData(req, res, 200, gradesJSON);
         })
@@ -1426,7 +1430,7 @@ const getWorkspaces = (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({errors: errors.array()});
-    readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)
       return res.status(500).send({message: 'Failed to read configurations!'});
 
@@ -1434,13 +1438,12 @@ const getWorkspaces = (req, res) => {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
 
     const folders = JSON.parse(data.toString()).folders;
-        return sendResponseData(req, res, 200, folders);
+    return sendResponseData(req, res, 200, folders);
 
   });
 };
 
-app.post('/api/assignment/workspaces', [
-], getWorkspaces);
+app.post('/api/assignment/workspaces', [], getWorkspaces);
 
 
 const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
@@ -1484,7 +1487,7 @@ const finalizeAssignment = async (req, res) => {
     const loc = req.body.location.replace(/\//g, sep);
     const assignmentFolder = config.defaultPath + sep + loc;
     const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_BASENAME');
-    const gradesJSON = await csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE);
+    const gradesJSON = await csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE);
     const files = glob.sync(assignmentFolder + sep + '/*');
 
     const start = async () => {
@@ -1610,7 +1613,7 @@ const finalizeAssignmentRubric = async (req, res) => {
     const loc = req.body.location.replace(/\//g, sep);
     const assignmentFolder = config.defaultPath + sep + loc;
     const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_BASENAME');
-    const gradesJSON = await csvtojson({ noheader: true, trim: false }).fromFile(assignmentFolder + sep + GRADES_FILE);
+    const gradesJSON = await csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE);
     const files = glob.sync(assignmentFolder + sep + '/*');
     const assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
     if (!isJson(assignmentSettingsBuffer))
@@ -1737,7 +1740,7 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
   const borderColor = {red: 0.21, green: 0.21, blue: 0.21};
   const rubricCriteriaLevelBackground = {red: 1.0, green: 1.0, blue: 1.0};
   const rubricCriteriaLevelBackgroundSelected = {red: 0.93, green: 0.93, blue: 0.93};
-  let criteriaColors =  {red: 1.0, green: 1.0, blue: 1.0};
+  let criteriaColors = {red: 1.0, green: 1.0, blue: 1.0};
   let maxScore = 0;
   rubric.criterias.forEach((value, index) => {
     let curHighest = -1;
@@ -1763,7 +1766,15 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
   rubric.criterias.forEach((value, criteriaIndex) => {
     criteriaCount++;
     yPosition = adjustPointsForResults(yPosition, 130);
-    resultsPage.drawRectangle({x: xPosition, y: yPosition, width: 130, height: 130, borderWidth: 1, color: rgb(rubricCriteriaLevelBackground.red, rubricCriteriaLevelBackground.green, rubricCriteriaLevelBackground.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
+    resultsPage.drawRectangle({
+      x: xPosition,
+      y: yPosition,
+      width: 130,
+      height: 130,
+      borderWidth: 1,
+      color: rgb(rubricCriteriaLevelBackground.red, rubricCriteriaLevelBackground.green, rubricCriteriaLevelBackground.blue),
+      borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),
+    });
 
     resultsPage.drawText(rubric.criterias[criteriaIndex].name, {x: (xPosition + 3), y: (yPosition + 110), size: rubricTextSize});
     let critSelected = marks[criteriaIndex];
@@ -1790,16 +1801,28 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
 
     rubric.criterias[criteriaIndex].levels.forEach((level, levelIndex) => {
       // check selected here against marks.
-      if ( critSelected === levelIndex) {
-        criteriaColors   = rubricCriteriaLevelBackgroundSelected;
+      if (critSelected === levelIndex) {
+        criteriaColors = rubricCriteriaLevelBackgroundSelected;
         critSelected = -1;
       } else {
-        criteriaColors =  rubricCriteriaLevelBackground;
+        criteriaColors = rubricCriteriaLevelBackground;
       }
 
       criteriaLevelX = criteriaLevelX + 130;
-      resultsPage.drawRectangle({x: criteriaLevelX, y: criteriaLevelY, width: 130, height: 130, borderWidth: 1, color: rgb(criteriaColors.red, criteriaColors.green, criteriaColors.blue), borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),});
-      resultsPage.drawText(level.label + ' - Marks: ' + level.score, {x: (criteriaLevelX + 3), y: (criteriaLevelY + 120), size: rubricTextSize});
+      resultsPage.drawRectangle({
+        x: criteriaLevelX,
+        y: criteriaLevelY,
+        width: 130,
+        height: 130,
+        borderWidth: 1,
+        color: rgb(criteriaColors.red, criteriaColors.green, criteriaColors.blue),
+        borderColor: rgb(borderColor.red, borderColor.green, borderColor.blue),
+      });
+      resultsPage.drawText(level.label + ' - Marks: ' + level.score, {
+        x: (criteriaLevelX + 3),
+        y: (criteriaLevelY + 120),
+        size: rubricTextSize
+      });
 
       const splitDesc = (level.description.replace('\n', '').split(' '));
       // let splitDesc = (level.description.replace('\n', '').split(''));
@@ -1841,7 +1864,7 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
     });
   });
   // check for max pages. Maybe use dimnesnsions rather?
-  if ((criteriaCount === 4) &&  (rubric.criterias.length > criteriaCount)) {
+  if ((criteriaCount === 4) && (rubric.criterias.length > criteriaCount)) {
     pdfDoc.save();
     resultsPage = pdfDoc.addPage([841.89, 595.28]);
     yPosition = resultsPage.getHeight() - 15;
@@ -1857,7 +1880,7 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
 const sendResponse = (req, res, statusCode: number, message: string) => {
   deleteUploadedFile(req);
   deleteMultipleFiles(req);
-  return res.status(statusCode).send({ message });
+  return res.status(statusCode).send({message});
 };
 
 const sendResponseData = (req, res, statusCode: number, data: any) => {
@@ -1991,7 +2014,8 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
       x: xPosition,
       y: 775,
       color: rgb(borderColor.red, borderColor.green, borderColor.blue),
-      size: textSize});
+      size: textSize
+    });
   y = adjustPointsForResults(y, 15);
 
   for (let i = 0; i < sectionMarks.length; i++) {
@@ -2034,7 +2058,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     y = adjustPointsForResults(y, 15);
 
     for (let i = 0; i < commentPointers.length; i++) {
-      const feedback = wrap(commentPointers[i], { width: 80 });
+      const feedback = wrap(commentPointers[i], {width: 80});
       const splitFeedback = feedback.split('\n');
       if (splitFeedback.length > 0) {
         for (let j = 0; j < splitFeedback.length; j++) {
@@ -2071,7 +2095,7 @@ const createAssignment = (req, res) => {
   const receivedParams = Object.keys(req.body);
   let isInvalidKey = false;
   let invalidParam: string;
-  uploadFiles(req, res, async function (err) {
+  uploadFiles(req, res, async function(err) {
     if (err) {
       return sendResponse(req, res, 400, 'Error uploading PDF files!');
     } else {
@@ -2185,16 +2209,15 @@ const createAssignment = (req, res) => {
             const content = readFileSync(file.path);
             const pdfDoc = await PDFDocument.load(content);
             const pdfBytes = await pdfDoc.save();
-            await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
+            await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname, pdfBytes);
             count++;
-          }
-          else {
+          } else {
             mkdirSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + feedbackFolder, {recursive: true});
             mkdirSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + submissionFolder, {recursive: true});
             const content = readFileSync(file.path);
             const pdfDoc = await PDFDocument.load(content);
             const pdfBytes = await pdfDoc.save();
-            await writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
+            await writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + submissionFolder + sep + file.originalname, pdfBytes);
             count++;
           }
         }
@@ -2206,8 +2229,7 @@ const createAssignment = (req, res) => {
           files.sort((a, b) => (a > b) ? 1 : -1);
           const folderModel = hierarchyModel(files, config.defaultPath);
           return sendResponseData(req, res, 200, folderModel);
-        }
-        else {
+        } else {
           writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + GRADES_FILE, csvString);
           writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
           const files = glob.sync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + '/**');
@@ -2232,7 +2254,7 @@ const updateAssignment = (req, res) => {
   const receivedParams = Object.keys(req.body);
   let isInvalidKey = false;
   let invalidParam: string;
-  uploadFiles(req, res, async function (err) {
+  uploadFiles(req, res, async function(err) {
     if (err) {
       return sendResponse(req, res, 400, 'Error uploading PDF files!');
     } else {
@@ -2279,7 +2301,10 @@ const updateAssignment = (req, res) => {
         if (studentDetails.length !== req.files.length)
           return sendResponse(req, res, 400, `Student details is not equal to number of files sent!`);
 
-        const grades = await csvtojson({ noheader: true, trim: false }).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE);
+        const grades = await csvtojson({
+          noheader: true,
+          trim: false
+        }).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE);
 
         let count = 0;
         const headers = `'${assignmentName}','SCORE_GRADE_TYPE'\n`;
@@ -2311,7 +2336,7 @@ const updateAssignment = (req, res) => {
             const content = readFileSync(file.path);
             const pdfDoc = await PDFDocument.load(content);
             const pdfBytes = await pdfDoc.save();
-            await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname,  pdfBytes);
+            await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname, pdfBytes);
             // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
             csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
           }
@@ -2363,95 +2388,91 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
     .pipe(etl.map(async entry => {
 
 
-
         const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
-        let csvString ="";
+        let csvString = "";
         let asnTitle = "";
         let dir = "";
         let isSet = true;
 
 
-      if(entry.type === 'File') {
-        const content = await entry.buffer();
-       // console.log("### - File Name First : " + entry.path);
-        //console.log("### - Old Folder : " + oldFolder);
-        //console.log("### - New Folder : " + newFolder);
+        if (entry.type === 'File') {
+          const content = await entry.buffer();
+          // console.log("### - File Name First : " + entry.path);
+          //console.log("### - Old Folder : " + oldFolder);
+          //console.log("### - New Folder : " + newFolder);
           entry.path = entry.path.replace(oldFolder, newFolder);
 
-        const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
-        const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
-
-        if(!existsSync(directory))
-          mkdirSync(directory, { recursive: true });
-        if(assignmentType === 'Generic') {
-          try {
-            const pdfDoc = await PDFDocument.load(content);
-            var fileName = entry.path;
-            console.log("### - File Name: " +fileName);
-            //Submission Test (2)/Bob_Johnson_AA223556_This_is_my_assignment.pdf
-            var tempDetails = fileName.substring((fileName.indexOf("/") + 1));
-
-            var splitArray = tempDetails.split("_");
-
-            var studentName = splitArray[1];
-            var studentSurename = splitArray[0];
-            var studentID = splitArray[2];
-            // tempDetails = tempDetails.subentry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf'string((tempDetails.indexOf(studentID))+1,tempDetails.length);
-            var studentDirectory = studentSurename + ", " + studentName + " (" + studentID + ")";
-
-            const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurename.toUpperCase()},${studentName.toUpperCase()},,,\n`;
-            csvString = csvString + csvData;
-            dir = directory;
-            console.log("####");
-            console.log(directory);
-            mkdirSync(directory + '/' + studentDirectory, {recursive: true});
-            mkdirSync(directory + '/' + studentDirectory + '/' + FEEDBACK_FOLDER, {recursive: true});
-            mkdirSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER, {recursive: true});
-            const pdfBytes = await pdfDoc.save();
-            writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + "/" + tempDetails, pdfBytes);
-          } catch (exception) {
-           console.log(exception)
-          }
-        }
-         else
-          try {
-          if(assignmentType === 'Assignment' && entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
-          // await writeFileSync(destination + entry.path.replace('/', sep),  content);
-          const pdfDoc = await PDFDocument.load(content);
-          const pdfBytes = await pdfDoc.save();
-
-          await writeFileSync(destination + entry.path.replace('/', sep),  pdfBytes);
-        } else {
-          await writeFileSync(destination + entry.path.replace('/', sep),  content);
-        }
-        } catch (exception) {
-            console.log(exception)
-        }
-      }
-      if(assignmentType === 'Generic') {
           const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
-        console.log("####");
+          const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
+
+          if (!existsSync(directory))
+            mkdirSync(directory, {recursive: true});
+          if (assignmentType === 'Generic') {
+            try {
+              const pdfDoc = await PDFDocument.load(content);
+              var fileName = entry.path;
+              console.log("### - File Name: " + fileName);
+              //Submission Test (2)/Bob_Johnson_AA223556_This_is_my_assignment.pdf
+              var tempDetails = fileName.substring((fileName.indexOf("/") + 1));
+
+              var splitArray = tempDetails.split("_");
+
+              var studentName = splitArray[1];
+              var studentSurename = splitArray[0];
+              var studentID = splitArray[2];
+              // tempDetails = tempDetails.subentry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf'string((tempDetails.indexOf(studentID))+1,tempDetails.length);
+              var studentDirectory = studentSurename + ", " + studentName + " (" + studentID + ")";
+
+              const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurename.toUpperCase()},${studentName.toUpperCase()},,,\n`;
+              csvString = csvString + csvData;
+              dir = directory;
+              console.log("####");
+              console.log(directory);
+              mkdirSync(directory + '/' + studentDirectory, {recursive: true});
+              mkdirSync(directory + '/' + studentDirectory + '/' + FEEDBACK_FOLDER, {recursive: true});
+              mkdirSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER, {recursive: true});
+              const pdfBytes = await pdfDoc.save();
+              writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + "/" + tempDetails, pdfBytes);
+            } catch (exception) {
+              console.log(exception);
+            }
+          } else
+            try {
+              if (assignmentType === 'Assignment' && entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
+                // await writeFileSync(destination + entry.path.replace('/', sep),  content);
+                const pdfDoc = await PDFDocument.load(content);
+                const pdfBytes = await pdfDoc.save();
+
+                await writeFileSync(destination + entry.path.replace('/', sep), pdfBytes);
+              } else {
+                await writeFileSync(destination + entry.path.replace('/', sep), content);
+              }
+            } catch (exception) {
+              console.log(exception);
+            }
+        }
+        if (assignmentType === 'Generic') {
+          const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
+          console.log("####");
           console.log(directory);
           if (!(existsSync(directory + sep + GRADES_FILE))) {
             const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
             let csvFullString = headers + `''\n` + subheaders;
-          //  csvFullString = csvFullString + csvString;
+            //  csvFullString = csvFullString + csvString;
             //console.log(csvFullString);
             console.log(directory + sep + GRADES_FILE);
             await writeFileSync(directory + sep + GRADES_FILE, csvFullString, {flag: 'a'});
             await writeFileSync(directory + sep + GRADES_FILE, csvString, {flag: 'a'});
-            console.log("create file")
+            console.log("create file");
             if (skippedFirst == 1) {
               console.log("Skipping... " + skippedFirst);
               unlinkSync(directory + sep + GRADES_FILE);
               skippedFirst++;
             }
-          } else
-          {
+          } else {
             await writeFileSync(directory + sep + GRADES_FILE, csvString, {flag: 'a'});
           }
-        }
-         else if (assignmentType = !'Generic') {
+        } else if (assignmentType = !'Generic') {
           await appendFileSync(dir + sep + GRADES_FILE, csvString);
         }
       }
@@ -2488,7 +2509,7 @@ const hierarchyModel = (pathInfos, configFolder) => {
 
 const deleteFolderRecursive = (path) => {
   if (existsSync(path)) {
-    readdirSync(path).forEach(function (file, index) {
+    readdirSync(path).forEach(function(file, index) {
       const curPath = path + '/' + file;
       if (isFolder(curPath)) { // recurse
         deleteFolderRecursive(curPath);
@@ -2501,5 +2522,5 @@ const deleteFolderRecursive = (path) => {
 };
 
 function isFolder(curPath: string) {
-return lstatSync(curPath).isDirectory();
+  return lstatSync(curPath).isDirectory();
 }

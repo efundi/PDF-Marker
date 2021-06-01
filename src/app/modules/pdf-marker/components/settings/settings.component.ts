@@ -94,9 +94,9 @@ export class SettingsComponent implements OnInit {
     this.settingsService.saveNewWorkingFolder(this.createFolderForm.value).subscribe((response) => {
       this.assignmentService.getAssignments().subscribe(assignments => {
         this.assignmentService.update(assignments);
+        this.appService.isLoading$.next(false);
+        this.appService.openSnackBar(true, response.message);
       });
-      this.appService.openSnackBar(true, response.message);
-      this.isLoading$.next(false);
     }, error => {
       this.isLoading$.next(false);
     });
