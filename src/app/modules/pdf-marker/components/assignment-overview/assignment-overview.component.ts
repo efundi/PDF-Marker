@@ -28,7 +28,7 @@ export interface AssignmentDetails {
 
   studentNumber: string;
 
-  assignment: string
+  assignment: string;
 
   grade?: number;
 

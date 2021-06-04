@@ -46,7 +46,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private assignmentId :string;
 
-  workspaces: String[];
+  workspaces: String[] = [];
   selectedWorkspace: string;
 
   // @ts-ignore
@@ -101,11 +101,12 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     });
 
     this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
-      this.workspaces = workspaces;
-      this.workspaces[0] = "Default Workspace";
-      for(var x = 1; x < this.workspaces.length+1; x++) {
-        this.workspaces[x] = this.workspaces[x].substr(this.workspaces[x].lastIndexOf("\\")+1, this.workspaces[x].length);
-      }
+      this.workspaces = [...workspaces];
+      this.workspaces = this.workspaces.map(item => {
+        item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+        return item;
+      });
+      this.workspaces.unshift('Default Workspace');
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.openSnackBar(false, "Unable to retrieve workspaces");

@@ -40,7 +40,7 @@ export interface AssignmentDetails {
 })
 export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   private hierarchyModel;
-  displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'markedCount'];
+  displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'hasRubric','curWorkspace'];
   dataSource: MatTableDataSource<AssignmentDetails>;
   assignmentName: string = 'Assignment Name';
   assignmentsLength;
@@ -75,11 +75,13 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
               private electronService: ElectronService) { }
 
   ngOnInit() {
+    this.appService.isLoading$.next(false);
     this.initForm();
     this.subscription = this.assignmentService.selectedAssignmentChanged().subscribe((selectedAssignment) => {
       if(selectedAssignment !== null) {
         this.hierarchyModel = selectedAssignment;
         this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '');
+        this.appService.isLoading$.next(false);
       }
     }, error => {
       this.appService.isLoading$.next(false);

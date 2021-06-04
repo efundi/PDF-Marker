@@ -8,6 +8,7 @@ import {FormBuilder, FormGroup} from "@angular/forms";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
 import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
+import {ZipService} from '@coreModule/services/zip.service';
 
 @Component({
   selector: 'pdf-marker-file-explorer',
@@ -49,7 +50,8 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   constructor(private router: Router,
               public assignmentService: AssignmentService,
-              private appService: AppService) { }
+              private appService: AppService,
+              private zipService: ZipService) { }
 
   ngOnInit() {
     if(this.assignmentRootFolder) {
@@ -68,21 +70,34 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
     this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
       this.workspaceList = workspaces;
+      console.log("WorkspaceList Pre");
+      console.log("WorkspaceList:  " + this.workspaceList);
+      if (!this.isAssignmentRoot(hierarchyModel)) {
+        this.appService.isLoading$.next(true);
+        this.assignmentService.setSelectedWorkspace(hierarchyModel);
+        if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
+          this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);
+        $event.stopImmediatePropagation();
+      } else if (this.isAssignmentRoot(hierarchyModel)) {
+        this.appService.isLoading$.next(true);
+        this.assignmentService.setSelectedAssignment(hierarchyModel);
+        if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW)
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
+        $event.stopImmediatePropagation();
+      }
     });
-    console.log("WorkspaceList Pre");
-    console.log("WorkspaceList:  " + this.workspaceList);
-    if (this.workspaceList.includes(hierarchyModel)) {
-      this.appService.isLoading$.next(true);
-      this.assignmentService.setSelectedWorkspace(hierarchyModel);
-      if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
-        this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);
-      $event.stopImmediatePropagation();
-    } else if (this.assignmentRootFolder) {
-      this.appService.isLoading$.next(true);
-      this.assignmentService.setSelectedAssignment(hierarchyModel);
-      if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW)
-        this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
-      $event.stopImmediatePropagation();
+    this.appService.isLoading$.next(false);
+  }
+
+  isAssignmentRoot(hierarchyModel: object): boolean {
+    const folderOrFileKeys = Object.keys(hierarchyModel);
+    if (this.assignmentRootFolder === undefined && folderOrFileKeys.length > 0) {
+      const assignmentName: string = folderOrFileKeys[0];
+      return this.zipService.isValidAssignmentObject(hierarchyModel[assignmentName]);
+  }
+    if (this.assignmentRootFolder === true && folderOrFileKeys.length > 0) {
+      const assignmentName: string = folderOrFileKeys[0];
+      return this.zipService.isValidAssignmentObject(hierarchyModel[assignmentName]);
     }
   }
 
