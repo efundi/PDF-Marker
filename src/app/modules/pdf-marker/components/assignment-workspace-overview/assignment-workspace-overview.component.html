@@ -18,31 +18,35 @@
     <ng-container matColumnDef="assignmentTitle">
       <th mat-header-cell *matHeaderCellDef> Assignment Name </th>
       <td mat-cell *matCellDef="let element">
-        <p class="pdf-marker-assignment-overview-assignment">Assignment Title</p>
+        <p class="pdf-marker-assignment-overview-assignment">{{element.assignmentTitle}}</p>
       </td>
     </ng-container>
 
     <!-- Submission Count Column -->
     <ng-container matColumnDef="submissionCount">
       <th mat-header-cell *matHeaderCellDef> No of Submissions </th>
-      <td mat-cell *matCellDef="let element"><span class="pdf-marker-assignment-overview-select-assignment"><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<p>5</p></span></td>
+      <td mat-cell *matCellDef="let element">{{element.submissionCount}}</td>
     </ng-container>
 
-    <!-- Marked Count Column
-    <ng-container matColumnDef="feedback">
-      <th mat-header-cell *matHeaderCellDef> Mark Count </th>
-      <td mat-cell *matCellDef="let element"><span><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<span class="pdf-marker-assignment-overview-edit">{{element.markedCount}}</span><mat-icon class="assignment-edit">create</mat-icon></span></td>
-    </ng-container> -->
+<!--  Marked Count Column-->
+    <ng-container matColumnDef="progress">
+      <th mat-header-cell *matHeaderCellDef> Marked / Not marked </th>
+      <td mat-cell *matCellDef="let element">{{element.markedCount}}</td>
+    </ng-container>
       <!-- iS Rubric Column -->
-      <ng-container matColumnDef="hasRubric">
-        <th mat-header-cell *matHeaderCellDef> Uses a Rubric </th>
-        <td mat-cell *matCellDef="let element"><span><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<span class="pdf-marker-assignment-overview-edit">No</span><mat-icon class="assignment-edit">create</mat-icon></span></td>
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef> Type </th>
+        <td mat-cell *matCellDef="let element"></td>
       </ng-container>
 
       <!-- Move Folder Column -->
       <ng-container matColumnDef="curWorkspace">
         <th mat-header-cell *matHeaderCellDef> Move Assignment </th>
-        <td mat-cell *matCellDef="let element"><span><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<span class="pdf-marker-assignment-overview-edit"><select><option>option</option></select></span><mat-icon class="assignment-edit">create</mat-icon></span></td>
+        <td mat-cell *matCellDef="let element">
+          <mat-select >
+            <mat-option>options</mat-option>
+          </mat-select>
+        </td>
       </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

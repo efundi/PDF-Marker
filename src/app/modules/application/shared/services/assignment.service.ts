@@ -156,13 +156,16 @@ export class AssignmentService {
     return this.selectedAssignment;
   }
 
-  setSelectedWorkspace(selectedAssignment: object) {
-    this.selectedWorkspace = selectedAssignment;
-    this.selectedWorkspaceSource$.next(this.selectedAssignment);
+  setSelectedWorkspace(selectedWorkspace: object) {
+    this.selectedWorkspace = selectedWorkspace;
+    this.selectedWorkspaceSource$.next(this.selectedWorkspace);
   }
 
   getSelectedWorkspace(): object {
     return this.selectedWorkspace;
+  }
+  selectedWorkspaceChanged(): Observable<object> {
+    return this.selectedWorkspaceSource$.asObservable();
   }
 
   dataChanged(): Observable<object[]> {

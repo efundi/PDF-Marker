@@ -18,12 +18,11 @@ import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
 import {FormBuilder, FormGroup} from "@angular/forms";
-import {RubricViewModalComponent} from "@sharedModule/components/rubric-view-modal/rubric-view-modal.component";
 import {ElectronService} from "@coreModule/services/electron.service";
 import {file} from "@rxweb/reactive-form-validators";
 import {AppSelectedPathInfo} from "@coreModule/info-objects/app-selected-path.info";
 
-export interface AssignmentDetails {
+export interface WorkspaceDetails {
   assignmentTitle: string;
 
   submissionCount: number;
@@ -40,8 +39,8 @@ export interface AssignmentDetails {
 })
 export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   private hierarchyModel;
-  displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'hasRubric','curWorkspace'];
-  dataSource: MatTableDataSource<AssignmentDetails>;
+  displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'progress', 'type','curWorkspace'];
+  dataSource: MatTableDataSource<WorkspaceDetails>;
   assignmentName: string = 'Assignment Name';
   assignmentsLength;
   assignmentPageSizeOptions: number[];
@@ -77,10 +76,10 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.appService.isLoading$.next(false);
     this.initForm();
-    this.subscription = this.assignmentService.selectedAssignmentChanged().subscribe((selectedAssignment) => {
-      if(selectedAssignment !== null) {
-        this.hierarchyModel = selectedAssignment;
-        this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '');
+    this.subscription = this.assignmentService.selectedWorkspaceChanged().subscribe((selectedWorkspace) => {
+      if (selectedWorkspace !== null) {
+        this.hierarchyModel = selectedWorkspace;
+        this.generateDataFromModel();
         this.appService.isLoading$.next(false);
       }
     }, error => {
@@ -88,11 +87,11 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       this.appService.openSnackBar(false, "Unable to read selected assignment");
     });
 
-    this.importService.getRubricDetails().subscribe((rubrics: IRubricName[]) => {
-      const data: IRubricName = {name: null, inUse: false};
-      rubrics.unshift(data);
-      this.rubrics = rubrics;
-    });
+    // this.importService.getRubricDetails().subscribe((rubrics: IRubricName[]) => {
+    //   const data: IRubricName = {name: null, inUse: false};
+    //   rubrics.unshift(data);
+    //   this.rubrics = rubrics;
+    // });
 
   }
 
@@ -120,21 +119,24 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
 
   private generateDataFromModel() {
-    let values: AssignmentDetails[] = [];
-    for (let i = 0; i < 3; i++) {
-     let value: AssignmentDetails = {
+    let values: WorkspaceDetails[] = [];
+    this.assignmentName = (Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '';
+    if (this.hierarchyModel[this.assignmentName]) {
+      Object.keys(this.hierarchyModel[this.assignmentName]).forEach(key => {
+        if (key) {
+          let value: WorkspaceDetails = {
             assignmentTitle: '',
             submissionCount: 0,
             hasRubric: '',
-            curWorkspace: '',
+            curWorkspace: ''
           };
-
-          value.assignmentTitle = "Test Assignment";
+          const matches = this.regEx.exec(key);
+          value.assignmentTitle = key;
           value.submissionCount = 10;
-          value.hasRubric = "Yes"
-          value.curWorkspace = "TestFolder";
+
           values.push(value);
         }
+      });
       this.dataSource = new MatTableDataSource(values);
       this.dataSource.paginator = this.paginator;
       this.assignmentsLength = values.length;
@@ -150,6 +152,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       this.assignmentPageSizeOptions = range;
       this.appService.isLoading$.next(false);
     }
+  }
 
   private isNullOrUndefined = (object: any): boolean => {
     return (object === null || object === undefined);

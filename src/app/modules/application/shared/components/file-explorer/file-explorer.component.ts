@@ -70,9 +70,20 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
     this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
       this.workspaceList = workspaces;
-      console.log("WorkspaceList Pre");
-      console.log("WorkspaceList:  " + this.workspaceList);
-      if (!this.isAssignmentRoot(hierarchyModel)) {
+      const workspaceNames = workspaces.map(item => {
+        item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+        return item;
+      });
+
+      const folderOrFileKeys = Object.keys(hierarchyModel);
+      let isWorkspace = false;
+      if (folderOrFileKeys.length > 0) {
+        const assignmentName: string = folderOrFileKeys[0];
+        if (workspaceNames.includes(assignmentName)) {
+          isWorkspace = true;
+        }
+      }
+      if (!this.isAssignmentRoot(hierarchyModel) && isWorkspace) {
         this.appService.isLoading$.next(true);
         this.assignmentService.setSelectedWorkspace(hierarchyModel);
         if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
@@ -91,11 +102,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   isAssignmentRoot(hierarchyModel: object): boolean {
     const folderOrFileKeys = Object.keys(hierarchyModel);
-    if (this.assignmentRootFolder === undefined && folderOrFileKeys.length > 0) {
-      const assignmentName: string = folderOrFileKeys[0];
-      return this.zipService.isValidAssignmentObject(hierarchyModel[assignmentName]);
-  }
-    if (this.assignmentRootFolder === true && folderOrFileKeys.length > 0) {
+    if (folderOrFileKeys.length > 0) {
       const assignmentName: string = folderOrFileKeys[0];
       return this.zipService.isValidAssignmentObject(hierarchyModel[assignmentName]);
     }
