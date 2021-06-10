@@ -103,9 +103,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         this.isSettings = true;
         if(!this.hierarchyModel && !!this.assignmentService.getSelectedAssignment()) {
           this.hierarchyModel = this.assignmentService.getSelectedAssignment();
-          this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0]:'');
+          this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '');
         } else {
-          this.router.navigate(["/marker"])
+          this.router.navigate(["/marker"]);
         }
       }
       this.appService.isLoading$.next(false);
@@ -124,7 +124,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   }
 
   private getAssignmentSettings(assignmentName: string) {
-    this.assignmentService.getAssignmentSettings(assignmentName).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
+    this.assignmentService.getAssignmentSettings(null, assignmentName).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
       this.assignmentSettings = assignmentSettings;
       this.isCreated = this.assignmentSettings.isCreated;
       if(this.assignmentSettings.rubric) {
@@ -161,7 +161,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
   private generateDataFromModel() {
     let values: AssignmentDetails[] = [];
-    this.assignmentName = (Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0]:'';
+    this.assignmentName = (Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '';
     if(this.hierarchyModel[this.assignmentName]) {
       Object.keys(this.hierarchyModel[this.assignmentName]).forEach(key => {
         if (this.regEx.test(key) && this.sakaiService.getAssignmentRootFiles().indexOf(key) === -1) {

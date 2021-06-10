@@ -75,7 +75,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         this.assignmentId = id;
         this.isEdit = true;
         this.fc.assignmentName.setValue(this.assignmentId);
-        this.assignmentService.getAssignmentSettings(id).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
+        this.assignmentService.getAssignmentSettings(null, id).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
           this.assignmentSettings = assignmentSettings;
           if (this.assignmentSettings.rubric) {
             this.selectedRubric = this.assignmentSettings.rubric;

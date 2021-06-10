@@ -3,54 +3,54 @@
 
   <div class="pdf-marker-assignment-generic-overview-assignment-header">
 
-    <h1 class="pdf-marker-assignment-overview-assignment-name"><mat-icon>warning</mat-icon>&nbsp; WIP: Component under construction!  </h1>
-    <h1 class="pdf-marker-assignment-overview-assignment-name">Workspace Overview - WorkspaceTitle  </h1>
+    <h1 class="pdf-marker-assignment-overview-assignment-name">Workspace Overview - {{workspaceName}} </h1>
     <span class="pdf-marker-fill-space"></span>
 
     <!--   <button [disabled]="!isCreated" mat-button mat-icon-button matTooltip="Manage Submissions" (click)="manageStudents()"><mat-icon [class.pdf-icon-disabled]="!isCreated">person</mat-icon></button>
       <button [disabled]="!isRubric" mat-button mat-icon-button matTooltip="Manage Rubric" (click)="viewRubric()"><mat-icon [class.pdf-icon-disabled]="!isRubric">apps</mat-icon></button>
       <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon >archive</mat-icon></button>
     -->
-    </div>
+  </div>
 
-    <table mat-table [dataSource]="dataSource">
-      <!-- Assignment Column -->
+  <table mat-table [dataSource]="dataSource">
+    <!-- Assignment Column -->
     <ng-container matColumnDef="assignmentTitle">
-      <th mat-header-cell *matHeaderCellDef> Assignment Name </th>
+      <th mat-header-cell *matHeaderCellDef> Assignment Name</th>
       <td mat-cell *matCellDef="let element">
-        <p class="pdf-marker-assignment-overview-assignment">{{element.assignmentTitle}}</p>
+        <p class="pdf-marker-workspace-overview-assignment-name">{{element.assignmentTitle}}</p>
       </td>
     </ng-container>
 
     <!-- Submission Count Column -->
     <ng-container matColumnDef="submissionCount">
-      <th mat-header-cell *matHeaderCellDef> No of Submissions </th>
+      <th mat-header-cell *matHeaderCellDef> No of Submissions</th>
       <td mat-cell *matCellDef="let element">{{element.submissionCount}}</td>
     </ng-container>
 
-<!--  Marked Count Column-->
+    <!--  Marked Count Column-->
     <ng-container matColumnDef="progress">
-      <th mat-header-cell *matHeaderCellDef> Marked / Not marked </th>
-      <td mat-cell *matCellDef="let element">{{element.markedCount}}</td>
+      <th mat-header-cell *matHeaderCellDef> Marked / Not marked</th>
+      <td mat-cell *matCellDef="let element">{{element.marked}} / {{element.notMarked}}</td>
     </ng-container>
-      <!-- iS Rubric Column -->
-      <ng-container matColumnDef="type">
-        <th mat-header-cell *matHeaderCellDef> Type </th>
-        <td mat-cell *matCellDef="let element"></td>
-      </ng-container>
+    <!-- iS Rubric Column -->
+    <ng-container matColumnDef="type">
+      <th mat-header-cell *matHeaderCellDef> Type</th>
+      <td mat-cell *matCellDef="let element">{{element.type}}</td>
+    </ng-container>
 
-      <!-- Move Folder Column -->
-      <ng-container matColumnDef="curWorkspace">
-        <th mat-header-cell *matHeaderCellDef> Move Assignment </th>
-        <td mat-cell *matCellDef="let element">
-          <mat-select >
-            <mat-option>options</mat-option>
-          </mat-select>
-        </td>
-      </ng-container>
+    <!-- Move Folder Column -->
+    <ng-container matColumnDef="curWorkspace">
+      <th mat-header-cell *matHeaderCellDef> Move Assignment</th>
+      <td mat-cell *matCellDef="let element">
+        <mat-select>
+          <mat-option>options</mat-option>
+        </mat-select>
+      </td>
+    </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
   </table>
-  <mat-paginator [length]="assignmentsLength" [pageSize]="pageSize" [pageSizeOptions]="assignmentPageSizeOptions" showFirstLastButtons></mat-paginator>
+  <mat-paginator [length]="assignmentsLength" [pageSize]="pageSize" [pageSizeOptions]="assignmentPageSizeOptions"
+                 showFirstLastButtons></mat-paginator>
 </ng-container>

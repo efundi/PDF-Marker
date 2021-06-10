@@ -10,6 +10,7 @@ import {Router} from "@angular/router";
 import {AppService} from "@coreModule/services/app.service";
 import {IRubric} from "@coreModule/utils/rubric.class";
 import {ZipService} from "@coreModule/services/zip.service";
+import {sep} from 'path';
 
 @Injectable({
   providedIn: 'root'
@@ -26,7 +27,7 @@ export class AssignmentService {
   private selectedPdfBlob: Blob;
   private assignmentSettingsInfo: AssignmentSettingsInfo;
 
-  private selectedWorkspace: object;
+  selectedWorkspace: object;
   private selectedWorkspaceSource$: Subject<object> = new Subject<object>();
 
   constructor(private http: HttpClient,
@@ -71,9 +72,13 @@ export class AssignmentService {
     return this.http.post('/api/assignment/settings', body);
   }
 
-  getAssignmentSettings(assignmentName: string = null): Observable<AssignmentSettingsInfo> {
-    if (!assignmentName)
-        assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0] : "");
+  getAssignmentSettings(workspaceName: string = null ,assignmentName: string = null): Observable<AssignmentSettingsInfo> {
+    if (!assignmentName) {
+      assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0] : "");
+    }
+    if (workspaceName) {
+      assignmentName = workspaceName + sep + assignmentName;
+    }
 
     const body = {
       location: assignmentName
@@ -85,6 +90,17 @@ export class AssignmentService {
   getAssignmentGrades() {
     const body = {
       location: Object.keys(this.selectedAssignment)[0]
+    };
+
+    return this.http.post('/api/assignment/grade', body);
+  }
+
+  getWorkspaceAssignmentGrades(workspaceName: string = null, assignmentName: string = null) {
+    if (workspaceName && assignmentName) {
+      assignmentName = workspaceName + sep + assignmentName;
+    }
+    const body = {
+      location: assignmentName
     };
 
     return this.http.post('/api/assignment/grade', body);
@@ -110,7 +126,7 @@ export class AssignmentService {
     }
     else
     assignmentName = ((pdfLocation && pdfLocation.split("/").length > 0) ? pdfLocation.split("/")[0] : "");
-    this.getAssignmentSettings(assignmentName).subscribe((assignmentSettingsInfo: AssignmentSettingsInfo) => {
+    this.getAssignmentSettings(null, assignmentName).subscribe((assignmentSettingsInfo: AssignmentSettingsInfo) => {
       this.setAssignmentSettings(assignmentSettingsInfo);
       this.setSelectedPdfURL(fileUrl, pdfLocation);
       this.setSelectedPdfBlob(blob);
