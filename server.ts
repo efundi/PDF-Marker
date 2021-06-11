@@ -1042,7 +1042,7 @@ const savingMarks = (req, res) => {
     if (!isJson(data))
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
     const config = JSON.parse(data.toString());
-    console.log("Path Recieved: " + req.body.location);
+   // console.log("Path Recieved: " + req.body.location);
     const loc = req.body.location.replace(/\//g, sep);
     console.log("loc after path: " + loc);
     const pathSplit = loc.split(sep);
@@ -1063,105 +1063,16 @@ const savingMarks = (req, res) => {
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
     console.log("studentFolder: " + studentFolder);
     return checkAccess(req, res, studentFolder, () => {
-      return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
-        const matches = regEx.exec(pathSplit[1]);
 
-        const studentNumber = matches[2] + '';
-        console.log("studentNumber: " + studentNumber);
-        const assignmentFolder = dirname(studentFolder);
-        console.log("assignmentFolder: " + assignmentFolder);
-
-        return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
-          return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
-            .then((gradesJSON) => {
-              let changed = false;
-              let assignmentHeader;
-              for (let i = 0; i < gradesJSON.length; i++) {
-                if (i === 0) {
-                  const keys = Object.keys(gradesJSON[i]);
-                  if (keys.length > 0)
-                    assignmentHeader = keys[0];
-                } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
-                  gradesJSON[i].field5 = totalMark;
-                  changed = true;
-                  json2csv(gradesJSON, (err, csv) => {
-                    if (err)
-                      return sendResponse(req, res, 400, 'Failed to convert json to csv!');
-
-                    return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', null);
-                  }, {emptyFieldValue: '', prependHeader: false});
-                  break;
-                }
-              }
-
-              if (changed) {
-                // more logic to save new JSON to CSV
-              } else
-                return sendResponse(req, res, 400, 'Failed to save mark');
-            })
-            .catch(reason => {
-              return sendResponse(req, res, 400, reason);
-            });
-        });
-      });
-    });
-  });
-};
-
-app.post('/api/assignment/marks/save', savingMarks);
-
-const savingRubricMarks = (req, res) => {
-  if (!checkClient(req, res))
-    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
-
-  if (isNullOrUndefined(req.body.location))
-    return sendResponse(req, res, 400, 'File location not provided');
-
-  if (isNullOrUndefined(req.body.rubricName))
-    return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
-
-  const marks = Array.isArray(req.body.marks) ? req.body.marks : [];
-  const rubricName = req.body.rubricName.trim();
-
-  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
-      return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
-
-    const config = JSON.parse(data.toString());
-    const loc = req.body.location.replace(/\//g, sep);
-    const pathSplit = loc.split(sep);
-    if (pathSplit.length !== 4)
-      return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
-
-    const regEx = /(.*)\((.+)\)/;
-    if (!regEx.test(pathSplit[1]))
-      return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
-
-    const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
-    const assignmentFolder = dirname(studentFolder);
-
-    return readFromFile(req, res, assignmentFolder + sep + SETTING_FILE, (data) => {
-      if (!isJson(data))
-        return sendResponse(req, res, 400, 'Could not read assignment settings');
-
-      const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(data.toString());
-
-      if (isNullOrUndefined(assignmentSettingsInfo.rubric))
-        return sendResponse(req, res, 400, 'Assignment\'s settings does not contain a rubric!');
-      else if (assignmentSettingsInfo.rubric.name !== rubricName)
-        return sendResponse(req, res, 400, 'Assignment\'s settings rubric does not match provided!');
-
-      let totalMark = 0;
-      marks.forEach((levelIndex: number, index: number) => {
-        if (levelIndex !== null)
-          totalMark += parseFloat('' + assignmentSettingsInfo.rubric.criterias[index].levels[levelIndex].score);
-      });
-
-      return checkAccess(req, res, studentFolder, () => {
+      if (pathSplitCount === 4) {
         return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
           const matches = regEx.exec(pathSplit[1]);
+          console.log("matches: " + matches);
+          const studentNumber = matches[2] + '';
+          console.log("studentNumber: " + studentNumber);
+          const assignmentFolder = dirname(studentFolder);
+          console.log("assignmentFolder: " + assignmentFolder);
 
-          const studentNumber = matches[2];
           return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
             return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
               .then((gradesJSON) => {
@@ -1195,6 +1106,189 @@ const savingRubricMarks = (req, res) => {
               });
           });
         });
+      }
+
+      if (pathSplitCount === 5) {
+        return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
+          const matches = regEx.exec(pathSplit[2]);
+          console.log("matches: " + matches);
+          const studentNumber = matches[2] + '';
+          console.log("studentNumber: " + studentNumber);
+          const assignmentFolder = dirname(studentFolder);
+          console.log("assignmentFolder: " + assignmentFolder);
+
+          return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
+            return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
+              .then((gradesJSON) => {
+                let changed = false;
+                let assignmentHeader;
+                for (let i = 0; i < gradesJSON.length; i++) {
+                  if (i === 0) {
+                    const keys = Object.keys(gradesJSON[i]);
+                    if (keys.length > 0)
+                      assignmentHeader = keys[0];
+                  } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                    gradesJSON[i].field5 = totalMark;
+                    changed = true;
+                    json2csv(gradesJSON, (err, csv) => {
+                      if (err)
+                        return sendResponse(req, res, 400, 'Failed to convert json to csv!');
+
+                      return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', null);
+                    }, {emptyFieldValue: '', prependHeader: false});
+                    break;
+                  }
+                }
+
+                if (changed) {
+                  // more logic to save new JSON to CSV
+                } else
+                  return sendResponse(req, res, 400, 'Failed to save mark');
+              })
+              .catch(reason => {
+                return sendResponse(req, res, 400, reason);
+              });
+          });
+        });
+      }
+
+    });
+  });
+};
+
+app.post('/api/assignment/marks/save', savingMarks);
+
+const savingRubricMarks = (req, res) => {
+  if (!checkClient(req, res))
+    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+
+  if (isNullOrUndefined(req.body.location))
+    return sendResponse(req, res, 400, 'File location not provided');
+
+  if (isNullOrUndefined(req.body.rubricName))
+    return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
+
+  const marks = Array.isArray(req.body.marks) ? req.body.marks : [];
+  const rubricName = req.body.rubricName.trim();
+
+  return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
+    if (!isJson(data))
+      return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+
+    const config = JSON.parse(data.toString());
+    const loc = req.body.location.replace(/\//g, sep);
+    console.log(loc);
+    const pathSplit = loc.split(sep);
+    const pathSplitCount = pathSplit.length;
+    const regEx = /(.*)\((.+)\)/;
+    if (pathSplitCount === 4) {
+      if (!regEx.test(pathSplit[1]))
+        return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
+    } else if (pathSplitCount === 5) {
+      if (!regEx.test(pathSplit[2]))
+        return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
+    }
+
+    const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
+    const assignmentFolder = dirname(studentFolder);
+
+    return readFromFile(req, res, assignmentFolder + sep + SETTING_FILE, (data) => {
+      if (!isJson(data))
+        return sendResponse(req, res, 400, 'Could not read assignment settings');
+
+      const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(data.toString());
+
+      if (isNullOrUndefined(assignmentSettingsInfo.rubric))
+        return sendResponse(req, res, 400, 'Assignment\'s settings does not contain a rubric!');
+      else if (assignmentSettingsInfo.rubric.name !== rubricName)
+        return sendResponse(req, res, 400, 'Assignment\'s settings rubric does not match provided!');
+
+      let totalMark = 0;
+      marks.forEach((levelIndex: number, index: number) => {
+        if (levelIndex !== null)
+          totalMark += parseFloat('' + assignmentSettingsInfo.rubric.criterias[index].levels[levelIndex].score);
+      });
+
+      return checkAccess(req, res, studentFolder, () => {
+        return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
+          if (pathSplitCount === 4) {
+
+            const matches = regEx.exec(pathSplit[1]);
+
+            const studentNumber = matches[2];
+            return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
+              return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
+                .then((gradesJSON) => {
+                  let changed = false;
+                  let assignmentHeader;
+                  for (let i = 0; i < gradesJSON.length; i++) {
+                    if (i === 0) {
+                      const keys = Object.keys(gradesJSON[i]);
+                      if (keys.length > 0)
+                        assignmentHeader = keys[0];
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                      gradesJSON[i].field5 = totalMark;
+                      changed = true;
+                      json2csv(gradesJSON, (err, csv) => {
+                        if (err)
+                          return sendResponse(req, res, 400, 'Failed to convert json to csv!');
+
+                        return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', null);
+                      }, {emptyFieldValue: '', prependHeader: false});
+                      break;
+                    }
+                  }
+
+                  if (changed) {
+                    // more logic to save new JSON to CSV
+                  } else
+                    return sendResponse(req, res, 400, 'Failed to save mark');
+                })
+                .catch(reason => {
+                  return sendResponse(req, res, 400, reason);
+                });
+            });
+          } else
+          if (pathSplitCount === 5) {
+
+            const matches = regEx.exec(pathSplit[2]);
+
+            const studentNumber = matches[2];
+            return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
+              return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
+                .then((gradesJSON) => {
+                  let changed = false;
+                  let assignmentHeader;
+                  for (let i = 0; i < gradesJSON.length; i++) {
+                    if (i === 0) {
+                      const keys = Object.keys(gradesJSON[i]);
+                      if (keys.length > 0)
+                        assignmentHeader = keys[0];
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                      gradesJSON[i].field5 = totalMark;
+                      changed = true;
+                      json2csv(gradesJSON, (err, csv) => {
+                        if (err)
+                          return sendResponse(req, res, 400, 'Failed to convert json to csv!');
+
+                        return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', null);
+                      }, {emptyFieldValue: '', prependHeader: false});
+                      break;
+                    }
+                  }
+
+                  if (changed) {
+                    // more logic to save new JSON to CSV
+                  } else
+                    return sendResponse(req, res, 400, 'Failed to save mark');
+                })
+                .catch(reason => {
+                  return sendResponse(req, res, 400, reason);
+                });
+            });
+          }
+
+          });
       });
     });
   });
