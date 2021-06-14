@@ -83,13 +83,16 @@ export class AssignmentService {
     const body = {
       location: assignmentName
     };
-    console.log("getAssignmentSettings: " + assignmentName);
     return this.http.post<AssignmentSettingsInfo>('/api/assignment/settings/fetch', body);
   }
 
-  getAssignmentGrades() {
+  getAssignmentGrades(workspaceName: string = null , assignmentName: string = null) {
+
+    if (workspaceName) {
+      assignmentName = workspaceName + sep + assignmentName;
+    }
     const body = {
-      location: Object.keys(this.selectedAssignment)[0]
+      location: assignmentName
     };
 
     return this.http.post('/api/assignment/grade', body);

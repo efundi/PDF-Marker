@@ -9,7 +9,7 @@ import {DomSanitizer} from "@angular/platform-browser";
 })
 export class AppComponent {
 
-  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer,) {
+  constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) {
     this.matIconRegistry
       .addSvgIcon("halfTick", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/halftick.svg"))
       .addSvgIcon("layout-expand-left", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-left.svg"))

@@ -1,11 +1,11 @@
 <ng-container>
   <pdf-marker-alert></pdf-marker-alert>
 
-  <div class="pdf-marker-assignment-generic-overview-assignment-header">
+  <div class="pdf-marker-workspace-overview-assignment-header">
 
-    <h1 class="pdf-marker-assignment-overview-assignment-name">Workspace Overview - {{workspaceName}} </h1>
+    <h1 class="pdf-marker-assignment-overview-assignment-name">{{workspaceName}} </h1>
     <span class="pdf-marker-fill-space"></span>
-
+    <button mat-button mat-icon-button matTooltip="Manage Folders" (click)="manageFolders($event)"><mat-icon>drive_file_rename_outline</mat-icon></button>
     <!--   <button [disabled]="!isCreated" mat-button mat-icon-button matTooltip="Manage Submissions" (click)="manageStudents()"><mat-icon [class.pdf-icon-disabled]="!isCreated">person</mat-icon></button>
       <button [disabled]="!isRubric" mat-button mat-icon-button matTooltip="Manage Rubric" (click)="viewRubric()"><mat-icon [class.pdf-icon-disabled]="!isRubric">apps</mat-icon></button>
       <button [disabled]="!isSettings" mat-button mat-icon-button matTooltip="Finalise and Export Assignment" (click)="onFinalizeAndExport($event)"><mat-icon >archive</mat-icon></button>

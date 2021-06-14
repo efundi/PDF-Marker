@@ -13,16 +13,14 @@ import {FileSaverService} from "ngx-filesaver";
 import {SettingsService} from "@pdfMarkerModule/services/settings.service";
 import {SettingInfo} from "@pdfMarkerModule/info-objects/setting.info";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
-import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {ImportService} from "@pdfMarkerModule/services/import.service";
 import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
 import {FormBuilder, FormGroup} from "@angular/forms";
 import {ElectronService} from "@coreModule/services/electron.service";
-import {file} from "@rxweb/reactive-form-validators";
-import {AppSelectedPathInfo} from "@coreModule/info-objects/app-selected-path.info";
 import * as fs from 'fs';
 import * as path from 'path';
 import {sep} from 'path';
+import {RoutesEnum} from '@coreModule/utils/routes.enum';
 
 export interface WorkspaceDetails {
   assignmentTitle: string;
@@ -61,6 +59,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   isSettings: boolean;
   isCreated: boolean;
   isRubric: boolean;
+  isEditingName: boolean = false;
 
   rubrics: IRubricName[] = [];
 
@@ -97,15 +96,17 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   private initForm() {
   }
 
-  async getAssignmentSettings(assignmentName: string, workspaceDetail: WorkspaceDetails): Promise<AssignmentSettingsInfo> {
+  manageFolders(event) {
+    // fs.renameSync()
+  }
+
+
+  async getAssignmentSettings(assignmentName: string): Promise<AssignmentSettingsInfo> {
     this.appService.isLoading$.next(true);
     return await this.assignmentService.getAssignmentSettings(this.workspaceName, assignmentName).toPromise()
       .then((assignmentSettings) => {
         this.appService.isLoading$.next(false);
-
         this.assignmentService.setSelectedAssignment(assignmentSettings);
-        // this.getGrades(this.workspaceName, assignmentName, workspaceDetail);
-        // workspaceDetail.submissionCount =  this.assignmentGrades.length > 0 ? this.assignmentGrades.length : 0;
         return assignmentSettings;
       })
       .catch(() => {
@@ -114,13 +115,11 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       });
   }
 
-  fromDir(startPath: any, filter: string): number {
+  countFileFilter(startPath: any, filter: string): number {
     let count = 0;
-    console.log('Starting from dir ' + startPath + '/');
 
     if (!fs.existsSync(startPath)) {
-      console.log('no dir ', startPath);
-      return;
+      return 0;
     }
 
     let files = fs.readdirSync(startPath);
@@ -128,48 +127,21 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       let filename = path.join(startPath, files[i]);
       let stat = fs.lstatSync(filename);
       if (stat.isDirectory()) {
-        count = count + this.fromDir(filename, filter); //recurse
+        count = count + this.countFileFilter(filename, filter);
       } else if (filename.indexOf(filter) >= 0) {
         count = count + 1;
-        console.log('-- found: ', filename);
       }
     }
     return count;
   }
 
-  async getGrades(workspaceName: string, assignmentName: string, workspaceDetail: WorkspaceDetails) {
-    this.assignmentService.getWorkspaceAssignmentGrades(workspaceName, assignmentName).subscribe((grades: any[]) => {
-      this.assignmentGrades = grades;
-      if (this.assignmentGrades.length > 0) {
-        workspaceDetail.submissionCount = this.assignmentGrades.length;
-        const keys = Object.keys(grades[0]);
-        if (keys.length > 0) {
-          this.assignmentHeader = keys[0];
-        }
-      }
-    }, error => {
-      this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(false, "Unable to read assignment grades file");
-    });
-  }
-
-  // private getAssignmentSettings(assignmentName: string): Observable<AssignmentSettingsInfo> {
-  //   return this.assignmentService.getAssignmentSettings(this.workspaceName, assignmentName);
-  // .subscribe((assignmentSettings: AssignmentSettingsInfo) => {
-  // return assignmentSettings;
-  // }, error => {
-  //   this.appService.openSnackBar(false, "Unable to read assignment settings");
-  //   this.appService.isLoading$.next(false);
-  // });
-  // }
-
   private generateDataFromModel() {
-    let values: WorkspaceDetails[] = [];
+    let workspaceRows: WorkspaceDetails[] = [];
     this.workspaceName = (Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '';
     if (this.hierarchyModel[this.workspaceName]) {
       Object.keys(this.hierarchyModel[this.workspaceName]).forEach(key => {
         if (key) {
-          let value: WorkspaceDetails = {
+          let workspaceRow: WorkspaceDetails = {
             assignmentTitle: '',
             submissionCount: 0,
             marked: 0,
@@ -177,29 +149,30 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
             type: '',
             curWorkspace: ''
           };
-
-          value.assignmentTitle = key;
+          // Assignment Name
+          workspaceRow.assignmentTitle = key;
+          // Submissions Count
           const assignmentFiles = Object.keys(this.hierarchyModel[this.workspaceName][key]).
           filter(x => this.sakaiService.getAssignmentRootFiles().indexOf(x) === -1);
-          value.submissionCount = assignmentFiles.length;
-
+          workspaceRow.submissionCount = assignmentFiles.length;
+          // Marked/Not Marked
           this.settingsService.getConfigurations().subscribe((configurations: SettingInfo) => {
-            const count = this.fromDir(configurations.defaultPath + sep + this.workspaceName + sep + key, '.marks.json');
-            value.marked = count;
-            value.notMarked = value.submissionCount - value.marked;
+            const count = this.countFileFilter(configurations.defaultPath + sep + this.workspaceName + sep + key, '.marks.json');
+            workspaceRow.marked = count;
+            workspaceRow.notMarked = workspaceRow.submissionCount - workspaceRow.marked;
           });
-
-          this.getAssignmentSettings(key, value).then((assignmentSettings) => {
+          // Type
+          this.getAssignmentSettings(key).then((assignmentSettings) => {
             const assignmentSettingsInfo = assignmentSettings;
-            value.type = assignmentSettingsInfo.rubric ? 'Rubric' : 'Manual';
+            workspaceRow.type = assignmentSettingsInfo.rubric ? 'Rubric' : 'Manual';
 
           });
-          values.push(value);
+          workspaceRows.push(workspaceRow);
         }
       });
-      this.dataSource = new MatTableDataSource(values);
+      this.dataSource = new MatTableDataSource(workspaceRows);
       this.dataSource.paginator = this.paginator;
-      this.assignmentsLength = values.length;
+      this.assignmentsLength = workspaceRows.length;
       const range = [];
       let i = 0;
       while (i <= this.assignmentsLength) {

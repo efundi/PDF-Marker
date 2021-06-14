@@ -20,6 +20,7 @@ const routes: Routes = [
   { path: 'assignment/upload', component: CreateAssignmentComponent },
   { path: 'assignment/upload/:id', component: CreateAssignmentComponent, canDeactivate: [UnsavedChangesGuard] },
   { path: 'assignment/overview', component: AssignmentOverviewComponent },
+  { path: 'assignment/overview/:workspaceName', component: AssignmentOverviewComponent },
   { path: 'assignment/workspaceOverview', component: AssignmentWorkspaceOverviewComponent },
   { path: 'assignment/marking', component: AssignmentMarkingComponent },
   { path: 'assignment/marking/rubric', component: AssignmentMarkingRubricComponent },

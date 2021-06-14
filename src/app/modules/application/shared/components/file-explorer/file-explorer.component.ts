@@ -9,6 +9,7 @@ import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-s
 import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {ZipService} from '@coreModule/services/zip.service';
+import {values} from 'pdf-lib';
 
 @Component({
   selector: 'pdf-marker-file-explorer',
@@ -20,6 +21,11 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   @Input()
   hierarchyModel;
 
+  // usableHierarchyModel: object = {};
+
+  @Input()
+  assignmentRootFolder: boolean;
+
   @Input()
   workspace;
 
@@ -28,8 +34,6 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   hierarchyModelKeys$: Observable<any>;
 
-  @Input()
-  assignmentRootFolder: boolean;
 
   private subscription: Subscription;
 
@@ -66,9 +70,9 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
     }
   }
 
-  onAssignment(hierarchyModel, $event) {
+  onAssignment(objectName, hierarchyModel, $event) {
 
-    this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
+    this.assignmentService.getWorkspaces().subscribe((workspaces: string[]) => {
       this.workspaceList = workspaces;
       const workspaceNames = workspaces.map(item => {
         item = item.substr(item.lastIndexOf("\\") + 1, item.length);
@@ -76,34 +80,47 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
       });
 
       const folderOrFileKeys = Object.keys(hierarchyModel);
+      // if (folderOrFileKeys.length > 1) {
+      //   folderOrFileKeys = Object.entries(hierarchyModel)
+      //     .find(pair => pair[0] === objectName);
+      // }
       let isWorkspace = false;
       if (folderOrFileKeys.length > 0) {
         const assignmentName: string = folderOrFileKeys[0];
-        if (workspaceNames.includes(assignmentName)) {
+        if (workspaceNames.includes(objectName)) {
           isWorkspace = true;
         }
       }
-      if (!this.isAssignmentRoot(hierarchyModel) && isWorkspace) {
+      if (!this.isAssignmentRoot(objectName, hierarchyModel) && isWorkspace) {
         this.appService.isLoading$.next(true);
         this.assignmentService.setSelectedWorkspace(hierarchyModel);
         if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
           this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);
         $event.stopImmediatePropagation();
-      } else if (this.isAssignmentRoot(hierarchyModel)) {
+      } else if (this.isAssignmentRoot(objectName, hierarchyModel)) {
         this.appService.isLoading$.next(true);
-        this.assignmentService.setSelectedAssignment(hierarchyModel);
-        if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW)
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
+
+        if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW) {
+          if (this.parent !== undefined) {
+            const arr = folderOrFileKeys.length > 1 ? Object.entries(hierarchyModel).find(x => x[0] === objectName) : hierarchyModel;
+            const obj = Object.fromEntries(new Map([arr]));
+            this.assignmentService.setSelectedAssignment(obj);
+            this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.parent]);
+          } else {
+            this.assignmentService.setSelectedAssignment(hierarchyModel);
+            this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
+          }
+        }
         $event.stopImmediatePropagation();
       }
     });
     this.appService.isLoading$.next(false);
   }
 
-  isAssignmentRoot(hierarchyModel: object): boolean {
+  isAssignmentRoot(objectName: string, hierarchyModel: object): boolean {
     const folderOrFileKeys = Object.keys(hierarchyModel);
     if (folderOrFileKeys.length > 0) {
-      const assignmentName: string = folderOrFileKeys[0];
+      const assignmentName: string = folderOrFileKeys.length > 1 ? folderOrFileKeys.find(x => x === objectName) : folderOrFileKeys[0];
       return this.zipService.isValidAssignmentObject(hierarchyModel[assignmentName]);
     }
   }
@@ -126,7 +143,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
         this.assignmentService.configure(pdfFileLocation, blobData);
       }, error => {
         this.appService.isLoading$.next(false);
-        this.appService.openSnackBar(false, "Unable to read file")
+        this.appService.openSnackBar(false, "Unable to read file");
       });
     }
   }

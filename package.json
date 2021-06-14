@@ -77,7 +77,7 @@
     "ng2-pdfjs-viewer": "^5.0.1",
     "ngx-color-picker": "^8.2.0",
     "ngx-filesaver": "^8.1.0",
-    "pdf-lib": "^1.2.1",
+    "pdf-lib": "^1.4.0",
     "rgb-hex": "^3.0.0",
     "rxjs": "~6.4.0",
     "simple-excel-to-json": "^2.2.1",

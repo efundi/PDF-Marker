@@ -1,7 +1,7 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {SakaiService} from "@coreModule/services/sakai.service";
-import {Router} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {Subscription} from "rxjs";
 import {AppService} from "@coreModule/services/app.service";
 import {MatPaginator} from "@angular/material/paginator";
@@ -22,6 +22,7 @@ import {RubricViewModalComponent} from "@sharedModule/components/rubric-view-mod
 import {ElectronService} from "@coreModule/services/electron.service";
 import {file} from "@rxweb/reactive-form-validators";
 import {AppSelectedPathInfo} from "@coreModule/info-objects/app-selected-path.info";
+import {sep} from 'path';
 
 export interface AssignmentDetails {
   studentName: string;
@@ -67,10 +68,12 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   selectedRubric: string = null;
   rubrics: IRubricName[] = [];
   rubricForm: FormGroup;
+  workspace: string;
 
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
               private router: Router,
+              private activatedRoute: ActivatedRoute,
               private appService: AppService,
               private alertService: AlertService,
               private fileSaverService: FileSaverService,
@@ -81,6 +84,12 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.initForm();
+    this.activatedRoute.params.subscribe(params => {
+      let id = params['workspaceName'];
+      if (id) {
+        this.workspace = id;
+      }
+    });
     this.subscription = this.assignmentService.selectedAssignmentChanged().subscribe((selectedAssignment) => {
       if(selectedAssignment !== null) {
         this.hierarchyModel = selectedAssignment;
@@ -124,10 +133,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   }
 
   private getAssignmentSettings(assignmentName: string) {
-    this.assignmentService.getAssignmentSettings(null, assignmentName).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
+    this.assignmentService.getAssignmentSettings(this.workspace, assignmentName).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
       this.assignmentSettings = assignmentSettings;
       this.isCreated = this.assignmentSettings.isCreated;
-      if(this.assignmentSettings.rubric) {
+      if (this.assignmentSettings.rubric) {
         this.selectedRubric = this.assignmentSettings.rubric.name;
         this.rubricForm.controls.rubric.setValue(this.assignmentSettings.rubric.name);
         this.isRubric = true;
@@ -136,15 +145,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         this.rubricForm.controls.rubric.setValue(this.selectedRubric);
         this.isRubric = false;
       }
-      this.getGrades();
+      this.getGrades(this.workspace, assignmentName);
     }, error => {
       this.appService.openSnackBar(false, "Unable to read assignment settings");
       this.appService.isLoading$.next(false);
     });
   }
 
-  private getGrades() {
-    this.assignmentService.getAssignmentGrades().subscribe((grades: any[]) => {
+  private getGrades(workspace: string, assignmentName: string) {
+    this.assignmentService.getAssignmentGrades(workspace, assignmentName).subscribe((grades: any[]) => {
       this.assignmentGrades = grades;
       if(this.assignmentGrades.length > 0) {
         const keys = Object.keys(grades[0]);
@@ -213,11 +222,14 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
   onSelectedPdf(pdfFileLocation: string) {
     this.appService.isLoading$.next(true);
+    if (this.workspace !== undefined) {
+      pdfFileLocation = this.workspace + sep + pdfFileLocation;
+    }
     this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
       this.assignmentService.configure(pdfFileLocation, blobData);
     }, error => {
       this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(false, "Unable to read file")
+      this.appService.openSnackBar(false, "Unable to read file");
     });
   }
 
@@ -315,7 +327,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         this.appService.openSnackBar(true, "Rubric View Opened");
       }, error => {
         this.appService.openSnackBar(false, "Rubric View Failed");
-        this.appService.isLoading$.next(false)
+        this.appService.isLoading$.next(false);
       });
     }
   }
