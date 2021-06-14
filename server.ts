@@ -2344,7 +2344,7 @@ app.post('/api/assignment/create', [
 ], createAssignment);
 
 const updateAssignment = (req, res) => {
-  const acceptedParams = ['assignmentName', 'studentDetails', 'isEdit'];
+  const acceptedParams = ['assignmentName',  'workspaceFolder', 'studentDetails', 'isEdit'];
   const receivedParams = Object.keys(req.body);
   let isInvalidKey = false;
   let invalidParam: string;
@@ -2375,11 +2375,17 @@ const updateAssignment = (req, res) => {
           return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
 
         const config = JSON.parse(data.toString());
+        let assignmentSettingsBuffer;
+        if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+          assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
+          if (!isJson(assignmentSettingsBuffer))
+            return sendResponse(req, res, 400, 'Invalid assignment settings file!');
 
-        const assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
-        if (!isJson(assignmentSettingsBuffer))
-          return sendResponse(req, res, 400, 'Invalid assignment settings file!');
-
+        } else {
+          assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + SETTING_FILE);
+          if (!isJson(assignmentSettingsBuffer))
+            return sendResponse(req, res, 400, 'Invalid assignment settings file!');
+        }
         const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
         if (!assignmentSettingsInfo.isCreated)
           return sendResponse(req, res, 400, 'Operation not permitted on this type of assignment!');
@@ -2398,7 +2404,10 @@ const updateAssignment = (req, res) => {
         const grades = await csvtojson({
           noheader: true,
           trim: false
-        }).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE);
+        }).fromFile(
+          (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") ?
+            config.defaultPath + sep + assignmentName + sep + GRADES_FILE :
+            config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + GRADES_FILE);
 
         let count = 0;
         const headers = `'${assignmentName}','SCORE_GRADE_TYPE'\n`;
@@ -2412,38 +2421,73 @@ const updateAssignment = (req, res) => {
           const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
           let csvData = '';
 
-          if (existsSync(config.defaultPath + sep + assignmentName + sep + studentFolder)) {
-            if (studentInfo.remove) {
-              deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder);
-            } else {
-              const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
-              if (studentRecord) {
-                csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},${studentRecord.field5},,\n`;
+          if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+            if (existsSync(config.defaultPath + sep + assignmentName + sep + studentFolder)) {
+              if (studentInfo.remove) {
+                deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder);
               } else {
-                csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
+                const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
+                if (studentRecord) {
+                  csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},${studentRecord.field5},,\n`;
+                } else {
+                  csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
+                }
               }
-            }
-          } else {
-            mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
-            mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
+            } else {
+              mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
+              mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
 
-            const content = readFileSync(file.path);
-            const pdfDoc = await PDFDocument.load(content);
-            const pdfBytes = await pdfDoc.save();
-            await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname, pdfBytes);
-            // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
-            csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
+              const content = readFileSync(file.path);
+              const pdfDoc = await PDFDocument.load(content);
+              const pdfBytes = await pdfDoc.save();
+              await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname, pdfBytes);
+              // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
+              csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
+            }
+          } else{
+            if (existsSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + studentFolder)) {
+              if (studentInfo.remove) {
+                deleteFolderRecursive(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + studentFolder);
+              } else {
+                const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
+                if (studentRecord) {
+                  csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},${studentRecord.field5},,\n`;
+                } else {
+                  csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
+                }
+              }
+            } else {
+              mkdirSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + feedbackFolder, {recursive: true});
+              mkdirSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + submissionFolder, {recursive: true});
+
+              const content = readFileSync(file.path);
+              const pdfDoc = await PDFDocument.load(content);
+              const pdfBytes = await pdfDoc.save();
+              await writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + submissionFolder + sep + file.originalname, pdfBytes);
+              // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
+              csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
+            }
           }
           csvString += csvData;
           count++;
         }
 
-        writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
-        const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
-        files.sort((a, b) => (a > b) ? 1 : -1);
-        const folderModel = hierarchyModel(files, config.defaultPath);
-
-        return sendResponseData(req, res, 200, folderModel);
+        //
+        if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+          writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
+          // writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
+          const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
+          files.sort((a, b) => (a > b) ? 1 : -1);
+          const folderModel = hierarchyModel(files, config.defaultPath);
+          return sendResponseData(req, res, 200, folderModel);
+        } else {
+          writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + GRADES_FILE, csvString);
+          // writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
+          const files = glob.sync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + '/**');
+          files.sort((a, b) => (a > b) ? 1 : -1);
+          const folderModel = hierarchyModel(files, config.defaultPath + sep + req.body.workspace);
+          return sendResponseData(req, res, 200, folderModel);
+        }
       } catch (e) {
         return sendResponse(req, res, 400, e.message);
       }

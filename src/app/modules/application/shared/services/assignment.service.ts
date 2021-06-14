@@ -86,7 +86,7 @@ export class AssignmentService {
     return this.http.post<AssignmentSettingsInfo>('/api/assignment/settings/fetch', body);
   }
 
-  getAssignmentGrades(workspaceName: string = null , assignmentName: string = null) {
+  getAssignmentGrades(workspaceName: string = null, assignmentName: string = null) {
 
     if (workspaceName) {
       assignmentName = workspaceName + sep + assignmentName;
@@ -253,7 +253,7 @@ export class AssignmentService {
     return this.http.post("/api/assignment/marks/fetch", body);
   }
 
-  getAssingmentGlobalSettings() {
+  getAssignmentGlobalSettings() {
     const body = {
       location: this.selectedPdfLocation
     };
@@ -273,7 +273,10 @@ export class AssignmentService {
     return this.http.post("/api/assignment/student/grade", body);
   }
 
-  finalizeAndExport(assignmentName: string) {
+  finalizeAndExport(workspaceName: string = null, assignmentName: string) {
+    if (workspaceName) {
+      assignmentName = workspaceName + sep + assignmentName;
+    }
     const body = {
       location: assignmentName,
     };
@@ -282,6 +285,27 @@ export class AssignmentService {
       'Accept': MimeTypesEnum.JSON
     });
     return this.http.post<Blob>("/api/assignment/finalize", body, {
+      reportProgress: true,
+      observe: 'events',
+      headers,
+      responseType: 'blob' as 'json',
+    });
+  }
+
+
+  finalizeAndExportRubric(workspaceName: string = null, assignmentName: string, assignmentRubric: IRubric) {
+    if (workspaceName) {
+      assignmentName = workspaceName + sep + assignmentName;
+    }
+    const body = {
+      location: assignmentName,
+      rubricName: assignmentRubric.name
+    };
+    const headers = new HttpHeaders({
+      'Content-Type': MimeTypesEnum.JSON,
+      'Accept': MimeTypesEnum.JSON
+    });
+    return this.http.post<Blob>("/api/assignment/finalize/rubric", body, {
       reportProgress: true,
       observe: 'events',
       headers,
@@ -306,22 +330,6 @@ export class AssignmentService {
     return this.http.post<IRubric>("/api/assignment/rubric/update", body);
   }
 
-  finalizeAndExportRubric(assignmentName: string, assignmentRubric: IRubric) {
-    const body = {
-      location: assignmentName,
-      rubricName: assignmentRubric.name
-    };
-    const headers = new HttpHeaders({
-      'Content-Type': MimeTypesEnum.JSON,
-      'Accept': MimeTypesEnum.JSON
-    });
-    return this.http.post<Blob>("/api/assignment/finalize/rubric", body, {
-      reportProgress: true,
-      observe: 'events',
-      headers,
-      responseType: 'blob' as 'json',
-    });
-  }
 
   getWorkspaces(): Observable<any> {
     const body = {

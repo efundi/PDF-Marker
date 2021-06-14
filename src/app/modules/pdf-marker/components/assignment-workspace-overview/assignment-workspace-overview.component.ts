@@ -44,7 +44,7 @@ export interface WorkspaceDetails {
 })
 export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   private hierarchyModel;
-  displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'progress', 'type', 'curWorkspace'];
+  displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'progress', 'type'];
   dataSource: MatTableDataSource<WorkspaceDetails>;
   workspaceName: string = 'Workspace Name';
   private assignmentGrades: any[] = [];
@@ -102,10 +102,8 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
 
   async getAssignmentSettings(assignmentName: string): Promise<AssignmentSettingsInfo> {
-    this.appService.isLoading$.next(true);
     return await this.assignmentService.getAssignmentSettings(this.workspaceName, assignmentName).toPromise()
       .then((assignmentSettings) => {
-        this.appService.isLoading$.next(false);
         this.assignmentService.setSelectedAssignment(assignmentSettings);
         return assignmentSettings;
       })

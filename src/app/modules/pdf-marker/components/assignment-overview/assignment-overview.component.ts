@@ -255,22 +255,22 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     };
 
     const shouldFinalizeAndExportFn = (shouldFinalizeAndExport: boolean) => {
-      if(shouldFinalizeAndExport) {
+      if (shouldFinalizeAndExport) {
         this.appService.isLoading$.next(true);
         if (!(this.isNullOrUndefined(this.assignmentSettings.rubric))) {
-          this.assignmentService.finalizeAndExportRubric(this.assignmentName, this.assignmentSettings.rubric).subscribe((events: any) => {
-            if(events.type === HttpEventType.Response)
+          this.assignmentService.finalizeAndExportRubric(this.workspace, this.assignmentName, this.assignmentSettings.rubric).subscribe((events: any) => {
+            if (events.type === HttpEventType.Response)
               this.onSuccessfulExport(events);
           }, (responseError) => {
             this.onUnsuccessfulExport(responseError);
-          })
+          });
         } else {
-          this.assignmentService.finalizeAndExport(this.assignmentName).subscribe((events: any) => {
-            if(events.type === HttpEventType.Response)
+          this.assignmentService.finalizeAndExport(this.workspace, this.assignmentName).subscribe((events: any) => {
+            if (events.type === HttpEventType.Response)
               this.onSuccessfulExport(events);
           }, (responseError) => {
             this.onUnsuccessfulExport(responseError);
-          })
+          });
         }
       }
     };
@@ -313,7 +313,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   }
 
   manageStudents() {
-    this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD, this.assignmentName]);
+    if (this.workspace) {
+      this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD, this.assignmentName, this.workspace]);
+    } else {
+      this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD, this.assignmentName]);
+    }
   }
 
   viewRubric() {
@@ -331,6 +335,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       });
     }
   }
+
   private openRubricModalDialog(rubric: IRubric, assignmentSettingsInfo: AssignmentSettingsInfo) {
     const config = new MatDialogConfig();
     config.disableClose = false;

@@ -94,23 +94,25 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
       if (!this.isAssignmentRoot(objectName, hierarchyModel) && isWorkspace) {
         this.appService.isLoading$.next(true);
         this.assignmentService.setSelectedWorkspace(hierarchyModel);
-        if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
-          this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);
+        // if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
+        this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);
         $event.stopImmediatePropagation();
       } else if (this.isAssignmentRoot(objectName, hierarchyModel)) {
-        this.appService.isLoading$.next(true);
 
-        if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW) {
+
+        // if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW) {
           if (this.parent !== undefined) {
             const arr = folderOrFileKeys.length > 1 ? Object.entries(hierarchyModel).find(x => x[0] === objectName) : hierarchyModel;
             const obj = Object.fromEntries(new Map([arr]));
+            this.appService.isLoading$.next(true);
             this.assignmentService.setSelectedAssignment(obj);
             this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.parent]);
           } else {
+            this.appService.isLoading$.next(true);
             this.assignmentService.setSelectedAssignment(hierarchyModel);
             this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
           }
-        }
+        // }
         $event.stopImmediatePropagation();
       }
     });
