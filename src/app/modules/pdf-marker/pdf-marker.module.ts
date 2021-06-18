@@ -28,11 +28,12 @@ import {AssignmentSettingsService} from "@pdfMarkerModule/services/assingment-se
 import { AssignmentMarkingRubricComponent } from './components/assignment-marking-rubric/assignment-marking-rubric.component';
 import { AssignmentWorkspaceOverviewComponent } from './components/assignment-workspace-overview/assignment-workspace-overview.component';
 import { GenericCommentsComponent } from './components/comments/comments.component';
+import { AssignmentWorkspaceManageModalComponent } from './components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
 
 
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, AssignmentWorkspaceOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent, CreateFolderComponent, RubricImportComponent, AssignmentMarkingRubricComponent, GenericCommentsComponent],
+  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, AssignmentWorkspaceOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent, CreateFolderComponent, RubricImportComponent, AssignmentMarkingRubricComponent, GenericCommentsComponent, AssignmentWorkspaceManageModalComponent],
   imports: [
     CommonModule,
     SharedModule,
@@ -45,6 +46,6 @@ import { GenericCommentsComponent } from './components/comments/comments.compone
   ],
   providers: [SettingsService, ImportService, AssignmentSettingsService],
   exports: [HomeComponent],
-  entryComponents: [MarkTypeIconComponent, FinaliseMarkingComponent, MarkTypeIconComponent]
+  entryComponents: [MarkTypeIconComponent, FinaliseMarkingComponent, MarkTypeIconComponent, AssignmentWorkspaceManageModalComponent]
 })
 export class PdfMarkerModule { }

@@ -241,6 +241,10 @@ pdf-marker-file-explorer-modal {
   }
 }
 
+.mat-accent .mat-pseudo-checkbox-checked, .mat-accent .mat-pseudo-checkbox-indeterminate, .mat-pseudo-checkbox-checked, .mat-pseudo-checkbox-indeterminate {
+  background: $pdf-marker-primary;
+}
+
 .errorMessages{
   font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
 }

@@ -31,6 +31,7 @@ import {
   readdirSync,
   readFile,
   readFileSync,
+  renameSync,
   statSync,
   unlinkSync,
   writeFile,
@@ -90,6 +91,8 @@ const EXTRACTED_ZIP = 'Successfully extracted assignment to selected workspace!'
 const EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC = 'Successfully extracted assignment to selected workspace! ' +
   'But Failed to write to rubrics file!';
 const NOT_PROVIDED_ASSIGNMENT_LOCATION = 'Assignment location not provided!';
+const NOT_PROVIDED_NEW_WORKSPACE_NAME = 'New workspace name not provided!';
+const NOT_PROVIDED_WORKSPACE_NAME = 'Current workspace name not provided!';
 const INVALID_PATH_PROVIDED = 'Invalid path provided!';
 const INVALID_STUDENT_FOLDER = 'Invalid student folder';
 /**/
@@ -958,6 +961,7 @@ const assignmentRubricUpdateFn = (req, res) => {
 app.post('/api/assignment/rubric/update', [
   check('assignmentName').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], assignmentRubricUpdateFn);
+
 /* END CHANGE ASSIGNMENT RUBRIC*/
 
 const getAssignments = (req, res) => {
@@ -2498,6 +2502,59 @@ app.put('/api/assignment/update', [
   check('assignmentName').not().isEmpty().withMessage('Assignment name must be provided!')
 ], updateAssignment);
 
+
+const updateWorkspace = (req, res) => {
+  if (!checkClient(req, res))
+    return res.status(401).send({message: FORBIDDEN_RESOURCE});
+  const receivedParams = Object.keys(req.body);
+  if (!req.body.workspaceName)
+    return res.status(400).send({message: NOT_PROVIDED_WORKSPACE_NAME});
+  if (!req.body.newWorkspaceName)
+    return res.status(400).send({message: NOT_PROVIDED_NEW_WORKSPACE_NAME});
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return res.status(400).json({errors: errors.array()});
+  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
+    if (err) {
+      return res.status(500).send({message: 'Failed to read configurations!'});
+    }
+
+    if (!isJson(data)) {
+      return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+    }
+    const config = JSON.parse(data.toString());
+    const folders = config.folders;
+    // return sendResponseData(req, res, 200, folders);
+    const workspaceName: string = req.body.workspaceName;
+    const newWorkspaceName: string = req.body.newWorkspaceName;
+    const currPath = config.defaultPath + sep + workspaceName;
+    const newPath = config.defaultPath + sep + newWorkspaceName;
+    if (existsSync(newPath)) {
+      return res.status(500).send({message: 'Folder name already exists.'});
+    }
+    try {
+      renameSync(currPath, newPath);
+      console.log('Successfully renamed the directory.');
+      const foundIndex = folders.findIndex(x => x === currPath);
+      folders[foundIndex] = newPath;
+      config.folders = folders;
+      writeFileSync(CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
+      // writeToFile(req, res, CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
+      return res.status(200).send({message: 'Successfully renamed the directory.'});
+    } catch (e) {
+      console.log(e);
+      return res.status(500).send({message:  e.message});
+
+    }
+
+  });
+};
+
+app.post('/api/workspace/update', [
+  check('workspaceName').not().isEmpty().withMessage(NOT_PROVIDED_WORKSPACE_NAME),
+  check('newWorkspaceName').not().isEmpty().withMessage(NOT_PROVIDED_NEW_WORKSPACE_NAME)
+], updateWorkspace);
+
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {
   res.render('index', {req});
@@ -2556,12 +2613,12 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
               var splitArray = tempDetails.split("_");
 
               var studentName = splitArray[1];
-              var studentSurename = splitArray[0];
+              var studentSurname = splitArray[0];
               var studentID = splitArray[2];
               // tempDetails = tempDetails.subentry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf'string((tempDetails.indexOf(studentID))+1,tempDetails.length);
-              var studentDirectory = studentSurename + ", " + studentName + " (" + studentID + ")";
+              var studentDirectory = studentSurname + ", " + studentName + " (" + studentID + ")";
 
-              const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurename.toUpperCase()},${studentName.toUpperCase()},,,\n`;
+              const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurname.toUpperCase()},${studentName.toUpperCase()},,,\n`;
               csvString = csvString + csvData;
               dir = directory;
               console.log("####");

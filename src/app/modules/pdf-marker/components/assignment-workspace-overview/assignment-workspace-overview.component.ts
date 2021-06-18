@@ -21,6 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {sep} from 'path';
 import {RoutesEnum} from '@coreModule/utils/routes.enum';
+import {AssignmentWorkspaceManageModalComponent} from '@pdfMarkerModule/components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
 
 export interface WorkspaceDetails {
   assignmentTitle: string;
@@ -80,6 +81,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
     this.initForm();
     let selectedWorkspace = this.assignmentService.selectedWorkspace;
     if (selectedWorkspace !== null) {
+      this.appService.isLoading$.next(true);
       this.hierarchyModel = selectedWorkspace;
       this.generateDataFromModel();
     }
@@ -97,7 +99,23 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   }
 
   manageFolders(event) {
-    // fs.renameSync()
+    const config = new MatDialogConfig();
+    config.disableClose = true;
+    config.width = "400px";
+    config.height = "500px";
+    config.data = {
+      workspaceName: this.workspaceName,
+      assignments: this.dataSource.data,
+      hierarchyModel: this.hierarchyModel
+    };
+
+
+    const dialogRef = this.appService.createDialog(AssignmentWorkspaceManageModalComponent, config);
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('The dialog was closed');
+      this.workspaceName = result;
+    });
   }
 
 

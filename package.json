@@ -12,6 +12,7 @@
     "type": "git",
     "url": "https://github.com/efundi/PDF-Marker.git"
   },
+  "browser": { "fs": false, "path": false, "os": false},
   "scripts": {
     "electron": "ng build --base-href ./ && electron .",
     "electron-tsc": "tsc main.ts && ng build --base-href ./ && electron .",
