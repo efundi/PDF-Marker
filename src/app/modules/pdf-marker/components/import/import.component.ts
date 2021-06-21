@@ -13,6 +13,7 @@ import {IRubricName} from "@coreModule/utils/rubric.class";
 import {AppSelectedPathInfo} from "@coreModule/info-objects/app-selected-path.info";
 import {ElectronService} from "@coreModule/services/electron.service";
 import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
+import {WorkspaceService} from '@sharedModule/services/workspace.service';
 
 @Component({
   selector: 'pdf-marker-import',
@@ -49,7 +50,7 @@ export class ImportComponent implements OnInit {
 
   rubrics: IRubricName[];
 
-  workspaces: String[] = [];
+  workspaces: string[] = [];
 
   private actualFilePath: string;
   assignmentTypeID = "Assignment";
@@ -67,6 +68,7 @@ export class ImportComponent implements OnInit {
               private appService: AppService,
               private importService: ImportService,
               private assignmentService: AssignmentService,
+              private workspaceService: WorkspaceService,
               private electronService: ElectronService) { }
 
   ngOnInit() {
@@ -103,7 +105,7 @@ export class ImportComponent implements OnInit {
       this.appService.openSnackBar(false, "Unable to retrieve rubrics");
     });
     this.appService.isLoading$.next(false);
-    this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
+    this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
       this.workspaces = [...workspaces];
       this.workspaces = this.workspaces.map(item => {
         item = item.substr(item.lastIndexOf("\\") + 1, item.length);

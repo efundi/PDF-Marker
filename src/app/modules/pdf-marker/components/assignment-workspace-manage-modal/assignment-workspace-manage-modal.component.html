@@ -19,13 +19,17 @@
         <mat-icon>close</mat-icon>
       </button>
     </mat-form-field>
-    <mat-selection-list #selectedAssignments>
+    <mat-selection-list formControlName="selectedAssignments">
       <mat-label class="pdf-marker-form-labels">Assignment List</mat-label>
-      <mat-list-option *ngFor="let assignment of assignments; let i = index">{{ assignment.assignmentTitle }}</mat-list-option>
+      <mat-list-option *ngFor="let assignment of assignments" [value]="assignment">{{ assignment.assignmentTitle }}</mat-list-option>
     </mat-selection-list>
-    <p>
-      Options selected: {{selectedAssignments.selectedOptions.selected.length}}
-    </p>
+<!--    <mat-selection-list #selectedAssignments [(ngModel)]="selectedOptions"  (selectionChange)="onChange($event)">-->
+<!--      <mat-label class="pdf-marker-form-labels">Assignment List</mat-label>-->
+<!--      <mat-list-option *ngFor="let assignment of assignments; let i = index" [value]="assignment.assignmentTitle">{{ assignment.assignmentTitle }}</mat-list-option>-->
+<!--    </mat-selection-list>-->
+<!--    <p>-->
+<!--      Options selected: {{manageForm.selectedAssignments}}-->
+<!--    </p>-->
     <div class="pdf-spacer"></div>
     <mat-label class="pdf-marker-form-labels">Move selected assignments to:&nbsp;</mat-label>
     <mat-form-field>
@@ -34,7 +38,7 @@
         <mat-option *ngFor="let workspace of workspaceNameList" [value]="workspace">{{workspace}}</mat-option>
       </mat-select>
     </mat-form-field>
-    <button type="button" matSuffix mat-icon-button matTooltip="Move" (click)="onEdit($event)">
+    <button type="button" matSuffix mat-icon-button matTooltip="Move" (click)="onMove($event)">
       Move<mat-icon>content_copy</mat-icon>
     </button>
   </form>

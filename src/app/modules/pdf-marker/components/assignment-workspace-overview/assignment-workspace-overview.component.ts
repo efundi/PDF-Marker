@@ -34,7 +34,7 @@ export interface WorkspaceDetails {
 
   type: string;
 
-  curWorkspace: string;
+  currentWorkspace: string;
 
 };
 
@@ -163,7 +163,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
             marked: 0,
             notMarked: 0,
             type: '',
-            curWorkspace: ''
+            currentWorkspace: ''
           };
           // Assignment Name
           workspaceRow.assignmentTitle = key;
@@ -183,6 +183,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
             workspaceRow.type = assignmentSettingsInfo.rubric ? 'Rubric' : 'Manual';
 
           });
+          workspaceRow.currentWorkspace =  this.workspaceName;
           workspaceRows.push(workspaceRow);
         }
       });
@@ -216,39 +217,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       message: message,
     };
   }
-
-  /**   viewRubric() {
-    if (this.assignmentSettings.rubric.name != null) {
-      console.log("Open Rubric name = " + this.assignmentSettings.rubric.name);
-      let data = {rubricName: this.assignmentSettings.rubric.name};
-      //console.log(data);
-      this.importService.getRubricContents(data).subscribe((rubric: IRubric) => {
-        this.openRubricModalDialog(rubric, this.assignmentSettings);
-        this.appService.isLoading$.next(false);
-        this.appService.openSnackBar(true, "Rubric View Opened");
-      }, error => {
-        this.appService.openSnackBar(false, "Rubric View Failed");
-        this.appService.isLoading$.next(false)
-      });
-    }
-  }
-   private openRubricModalDialog(rubric: IRubric, assignmentSettingsInfo: AssignmentSettingsInfo) {
-    const config = new MatDialogConfig();
-    config.disableClose = false;
-    config.width = "1500px";
-    config.height = "750px";
-    config.data = {
-      rubric: rubric,
-      assignmentSettingsInfo: assignmentSettingsInfo,
-      assignmentName: this.workspaceName
-    };
-
-    let dialogRef = this.appService.createDialog(RubricViewModalComponent, config);
-    dialogRef.afterClosed().subscribe(result => {
-      this.getAssignmentSettings(this.workspaceName);
-    });
-  }
-   **/
 
   ngOnDestroy(): void {
     this.assignmentService.setSelectedWorkspace(null);

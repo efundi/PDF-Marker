@@ -14,6 +14,7 @@ import {AssignmentDetails} from "@pdfMarkerModule/components/assignment-overview
 import {SakaiService} from "@coreModule/services/sakai.service";
 import {MatDialogConfig} from "@angular/material/dialog";
 import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
+import {WorkspaceService} from '@sharedModule/services/workspace.service';
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -48,7 +49,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private workspaceName :string;
 
-  workspaces: String[] = [];
+  workspaces: string[] = [];
   selectedWorkspace: string;
 
   // @ts-ignore
@@ -62,6 +63,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
               private alertService: AlertService,
               private assignmentService: AssignmentService,
               private appService: AppService,
+              private workspaceService: WorkspaceService,
               private router: Router,
               private activatedRoute: ActivatedRoute,
               private importService: ImportService,
@@ -108,7 +110,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.appService.isLoading$.next(false);
     });
 
-    this.assignmentService.getWorkspaces().subscribe((workspaces: String[]) => {
+    this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
       this.workspaces = [...workspaces];
       this.workspaces = this.workspaces.map(item => {
         item = item.substr(item.lastIndexOf("\\") + 1, item.length);

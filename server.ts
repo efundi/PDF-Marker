@@ -23,6 +23,7 @@ import {
   access,
   accessSync,
   constants,
+  copyFile,
   copyFileSync,
   createReadStream,
   existsSync,
@@ -57,6 +58,8 @@ const unzipper = require('unzipper');
 const etl = require('etl');
 
 const fs = require('fs');
+const fse = require('fs-extra');
+// const mv = require('mv');
 
 const {check, validationResult} = require('express-validator');
 const multer = require('multer');
@@ -1541,7 +1544,7 @@ const getWorkspaces = (req, res) => {
   });
 };
 
-app.post('/api/assignment/workspaces', [], getWorkspaces);
+app.post('/api/workspaces', [], getWorkspaces);
 
 
 const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
@@ -2503,10 +2506,9 @@ app.put('/api/assignment/update', [
 ], updateAssignment);
 
 
-const updateWorkspace = (req, res) => {
+const updateWorkspaceName = (req, res) => {
   if (!checkClient(req, res))
     return res.status(401).send({message: FORBIDDEN_RESOURCE});
-  const receivedParams = Object.keys(req.body);
   if (!req.body.workspaceName)
     return res.status(400).send({message: NOT_PROVIDED_WORKSPACE_NAME});
   if (!req.body.newWorkspaceName)
@@ -2524,7 +2526,6 @@ const updateWorkspace = (req, res) => {
     }
     const config = JSON.parse(data.toString());
     const folders = config.folders;
-    // return sendResponseData(req, res, 200, folders);
     const workspaceName: string = req.body.workspaceName;
     const newWorkspaceName: string = req.body.newWorkspaceName;
     const currPath = config.defaultPath + sep + workspaceName;
@@ -2553,7 +2554,69 @@ const updateWorkspace = (req, res) => {
 app.post('/api/workspace/update', [
   check('workspaceName').not().isEmpty().withMessage(NOT_PROVIDED_WORKSPACE_NAME),
   check('newWorkspaceName').not().isEmpty().withMessage(NOT_PROVIDED_NEW_WORKSPACE_NAME)
-], updateWorkspace);
+], updateWorkspaceName);
+
+
+const moveWorkspaceAssignments = (req, res) => {
+  if (!checkClient(req, res))
+    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+
+  if (isNullOrUndefined(req.body.workspaceName))
+    return sendResponse(req, res, 400, 'Workspace location not provided');
+
+
+  const assignments = Array.isArray(req.body.assignments) ? req.body.assignments : [];
+  if (!isNullOrUndefined(assignments)) {
+    return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
+      if (!isJson(data)) {
+        return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+      }
+      const config = JSON.parse(data.toString());
+      const loc = req.body.currentWorkspaceName.replace(/\//g, sep);
+      console.log(loc);
+      const loc2 = req.body.workspaceName.replace(/\//g, sep);
+      console.log(loc2);
+
+      const workspacePath = config.defaultPath + sep + loc;
+      console.log(workspacePath);
+      const newWorkspacePath = config.defaultPath + sep + loc2;
+      console.log(newWorkspacePath);
+      assignments.forEach((assignment) => {
+        const assignmentPath = workspacePath + sep + assignment.assignmentTitle;
+        console.log(assignmentPath);
+        const newAssignmentPath = newWorkspacePath + sep + assignment.assignmentTitle;
+        console.log(newAssignmentPath);
+        if (!existsSync(newAssignmentPath)) {
+          //
+          (async () => {
+
+            const src = assignmentPath;
+            const dest = newAssignmentPath;
+
+            await fse.move(src, dest);
+
+          })();
+          //
+          // try {
+          //   fse.move(assignmentPath, newAssignmentPath, function(err) {
+          //     if (err) return console.error(err);
+          //     console.log("success!");
+          //   });
+          //   // mkdirSync(newAssignmentPath, {recursive: true});
+          //   // copyFileSync(assignmentPath, newAssignmentPath);
+          // } catch (err) {
+          //   console.log(err);
+          //   throw err;
+          // }
+        }
+      });
+    });
+  }
+
+};
+
+
+app.post('/api/workspace/move', moveWorkspaceAssignments);
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {

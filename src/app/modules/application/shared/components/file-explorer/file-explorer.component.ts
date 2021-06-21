@@ -10,6 +10,7 @@ import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {ZipService} from '@coreModule/services/zip.service';
 import {values} from 'pdf-lib';
+import {WorkspaceService} from '@sharedModule/services/workspace.service';
 
 @Component({
   selector: 'pdf-marker-file-explorer',
@@ -50,10 +51,11 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   isWorkspaceFolder: boolean;
 
-  workspaceList: String[];
+  workspaceList: string[];
 
   constructor(private router: Router,
               public assignmentService: AssignmentService,
+              private workspaceService: WorkspaceService,
               private appService: AppService,
               private zipService: ZipService) { }
 
@@ -72,7 +74,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   onAssignment(objectName, hierarchyModel, $event) {
 
-    this.assignmentService.getWorkspaces().subscribe((workspaces: string[]) => {
+    this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
       this.workspaceList = workspaces;
       const workspaceNames = workspaces.map(item => {
         item = item.substr(item.lastIndexOf("\\") + 1, item.length);

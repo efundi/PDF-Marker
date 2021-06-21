@@ -72,7 +72,7 @@ export class AssignmentService {
     return this.http.post('/api/assignment/settings', body);
   }
 
-  getAssignmentSettings(workspaceName: string = null ,assignmentName: string = null): Observable<AssignmentSettingsInfo> {
+  getAssignmentSettings(workspaceName: string = null, assignmentName: string = null): Observable<AssignmentSettingsInfo> {
     if (!assignmentName) {
       assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0] : "");
     }
@@ -89,17 +89,6 @@ export class AssignmentService {
   getAssignmentGrades(workspaceName: string = null, assignmentName: string = null) {
 
     if (workspaceName) {
-      assignmentName = workspaceName + sep + assignmentName;
-    }
-    const body = {
-      location: assignmentName
-    };
-
-    return this.http.post('/api/assignment/grade', body);
-  }
-
-  getWorkspaceAssignmentGrades(workspaceName: string = null, assignmentName: string = null) {
-    if (workspaceName && assignmentName) {
       assignmentName = workspaceName + sep + assignmentName;
     }
     const body = {
@@ -328,16 +317,5 @@ export class AssignmentService {
     };
 
     return this.http.post<IRubric>("/api/assignment/rubric/update", body);
-  }
-
-
-  getWorkspaces(): Observable<any> {
-    const body = {
-    };
-    const headers = new HttpHeaders({
-      'Content-Type': MimeTypesEnum.JSON,
-      'Accept': MimeTypesEnum.JSON
-    });
-    return this.http.post<String[]>("/api/assignment/workspaces", body);
   }
 }

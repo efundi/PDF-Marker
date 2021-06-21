@@ -4,6 +4,7 @@ import {FormBuilder, FormGroup} from '@angular/forms';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
 import {AppService} from '@coreModule/services/app.service';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
+import {MatSelectionListChange} from '@angular/material';
 
 @Component({
   selector: 'pdf-marker-assignment-workspace-manage-modal',
@@ -22,6 +23,8 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
   workspaceNameList: string[];
   newWorkspaceName: string;
 
+  selectedOptions: string[] = [];
+
   constructor(private formBuilder: FormBuilder,
               public dialogRef: MatDialogRef<AssignmentWorkspaceManageModalComponent>,
               private appService: AppService,
@@ -37,7 +40,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
     this.workspaceName = this.data.workspaceName;
     this.assignments = this.data.assignments;
     this.manageForm.controls.workspaceName.setValue(this.data.workspaceName);
-    this.assignmentService.getWorkspaces().subscribe((workspaces: string[]) => {
+    this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
       this.workspaceList = workspaces;
       this.workspaceNameList = workspaces.map(item => {
         item = item.substr(item.lastIndexOf("\\") + 1, item.length);
@@ -48,6 +51,11 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
     });
   }
 
+  onChange(change: MatSelectionListChange) {
+    console.log(change.option.value, change.option.selected);
+    console.log('on ng model change', change);
+  }
+
 
   onClose() {
     this.dialogRef.close();
@@ -56,7 +64,8 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
   private initForm() {
     this.manageForm = this.formBuilder.group({
       workspaceName: [null],
-      newWorkspaceFolder: [null]
+      newWorkspaceFolder: [null],
+      selectedAssignments: [null]
     });
   }
 
@@ -89,5 +98,25 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
   onEdit($event) {
     this.isEditing = true;
+  }
+
+  onMove($event) {
+    console.log(this.manageForm.get('selectedAssignments').value);
+    const assignments = this.manageForm.get('selectedAssignments').value;
+    const newFolder = this.manageForm.get('newWorkspaceFolder').value;
+    let folder = this.data.workspaceName;
+    if (this.manageForm.get('workspaceName').value) {
+      folder = this.manageForm.get('workspaceName').value;
+    }
+    if ( folder && newFolder && (this.assignments && this.assignments.length > 0)) {
+      this.workspaceService.moveWorkspaceAssignments(folder, newFolder, assignments).subscribe((workspaceName: string) => {
+        this.appService.openSnackBar(true, "Successfully moved selected assignments");
+        this.appService.isLoading$.next(false);
+      }, error => {
+        this.appService.isLoading$.next(false);
+        console.log(error);
+        this.appService.openSnackBar(false, "Unable to move assignments");
+      });
+    }
   }
 }
