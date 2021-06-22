@@ -1,10 +1,19 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
-import {FormBuilder, FormGroup} from '@angular/forms';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
 import {AppService} from '@coreModule/services/app.service';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
 import {MatSelectionListChange} from '@angular/material';
+
+export interface WorkspaceDialogResult {
+  prevWorkspaceName: string;
+
+  workspaceName: string;
+
+  movedAssignments: any[];
+};
+
 
 @Component({
   selector: 'pdf-marker-assignment-workspace-manage-modal',
@@ -18,12 +27,14 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
   isEditing: boolean;
 
   workspaceName: string;
+  prevWorkspaceName: string;
   assignments: [];
   workspaceList: string[];
   workspaceNameList: string[];
   newWorkspaceName: string;
 
   selectedOptions: string[] = [];
+  movedAssignments: string[] = [];
 
   constructor(private formBuilder: FormBuilder,
               public dialogRef: MatDialogRef<AssignmentWorkspaceManageModalComponent>,
@@ -38,6 +49,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
     this.isEditing = false;
     this.initForm();
     this.workspaceName = this.data.workspaceName;
+    this.prevWorkspaceName = this.data.workspaceName;
     this.assignments = this.data.assignments;
     this.manageForm.controls.workspaceName.setValue(this.data.workspaceName);
     this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
@@ -51,31 +63,36 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
     });
   }
 
-  onChange(change: MatSelectionListChange) {
-    console.log(change.option.value, change.option.selected);
-    console.log('on ng model change', change);
-  }
-
-
   onClose() {
-    this.dialogRef.close();
+    const returnVar: WorkspaceDialogResult = {
+      prevWorkspaceName: this.prevWorkspaceName,
+      workspaceName: '',
+      movedAssignments: []
+    };
+    const workspace = this.manageForm.controls.workspaceName.value;
+    if (workspace !== this.prevWorkspaceName) {
+      returnVar.workspaceName = workspace;
+    }
+    const assignments = this.manageForm.get('selectedAssignments').value;
+    if (assignments && assignments.length > 0) {
+      returnVar.movedAssignments = [...assignments];
+    }
+    this.workspaceService.announceWorkspaceChanges(returnVar);
+    this.dialogRef.close(returnVar);
   }
 
   private initForm() {
     this.manageForm = this.formBuilder.group({
-      workspaceName: [null],
+      workspaceName: [null, Validators.required],
       newWorkspaceFolder: [null],
       selectedAssignments: [null]
     });
   }
 
-  onSave() {
-    this.dialogRef.close();
-  }
-
   saveWorkspaceName($event) {
     // this.dialogRef.close();
-    this.workspaceService.updateWorkspaceName(this.data.workspaceName, this.manageForm.controls.workspaceName.value).subscribe((workspaceName: string) => {
+    const newName  = this.manageForm.controls.workspaceName.value;
+    this.workspaceService.updateWorkspaceName(this.data.workspaceName, newName).subscribe((workspaceName: string) => {
       this.appService.openSnackBar(true, "Successfully updated workspaceName");
       this.data.workspaceName = workspaceName;
       this.workspaceName = workspaceName;

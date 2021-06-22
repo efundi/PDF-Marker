@@ -23,13 +23,6 @@
       <mat-label class="pdf-marker-form-labels">Assignment List</mat-label>
       <mat-list-option *ngFor="let assignment of assignments" [value]="assignment">{{ assignment.assignmentTitle }}</mat-list-option>
     </mat-selection-list>
-<!--    <mat-selection-list #selectedAssignments [(ngModel)]="selectedOptions"  (selectionChange)="onChange($event)">-->
-<!--      <mat-label class="pdf-marker-form-labels">Assignment List</mat-label>-->
-<!--      <mat-list-option *ngFor="let assignment of assignments; let i = index" [value]="assignment.assignmentTitle">{{ assignment.assignmentTitle }}</mat-list-option>-->
-<!--    </mat-selection-list>-->
-<!--    <p>-->
-<!--      Options selected: {{manageForm.selectedAssignments}}-->
-<!--    </p>-->
     <div class="pdf-spacer"></div>
     <mat-label class="pdf-marker-form-labels">Move selected assignments to:&nbsp;</mat-label>
     <mat-form-field>

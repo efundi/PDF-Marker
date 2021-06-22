@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {SakaiService} from "@coreModule/services/sakai.service";
 import {Router} from "@angular/router";
@@ -6,21 +6,15 @@ import {AppService} from "@coreModule/services/app.service";
 import {MatPaginator} from "@angular/material/paginator";
 import {MatTableDataSource} from "@angular/material/table";
 import {MatDialogConfig} from "@angular/material/dialog";
-import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
 import {AlertService} from "@coreModule/services/alert.service";
-import {HttpEventType} from "@angular/common/http";
 import {FileSaverService} from "ngx-filesaver";
 import {SettingsService} from "@pdfMarkerModule/services/settings.service";
 import {SettingInfo} from "@pdfMarkerModule/info-objects/setting.info";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
-import {ImportService} from "@pdfMarkerModule/services/import.service";
-import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
-import {FormBuilder, FormGroup} from "@angular/forms";
-import {ElectronService} from "@coreModule/services/electron.service";
+import {FormBuilder} from "@angular/forms";
 import * as fs from 'fs';
 import * as path from 'path';
 import {sep} from 'path';
-import {RoutesEnum} from '@coreModule/utils/routes.enum';
 import {AssignmentWorkspaceManageModalComponent} from '@pdfMarkerModule/components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
 
 export interface WorkspaceDetails {
@@ -59,11 +53,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
   isSettings: boolean;
   isCreated: boolean;
-  isRubric: boolean;
   isEditingName: boolean = false;
-
-  rubrics: IRubricName[] = [];
-
 
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
@@ -72,9 +62,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
               private alertService: AlertService,
               private fileSaverService: FileSaverService,
               private settingsService: SettingsService,
-              private importService: ImportService,
-              private fb: FormBuilder,
-              private electronService: ElectronService) {
+              private fb: FormBuilder) {
   }
 
   ngOnInit() {
@@ -85,14 +73,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       this.hierarchyModel = selectedWorkspace;
       this.generateDataFromModel();
     }
-
-
-    // this.importService.getRubricDetails().subscribe((rubrics: IRubricName[]) => {
-    //   const data: IRubricName = {name: null, inUse: false};
-    //   rubrics.unshift(data);
-    //   this.rubrics = rubrics;
-    // });
-
   }
 
   private initForm() {
@@ -114,7 +94,33 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(result => {
       console.log('The dialog was closed');
-      this.workspaceName = result;
+      console.log(result);
+      let edited = false;
+      if (result && result.workspaceName && result.workspaceName !== this.workspaceName) {
+        this.workspaceName = result.workspaceName;
+        edited = true;
+      }
+      if (result && result.movedAssignments && result.movedAssignments.length > 0) {
+        result.movedAssignments.forEach(assignment => {
+          const foundIndex = this.dataSource.data.findIndex(x => x.assignmentTitle === assignment.assignmentTitle);
+          this.dataSource.data.splice(foundIndex, 1);
+          this.dataSource._updateChangeSubscription();
+          this.dataSource.paginator = this.paginator;
+          edited = true;
+        });
+      }
+      if(edited){
+        this.appService.isLoading$.next(true);
+        this.assignmentService.getAssignments().subscribe((assignments) => {
+          this.assignmentService.update(assignments);
+          this.appService.isLoading$.next(false);
+          this.appService.openSnackBar(true, "Refreshed list");
+        }, error => {
+          this.appService.isLoading$.next(false);
+          this.appService.openSnackBar(false, "Could not refresh list");
+        });
+
+      }
     });
   }
 

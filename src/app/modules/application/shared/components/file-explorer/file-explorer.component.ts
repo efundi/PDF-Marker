@@ -60,9 +60,9 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
               private zipService: ZipService) { }
 
   ngOnInit() {
-    if(this.assignmentRootFolder) {
+    if (this.assignmentRootFolder) {
       this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfFile => {
-        if(this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + "/"))
+        if (this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + "/"))
           this.filePath = this.assignmentService.getSelectedPdfLocation();
         else {
           this.isFileSelected = false;
@@ -70,6 +70,16 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
         }
       });
     }
+    // this.subscription = this.workspaceService.dialogResultSource$.subscribe(
+    //   dialogResult => {
+    //     if (dialogResult && dialogResult.workspaceName && dialogResult.workspaceName !== dialogResult.prevWorkspaceName) {
+    //       console.log(dialogResult.prevWorkspaceName);
+    //       console.log(dialogResult.workspaceName);
+    //     }
+    //     if (dialogResult && dialogResult.movedAssignments && dialogResult.movedAssignments.length > 0) {
+    //       console.log(dialogResult.movedAssignments);
+    //     }
+    //   });
   }
 
   onAssignment(objectName, hierarchyModel, $event) {

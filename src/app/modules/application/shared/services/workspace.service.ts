@@ -1,18 +1,27 @@
 import {Inject, Injectable, Optional, PLATFORM_ID} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {AppService} from '@coreModule/services/app.service';
-import {Observable} from 'rxjs';
+import {Observable, Subject} from 'rxjs';
 import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
+import {WorkspaceDialogResult} from '@pdfMarkerModule/components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WorkspaceService {
 
+
+  private dialogResultSource = new Subject<WorkspaceDialogResult>();
+  dialogResultSource$ = this.dialogResultSource.asObservable();
+
+
   constructor(private http: HttpClient,
-              @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
               @Inject(PLATFORM_ID) private platformId: any,
               private appService: AppService) {
+  }
+
+  announceWorkspaceChanges(workspaceModal: WorkspaceDialogResult) {
+    this.dialogResultSource.next(workspaceModal);
   }
 
   getWorkspaces(): Observable<any> {
