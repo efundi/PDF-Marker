@@ -59,7 +59,10 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
         return item;
       });
       const foundIndex = this.workspaceNameList.findIndex(x => x === this.data.workspaceName);
-      delete this.workspaceNameList[foundIndex];
+      this.workspaceList.splice(foundIndex, 1);
+      this.workspaceNameList.splice(foundIndex, 1);
+      // delete this.workspaceList[foundIndex];
+      // delete this.workspaceNameList[foundIndex];
     });
   }
 
@@ -91,20 +94,21 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
   saveWorkspaceName($event) {
     // this.dialogRef.close();
-    const newName  = this.manageForm.controls.workspaceName.value;
-    this.workspaceService.updateWorkspaceName(this.data.workspaceName, newName).subscribe((workspaceName: string) => {
-      this.appService.openSnackBar(true, "Successfully updated workspaceName");
-      this.data.workspaceName = workspaceName;
-      this.workspaceName = workspaceName;
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.isLoading$.next(false);
-      console.log(error);
-      this.appService.openSnackBar(false, "Unable to update workspaceName");
-    });
+    if (this.manageForm.valid) {
+      const newName = this.manageForm.controls.workspaceName.value;
+      this.workspaceService.updateWorkspaceName(this.data.workspaceName, newName).subscribe((workspaceName: string) => {
+        this.appService.openSnackBar(true, "Successfully updated workspace name");
+        this.data.workspaceName = workspaceName;
+        this.workspaceName = workspaceName;
+        this.appService.isLoading$.next(false);
+      }, error => {
+        this.appService.isLoading$.next(false);
+        console.log(error);
+        this.appService.openSnackBar(false, "Unable to update workspace name");
+      });
+    }
     this.isEditing = false;
   }
-
 
 
   onCancel($event) {
@@ -118,22 +122,24 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
   }
 
   onMove($event) {
-    console.log(this.manageForm.get('selectedAssignments').value);
-    const assignments = this.manageForm.get('selectedAssignments').value;
-    const newFolder = this.manageForm.get('newWorkspaceFolder').value;
-    let folder = this.data.workspaceName;
-    if (this.manageForm.get('workspaceName').value) {
-      folder = this.manageForm.get('workspaceName').value;
-    }
-    if ( folder && newFolder && (this.assignments && this.assignments.length > 0)) {
-      this.workspaceService.moveWorkspaceAssignments(folder, newFolder, assignments).subscribe((workspaceName: string) => {
-        this.appService.openSnackBar(true, "Successfully moved selected assignments");
-        this.appService.isLoading$.next(false);
-      }, error => {
-        this.appService.isLoading$.next(false);
-        console.log(error);
-        this.appService.openSnackBar(false, "Unable to move assignments");
-      });
+    if (this.manageForm.valid) {
+      console.log(this.manageForm.get('selectedAssignments').value);
+      const assignments = this.manageForm.get('selectedAssignments').value;
+      const newFolder = this.manageForm.get('newWorkspaceFolder').value;
+      let folder = this.data.workspaceName;
+      if (this.manageForm.get('workspaceName').value) {
+        folder = this.manageForm.get('workspaceName').value;
+      }
+      if (folder && newFolder && (this.assignments && this.assignments.length > 0)) {
+        this.workspaceService.moveWorkspaceAssignments(folder, newFolder, assignments).subscribe((workspaceName: string) => {
+          this.appService.openSnackBar(true, "Successfully moved selected assignments");
+          this.appService.isLoading$.next(false);
+        }, error => {
+          this.appService.isLoading$.next(false);
+          console.log(error);
+          this.appService.openSnackBar(false, error);
+        });
+      }
     }
   }
 }

@@ -115,7 +115,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
          // if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW) {
           if (this.parent !== undefined) {
             const arr = folderOrFileKeys.length > 1 ? Object.entries(hierarchyModel).find(x => x[0] === objectName) : hierarchyModel;
-            const obj = Object.fromEntries(new Map([arr]));
+            const obj = Array.isArray(arr) ? Object.fromEntries(new Map([...arr])) : hierarchyModel;
             this.appService.isLoading$.next(true);
             this.assignmentService.setSelectedAssignment(obj);
             this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.parent]);

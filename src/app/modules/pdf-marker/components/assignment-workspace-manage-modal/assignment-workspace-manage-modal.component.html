@@ -1,11 +1,14 @@
 <ng-container autoscroll="true">
   <div>
-    <button class="close-button" type="button" mat-icon-button matTooltip="Close" (click)="onClose()">
+    <h2 mat-dialog-title>Manage Workspace     <button class="close-button" type="button" mat-icon-button matTooltip="Close" (click)="onClose()">
       <mat-icon>close</mat-icon>
-    </button>
+    </button></h2>
+
   </div>
+  <mat-dialog-content>
   <form [formGroup]="manageForm">
-    <mat-label class="pdf-marker-form-labels">Workspace name</mat-label>
+    <mat-label class="pdf-marker-form-labels">Workspace name: </mat-label>
+    <div class="pdf-spacer"></div>
     <mat-form-field>
       <input [readonly]="!isEditing" formControlName="workspaceName" id="workspaceName" type="text" matInput required
              [autocomplete]="false">
@@ -19,20 +22,28 @@
         <mat-icon>close</mat-icon>
       </button>
     </mat-form-field>
-    <mat-selection-list formControlName="selectedAssignments">
+    <mat-selection-list formControlName="selectedAssignments" #selected>
       <mat-label class="pdf-marker-form-labels">Assignment List</mat-label>
       <mat-list-option *ngFor="let assignment of assignments" [value]="assignment">{{ assignment.assignmentTitle }}</mat-list-option>
     </mat-selection-list>
     <div class="pdf-spacer"></div>
     <mat-label class="pdf-marker-form-labels">Move selected assignments to:&nbsp;</mat-label>
-    <mat-form-field>
-      <mat-label>Select Workspace</mat-label>
-      <mat-select formControlName="newWorkspaceFolder">
-        <mat-option *ngFor="let workspace of workspaceNameList" [value]="workspace">{{workspace}}</mat-option>
-      </mat-select>
-    </mat-form-field>
-    <button type="button" matSuffix mat-icon-button matTooltip="Move" (click)="onMove($event)">
-      Move<mat-icon>content_copy</mat-icon>
-    </button>
+
+    <div class="customFlexContainer flexGrow3">
+      <div>
+        <mat-form-field>
+          <mat-label>Select Workspace</mat-label>
+          <mat-select formControlName="newWorkspaceFolder">
+            <mat-option *ngFor="let workspace of workspaceNameList" [value]="workspace">{{workspace}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="button-right-margin">
+        <button [disabled]="selected.selectedOptions.selected.length == 0" type="button" matSuffix mat-icon-button matTooltip="Move" (click)="onMove($event)">
+          Move<mat-icon [class.pdf-icon-disabled]="selected.selectedOptions.selected.length == 0" >content_copy</mat-icon>
+        </button>
+      </div>
+    </div>
   </form>
+  </mat-dialog-content>
 </ng-container>

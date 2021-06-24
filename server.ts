@@ -1547,9 +1547,9 @@ const getWorkspaces = (req, res) => {
 app.post('/api/workspaces', [], getWorkspaces);
 
 
-const validateRequest = (requiredKeys = [], recievedKeys = []): boolean => {
+const validateRequest = (requiredKeys = [], receivedKeys = []): boolean => {
   let invalidKeyFound = false;
-  for (const key of recievedKeys) {
+  for (const key of receivedKeys) {
     if (requiredKeys.indexOf(key) === -1) {
       invalidKeyFound = true;
       break;
@@ -2540,7 +2540,6 @@ const updateWorkspaceName = (req, res) => {
       folders[foundIndex] = newPath;
       config.folders = folders;
       writeFileSync(CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
-      // writeToFile(req, res, CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
       return res.status(200).send({message: 'Successfully renamed the directory.'});
     } catch (e) {
       console.log(e);
@@ -2558,12 +2557,13 @@ app.post('/api/workspace/update', [
 
 
 const moveWorkspaceAssignments = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
-  if (isNullOrUndefined(req.body.workspaceName))
+  if (isNullOrUndefined(req.body.workspaceName)) {
     return sendResponse(req, res, 400, 'Workspace location not provided');
-
+  }
 
   const assignments = Array.isArray(req.body.assignments) ? req.body.assignments : [];
   if (!isNullOrUndefined(assignments)) {
@@ -2573,43 +2573,28 @@ const moveWorkspaceAssignments = (req, res) => {
       }
       const config = JSON.parse(data.toString());
       const loc = req.body.currentWorkspaceName.replace(/\//g, sep);
-      console.log(loc);
       const loc2 = req.body.workspaceName.replace(/\//g, sep);
-      console.log(loc2);
 
       const workspacePath = config.defaultPath + sep + loc;
-      console.log(workspacePath);
       const newWorkspacePath = config.defaultPath + sep + loc2;
-      console.log(newWorkspacePath);
       assignments.forEach((assignment) => {
         const assignmentPath = workspacePath + sep + assignment.assignmentTitle;
-        console.log(assignmentPath);
         const newAssignmentPath = newWorkspacePath + sep + assignment.assignmentTitle;
-        console.log(newAssignmentPath);
         if (!existsSync(newAssignmentPath)) {
-          //
-          (async () => {
-
+          try {
             const src = assignmentPath;
             const dest = newAssignmentPath;
-
-            await fse.move(src, dest);
-
-          })();
-          //
-          // try {
-          //   fse.move(assignmentPath, newAssignmentPath, function(err) {
-          //     if (err) return console.error(err);
-          //     console.log("success!");
-          //   });
-          //   // mkdirSync(newAssignmentPath, {recursive: true});
-          //   // copyFileSync(assignmentPath, newAssignmentPath);
-          // } catch (err) {
-          //   console.log(err);
-          //   throw err;
-          // }
+            fse.move(src, dest);
+          } catch (e) {
+            console.log(e);
+            return res.status(500).send({message:  e.message});
+          }
+        } else {
+          return res.status(500).send({message: 'Assignment with name already exists.'});
+          // return sendResponse(req, res, 400, 'Assignment with name already exists.');
         }
       });
+      return res.status(200).send({message: 'Successfully renamed the directory.'});
     });
   }
 

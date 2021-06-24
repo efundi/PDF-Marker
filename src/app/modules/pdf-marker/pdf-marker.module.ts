@@ -15,25 +15,41 @@ import {IconsComponent} from './components/icons/icons.component';
 import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component";
 import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
 import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-marking.component';
-import { CreateAssignmentComponent } from './components/create-assignment/create-assignment.component';
-import { CreateFolderComponent  } from './components/create-folder/create-folder.component';
+import {CreateAssignmentComponent} from './components/create-assignment/create-assignment.component';
+import {CreateFolderComponent} from './components/create-folder/create-folder.component';
 
 import {PdfJsViewerModule} from 'ng2-pdfjs-viewer';
 import {ColorPickerModule} from "ngx-color-picker";
-import {  RxReactiveFormsModule } from "@rxweb/reactive-form-validators"
+import {RxReactiveFormsModule} from "@rxweb/reactive-form-validators";
 
-import { RubricImportComponent } from './components/rubric-import/rubric-import.component';
+import {RubricImportComponent} from './components/rubric-import/rubric-import.component';
 import {FileSaverModule} from "ngx-filesaver";
 import {AssignmentSettingsService} from "@pdfMarkerModule/services/assingment-settings.service";
-import { AssignmentMarkingRubricComponent } from './components/assignment-marking-rubric/assignment-marking-rubric.component';
-import { AssignmentWorkspaceOverviewComponent } from './components/assignment-workspace-overview/assignment-workspace-overview.component';
-import { GenericCommentsComponent } from './components/comments/comments.component';
-import { AssignmentWorkspaceManageModalComponent } from './components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
-
+import {AssignmentMarkingRubricComponent} from './components/assignment-marking-rubric/assignment-marking-rubric.component';
+import {AssignmentWorkspaceOverviewComponent} from './components/assignment-workspace-overview/assignment-workspace-overview.component';
+import {GenericCommentsComponent} from './components/comments/comments.component';
+import {AssignmentWorkspaceManageModalComponent} from './components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
 
 
 @NgModule({
-  declarations: [HomeComponent, WelcomeComponent, ImportComponent, SettingsComponent, AssignmentOverviewComponent, AssignmentWorkspaceOverviewComponent, IconsComponent, AssignmentMarkingComponent, FinaliseMarkingComponent, MarkTypeIconComponent, CreateAssignmentComponent, CreateFolderComponent, RubricImportComponent, AssignmentMarkingRubricComponent, GenericCommentsComponent, AssignmentWorkspaceManageModalComponent],
+  declarations: [
+    AssignmentMarkingComponent,
+    AssignmentMarkingRubricComponent,
+    AssignmentOverviewComponent,
+    AssignmentWorkspaceManageModalComponent,
+    AssignmentWorkspaceOverviewComponent,
+    CreateAssignmentComponent,
+    CreateFolderComponent,
+    FinaliseMarkingComponent,
+    GenericCommentsComponent,
+    HomeComponent,
+    ImportComponent,
+    IconsComponent,
+    MarkTypeIconComponent,
+    RubricImportComponent,
+    SettingsComponent,
+    WelcomeComponent
+  ],
   imports: [
     CommonModule,
     SharedModule,
@@ -48,4 +64,5 @@ import { AssignmentWorkspaceManageModalComponent } from './components/assignment
   exports: [HomeComponent],
   entryComponents: [MarkTypeIconComponent, FinaliseMarkingComponent, MarkTypeIconComponent, AssignmentWorkspaceManageModalComponent]
 })
-export class PdfMarkerModule { }
+export class PdfMarkerModule {
+}

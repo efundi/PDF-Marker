@@ -53,7 +53,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
   isSettings: boolean;
   isCreated: boolean;
-  isEditingName: boolean = false;
 
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
