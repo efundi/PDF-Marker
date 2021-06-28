@@ -16,6 +16,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {sep} from 'path';
 import {AssignmentWorkspaceManageModalComponent} from '@pdfMarkerModule/components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
+import {Subscription} from 'rxjs';
 
 export interface WorkspaceDetails {
   assignmentTitle: string;
@@ -48,6 +49,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   readonly pageSize: number = 10;
   private assignmentsInFolder: any[] = [];
   private assignmentHeader: string;
+  subscription: Subscription;
 
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
 
@@ -66,12 +68,19 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.initForm();
-    let selectedWorkspace = this.assignmentService.selectedWorkspace;
-    if (selectedWorkspace !== null) {
-      this.appService.isLoading$.next(true);
-      this.hierarchyModel = selectedWorkspace;
-      this.generateDataFromModel();
-    }
+    this.subscription = this.assignmentService.selectedWorkspaceSource$.subscribe((selectedWorkspace) => {
+      // let selectedWorkspace = this.assignmentService.selectedWorkspace;
+      if (selectedWorkspace !== null) {
+        // this.appService.isLoading$.next(true);
+        this.hierarchyModel = selectedWorkspace;
+        this.generateDataFromModel();
+        // this.appService.isLoading$.next(false);
+      }
+    }, error => {
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(false, 'Unable to read selected workspace');
+    });
+    // this.appService.isLoading$.next(false);
   }
 
   private initForm() {
@@ -225,5 +234,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.assignmentService.setSelectedWorkspace(null);
+    this.subscription.unsubscribe();
   }
 }

@@ -354,10 +354,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if(!this.subscription.closed)
+    if (!this.subscription.closed)
       this.subscription.unsubscribe();
 
-    if(this.router.url.endsWith(RoutesEnum.ASSIGNMENT_UPLOAD))
+    if (this.router.url.endsWith(RoutesEnum.ASSIGNMENT_UPLOAD))
       this.assignmentService.setSelectedAssignment(null);
   }
 }

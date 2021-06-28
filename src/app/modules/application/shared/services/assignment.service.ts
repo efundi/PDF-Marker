@@ -27,8 +27,9 @@ export class AssignmentService {
   private selectedPdfBlob: Blob;
   private assignmentSettingsInfo: AssignmentSettingsInfo;
 
-  selectedWorkspace: object;
-  private selectedWorkspaceSource$: Subject<object> = new Subject<object>();
+  private selectedWorkspace: object;
+  private selectedWorkspaceSource: Subject<object> = new Subject<object>();
+  selectedWorkspaceSource$ = this.selectedWorkspaceSource.asObservable();
 
   constructor(private http: HttpClient,
               @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
@@ -87,7 +88,6 @@ export class AssignmentService {
   }
 
   getAssignmentGrades(workspaceName: string = null, assignmentName: string = null) {
-
     if (workspaceName) {
       assignmentName = workspaceName + sep + assignmentName;
     }
@@ -166,14 +166,14 @@ export class AssignmentService {
 
   setSelectedWorkspace(selectedWorkspace: object) {
     this.selectedWorkspace = selectedWorkspace;
-    this.selectedWorkspaceSource$.next(this.selectedWorkspace);
+    this.selectedWorkspaceSource.next(this.selectedWorkspace);
   }
 
   getSelectedWorkspace(): object {
     return this.selectedWorkspace;
   }
   selectedWorkspaceChanged(): Observable<object> {
-    return this.selectedWorkspaceSource$.asObservable();
+    return this.selectedWorkspaceSource.asObservable();
   }
 
   dataChanged(): Observable<object[]> {

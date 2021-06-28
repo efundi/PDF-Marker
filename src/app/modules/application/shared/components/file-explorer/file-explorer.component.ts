@@ -104,7 +104,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
         }
       }
       if (!this.isAssignmentRoot(objectName, hierarchyModel) && isWorkspace) {
-        // this.appService.isLoading$.next(true);
+        this.appService.isLoading$.next(true);
         this.assignmentService.setSelectedWorkspace(hierarchyModel);
          // if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
         this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);

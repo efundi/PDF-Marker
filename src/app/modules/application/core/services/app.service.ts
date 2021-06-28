@@ -15,13 +15,17 @@ export class AppService {
 
   isLoading$: Subject<boolean> = new Subject<boolean>();
 
+  isLoading = this.isLoading$.asObservable();
+
   private containerElement: any;
 
   public readonly client_id: string = "PDF_MARKER";
 
   private readonly appName: string = "PDF-MARKER"
 
-  constructor(private dialog: MatDialog, private snackBar: MatSnackBar) { }
+  constructor(private dialog: MatDialog, private snackBar: MatSnackBar) {
+    // this.isLoading$.next(false);
+  }
 
   initializeScrollPosition() {
     this.containerElement.elementRef.nativeElement.scrollTop = 0;
