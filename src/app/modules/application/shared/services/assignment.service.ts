@@ -1,6 +1,6 @@
 import {Inject, Injectable, Optional, PLATFORM_ID} from '@angular/core';
 import {HttpClient, HttpHeaders} from "@angular/common/http";
-import {Observable, ReplaySubject, Subject} from "rxjs";
+import {BehaviorSubject, Observable, ReplaySubject, Subject} from "rxjs";
 import {makeStateKey, StateKey, TransferState} from "@angular/platform-browser";
 import {isPlatformServer} from "@angular/common";
 import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
@@ -18,7 +18,8 @@ import {sep} from 'path';
 export class AssignmentService {
 
   private assignmentListSource$: Subject<object[]> = new ReplaySubject<object[]>(1);
-  private selectedAssignmentSource$: Subject<object> = new Subject<object>();
+  private selectedAssignmentSource: Subject<object> = new Subject<object>();
+  onAssignmentSourceChange: Observable<object>;
   private assignments: object[] = new Array<object>();
   private selectedAssignment: object;
   private selectedPdfLocation: string;
@@ -28,8 +29,11 @@ export class AssignmentService {
   private assignmentSettingsInfo: AssignmentSettingsInfo;
 
   private selectedWorkspace: object;
-  private selectedWorkspaceSource: Subject<object> = new Subject<object>();
-  selectedWorkspaceSource$ = this.selectedWorkspaceSource.asObservable();
+  // private selectedWorkspaceSource: Subject<object> = new Subject<object>();
+  private workspaceSourceSubject: BehaviorSubject<object> = new BehaviorSubject<object>(null);
+  // onWorkspaceSourceChange: Observable<object>;
+  onWorkspaceSourceChange = this.workspaceSourceSubject.asObservable();
+  // selectedWorkspaceSource$ = this.selectedWorkspaceSource.asObservable();
 
   constructor(private http: HttpClient,
               @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
@@ -58,6 +62,8 @@ export class AssignmentService {
       })
     }
     //this.assignmentListSource$.next(this.assignments);
+    this.onWorkspaceSourceChange = this.workspaceSourceSubject.asObservable();
+    this.onAssignmentSourceChange = this.selectedAssignmentSource.asObservable();
   }
 
   getAssignments(): Observable<object[]> {
@@ -157,7 +163,8 @@ export class AssignmentService {
 
   setSelectedAssignment(selectedAssignment: object) {
     this.selectedAssignment = selectedAssignment;
-    this.selectedAssignmentSource$.next(this.selectedAssignment);
+    this.selectedAssignmentSource.next(selectedAssignment);
+    // this.selectedAssignmentSource$.next(this.selectedAssignment);
   }
 
   getSelectedAssignment(): object {
@@ -166,14 +173,17 @@ export class AssignmentService {
 
   setSelectedWorkspace(selectedWorkspace: object) {
     this.selectedWorkspace = selectedWorkspace;
-    this.selectedWorkspaceSource.next(this.selectedWorkspace);
+    this.workspaceSourceSubject.next(selectedWorkspace);
+    // this.selectedWorkspaceSource.next(this.selectedWorkspace);
   }
 
   getSelectedWorkspace(): object {
     return this.selectedWorkspace;
   }
+
   selectedWorkspaceChanged(): Observable<object> {
-    return this.selectedWorkspaceSource.asObservable();
+    return this.workspaceSourceSubject.asObservable();
+    // return this.selectedWorkspaceSource.asObservable();
   }
 
   dataChanged(): Observable<object[]> {
@@ -181,7 +191,7 @@ export class AssignmentService {
   }
 
   selectedAssignmentChanged(): Observable<object> {
-    return this.selectedAssignmentSource$.asObservable();
+    return this.selectedAssignmentSource.asObservable();
   }
 
   setSelectedPdfURL(selectedPdfURL: string, selectedPdfLocation: string) {

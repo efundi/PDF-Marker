@@ -1433,16 +1433,17 @@ const getAssignmentSettings = (req, res) => {
       return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
 
     const assignmentFolder = config.defaultPath + sep + loc;
+    if (existsSync(assignmentFolder)) {
+      return readFile(assignmentFolder + sep + SETTING_FILE, (err, data) => {
+        if (err)
+          return sendResponseData(req, res, 400, err.message);
 
-    return readFile(assignmentFolder + sep + SETTING_FILE, (err, data) => {
-      if (err)
-        return sendResponseData(req, res, 400, err.message);
-
-      if (!isJson(data))
-        return sendResponseData(req, res, 400, err.message);
-      else
-        return sendResponseData(req, res, 200, JSON.parse(data.toString()));
-    });
+        if (!isJson(data))
+          return sendResponseData(req, res, 400, err.message);
+        else
+          return sendResponseData(req, res, 200, JSON.parse(data.toString()));
+      });
+    }
   });
 };
 

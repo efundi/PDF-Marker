@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {SakaiService} from "@coreModule/services/sakai.service";
 import {Router} from "@angular/router";
@@ -68,15 +68,17 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.initForm();
-    this.subscription = this.assignmentService.selectedWorkspaceSource$.subscribe((selectedWorkspace) => {
+    this.subscription = this.assignmentService.onWorkspaceSourceChange.subscribe((selectedWorkspace) => {
       // let selectedWorkspace = this.assignmentService.selectedWorkspace;
+
       if (selectedWorkspace !== null) {
         // this.appService.isLoading$.next(true);
         this.hierarchyModel = selectedWorkspace;
-        this.generateDataFromModel();
+        return this.generateDataFromModel();
         // this.appService.isLoading$.next(false);
       }
     }, error => {
+      console.log(error);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(false, 'Unable to read selected workspace');
     });
@@ -132,12 +134,13 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
     });
   }
 
-
   async getAssignmentSettings(assignmentName: string): Promise<AssignmentSettingsInfo> {
+    this.appService.isLoading$.next(true);
     return await this.assignmentService.getAssignmentSettings(this.workspaceName, assignmentName).toPromise()
       .then((assignmentSettings) => {
         this.assignmentService.setSelectedAssignment(assignmentSettings);
         return assignmentSettings;
+        this.appService.isLoading$.next(false);
       })
       .catch(() => {
         this.appService.isLoading$.next(false);
@@ -220,7 +223,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
   private isNullOrUndefined = (object: any): boolean => {
     return (object === null || object === undefined);
-  };
+  }
 
   private openYesNoConfirmationDialog(title: string = "Confirm", message: string) {
     const config = new MatDialogConfig();
@@ -234,6 +237,8 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.assignmentService.setSelectedWorkspace(null);
-    this.subscription.unsubscribe();
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 }

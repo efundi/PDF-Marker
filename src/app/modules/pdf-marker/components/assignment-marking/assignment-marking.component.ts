@@ -275,7 +275,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   async saveMarks(marks: any[] = null): Promise<boolean> {
-    const markDetails = (marks) ? marks:this.getMarksToSave();
+    const markDetails = (marks) ? marks: this.getMarksToSave();
     this.appService.isLoading$.next(true);
     return await this.assignmentService.saveMarks(markDetails, this.totalMark).toPromise()
       .then(() => {

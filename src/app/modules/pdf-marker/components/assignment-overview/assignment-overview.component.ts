@@ -90,7 +90,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         this.workspace = id;
       }
     });
-    this.subscription = this.assignmentService.selectedAssignmentChanged().subscribe((selectedAssignment) => {
+    this.subscription = this.assignmentService.onAssignmentSourceChange.subscribe((selectedAssignment) => {
       if(selectedAssignment !== null) {
         this.hierarchyModel = selectedAssignment;
         this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '');

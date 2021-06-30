@@ -125,7 +125,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
             this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
           }
          // }
-        $event.stopImmediatePropagation();
+         $event.stopImmediatePropagation();
       }
     });
     this.appService.isLoading$.next(false);
