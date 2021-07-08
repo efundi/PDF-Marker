@@ -383,7 +383,7 @@ const zipFileUploadCallback = (req, res, data) => {
 
     const zip = new JSZip();
     return zip.loadAsync(new Uint8Array(zipFile))
-      .then(async (zipObject) => {
+      .then((zipObject) => {
         let entry = '';
         zipObject.forEach((relativePath, zipEntry) => {
           if (entry === '') {
@@ -409,7 +409,7 @@ const zipFileUploadCallback = (req, res, data) => {
             newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
 
             if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
-              extractZipFile(req.body.file, config.defaultPath + sep, newFolder + sep, oldPath + '/', req.body.assignmentType).then(() => {
+              extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
@@ -427,7 +427,7 @@ const zipFileUploadCallback = (req, res, data) => {
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
-              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder + sep, oldPath + '/', req.body.assignmentType).then(() => {
+              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
@@ -446,7 +446,6 @@ const zipFileUploadCallback = (req, res, data) => {
               });
             }
           } else {
-
             if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
               extractZipFile(req.body.file, config.defaultPath + sep, '', '', req.body.assignmentType)
                 .then(async () => {
@@ -2624,105 +2623,37 @@ const isJson = (str) => {
 };
 
 const extractZipFile = async (file, destination, newFolder, oldFolder, assignmentType) => {
-
-  var skippedFirst = 1;
-
   return await createReadStream(file)
     .pipe(unzipper.Parse())
     .pipe(etl.map(async entry => {
-
-
-        const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
-        let csvString = "";
-        let asnTitle = "";
-        let dir = "";
-        let isSet = true;
-
-
-        if (entry.type === 'File') {
-          const content = await entry.buffer();
-          // console.log("### - File Name First : " + entry.path);
-          //console.log("### - Old Folder : " + oldFolder);
-          //console.log("### - New Folder : " + newFolder);
-          entry.path = entry.path.replace(oldFolder, newFolder);
-
-          const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
-          const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
-
-          if (!existsSync(directory))
-            mkdirSync(directory, {recursive: true});
-          if (assignmentType === 'Generic') {
-            try {
-              const pdfDoc = await PDFDocument.load(content);
-              var fileName = entry.path;
-              console.log("### - File Name: " + fileName);
-              //Submission Test (2)/Bob_Johnson_AA223556_This_is_my_assignment.pdf
-              var tempDetails = fileName.substring((fileName.indexOf("/") + 1));
-
-              var splitArray = tempDetails.split("_");
-
-              var studentName = splitArray[1];
-              var studentSurname = splitArray[0];
-              var studentID = splitArray[2];
-              // tempDetails = tempDetails.subentry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf'string((tempDetails.indexOf(studentID))+1,tempDetails.length);
-              var studentDirectory = studentSurname + ", " + studentName + " (" + studentID + ")";
-
-              const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurname.toUpperCase()},${studentName.toUpperCase()},,,\n`;
-              csvString = csvString + csvData;
-              dir = directory;
-              console.log("####");
-              console.log(directory);
-              mkdirSync(directory + '/' + studentDirectory, {recursive: true});
-              mkdirSync(directory + '/' + studentDirectory + '/' + FEEDBACK_FOLDER, {recursive: true});
-              mkdirSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER, {recursive: true});
-              const pdfBytes = await pdfDoc.save();
-              writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + "/" + tempDetails, pdfBytes);
-            } catch (exception) {
-              console.log(exception);
-            }
-          } else
-            try {
-              if (assignmentType === 'Assignment' && entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
-                // await writeFileSync(destination + entry.path.replace('/', sep),  content);
-                const pdfDoc = await PDFDocument.load(content);
-                const pdfBytes = await pdfDoc.save();
-
-                await writeFileSync(destination + entry.path.replace('/', sep), pdfBytes);
-              } else {
-                await writeFileSync(destination + entry.path.replace('/', sep), content);
-              }
-            } catch (exception) {
-              console.log(exception);
-            }
-        }
-        if (assignmentType === 'Generic') {
-          const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
-          console.log("####");
-          console.log(directory);
-          if (!(existsSync(directory + sep + GRADES_FILE))) {
-            const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
-            let csvFullString = headers + `''\n` + subheaders;
-            //  csvFullString = csvFullString + csvString;
-            //console.log(csvFullString);
-            console.log(directory + sep + GRADES_FILE);
-            await writeFileSync(directory + sep + GRADES_FILE, csvFullString, {flag: 'a'});
-            await writeFileSync(directory + sep + GRADES_FILE, csvString, {flag: 'a'});
-            console.log("create file");
-            if (skippedFirst == 1) {
-              console.log("Skipping... " + skippedFirst);
-              unlinkSync(directory + sep + GRADES_FILE);
-              skippedFirst++;
-            }
-          } else {
-            await writeFileSync(directory + sep + GRADES_FILE, csvString, {flag: 'a'});
-          }
-        } else if (assignmentType = !'Generic') {
-          await appendFileSync(dir + sep + GRADES_FILE, csvString);
+      if(entry.type === 'File') {
+        const content = await entry.buffer();
+        entry.path = entry.path.replace(oldFolder, newFolder);
+        const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
+        const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
+        if(!existsSync(directory))
+          mkdirSync(directory, { recursive: true });
+      try {
+        if(entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
+          // await writeFileSync(destination + entry.path.replace('/', sep),  content);
+          const pdfDoc = await PDFDocument.load(content);
+          const pdfBytes = await pdfDoc.save();
+          await writeFileSync(destination + entry.path.replace('/', sep),  pdfBytes);
+        } else {
+          await writeFileSync(destination + entry.path.replace('/', sep),  content);
         }
       }
-    )).promise();
-};
+      catch(exception) {
 
+      } } else {
+        entry.path = entry.path.replace(oldFolder, newFolder);
+        const directory = destination + entry.path.replace('/', sep);
+        if(!existsSync(directory))
+          mkdirSync(directory, { recursive: true });
+        entry.autodrain();
+      }
+    })).promise();
+};
 
 const hierarchyModel = (pathInfos, configFolder) => {
   const pattern = /\\/g;
