@@ -42,7 +42,7 @@ export class GenericCommentsComponent implements OnInit {
 
   private initForm() {
     this.genericCommentsForm = this.fb.group({
-      commentText: [Validators.required],
+      newComment: [Validators.required],
     });
   }
 
@@ -61,14 +61,12 @@ export class GenericCommentsComponent implements OnInit {
     }
 
     const formData: FormData = new FormData();
-    formData.append('comment', this.fc.commentText.value);
-
+    formData.append('newComment', this.fc.newComment.value);
     this.appService.isLoading$.next(true);
-    this.commentsService.saveComments(formData).subscribe((comments: IComment[]) => {
-      this.populateComments(comments);
+    this.commentsService.saveComments( this.genericCommentsForm.value).subscribe((comments: IComment[]) => {
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Comment saved');
-     // this.resetPreviousUpload();
+      //this.resetPreviousUpload();
     }, error => {
       this.appService.openSnackBar(false, 'Unable to sav comment');
       this.appService.isLoading$.next(false);

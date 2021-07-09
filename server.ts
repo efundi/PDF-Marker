@@ -524,21 +524,23 @@ const saveNewComment = (req, res) => {
   if (!errors.isEmpty())
     return sendResponseData(req, res, 400, {errors: errors.array()});
 
-  mkdirSync(req.body.defaultPath + sep + req.body.workingFolders);
+  if (!existsSync(CONFIG_DIR + COMMENTS_FILE)) {
+    writeToFile(req, res, CONFIG_DIR + COMMENTS_FILE, "[]");
+  }
+
   const configData = readFileSync(CONFIG_DIR + COMMENTS_FILE);
   const config = JSON.parse(configData.toString());
+
+  config.push({title: req.body.newComment, inUse: 0});
+
   console.log(config);
 
-  if (isNullOrUndefined(config.comments)) {
-    config.comments = [];
-  }
-  config.comments.push(req.body.comment);
   console.log(config);
   return writeToFile(req, res, CONFIG_DIR + COMMENTS_FILE, JSON.stringify(config));
 };
 
 app.post('/api/comments/save', [
-  check('comment').not().isEmpty().withMessage('comment not provided!'),
+  check('newComment').not().isEmpty().withMessage('comment not provided!'),
 ], saveNewComment);
 
 /*RUBRIC IMPORT API*/
