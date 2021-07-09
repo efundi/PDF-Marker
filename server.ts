@@ -1573,7 +1573,7 @@ const finalizeAssignment = async (req, res) => {
   if (!errors.isEmpty())
     return sendResponseData(req, res, 400, {errors: errors.array()});
 
-  const keys = ['location'];
+  const keys = ['workspaceFolder', 'location'];
   const bodyKeys = Object.keys(req.body);
 
   if (validateRequest(keys, bodyKeys))
@@ -1586,8 +1586,11 @@ const finalizeAssignment = async (req, res) => {
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
-    const assignmentFolder = config.defaultPath + sep + loc;
-    const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_BASENAME');
+    let workspaceFolder = '';
+    if (req.body.workspaceFolder) {
+      workspaceFolder = req.body.workspaceFolder.replace(/\//g, sep);
+    }
+    const assignmentFolder = (workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder + sep + loc : config.defaultPath + sep + loc;
     const gradesJSON = await csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE);
     const files = glob.sync(assignmentFolder + sep + '/*');
 
@@ -1674,11 +1677,12 @@ const finalizeAssignment = async (req, res) => {
     };
     await start();
     if (!failed) {
-      return zipDir(config.defaultPath, {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(config.defaultPath + sep + assignmentName)) ? true : (path.startsWith(config.defaultPath + sep + assignmentName + sep))))}, (err, buffer) => {
-        if (err)
-          return sendResponse(req, res, 400, 'Could not export assignment');
-        return sendResponseData(req, res, 200, buffer);
-      });
+      return zipDir((workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder : config.defaultPath,
+        {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(assignmentFolder)) ? true : (path.startsWith((assignmentFolder) + sep))))}, (err, buffer) => {
+          if (err)
+            return sendResponse(req, res, 400, 'Could not export assignment');
+          return sendResponseData(req, res, 200, buffer);
+        });
     }
   } catch (e) {
     return sendResponse(req, res, 500, e.message);
@@ -1699,7 +1703,7 @@ const finalizeAssignmentRubric = async (req, res) => {
   if (!errors.isEmpty())
     return sendResponseData(req, res, 400, {errors: errors.array()});
 
-  const keys = ['location', 'rubricName'];
+  const keys = ['workspaceFolder', 'location', 'rubricName'];
   const bodyKeys = Object.keys(req.body);
 
   if (validateRequest(keys, bodyKeys))
@@ -1712,11 +1716,15 @@ const finalizeAssignmentRubric = async (req, res) => {
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
-    const assignmentFolder = config.defaultPath + sep + loc;
-    const assignmentName = pathinfo(assignmentFolder, 'PATHINFO_BASENAME');
+    let workspaceFolder = '';
+    if (req.body.workspaceFolder) {
+      workspaceFolder = req.body.workspaceFolder.replace(/\//g, sep);
+    }
+    const assignmentFolder = (workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ?
+      config.defaultPath + sep + workspaceFolder + sep + loc : config.defaultPath + sep + loc;
     const gradesJSON = await csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE);
     const files = glob.sync(assignmentFolder + sep + '/*');
-    const assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
+    const assignmentSettingsBuffer = readFileSync(assignmentFolder + sep + SETTING_FILE);
     if (!isJson(assignmentSettingsBuffer))
       return sendResponse(req, res, 400, 'Invalid assignment settings file!');
 
@@ -1812,7 +1820,8 @@ const finalizeAssignmentRubric = async (req, res) => {
     };
     await start();
     if (!failed) {
-      return zipDir(config.defaultPath, {filter: (path: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(path)) && ((path.endsWith(config.defaultPath + sep + assignmentName)) ? true : (path.startsWith(config.defaultPath + sep + assignmentName + sep))))}, (err, buffer) => {
+      return zipDir((workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder : config.defaultPath,
+        {filter: (path: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(path)) && ((path.endsWith(assignmentFolder)) ? true : (path.startsWith(assignmentFolder + sep))))}, (err, buffer) => {
         if (err)
           return sendResponse(req, res, 400, 'Could not export assignment');
         return sendResponseData(req, res, 200, buffer);

@@ -273,11 +273,9 @@ export class AssignmentService {
   }
 
   finalizeAndExport(workspaceName: string = null, assignmentName: string) {
-    if (workspaceName) {
-      assignmentName = workspaceName + sep + assignmentName;
-    }
     const body = {
-      location: assignmentName,
+      workspaceFolder: workspaceName,
+      location: assignmentName
     };
     const headers = new HttpHeaders({
       'Content-Type': MimeTypesEnum.JSON,
@@ -293,10 +291,8 @@ export class AssignmentService {
 
 
   finalizeAndExportRubric(workspaceName: string = null, assignmentName: string, assignmentRubric: IRubric) {
-    if (workspaceName) {
-      assignmentName = workspaceName + sep + assignmentName;
-    }
     const body = {
+      workspaceFolder: workspaceName,
       location: assignmentName,
       rubricName: assignmentRubric.name
     };
