@@ -111,21 +111,24 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
         $event.stopImmediatePropagation();
       } else if (this.isAssignmentRoot(objectName, hierarchyModel)) {
 
-
-         // if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW) {
-          if (this.parent !== undefined) {
-            const arr = folderOrFileKeys.length > 1 ? Object.entries(hierarchyModel).find(x => x[0] === objectName) : hierarchyModel;
-            const obj = Array.isArray(arr) ? Object.fromEntries(new Map([...arr])) : hierarchyModel;
-            this.appService.isLoading$.next(true);
-            this.assignmentService.setSelectedAssignment(obj);
-            this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.parent]);
+        // if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW) {
+        if (this.parent !== undefined) {
+          this.appService.isLoading$.next(true);
+          if (folderOrFileKeys.length > 1) {
+            const arr = Object.entries(hierarchyModel).find(x => x[0] === objectName);
+            const obj1 = Object.fromEntries(new Map([arr]));
+            this.assignmentService.setSelectedAssignment(obj1);
           } else {
-            this.appService.isLoading$.next(true);
             this.assignmentService.setSelectedAssignment(hierarchyModel);
-            this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
           }
-         // }
-         $event.stopImmediatePropagation();
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.parent]);
+        } else {
+          this.appService.isLoading$.next(true);
+          this.assignmentService.setSelectedAssignment(hierarchyModel);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
+        }
+        // }
+        $event.stopImmediatePropagation();
       }
     });
     this.appService.isLoading$.next(false);
