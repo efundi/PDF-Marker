@@ -42,6 +42,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   private hierarchyModel;
   displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'progress', 'type'];
   dataSource: MatTableDataSource<WorkspaceDetails>;
+  workspaceRows: WorkspaceDetails[] = [];
   workspaceName: string = 'Workspace Name';
   private assignmentGrades: any[] = [];
   assignmentsLength;
@@ -111,13 +112,8 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
         edited = true;
       }
       if (result && result.movedAssignments && result.movedAssignments.length > 0) {
-        result.movedAssignments.forEach(assignment => {
-          const foundIndex = this.dataSource.data.findIndex(x => x.assignmentTitle === assignment.assignmentTitle);
-          this.dataSource.data.splice(foundIndex, 1);
-          this.dataSource._updateChangeSubscription();
-          this.dataSource.paginator = this.paginator;
-          edited = true;
-        });
+        this.dataSource = new MatTableDataSource<WorkspaceDetails>(this.workspaceRows);
+        edited = true;
       }
       if(edited){
         this.appService.isLoading$.next(true);
@@ -169,7 +165,8 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   }
 
   private generateDataFromModel() {
-    let workspaceRows: WorkspaceDetails[] = [];
+    // let workspaceRows: WorkspaceDetails[] = [];
+    this.workspaceRows = [];
     this.workspaceName = (Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '';
     if (this.hierarchyModel[this.workspaceName]) {
       Object.keys(this.hierarchyModel[this.workspaceName]).forEach(key => {
@@ -201,12 +198,12 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
 
           });
           workspaceRow.currentWorkspace =  this.workspaceName;
-          workspaceRows.push(workspaceRow);
+          this.workspaceRows.push(workspaceRow);
         }
       });
-      this.dataSource = new MatTableDataSource(workspaceRows);
+      this.dataSource = new MatTableDataSource(this.workspaceRows);
       this.dataSource.paginator = this.paginator;
-      this.assignmentsLength = workspaceRows.length;
+      this.assignmentsLength = this.workspaceRows.length;
       const range = [];
       let i = 0;
       while (i <= this.assignmentsLength) {

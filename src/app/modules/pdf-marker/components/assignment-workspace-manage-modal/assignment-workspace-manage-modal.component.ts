@@ -5,6 +5,7 @@ import {WorkspaceService} from '@sharedModule/services/workspace.service';
 import {AppService} from '@coreModule/services/app.service';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
 import {MatSelectionListChange} from '@angular/material';
+import {WorkspaceDetails} from '@pdfMarkerModule/components/assignment-workspace-overview/assignment-workspace-overview.component';
 
 export interface WorkspaceDialogResult {
   prevWorkspaceName: string;
@@ -28,7 +29,8 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
   workspaceName: string;
   prevWorkspaceName: string;
-  assignments: [];
+  assignments: WorkspaceDetails[] = [];
+  returnSelectedAssignments: any[] = [];
   workspaceList: string[];
   workspaceNameList: string[];
   newWorkspaceName: string;
@@ -46,6 +48,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
 
   ngOnInit() {
+    // this.returnSelectedAssignments = [];
     this.isEditing = false;
     this.initForm();
     this.workspaceName = this.data.workspaceName;
@@ -61,8 +64,8 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
       const foundIndex = this.workspaceNameList.findIndex(x => x === this.data.workspaceName);
       this.workspaceList.splice(foundIndex, 1);
       this.workspaceNameList.splice(foundIndex, 1);
-      // delete this.workspaceList[foundIndex];
-      // delete this.workspaceNameList[foundIndex];
+      this.workspaceList.unshift('Default Workspace');
+      this.workspaceNameList.unshift('Default Workspace');
     });
   }
 
@@ -77,8 +80,10 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
       returnVar.workspaceName = workspace;
     }
     const assignments = this.manageForm.get('selectedAssignments').value;
-    if (assignments && assignments.length > 0) {
-      returnVar.movedAssignments = [...assignments];
+
+    // if (assignments && assignments.length > 0) {
+    if (this.returnSelectedAssignments && this.returnSelectedAssignments.length > 0) {
+      returnVar.movedAssignments = [...this.returnSelectedAssignments];
     }
     this.workspaceService.announceWorkspaceChanges(returnVar);
     this.dialogRef.close(returnVar);
@@ -130,10 +135,21 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
       if (this.manageForm.get('workspaceName').value) {
         folder = this.manageForm.get('workspaceName').value;
       }
-      if (folder && newFolder && (this.assignments && this.assignments.length > 0)) {
+      if (folder && newFolder && (assignments && assignments.length > 0)) {
         this.workspaceService.moveWorkspaceAssignments(folder, newFolder, assignments).subscribe((workspaceName: string) => {
           this.appService.openSnackBar(true, "Successfully moved selected assignments");
           this.appService.isLoading$.next(false);
+          if (assignments && assignments.length > 0) {
+
+            assignments.forEach(assignment => {
+              this.returnSelectedAssignments.push(assignment);
+              const foundIndex = this.assignments.findIndex(x => x.assignmentTitle === assignment.assignmentTitle);
+              this.assignments.splice(foundIndex, 1);
+              const newassignments = this.assignments.filter((_, i) => i !== foundIndex);
+
+              this.manageForm.get('selectedAssignments').patchValue('');
+            });
+          }
         }, error => {
           this.appService.isLoading$.next(false);
           console.log(error);

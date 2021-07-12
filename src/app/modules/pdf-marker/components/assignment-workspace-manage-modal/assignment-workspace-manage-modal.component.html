@@ -5,7 +5,6 @@
     </button></h2>
 
   </div>
-  <mat-dialog-content>
   <form [formGroup]="manageForm">
     <mat-label class="pdf-marker-form-labels">Workspace name </mat-label>
     <div class="pdf-spacer"></div>
@@ -38,12 +37,12 @@
           </mat-select>
         </mat-form-field>
       </div>
+
       <div class="button-right-margin">
-        <button [disabled]="selected.selectedOptions.selected.length == 0" type="button" matSuffix mat-icon-button matTooltip="Move" (click)="onMove($event)">
-          Move<mat-icon [class.pdf-icon-disabled]="selected.selectedOptions.selected.length == 0" >content_copy</mat-icon>
+        <button [disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value" type="button" matSuffix mat-icon-button matTooltip="Move" (click)="onMove($event)">
+          Move<mat-icon [class.pdf-icon-disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value" >content_copy</mat-icon>
         </button>
       </div>
     </div>
   </form>
-  </mat-dialog-content>
 </ng-container>

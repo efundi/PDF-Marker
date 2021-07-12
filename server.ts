@@ -2584,10 +2584,11 @@ const moveWorkspaceAssignments = (req, res) => {
       }
       const config = JSON.parse(data.toString());
       const loc = req.body.currentWorkspaceName.replace(/\//g, sep);
+      const isDefault: boolean = req.body.workspaceName === 'Default Workspace';
       const loc2 = req.body.workspaceName.replace(/\//g, sep);
 
       const workspacePath = config.defaultPath + sep + loc;
-      const newWorkspacePath = config.defaultPath + sep + loc2;
+      const newWorkspacePath = isDefault ? config.defaultPath : config.defaultPath + sep + loc2;
       assignments.forEach((assignment) => {
         const assignmentPath = workspacePath + sep + assignment.assignmentTitle;
         const newAssignmentPath = newWorkspacePath + sep + assignment.assignmentTitle;
