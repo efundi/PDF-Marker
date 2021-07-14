@@ -383,7 +383,7 @@ const zipFileUploadCallback = (req, res, data) => {
 
     const zip = new JSZip();
     return zip.loadAsync(new Uint8Array(zipFile))
-      .then((zipObject) => {
+      .then(async (zipObject) => {
         let entry = '';
         zipObject.forEach((relativePath, zipEntry) => {
           if (entry === '') {
@@ -409,7 +409,7 @@ const zipFileUploadCallback = (req, res, data) => {
             newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
 
             if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
-              extractZipFile(req.body.file, config.defaultPath + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
+              extractZipFile(req.body.file, config.defaultPath + sep, newFolder + sep, oldPath + '/', req.body.assignmentType).then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
@@ -427,7 +427,7 @@ const zipFileUploadCallback = (req, res, data) => {
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
-              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder, oldPath + '/', req.body.assignmentType).then(() => {
+              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder + sep, oldPath + '/', req.body.assignmentType).then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
@@ -2635,8 +2635,8 @@ const isJson = (str) => {
 };
 
 const extractZipFile = async (file, destination, newFolder, oldFolder, assignmentType) => {
+  //TODO Should we validate the zip structure based on assignment type?
   if (assignmentType === 'Generic') {
-    let skippedFirst = 1;
     return await createReadStream(file)
       .pipe(unzipper.Parse())
       .pipe(etl.map(async entry => {
@@ -2686,11 +2686,9 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           entry.path = entry.path.replace(oldFolder, newFolder);
           const directory = destination + entry.path.replace('/', sep);
           // const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
-          // if (skippedFirst == 1) {
-            if (!existsSync(directory))
-              mkdirSync(directory, {recursive: true});
-          // }
-          console.log("####");
+          if (!existsSync(directory))
+            mkdirSync(directory, {recursive: true});
+          console.log('####');
           console.log(directory);
           if (!(existsSync(directory + GRADES_FILE))) {
             const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
@@ -2700,13 +2698,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
             console.log(directory + GRADES_FILE);
             await writeFileSync(directory + GRADES_FILE, csvFullString, {flag: 'a'});
             await writeFileSync(directory + GRADES_FILE, csvString, {flag: 'a'});
-            console.log("create file");
-            if (skippedFirst == 1) {
-              console.log("Skipping... " + skippedFirst);
-              console.log("Dir... " + directory);
-              unlinkSync(directory + GRADES_FILE);
-              skippedFirst++;
-            }
+            console.log('create file');
           } else {
             await writeFileSync(directory + GRADES_FILE, csvString, {flag: 'a'});
           }
@@ -2726,9 +2718,6 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           if (!existsSync(directory))
             mkdirSync(directory, {recursive: true});
           try {
-            // if (assignmentType === 'Generic') {
-            //
-            // }
             if (entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
               // await writeFileSync(destination + entry.path.replace('/', sep),  content);
               const pdfDoc = await PDFDocument.load(content);
