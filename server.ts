@@ -50,7 +50,7 @@ import {IconTypeEnum} from './src/app/modules/pdf-marker/info-objects/icon-type.
 import {IconSvgEnum} from './src/app/modules/pdf-marker/info-objects/icon-svg.enum';
 import {IRubric, IRubricName} from './src/app/modules/application/core/utils/rubric.class';
 import {AssignmentSettingsInfo} from './src/app/modules/pdf-marker/info-objects/assignment-settings.info';
-import {IComment, ICommentDsc} from './src/app/modules/application/core/utils/comment.class';
+import {IComment} from './src/app/modules/application/core/utils/comment.class';
 
 const zipDir = require('zip-dir');
 const JSZip = require('jszip');
@@ -98,6 +98,8 @@ const NOT_PROVIDED_NEW_WORKSPACE_NAME = 'New workspace name not provided!';
 const NOT_PROVIDED_WORKSPACE_NAME = 'Current workspace name not provided!';
 const INVALID_PATH_PROVIDED = 'Invalid path provided!';
 const INVALID_STUDENT_FOLDER = 'Invalid student folder';
+
+const COULD_NOT_READ_COMMENT_LIST = 'Could not read list of comments!';
 /**/
 
 const assignmentList = (callback) => {
@@ -390,9 +392,9 @@ const zipFileUploadCallback = (req, res, data) => {
             entry = zipEntry.name;
           }
         });
-        console.log("entry: " + entry);
+        console.log('entry: ' + entry);
         const entryPath = entry.split('/');
-        console.log("entryPath: " + entryPath);
+        console.log('entryPath: ' + entryPath);
         if (entryPath.length > 0) {
           let newFolder;
           const oldPath = entryPath[0];
@@ -516,7 +518,7 @@ app.post('/api/import', uploadFn);
 /* Comments API*/
 /* New Folder API */
 
-const saveNewComment = (req, res) => {
+const saveNewComment = async (req, res) => {
   if (!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
 
@@ -525,23 +527,76 @@ const saveNewComment = (req, res) => {
     return sendResponseData(req, res, 400, {errors: errors.array()});
 
   if (!existsSync(CONFIG_DIR + COMMENTS_FILE)) {
-    writeToFile(req, res, CONFIG_DIR + COMMENTS_FILE, "[]");
+    await writeFileSync(CONFIG_DIR + COMMENTS_FILE, '[]');
   }
 
   const configData = readFileSync(CONFIG_DIR + COMMENTS_FILE);
-  const config = JSON.parse(configData.toString());
+  const comments: IComment[] = JSON.parse(configData.toString());
+  // ----
+  const foundCount = comments.length + 1;
 
-  config.push({title: req.body.newComment, inUse: 0});
+  comments.push({id: foundCount, title: req.body.newComment, inUse: 'false'});
 
-  console.log(config);
+  console.log(comments);
 
-  console.log(config);
-  return writeToFile(req, res, CONFIG_DIR + COMMENTS_FILE, JSON.stringify(config));
+  try {
+    await writeFileSync(CONFIG_DIR + COMMENTS_FILE, JSON.stringify(comments));
+  } catch (e) {
+    return sendResponseData(req, res, 500, false);
+  }
+  return sendResponseData(req, res, 200, true);
 };
 
 app.post('/api/comments/save', [
   check('newComment').not().isEmpty().withMessage('comment not provided!'),
 ], saveNewComment);
+
+/*READ COMMENTS DETAIL*/
+const getComments = async (req, res) => {
+
+  console.log("1");
+  if (!checkClient(req, res))
+    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  console.log("2");
+  if (!existsSync(CONFIG_DIR)) {
+    console.log("3");
+    return mkdir(CONFIG_DIR, err => {
+      if (err)
+        return sendResponse(req, res, 500, COULD_NOT_READ_COMMENT_LIST);
+    });
+  } else {
+    console.log("4");
+    if (existsSync(CONFIG_DIR + COMMENTS_FILE)) {
+      console.log("5");
+      return readFromFile(req, res, CONFIG_DIR + COMMENTS_FILE, (data) => {
+        if (!isJson(data))
+          return sendResponse(req, res, 400, COULD_NOT_READ_COMMENT_LIST);
+        console.log("Before Comments...");
+        const comments: IComment[] = getCommentsDetails(JSON.parse(data.toString()));
+        console.log("After Comments...");
+        if (Array.isArray(comments))
+          return sendResponseData(req, res, 200, comments);
+
+      });
+    } else {
+      await writeFileSync(CONFIG_DIR + COMMENTS_FILE, '[]');
+    }
+  }
+};
+app.get('/api/comments/details', getComments);
+/* END COMMENTS DETAIL*/
+
+const getCommentsDetails = (comments: IComment[]) => {
+  const commentNames: IComment[] = [];
+  if (Array.isArray(comments)) {
+    comments.forEach(comment => {
+      const commentName = {id: comment.id, title: comment.title, inUse: comment.inUse};
+      commentNames.push(commentName);
+    });
+    return commentNames;
+  }
+  return commentNames;
+};
 
 /*RUBRIC IMPORT API*/
 
@@ -1015,7 +1070,7 @@ const getPdfFile = (req, res) => {
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
     const actualPath = config.defaultPath + sep + loc;
-    console.log("Get PDF: " + actualPath);
+    console.log('Get PDF: ' + actualPath);
     return checkAccess(req, res, actualPath, () => {
       const file = createReadStream(actualPath);
       file.pipe(res);
@@ -1052,9 +1107,9 @@ const savingMarks = (req, res) => {
     const config = JSON.parse(data.toString());
    // console.log("Path Recieved: " + req.body.location);
     const loc = req.body.location.replace(/\//g, sep);
-    console.log("loc after path: " + loc);
+    console.log('loc after path: ' + loc);
     const pathSplit = loc.split(sep);
-    console.log("split: " + pathSplit);
+    console.log('split: ' + pathSplit);
     //  if (pathSplit.length !== 4)
     //  return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
     const pathSplitCount = pathSplit.length;
@@ -1067,19 +1122,19 @@ const savingMarks = (req, res) => {
       if (!regEx.test(pathSplit[2]))
         return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
     }
-    console.log("loc before studFolder: " + loc);
+    console.log('loc before studFolder: ' + loc);
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
-    console.log("studentFolder: " + studentFolder);
+    console.log('studentFolder: ' + studentFolder);
     return checkAccess(req, res, studentFolder, () => {
 
       if (pathSplitCount === 4) {
         return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
           const matches = regEx.exec(pathSplit[1]);
-          console.log("matches: " + matches);
+          console.log('matches: ' + matches);
           const studentNumber = matches[2] + '';
-          console.log("studentNumber: " + studentNumber);
+          console.log('studentNumber: ' + studentNumber);
           const assignmentFolder = dirname(studentFolder);
-          console.log("assignmentFolder: " + assignmentFolder);
+          console.log('assignmentFolder: ' + assignmentFolder);
 
           return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
             return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
@@ -1119,11 +1174,11 @@ const savingMarks = (req, res) => {
       if (pathSplitCount === 5) {
         return writeToFile(req, res, studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!', () => {
           const matches = regEx.exec(pathSplit[2]);
-          console.log("matches: " + matches);
+          console.log('matches: ' + matches);
           const studentNumber = matches[2] + '';
-          console.log("studentNumber: " + studentNumber);
+          console.log('studentNumber: ' + studentNumber);
           const assignmentFolder = dirname(studentFolder);
-          console.log("assignmentFolder: " + assignmentFolder);
+          console.log('assignmentFolder: ' + assignmentFolder);
 
           return checkAccess(req, res, assignmentFolder + sep + GRADES_FILE, () => {
             return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
@@ -1317,9 +1372,9 @@ const getMarks = (req, res) => {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
 
     const config = JSON.parse(data.toString());
-    var loc = "";
-    console.log("req.body.location: " + req.body.location);
-    var count = (req.body.location.match(new RegExp("/", "g")) || []).length;
+    let loc = '';
+    console.log('req.body.location: ' + req.body.location);
+    const count = (req.body.location.match(new RegExp('/', 'g')) || []).length;
     //   commented this out for workspace path change, does not seem to affect root assignments either...
     //   if (count > 3) {
     //    var splitArray = req.body.location.split("/");
@@ -1328,13 +1383,13 @@ const getMarks = (req, res) => {
     //  else
     loc = req.body.location.replace(/\//g, sep);
 
-    console.log("Loc: " + loc);
-    //const pathSplit = loc.split(sep);
-    //if (pathSplit.length !== 4)
+    console.log('Loc: ' + loc);
+    // const pathSplit = loc.split(sep);
+    // if (pathSplit.length !== 4)
     //  return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
 
-    //const regEx = /(.*)\((.+)\)/;
-    //if (!regEx.test(pathSplit[1]))
+    // const regEx = /(.*)\((.+)\)/;
+    // if (!regEx.test(pathSplit[1]))
     // return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
 
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
@@ -2315,7 +2370,7 @@ const createAssignment = (req, res) => {
           const csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
           csvString += csvData;
 
-          if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+          if (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') {
             mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
             mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
             const content = readFileSync(file.path);
@@ -2334,7 +2389,7 @@ const createAssignment = (req, res) => {
           }
         }
 
-        if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+        if (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') {
           writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
           writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
           const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
@@ -2394,7 +2449,7 @@ const updateAssignment = (req, res) => {
 
         const config = JSON.parse(data.toString());
         let assignmentSettingsBuffer;
-        if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+        if (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') {
           assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
           if (!isJson(assignmentSettingsBuffer))
             return sendResponse(req, res, 400, 'Invalid assignment settings file!');
@@ -2423,7 +2478,7 @@ const updateAssignment = (req, res) => {
           noheader: true,
           trim: false
         }).fromFile(
-          (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") ?
+          (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') ?
             config.defaultPath + sep + assignmentName + sep + GRADES_FILE :
             config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + GRADES_FILE);
 
@@ -2439,7 +2494,7 @@ const updateAssignment = (req, res) => {
           const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
           let csvData = '';
 
-          if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+          if (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') {
             if (existsSync(config.defaultPath + sep + assignmentName + sep + studentFolder)) {
               if (studentInfo.remove) {
                 deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder);
@@ -2462,7 +2517,7 @@ const updateAssignment = (req, res) => {
               // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
               csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
             }
-          } else{
+          } else {
             if (existsSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + studentFolder)) {
               if (studentInfo.remove) {
                 deleteFolderRecursive(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + studentFolder);
@@ -2491,7 +2546,7 @@ const updateAssignment = (req, res) => {
         }
 
         //
-        if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+        if (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') {
           writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
           // writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
           const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
@@ -2681,7 +2736,6 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           } catch (exception) {
             console.log(exception);
           }
-
         } else {
           entry.path = entry.path.replace(oldFolder, newFolder);
           const directory = destination + entry.path.replace('/', sep);

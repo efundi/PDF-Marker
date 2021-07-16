@@ -6,7 +6,6 @@ import { AppService } from '@coreModule/services/app.service';
 import { ElectronService } from '@coreModule/services/electron.service';
 import { IComment } from '@coreModule/utils/comment.class';
 import { CommentService } from '@pdfMarkerModule/services/comment.service';
-import { ImportService } from '@pdfMarkerModule/services/import.service';
 import { SettingsService } from '@pdfMarkerModule/services/settings.service';
 import { AssignmentService } from '@sharedModule/services/assignment.service';
 
@@ -37,7 +36,20 @@ export class GenericCommentsComponent implements OnInit {
   ngOnInit() {
     this.isLoading$.next(true);
     this.initForm();
+    this.commentsService.getCommentDetails().subscribe((comments: IComment[]) => {
+      this.populateComments(comments);
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
+      this.appService.isLoading$.next(false);
+    });
+
     this.isLoading$.next(false);
+  }
+
+  private populateComments(comments: IComment[]) {
+    this.comments = comments;
+    this.dataSource = new MatTableDataSource<IComment>(this.comments);
   }
 
   private initForm() {
@@ -66,16 +78,10 @@ export class GenericCommentsComponent implements OnInit {
     this.commentsService.saveComments( this.genericCommentsForm.value).subscribe((comments: IComment[]) => {
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Comment saved');
-      //this.resetPreviousUpload();
     }, error => {
-      this.appService.openSnackBar(false, 'Unable to sav comment');
+      this.appService.openSnackBar(false, 'Unable to save comment');
       this.appService.isLoading$.next(false);
     });
-  }
-
-  private populateComments(comments: IComment[]) {
-    this.comments = comments;
-    this.dataSource = new MatTableDataSource<IComment>(this.comments);
   }
 
 }
