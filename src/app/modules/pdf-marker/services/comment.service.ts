@@ -10,13 +10,13 @@ import {IRubric} from '@coreModule/utils/rubric.class';
 export class CommentService {
 
   saveComments(data: FormData): Observable<IComment[]> {
-    return this.http.post<IComment[]>('/api/comments/save', data);
+    return this.http.post<IComment[]>('/api/comment/save', data);
   }
 
   constructor(private http: HttpClient) { }
 
   getCommentDetails(): Observable<IComment[]> {
-    return this.http.get<IComment[]>('/api/comment/details');
+    return this.http.get<IComment[]>('/api/comment/list');
   }
 
   deleteComment(data: any): Observable<IComment[]> {

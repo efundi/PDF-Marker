@@ -100,6 +100,7 @@ const INVALID_PATH_PROVIDED = 'Invalid path provided!';
 const INVALID_STUDENT_FOLDER = 'Invalid student folder';
 
 const COULD_NOT_READ_COMMENT_LIST = 'Could not read list of comments!';
+const NOT_PROVIDED_COMMENT = 'Comment must be provided!';
 /**/
 
 const assignmentList = (callback) => {
@@ -535,7 +536,7 @@ const saveNewComment = async (req, res) => {
   // ----
   const foundCount = comments.length + 1;
 
-  comments.push({id: foundCount, title: req.body.newComment, inUse: 'false'});
+  comments.push({id: foundCount, title: req.body.newComment, inUse: false});
 
   console.log(comments);
 
@@ -547,33 +548,26 @@ const saveNewComment = async (req, res) => {
   return sendResponseData(req, res, 200, true);
 };
 
-app.post('/api/comments/save', [
+app.post('/api/comment/save', [
   check('newComment').not().isEmpty().withMessage('comment not provided!'),
 ], saveNewComment);
 
 /*READ COMMENTS DETAIL*/
 const getComments = async (req, res) => {
 
-  console.log("1");
   if (!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
-  console.log("2");
   if (!existsSync(CONFIG_DIR)) {
-    console.log("3");
     return mkdir(CONFIG_DIR, err => {
       if (err)
         return sendResponse(req, res, 500, COULD_NOT_READ_COMMENT_LIST);
     });
   } else {
-    console.log("4");
     if (existsSync(CONFIG_DIR + COMMENTS_FILE)) {
-      console.log("5");
       return readFromFile(req, res, CONFIG_DIR + COMMENTS_FILE, (data) => {
         if (!isJson(data))
           return sendResponse(req, res, 400, COULD_NOT_READ_COMMENT_LIST);
-        console.log("Before Comments...");
         const comments: IComment[] = getCommentsDetails(JSON.parse(data.toString()));
-        console.log("After Comments...");
         if (Array.isArray(comments))
           return sendResponseData(req, res, 200, comments);
 
@@ -583,8 +577,97 @@ const getComments = async (req, res) => {
     }
   }
 };
-app.get('/api/comments/details', getComments);
+app.get('/api/comment/list', getComments);
 /* END COMMENTS DETAIL*/
+
+/* START COMMENT DELETE*/
+
+/* DELETE RUBRICS */
+
+const deleteCommentFn = (req, res) => {
+  if (!checkClient(req, res))
+    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+
+  if (!req.body.id)
+    return sendResponse(req, res, 400, NOT_PROVIDED_COMMENT);
+
+  const id: number = req.body.id;
+  let inUse: boolean = false;
+
+  return readFromFile(req, res, CONFIG_DIR + COMMENTS_FILE, (data) => {
+    if (!isJson(data))
+      return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+      const comments: IComment[] = getCommentsDetails(JSON.parse(data.toString()));
+
+try {
+  for (let i = 0; i < comments.length; i++) {
+    if (comments[i].id === id) {
+      inUse = true;
+      break;
+    }
+  }
+    return sendResponseData(req, res, 200, inUse);
+}catch (e) {
+      return sendResponse(req, res, 500, e.message);
+    }
+  });
+};
+app.post('/api/comment/delete/check',
+  check('id').not().isEmpty().withMessage(NOT_PROVIDED_COMMENT), deleteCommentFn);
+
+const deleteCommentConfirmation = (req, res) => {
+  if (!checkClient(req, res))
+    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+
+  if (!req.body.id)
+    return sendResponse(req, res, 400, NOT_PROVIDED_COMMENT);
+
+  if (!req.body.id)
+    return sendResponse(req, res, 400, FORBIDDEN_RESOURCE);
+
+  const id: number = req.body.id;
+
+  if (existsSync(CONFIG_DIR + COMMENTS_FILE)) {
+    return readFromFile(req, res, CONFIG_DIR + COMMENTS_FILE, async (data) => {
+      if (!isJson(data))
+        return sendResponse(req, res, 400, COULD_NOT_READ_COMMENT_LIST);
+      console.log(data);
+      const comments: IComment[] = JSON.parse(data.toString());
+      console.log(comments);
+      if (Array.isArray(comments)) {
+        let indexFound = -1;
+        for (let i = 0; i < comments.length; i++) {
+          if (comments[i].id === id) {
+            indexFound = i;
+            break;
+          }
+        }
+
+        if (indexFound === -1)
+          return sendResponse(req, res, 404, 'Could not find comment');
+
+        comments.splice(indexFound, 1);
+        const newComments = getCommentsDetails(comments);
+
+        try {
+          writeFileSync(CONFIG_DIR + COMMENTS_FILE, JSON.stringify(newComments));
+        } catch (e) {
+          return sendResponse(req, res, 500, COULD_NOT_READ_COMMENT_LIST);
+        }
+
+      return sendResponseData(req, res, 200, newComments);
+      }
+    });
+  }
+  return sendResponseData(req, res, 500, []);
+};
+
+app.post('/api/comment/delete',
+  check('id').not().isEmpty().withMessage(NOT_PROVIDED_COMMENT), deleteCommentConfirmation);
+/* DELETE READ RUBRICS */
+
+
+/*END COMMENT DELETE*/
 
 const getCommentsDetails = (comments: IComment[]) => {
   const commentNames: IComment[] = [];

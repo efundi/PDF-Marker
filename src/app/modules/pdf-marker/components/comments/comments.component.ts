@@ -8,6 +8,9 @@ import { IComment } from '@coreModule/utils/comment.class';
 import { CommentService } from '@pdfMarkerModule/services/comment.service';
 import { SettingsService } from '@pdfMarkerModule/services/settings.service';
 import { AssignmentService } from '@sharedModule/services/assignment.service';
+import {MatDialogConfig} from '@angular/material/dialog';
+import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {IRubric} from '@coreModule/utils/rubric.class';
 
 @Component({
   selector: 'pdf-marker-comments',
@@ -54,11 +57,8 @@ export class GenericCommentsComponent implements OnInit {
 
   private initForm() {
     this.genericCommentsForm = this.fb.group({
-      newComment: [Validators.required],
+      newComment: [null, Validators.required],
     });
-  }
-
-  deleteComment(comment: string) {
   }
 
   get fc() {
@@ -76,10 +76,51 @@ export class GenericCommentsComponent implements OnInit {
     formData.append('newComment', this.fc.newComment.value);
     this.appService.isLoading$.next(true);
     this.commentsService.saveComments( this.genericCommentsForm.value).subscribe((comments: IComment[]) => {
+      this.populateComments(comments);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Comment saved');
     }, error => {
       this.appService.openSnackBar(false, 'Unable to save comment');
+      this.appService.isLoading$.next(false);
+    });
+  }
+
+  deleteComment(id: string) {
+    const data = {id};
+    this.appService.isLoading$.next(true);
+    this.commentsService.deleteCommentCheck(data).subscribe((inUse: boolean) => {
+      if (inUse) {
+        const config = new MatDialogConfig();
+        config.width = '400px';
+        config.maxWidth = '400px';
+        config.data = {
+          title: 'Confirmation',
+          message: 'This comment is in use, are your sure you want to delete it?'
+        };
+        const shouldDeleteFn = (shouldDelete: boolean) => {
+          if (shouldDelete) {
+            this.deleteCommentImpl(id, shouldDelete);
+          }
+        };
+
+        this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+      } else {
+        this.deleteCommentImpl(id, true);
+      }
+    }, error => {
+      this.appService.openSnackBar(false, 'Unable to delete comment');
+      this.appService.isLoading$.next(false);
+    });
+  }
+
+  private deleteCommentImpl(id: string, confirmation: boolean) {
+    const newData = { id, confirmation};
+    this.commentsService.deleteComment(newData).subscribe((comments: IComment[]) => {
+      this.populateComments(comments);
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(true, 'Comment deleted');
+    }, error => {
+      this.appService.openSnackBar(false, 'Unable to deleted comment');
       this.appService.isLoading$.next(false);
     });
   }
