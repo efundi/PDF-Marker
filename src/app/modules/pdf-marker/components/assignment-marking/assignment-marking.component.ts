@@ -399,13 +399,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
           } else {
             componentRef.instance.setTotalMark(formData.totalMark);
             componentRef.instance.setSectionLabel(formData.sectionLabel);
-            if (formData.genericComment && formData.markingComment) {
-              componentRef.instance.setComment(formData.markingComment + ' ' + formData.genericComment);
-            } else if (formData.genericComment) {
-              componentRef.instance.setComment(formData.genericComment);
-            } else {
-              componentRef.instance.setComment(formData.markingComment);
-            }
+            componentRef.instance.setComment(formData.markingComment);
             this.saveMarks().then((isSaved: boolean) => {
               if(isSaved) {
                 this.appService.openSnackBar(true, "Saved");

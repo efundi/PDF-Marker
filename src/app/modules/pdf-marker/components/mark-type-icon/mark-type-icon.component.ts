@@ -285,13 +285,8 @@ export class MarkTypeIconComponent implements OnInit {
       console.log("Form Data is", formData);
       this.totalMark = formData.totalMark;
       this.sectionLabel = formData.sectionLabel;
-      if (formData.genericComment && formData.markingComment) {
-        this.comment = formData.markingComment + ' ' + formData.genericComment;
-      } else if (formData.genericComment) {
-        this.comment = formData.genericComment;
-      } else {
-        this.comment = formData.markingComment;
-      }
+      this.comment = formData.markingComment;
+
       if(this.iconForm) {
         this.iconForm.controls.totalMark.setValue(this.totalMark);
       }

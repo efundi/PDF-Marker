@@ -18,7 +18,7 @@
     <mat-divider></mat-divider>
     <mat-form-field>
       <mat-label>Generic Comment:</mat-label>
-      <mat-select formControlName="genericComment" (change)="doSomething($event)">
+      <mat-select formControlName="genericComment" (selectionChange)="appendGenericComment($event)">
         <mat-option *ngFor="let comment of genericComments" [value]="comment.title">{{comment.title}}</mat-option>
       </mat-select>
     </mat-form-field><br>
@@ -26,7 +26,7 @@
     <mat-divider></mat-divider>
     <mat-form-field style="width:100%">
       <mat-label>Comment:</mat-label>
-      <textarea formControlName="markingComment" id="markingComment" #markingComment type="text" matInput placeholder="Marking comment to student..."></textarea>
+      <textarea formControlName="markingComment" id="markingComment" #markingComment type="text" matInput placeholder="Marking comment to student..." (focusout)="trackCommentCaretPosition(markingComment, $event)"></textarea>
     </mat-form-field>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>

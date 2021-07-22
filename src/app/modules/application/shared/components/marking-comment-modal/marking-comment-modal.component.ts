@@ -4,7 +4,7 @@ import {FormBuilder, FormControl, FormGroup, Validators} from "@angular/forms";
 import {AppService} from "@coreModule/services/app.service";
 import {IComment} from '@coreModule/utils/comment.class';
 import {CommentService} from '@pdfMarkerModule/services/comment.service';
-
+import {MatSelectChange} from '@angular/material/select/typings/select';
 
 @Component({
   selector: 'pdf-marker-marking-comment-modal',
@@ -31,6 +31,8 @@ export class MarkingCommentModalComponent implements OnInit {
   private  markingCommentObj: any;
 
   genericComments: IComment[] = [];
+
+  commentCaretPos = 0;
 
   constructor(private appService: AppService,
               private dialogRef: MatDialogRef<MarkingCommentModalComponent>,
@@ -84,7 +86,7 @@ export class MarkingCommentModalComponent implements OnInit {
       //const markingCommentObj = {sectionLabel: this.markTypeIcon.getSectionLabel(),  totalMark: this.markTypeIcon.getTotalMark(), markingComment: this.markTypeIcon.getComment()};
       this.dialogRef.close(this.markingCommentObj);
     } else {
-      const markingRemove = {removeIcon: true}
+      const markingRemove = {removeIcon: true};
       this.dialogRef.close(markingRemove);
       }
   }
@@ -101,7 +103,19 @@ export class MarkingCommentModalComponent implements OnInit {
     }
   }
 
-  doSomething($event: Event) {
-    console.log($event);
+  appendGenericComment($event: MatSelectChange) {
+    const commentText = this.commentForm.controls.markingComment.value;
+    const textToInsert = $event.value;
+    if (commentText && commentText.length > 0) {
+      this.commentForm.controls.markingComment.patchValue([commentText.slice(0, this.commentCaretPos), textToInsert, commentText.slice(this.commentCaretPos)].join(''));
+    } else {
+      this.commentForm.controls.markingComment.patchValue(textToInsert);
+    }
+  }
+
+  trackCommentCaretPosition(oField, $event) {
+    if (oField.selectionStart || oField.selectionStart === 0) {
+      this.commentCaretPos = oField.selectionStart;
+    }
   }
 }
