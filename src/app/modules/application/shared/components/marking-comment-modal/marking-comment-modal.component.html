@@ -10,9 +10,17 @@
     </mat-form-field><br>
     <div class="pdf-spacer"></div>
     <mat-divider></mat-divider>
-    <mat-form-field >
+    <mat-form-field>
       <mat-label>Mark:</mat-label>
       <input  type="number" formControlName="totalMark" id="totalMark" #totalMark placeholder="Mark Value..." matInput required [autocomplete]="false">
+    </mat-form-field><br>
+    <div class="pdf-spacer"></div>
+    <mat-divider></mat-divider>
+    <mat-form-field>
+      <mat-label>Generic Comment:</mat-label>
+      <mat-select formControlName="genericComment" (change)="doSomething($event)">
+        <mat-option *ngFor="let comment of genericComments" [value]="comment.title">{{comment.title}}</mat-option>
+      </mat-select>
     </mat-form-field><br>
     <div class="pdf-spacer"></div>
     <mat-divider></mat-divider>

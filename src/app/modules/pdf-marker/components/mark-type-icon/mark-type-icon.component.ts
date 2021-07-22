@@ -281,12 +281,17 @@ export class MarkTypeIconComponent implements OnInit {
       componentRef: this.componentReferene
     };
 
-    const handelCommentFN = (formData: any) => {
+    const handleCommentFN = (formData: any) => {
       console.log("Form Data is", formData);
       this.totalMark = formData.totalMark;
       this.sectionLabel = formData.sectionLabel;
-      this.comment = formData.markingComment;
-
+      if (formData.genericComment && formData.markingComment) {
+        this.comment = formData.markingComment + ' ' + formData.genericComment;
+      } else if (formData.genericComment) {
+        this.comment = formData.genericComment;
+      } else {
+        this.comment = formData.markingComment;
+      }
       if(this.iconForm) {
         this.iconForm.controls.totalMark.setValue(this.totalMark);
       }
@@ -299,6 +304,6 @@ export class MarkTypeIconComponent implements OnInit {
         }
       });
     };
-    this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
+    this.appService.createDialog(MarkingCommentModalComponent, config, handleCommentFN);
   }
 }
