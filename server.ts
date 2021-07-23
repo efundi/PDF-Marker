@@ -545,7 +545,7 @@ const saveNewComment = async (req, res) => {
   } catch (e) {
     return sendResponseData(req, res, 500, false);
   }
-  return sendResponseData(req, res, 200, true);
+  return sendResponseData(req, res, 200, comments);
 };
 
 app.post('/api/comment/save', [

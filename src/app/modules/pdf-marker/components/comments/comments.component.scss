@@ -1,9 +1,14 @@
-mat-cell:nth-child(1),
-mat-header-cell:nth-child(1) {
-  flex: 0 0 30%;
+.comment-width {
+  width: 25%;
 }
 
-mat-cell:nth-child(5),
-mat-header-cell:nth-child(5) {
-  flex: 0 0 10%;
+pdf-marker-comment-hide{
+  display: none;
+}
+
+#pdf-marker-rubric-import-comment-list {
+  table {
+    min-width: 500px;
+    width: 100%;
+  }
 }

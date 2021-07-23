@@ -3,14 +3,11 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material';
 import { AlertService } from '@coreModule/services/alert.service';
 import { AppService } from '@coreModule/services/app.service';
-import { ElectronService } from '@coreModule/services/electron.service';
 import { IComment } from '@coreModule/utils/comment.class';
 import { CommentService } from '@pdfMarkerModule/services/comment.service';
 import { SettingsService } from '@pdfMarkerModule/services/settings.service';
-import { AssignmentService } from '@sharedModule/services/assignment.service';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
-import {IRubric} from '@coreModule/utils/rubric.class';
 
 @Component({
   selector: 'pdf-marker-comments',
@@ -20,7 +17,6 @@ import {IRubric} from '@coreModule/utils/rubric.class';
 export class GenericCommentsComponent implements OnInit {
 
 
-  isLoading$ = this.appService.isLoading$;
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
   genericCommentsForm: FormGroup;
 
@@ -31,13 +27,11 @@ export class GenericCommentsComponent implements OnInit {
               private settingsService: SettingsService,
               private appService: AppService,
               private commentsService: CommentService,
-              private alertService: AlertService,
-              private electronService: ElectronService,
-              private assignmentService: AssignmentService) {
+              private alertService: AlertService) {
   }
 
   ngOnInit() {
-    this.isLoading$.next(true);
+    this.appService.isLoading$.next(true);
     this.initForm();
     this.commentsService.getCommentDetails().subscribe((comments: IComment[]) => {
       this.populateComments(comments);
@@ -47,7 +41,7 @@ export class GenericCommentsComponent implements OnInit {
       this.appService.isLoading$.next(false);
     });
 
-    this.isLoading$.next(false);
+    this.appService.isLoading$.next(false);
   }
 
   private populateComments(comments: IComment[]) {
