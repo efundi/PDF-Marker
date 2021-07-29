@@ -73,6 +73,7 @@ export class GenericCommentsComponent implements OnInit {
       this.populateComments(comments);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Comment saved');
+      this.genericCommentsForm.reset();
     }, error => {
       this.appService.openSnackBar(false, 'Unable to save comment');
       this.appService.isLoading$.next(false);

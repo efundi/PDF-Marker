@@ -111,6 +111,11 @@ export class MarkingCommentModalComponent implements OnInit {
     } else {
       this.commentForm.controls.markingComment.patchValue(textToInsert);
     }
+    $event.value = '';
+    // Clear droplist
+    this.commentForm.controls.genericComment.setValue('');
+    this.commentForm.controls.genericComment.setErrors(null);
+
   }
 
   trackCommentCaretPosition(oField, $event) {

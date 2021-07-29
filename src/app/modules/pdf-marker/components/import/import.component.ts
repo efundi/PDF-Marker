@@ -128,7 +128,7 @@ export class ImportComponent implements OnInit {
       assignmentType: [null],
       assignmentZipFileText: [null],
       assignmentName: [null],
-      workspaceFolder:[null, Validators.required],
+      workspaceFolder: [null, Validators.required],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required]
     });
@@ -258,6 +258,7 @@ export class ImportComponent implements OnInit {
     }
 
     const {
+      assignmentName,
       noRubric,
       rubric,
       workspaceFolder
@@ -268,6 +269,7 @@ export class ImportComponent implements OnInit {
       'workspace': workspaceFolder,
       'noRubric': noRubric,
       'rubric': rubric,
+      'assignmentName': assignmentName,
       'assignmentType': this.selectedType
     };
     this.appService.isLoading$.next(true);

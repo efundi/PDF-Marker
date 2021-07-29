@@ -310,7 +310,7 @@ app.post('/api/settings/newFolder', [
 /*IMPORT API*/
 
 const zipFileUploadCallback = (req, res, data) => {
-  const acceptedParams = ['file', 'workspace', 'noRubric', 'rubric', 'assignmentType'];
+  const acceptedParams = ['file', 'workspace', 'assignmentName', 'noRubric', 'rubric', 'assignmentType'];
   const receivedParams = Object.keys(req.body);
   let isInvalidKey = false;
   let invalidParam: string;
@@ -412,7 +412,7 @@ const zipFileUploadCallback = (req, res, data) => {
             newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
 
             if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
-              extractZipFile(req.body.file, config.defaultPath + sep, newFolder + sep, oldPath + '/', req.body.assignmentType).then(() => {
+              extractZipFile(req.body.file, config.defaultPath + sep, newFolder + sep, oldPath + '/', req.body.assignmentName, req.body.assignmentType).then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
@@ -430,7 +430,7 @@ const zipFileUploadCallback = (req, res, data) => {
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
-              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder + sep, oldPath + '/', req.body.assignmentType).then(() => {
+              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, newFolder + sep, oldPath + '/', req.body.assignmentName, req.body.assignmentType).then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
@@ -450,7 +450,7 @@ const zipFileUploadCallback = (req, res, data) => {
             }
           } else {
             if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
-              extractZipFile(req.body.file, config.defaultPath + sep, '', '', req.body.assignmentType)
+              extractZipFile(req.body.file, config.defaultPath + sep, '', '', req.body.assignmentName, req.body.assignmentType)
                 .then(async () => {
                   return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
                     EXTRACTED_ZIP,
@@ -469,7 +469,7 @@ const zipFileUploadCallback = (req, res, data) => {
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
-              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, '', '', req.body.assignmentType).then(() => {
+              extractZipFile(req.body.file, config.defaultPath + sep + req.body.workspace + sep, '', '', req.body.assignmentName, req.body.assignmentType).then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + req.body.workspace + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
                   null, () => {
@@ -498,7 +498,7 @@ const zipFileUploadCallback = (req, res, data) => {
   }, 'File not uploaded!');
 };
 
-const uploadFn = (req, res, next) => {
+const importFn = (req, res, next) => {
   if (!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
 
@@ -513,7 +513,7 @@ const uploadFn = (req, res, next) => {
   });
 };
 
-app.post('/api/import', uploadFn);
+app.post('/api/import', importFn);
 
 /*END IMPORT API*/
 /* Comments API*/
@@ -1165,23 +1165,43 @@ app.post('/api/pdf/file', [
   check('location').not().isEmpty().withMessage('File location not provided!')
 ], getPdfFile);
 
-const savingMarks = (req, res) => {
+const saveMarks = (req, res) => {
   if (!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
 
-  if (req.body.location === null || req.body.location === undefined)
+  if (req.body.location === null || req.body.location === undefined) {
     return sendResponse(req, res, 400, 'File location not provided');
+  }
 
   const marks = Array.isArray(req.body.marks) ? req.body.marks : [];
   let totalMark = 0;
   if (!isNullOrUndefined(marks)) {
     const pages = Object.keys(marks);
+    const commentsData = existsSync(CONFIG_DIR + COMMENTS_FILE) ? readFileSync(CONFIG_DIR + COMMENTS_FILE) : null;
+    const comments: IComment[] = isNullOrUndefined(commentsData) ? null : JSON.parse(commentsData.toString());
+    let commentbool = false;
     pages.forEach(page => {
       if (Array.isArray(marks[page])) {
-        for (let i = 0; i < marks[page].length; i++)
+        for (let i = 0; i < marks[page].length; i++) {
           totalMark += (marks[page][i] && marks[page][i].totalMark) ? marks[page][i].totalMark : 0;
+          if (existsSync(CONFIG_DIR + COMMENTS_FILE)) {
+            comments.forEach(comment => {
+              if (marks[page][i].comment.includes(comment.title) && !comment.inUse) {
+                commentbool = true;
+                comment.inUse = true;
+              }
+            });
+          }
+        }
       }
     });
+    if (commentbool) {
+      try {
+        writeFileSync(CONFIG_DIR + COMMENTS_FILE, JSON.stringify(comments));
+      } catch (e) {
+        return sendResponseData(req, res, 500, false);
+      }
+    }
   }
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
@@ -1229,7 +1249,7 @@ const savingMarks = (req, res) => {
                     const keys = Object.keys(gradesJSON[i]);
                     if (keys.length > 0)
                       assignmentHeader = keys[0];
-                  } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                  } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === studentNumber.toUpperCase()) {
                     gradesJSON[i].field5 = totalMark;
                     changed = true;
                     json2csv(gradesJSON, (err, csv) => {
@@ -1273,7 +1293,7 @@ const savingMarks = (req, res) => {
                     const keys = Object.keys(gradesJSON[i]);
                     if (keys.length > 0)
                       assignmentHeader = keys[0];
-                  } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                  } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === studentNumber.toUpperCase()) {
                     gradesJSON[i].field5 = totalMark;
                     changed = true;
                     json2csv(gradesJSON, (err, csv) => {
@@ -1302,7 +1322,7 @@ const savingMarks = (req, res) => {
   });
 };
 
-app.post('/api/assignment/marks/save', savingMarks);
+app.post('/api/assignment/marks/save', saveMarks);
 
 const savingRubricMarks = (req, res) => {
   if (!checkClient(req, res))
@@ -1783,7 +1803,7 @@ const finalizeAssignment = async (req, res) => {
                       if (keys.length > 0) {
                         assignmentHeader = keys[0];
                       }
-                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
                       gradesJSON[i].field5 = data.totalMark;
                       changed = true;
                       await json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
@@ -1926,7 +1946,7 @@ const finalizeAssignmentRubric = async (req, res) => {
                       if (keys.length > 0) {
                         assignmentHeader = keys[0];
                       }
-                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === matches[2]) {
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
                       gradesJSON[i].field5 = data.totalMark;
                       changed = true;
                       await json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
@@ -2772,15 +2792,16 @@ const isJson = (str) => {
   return true;
 };
 
-const extractZipFile = async (file, destination, newFolder, oldFolder, assignmentType) => {
+const extractZipFile = async (file, destination, newFolder, oldFolder, assignmentName, assignmentType) => {
   //TODO Should we validate the zip structure based on assignment type?
   if (assignmentType === 'Generic') {
+    let skippedFirst = 1;
     return await createReadStream(file)
       .pipe(unzipper.Parse())
       .pipe(etl.map(async entry => {
         const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
         let csvString = "";
-        let asnTitle = "";
+        let asnTitle = assignmentName;
         let dir = "";
         let isSet = true;
         if (entry.type === 'File') {
@@ -2814,6 +2835,22 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
             mkdirSync(directory + '/' + studentDirectory, {recursive: true});
             mkdirSync(directory + '/' + studentDirectory + '/' + FEEDBACK_FOLDER, {recursive: true});
             mkdirSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER, {recursive: true});
+            if (!existsSync(directory + GRADES_FILE) && skippedFirst === 1) {
+              const headers = `'${asnTitle}','SCORE_GRADE_TYPE'\n`;
+              const csvFullString = headers + `''\n` + subheaders;
+              console.log(directory + GRADES_FILE);
+              skippedFirst++;
+              await writeFileSync(directory + sep + GRADES_FILE, csvFullString, {flag: 'a'});
+              await writeFileSync(directory + sep + GRADES_FILE, csvString, {flag: 'a'});
+              console.log('create file');
+            } else {
+              skippedFirst++;
+              await writeFileSync(directory + sep + GRADES_FILE, csvString, {flag: 'a'});
+            }
+            // if (skippedFirst === 1) {
+            //   await writeFileSync(directory + GRADES_FILE, csvString, {flag: 'a'});
+            //   skippedFirst++;
+            // }
             const pdfBytes = await pdfDoc.save();
             writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + "/" + tempDetails, pdfBytes);
           } catch (exception) {
@@ -2833,10 +2870,12 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
             //  csvFullString = csvFullString + csvString;
             //console.log(csvFullString);
             console.log(directory + GRADES_FILE);
+            skippedFirst++;
             await writeFileSync(directory + GRADES_FILE, csvFullString, {flag: 'a'});
             await writeFileSync(directory + GRADES_FILE, csvString, {flag: 'a'});
             console.log('create file');
           } else {
+            skippedFirst++;
             await writeFileSync(directory + GRADES_FILE, csvString, {flag: 'a'});
           }
         }
