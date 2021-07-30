@@ -27,7 +27,7 @@
       <mat-label class="pdf-marker-form-labels">Workspace Folder:&nbsp;</mat-label>
       <mat-form-field>
         <mat-label>Select Workspace</mat-label>
-        <mat-select formControlName="workspaceFolder">
+        <mat-select formControlName="workspaceFolder" required>
           <mat-option *ngFor="let workspace of workspaces" [value]="workspace">{{workspace}}</mat-option>
         </mat-select>
       </mat-form-field>
