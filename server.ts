@@ -592,22 +592,22 @@ const deleteCommentFn = (req, res) => {
     return sendResponse(req, res, 400, NOT_PROVIDED_COMMENT);
 
   const id: number = req.body.id;
-  let inUse: boolean = false;
+  let found = false;
 
   return readFromFile(req, res, CONFIG_DIR + COMMENTS_FILE, (data) => {
     if (!isJson(data))
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
-      const comments: IComment[] = getCommentsDetails(JSON.parse(data.toString()));
+    const comments: IComment[] = getCommentsDetails(JSON.parse(data.toString()));
 
-try {
-  for (let i = 0; i < comments.length; i++) {
-    if (comments[i].id === id) {
-      inUse = true;
-      break;
-    }
-  }
-    return sendResponseData(req, res, 200, inUse);
-}catch (e) {
+    try {
+      for (let i = 0; i < comments.length; i++) {
+        if (comments[i].id === id) {
+          found = true;
+          break;
+        }
+      }
+      return sendResponseData(req, res, 200, found);
+    } catch (e) {
       return sendResponse(req, res, 500, e.message);
     }
   });
@@ -896,15 +896,16 @@ const deleteRubricsFn = (req, res) => {
       const folders: string[] = glob.sync(config.defaultPath + sep + '*');
       let found = false;
       folders.forEach(folder => {
-        const settingFileContents = readFileSync(folder + sep + SETTING_FILE);
+        const settingFileContents = existsSync(folder + sep + SETTING_FILE) ? readFileSync(folder + sep + SETTING_FILE) : null;
+        if (settingFileContents != null) {
+          if (!isJson(settingFileContents)) {
+            return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+          }
+          const settings: AssignmentSettingsInfo = JSON.parse(settingFileContents.toString());
 
-        if (!isJson(settingFileContents))
-          return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
-
-        const settings: AssignmentSettingsInfo = JSON.parse(settingFileContents.toString());
-
-        if (settings.rubric && settings.rubric.name.toLowerCase() === rubricName.toLowerCase())
-          found = true;
+          if (settings.rubric && settings.rubric.name.toLowerCase() === rubricName.toLowerCase())
+            found = true;
+        }
       });
 
       return sendResponseData(req, res, 200, found);
@@ -957,6 +958,7 @@ const deleteRubricConfirmation = (req, res) => {
 
   return sendResponseData(req, res, 200, []);
 };
+
 app.post('/api/rubric/delete',
   check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), deleteRubricConfirmation);
 /* DELETE READ RUBRICS */

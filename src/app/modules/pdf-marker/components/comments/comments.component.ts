@@ -80,9 +80,9 @@ export class GenericCommentsComponent implements OnInit {
     });
   }
 
-  deleteComment(id: string) {
-    const data = {id};
+  deleteComment(item: IComment) {
     this.appService.isLoading$.next(true);
+    const data = {id: item.id};
     this.commentsService.deleteCommentCheck(data).subscribe((inUse: boolean) => {
       if (inUse) {
         const config = new MatDialogConfig();
@@ -90,17 +90,17 @@ export class GenericCommentsComponent implements OnInit {
         config.maxWidth = '400px';
         config.data = {
           title: 'Confirmation',
-          message: 'This comment is in use, are your sure you want to delete it?'
+          message: item.inUse ? 'This comment is in use, are your sure you want to delete it?' : 'Are you sure you want to delete this comment?'
         };
         const shouldDeleteFn = (shouldDelete: boolean) => {
           if (shouldDelete) {
-            this.deleteCommentImpl(id, shouldDelete);
+            this.deleteCommentImpl(item.id, shouldDelete);
           }
         };
 
         this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
       } else {
-        this.deleteCommentImpl(id, true);
+        this.deleteCommentImpl(item.id, true);
       }
     }, error => {
       this.appService.openSnackBar(false, 'Unable to delete comment');
@@ -108,7 +108,7 @@ export class GenericCommentsComponent implements OnInit {
     });
   }
 
-  private deleteCommentImpl(id: string, confirmation: boolean) {
+  private deleteCommentImpl(id: number, confirmation: boolean) {
     const newData = { id, confirmation};
     this.commentsService.deleteComment(newData).subscribe((comments: IComment[]) => {
       this.populateComments(comments);
