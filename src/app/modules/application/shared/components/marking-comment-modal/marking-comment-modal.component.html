@@ -26,7 +26,10 @@
     <mat-divider></mat-divider>
     <mat-form-field style="width:100%">
       <mat-label>Comment:</mat-label>
-      <textarea formControlName="markingComment" id="markingComment" #markingComment type="text" matInput placeholder="Marking comment to student..." (focusout)="trackCommentCaretPosition(markingComment, $event)"></textarea>
+      <textarea formControlName="markingComment" id="markingComment" #markingComment
+                type="text" matInput placeholder="Marking comment to student..."
+                (focusout)="trackCommentCaretPosition(markingComment, $event)"
+                cdkTextareaAutosize cdkAutosizeMinRows="2"></textarea>
     </mat-form-field>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>

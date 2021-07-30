@@ -1188,7 +1188,7 @@ const saveMarks = (req, res) => {
           totalMark += (marks[page][i] && marks[page][i].totalMark) ? marks[page][i].totalMark : 0;
           if (existsSync(CONFIG_DIR + COMMENTS_FILE)) {
             comments.forEach(comment => {
-              if (marks[page][i].comment.includes(comment.title) && !comment.inUse) {
+              if (marks[page][i].comment && marks[page][i].comment.includes(comment.title) && !comment.inUse) {
                 commentbool = true;
                 comment.inUse = true;
               }
@@ -1796,6 +1796,7 @@ const finalizeAssignment = async (req, res) => {
                 await annotateFN().then(async (data) => {
                   fileName += '_MARK';
                   writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
+                  unlinkSync(submission);
                   accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
                   let changed = false;
                   let assignmentHeader;
