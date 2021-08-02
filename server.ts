@@ -1394,7 +1394,7 @@ const savingRubricMarks = (req, res) => {
                       const keys = Object.keys(gradesJSON[i]);
                       if (keys.length > 0)
                         assignmentHeader = keys[0];
-                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === studentNumber.toUpperCase()) {
                       gradesJSON[i].field5 = totalMark;
                       changed = true;
                       json2csv(gradesJSON, (err, csv) => {
@@ -1432,7 +1432,7 @@ const savingRubricMarks = (req, res) => {
                       const keys = Object.keys(gradesJSON[i]);
                       if (keys.length > 0)
                         assignmentHeader = keys[0];
-                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader] === studentNumber) {
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === studentNumber.toUpperCase()) {
                       gradesJSON[i].field5 = totalMark;
                       changed = true;
                       json2csv(gradesJSON, (err, csv) => {
@@ -2336,7 +2336,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
       if (splitFeedback.length > 0) {
         for (let j = 0; j < splitFeedback.length; j++) {
           y = adjustPointsForResults(y, 15);
-          feedbackPage.drawText(splitFeedback[j] + '', {x: xPosition, y, size: textSize});
+          feedbackPage.drawText(splitFeedback[j] + '', {x: xPosition, y, size: textSize, maxWidth: 350, lineHeight: 800});
 
           if (y <= 5) {
             feedbackPage = pdfDoc.addPage(PageSizes.A4);
@@ -2345,7 +2345,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
         }
       } else {
         y = adjustPointsForResults(y, 15);
-        feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y, size: textSize});
+        feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y, size: textSize, maxWidth: 350, lineHeight: 800});
 
         if (y <= 5) {
           feedbackPage = pdfDoc.addPage(PageSizes.A4);
