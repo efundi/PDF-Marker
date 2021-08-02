@@ -52,11 +52,13 @@ export class ImportComponent implements OnInit {
 
   workspaces: string[] = [];
 
+  selected: string;
+
   private actualFilePath: string;
   assignmentTypeID = "Assignment";
   assignmentTypes = [
-    { 'name' : 'Assignment'},
-    { 'name' : 'Generic'},]
+    {'name': 'Assignment'},
+    {'name': 'Generic'}];
   selectedType: string;
   selectedWorkspace: string;
 
@@ -112,7 +114,9 @@ export class ImportComponent implements OnInit {
         return item;
       });
       this.workspaces.unshift('Default Workspace');
-      console.log(this.workspaces);
+      if (this.workspaces.length <= 1) {
+        this.importForm.controls.workspaceFolder.setValue('Default Workspace');
+      }
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.openSnackBar(false, "Unable to retrieve workspaces");
@@ -120,7 +124,12 @@ export class ImportComponent implements OnInit {
     });
 
     this.initForm();
+
     this.appService.isLoading$.next(false);
+  }
+
+  compareCategoryObjects(object1: any, object2: any) {
+    return object1 && object2 && object1.id == object2.id;
   }
 
   private initForm() {

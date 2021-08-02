@@ -117,6 +117,9 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         return item;
       });
       this.workspaces.unshift('Default Workspace');
+      if (this.workspaces.length <= 1) {
+        this.createAssignmentForm.controls.workspaceFolder.setValue('Default Workspace');
+      }
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.openSnackBar(false, "Unable to retrieve workspaces");
