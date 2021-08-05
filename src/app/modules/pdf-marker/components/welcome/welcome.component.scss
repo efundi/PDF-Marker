@@ -17,10 +17,9 @@
 .boundary::-webkit-scrollbar-thumb {
   background: #888;
 }
-$pdf-marker-primary: #6f327a;
 
 .pdf-marker-icons-svg-class {
-  stroke: $pdf-marker-primary;
+  stroke: var(--pdf-marker-primary);
   stroke-width: 0;
 }
 

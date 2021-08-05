@@ -45,7 +45,7 @@ export class IconsComponent implements OnInit, OnChanges {
   containsRubric: boolean;
 
   selecetedIcon: IconInfo;
-
+//TODO colour config
   private readonly defaultColour = "#6F327A";
 
   @Input()

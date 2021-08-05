@@ -63,7 +63,7 @@
 }
 
 /*Variables*/
-$pdf-marker-primary: #6f327a;
+@import "scss/variables";
 
 html, body { height: 100%; font-family: Roboto, "Helvetica Neue", sans-serif !important; min-height: 695px; min-height: 650px;}
 body { margin: 0; }
@@ -106,7 +106,7 @@ pdf-marker-finalise-marking {
   }
 
   .pdf-marker-finalise-marking-modal-content::-webkit-scrollbar-thumb {
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
     border-radius: 10px;
   }
   .pdf-marker-finalise-marking-modal-content::-webkit-scrollbar {
@@ -128,7 +128,7 @@ body {
 
   .mat-dialog-container::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
   }
 
   .mat-dialog-container::-webkit-scrollbar {
@@ -138,7 +138,7 @@ body {
 
   .mat-drawer-content::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
   }
 }
 
@@ -147,7 +147,7 @@ body {
 }
 
 .mat-icon {
-  color: $pdf-marker-primary;
+  color: var(--pdf-marker-primary);
 }
 
 .pdf-marker-container {
@@ -175,7 +175,7 @@ button {
 
   .mat-drawer-inner-container::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
   }
 
   .pdf-marker-content-container {
@@ -237,12 +237,12 @@ pdf-marker-file-explorer-modal {
 
 .mat-checkbox-checked, .mat-checkbox-indeterminate {
   .mat-checkbox-background, .mat-checkbox-background {
-    background: $pdf-marker-primary !important;
+    background: var(--pdf-marker-primary) !important;
   }
 }
 
 .mat-accent .mat-pseudo-checkbox-checked, .mat-accent .mat-pseudo-checkbox-indeterminate, .mat-pseudo-checkbox-checked, .mat-pseudo-checkbox-indeterminate {
-  background: $pdf-marker-primary;
+  background: var(--pdf-marker-primary);
 }
 
 .errorMessages{
@@ -336,3 +336,21 @@ pdf-marker-rubric-criteria-level-block {
   display: flex;
   flex-direction: column;
 }
+
+//App component
+.mat-drawer {
+  font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif;
+}
+
+.visible {
+  visibility: hidden;
+}
+
+.pdf-marker-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+//App component end
+

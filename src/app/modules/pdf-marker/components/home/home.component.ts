@@ -1,4 +1,4 @@
-import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {ActivatedRoute, NavigationEnd, PRIMARY_OUTLET, Router} from "@angular/router";
 import {filter, map} from "rxjs/operators";
