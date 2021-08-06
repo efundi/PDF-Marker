@@ -186,7 +186,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
           value.studentName = matches[1];
           value.studentNumber = matches[2];
           value.assignment = this.hierarchyModel[this.assignmentName][key][this.submissionFolder] ? Object.keys(this.hierarchyModel[this.assignmentName][key][this.submissionFolder])[0] : '';
-          const gradesInfo = this.assignmentGrades.find(gradesInfo => gradesInfo[this.assignmentHeader] === value.studentNumber);
+          const gradesInfo = this.assignmentGrades.find(gradesInfo => gradesInfo[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
           value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5 : 0);
           value.path = (value.assignment) ? this.assignmentName + '/' + key + "/" + this.submissionFolder + "/" + value.assignment : '';
           value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7 : 'N/A');
