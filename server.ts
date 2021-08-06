@@ -23,28 +23,23 @@ import {
   access,
   accessSync,
   constants,
-  copyFile,
-  copyFileSync,
   createReadStream,
   existsSync,
+  lstatSync,
   mkdir,
   mkdirSync,
   readdirSync,
   readFile,
   readFileSync,
   renameSync,
+  rmdirSync,
   statSync,
   unlinkSync,
   writeFile,
   writeFileSync,
-  unlink,
-  rmdirSync,
-  lstatSync,
-  readdir,
-  appendFileSync,
 } from 'fs';
 import {json2csv, json2csvAsync} from 'json-2-csv';
-import {PageSizes, PDFDocument, PDFPage, rgb} from 'pdf-lib';
+import {PageSizes, PDFDocument, PDFPage, rgb, StandardFonts} from 'pdf-lib';
 import {AnnotationFactory} from 'annotpdf';
 import {IconTypeEnum} from './src/app/modules/pdf-marker/info-objects/icon-type.enum';
 import {IconSvgEnum} from './src/app/modules/pdf-marker/info-objects/icon-svg.enum';
@@ -68,7 +63,6 @@ const csvtojson = require('csvtojson');
 const hexRgb = require('hex-rgb');
 const rgbHex = require('rgb-hex');
 const pathinfo = require('locutus/php/filesystem/pathinfo');
-const wrap = require('word-wrap');
 
 
 const CONFIG_FILE = 'config.json';
@@ -2331,12 +2325,12 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     y = adjustPointsForResults(y, 15);
 
     for (let i = 0; i < commentPointers.length; i++) {
-      const feedback = wrap(commentPointers[i], {width: 80});
-      const splitFeedback = feedback.split('\n');
+      const splitFeedback = fillParagraph(commentPointers[i], await pdfDoc.embedFont(StandardFonts.Helvetica), textSize, 400 ).split('\n');
       if (splitFeedback.length > 0) {
         for (let j = 0; j < splitFeedback.length; j++) {
+
           y = adjustPointsForResults(y, 15);
-          feedbackPage.drawText(splitFeedback[j] + '', {x: xPosition, y, size: textSize, maxWidth: 350, lineHeight: 800});
+          feedbackPage.drawText(splitFeedback[j] + '', {x: xPosition, y, size: textSize});
 
           if (y <= 5) {
             feedbackPage = pdfDoc.addPage(PageSizes.A4);
@@ -2345,7 +2339,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
         }
       } else {
         y = adjustPointsForResults(y, 15);
-        feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y, size: textSize, maxWidth: 350, lineHeight: 800});
+        feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y, size: textSize});
 
         if (y <= 5) {
           feedbackPage = pdfDoc.addPage(PageSizes.A4);
@@ -2358,6 +2352,30 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   const newPdfBytes = await pdfDoc.save();
   return Promise.resolve({pdfBytes: newPdfBytes, totalMark});
 };
+
+function fillParagraph(text, font, fontSize, maxWidth) {
+  const paragraphs = text.split('\n');
+  for (let index = 0; index < paragraphs.length; index++) {
+    const paragraph = paragraphs[index];
+    if (font.widthOfTextAtSize(paragraph, fontSize) > maxWidth) {
+      const words = paragraph.split(' ');
+      const newParagraph = [];
+      let i = 0;
+      newParagraph[i] = [];
+      for (const word of words) {
+        newParagraph[i].push(word);
+        if (font.widthOfTextAtSize(newParagraph[i].join(' '), fontSize) > maxWidth) {
+          newParagraph[i].splice(-1); // retira a ultima palavra
+          i = i + 1;
+          newParagraph[i] = [];
+          newParagraph[i].push(word);
+        }
+      }
+      paragraphs[index] = newParagraph.map(p => p.join(' ')).join('\n');
+    }
+  }
+  return paragraphs.join('\n');
+}
 
 const adjustPointsForResults = (coordinate: number, change: number): number => {
   return coordinate - (change);
