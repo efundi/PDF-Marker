@@ -29,6 +29,7 @@ import {AssignmentMarkingRubricComponent} from './components/assignment-marking-
 import {AssignmentWorkspaceOverviewComponent} from './components/assignment-workspace-overview/assignment-workspace-overview.component';
 import {GenericCommentsComponent} from './components/comments/comments.component';
 import {AssignmentWorkspaceManageModalComponent} from './components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
+import { PdfmAnnotateComponent } from './components/pdfm-annotate/pdfm-annotate.component';
 
 
 @NgModule({
@@ -48,7 +49,8 @@ import {AssignmentWorkspaceManageModalComponent} from './components/assignment-w
     MarkTypeIconComponent,
     RubricImportComponent,
     SettingsComponent,
-    WelcomeComponent
+    WelcomeComponent,
+    PdfmAnnotateComponent
   ],
   imports: [
     CommonModule,

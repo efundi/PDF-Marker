@@ -11,6 +11,7 @@ import {AssignmentMarkingRubricComponent} from "@pdfMarkerModule/components/assi
 import {UnsavedChangesGuard} from "@pdfMarkerModule/guards/unsaved-changes.guard";
 import { AssignmentWorkspaceOverviewComponent } from './components/assignment-workspace-overview/assignment-workspace-overview.component';
 import { GenericCommentsComponent } from './components/comments/comments.component';
+import {PdfmAnnotateComponent} from '@pdfMarkerModule/components/pdfm-annotate/pdfm-annotate.component';
 
 
 const routes: Routes = [
@@ -27,6 +28,7 @@ const routes: Routes = [
   { path: 'assignment/marking/rubric', component: AssignmentMarkingRubricComponent },
   { path: 'assignment/rubric', component: RubricImportComponent },
   { path: 'assignment/comments', component: GenericCommentsComponent },
+  { path: 'assignment/annotate', component: PdfmAnnotateComponent },
   { path: '**', redirectTo: '', pathMatch: 'full'}
 ];
 

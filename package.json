@@ -46,7 +46,9 @@
     "test": "npm run postinstall:web && ng test",
     "e2e": "npm run build:prod && mocha --timeout 300000 --require ts-node/register e2e/**/*.spec.ts",
     "version": "conventional-changelog -i CHANGELOG.md -s -r 0 && git add CHANGELOG.md",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "ugly": "uglifyjs src/vendor/pdf.js src/vendor/pdf_viewer.js src/vendor/pdfkit.js src/vendor/jspdf.debug.js -o src/assets/ugly.min.js",
+    "uglycss": "uglifycss src/assets/css/pdf_viewer.css src/assets/css/toolbar.css --output src/assets/ugly.min.css"
   },
   "private": true,
   "dependencies": {
@@ -83,11 +85,17 @@
     "ng2-pdfjs-viewer": "^5.0.1",
     "ngx-color-picker": "^8.2.0",
     "ngx-filesaver": "^8.1.0",
+    "pdf-annotate": "0.0.0",
     "pdf-lib": "^1.4.0",
+    "pdfkit": "^0.12.3",
     "rgb-hex": "^3.0.0",
     "rxjs": "~6.4.0",
     "simple-excel-to-json": "^2.2.1",
     "tslib": "^1.10.0",
+    "twitter-text": "^3.1.0",
+    "uglify-es": "^3.3.9",
+    "uglify-js": "^3.4.9",
+    "uglifycss": "0.0.29",
     "unzipper": "^0.10.10",
     "word-wrap": "^1.2.3",
     "zip-dir": "^1.0.2",

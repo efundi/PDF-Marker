@@ -25,6 +25,9 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500&display=swap" rel="stylesheet">
   <!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
+<!--  <link href="./assets/ugly.min.css" rel="stylesheet">-->
+  <!-- npm run ugly - scripts from src/vendor -->
+
 </head>
 <body>
     <div id="notification" class="hidden">
@@ -64,6 +67,17 @@
         ipcRenderer.send('restart_app');
       }
     </script>
+<!--    <script>-->
+<!--      //pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/build/pdf.worker.js';-->
+<!--      PDFJS = pdfjsLib;-->
+<!--      PDFJS.DefaultTextLayerFactory = DefaultTextLayerFactory;-->
+<!--    </script>-->
+
   <app-root></app-root>
+<!--    <script src="./assets/ugly.min.js"></script>-->
+    <script src="./assets/pdf.js"></script>
+    <script src="./assets/pdf_viewer.js"></script>
+    <script src="./assets/index.js"></script>
+
 </body>
 </html>

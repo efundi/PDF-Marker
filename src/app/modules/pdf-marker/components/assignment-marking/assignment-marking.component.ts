@@ -24,6 +24,7 @@ import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-s
 import {FinaliseMarkingComponent} from "@pdfMarkerModule/components/finalise-marking/finalise-marking.component";
 import {MarkingCommentModalComponent} from "@sharedModule/components/marking-comment-modal/marking-comment-modal.component";
 
+
 @Component({
   selector: 'pdf-marker-assignment-marking',
   templateUrl: './assignment-marking.component.html',
@@ -38,7 +39,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
               private resolver: ComponentFactoryResolver,
               private route: ActivatedRoute,
               private router: Router,
-              private appService: AppService) { }
+              private appService: AppService) {
+
+  }
   // @ts-ignore
   @ViewChild('container') container: ElementRef;
 
