@@ -19,7 +19,7 @@ export class SettingsComponent implements OnInit {
   settingsLMSSelected = "Sakai";
   lmsChoices: string[] = ['Sakai'];
 
-  createFolderForm: FormGroup;
+
 
   constructor(private fb: FormBuilder,
               private settingsService: SettingsService,
@@ -34,7 +34,6 @@ export class SettingsComponent implements OnInit {
     this.settingsService.getConfigurations().subscribe(configurations => {
       this.settingsForm.controls.lmsSelection.setValue(configurations.lmsSelection ? configurations.lmsSelection:this.settingsLMSSelected);
       this.settingsForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath:null);
-      this.createFolderForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath:null);
       this.isLoading$.next(false);
     }, error => {
       this.isLoading$.next(false);
@@ -46,10 +45,6 @@ export class SettingsComponent implements OnInit {
     this.settingsForm = this.fb.group({
       lmsSelection: ["Sakai", Validators.required],
       defaultPath: [null, Validators.required]
-    });
-        this.createFolderForm = this.fb.group({
-          workingFolders: [null, [Validators.required, Validators.pattern("^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$")]],
-          defaultPath: [null, Validators.required]
     });
   }
 
@@ -83,24 +78,6 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  onSubmitCreateFolder(event) {
-    this.alertService.clear();
-    if (this.createFolderForm.invalid) {
-      this.alertService.error('Please fill in the correct details!');
-      return;
-    }
-    // Call Service to handle rest calls... also use interceptors
-    this.isLoading$.next(true);
-    this.settingsService.saveNewWorkingFolder(this.createFolderForm.value).subscribe((response) => {
-      this.assignmentService.getAssignments().subscribe(assignments => {
-        this.assignmentService.update(assignments);
-        this.appService.isLoading$.next(false);
-        this.appService.openSnackBar(true, response.message);
-      });
-    }, error => {
-      this.isLoading$.next(false);
-    });
-  }
 
   private removeTrailingSlashes(path: string): string {
     return path.replace(/\\+$/, ''); //Removes one or more trailing slashes

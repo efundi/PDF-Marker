@@ -1,0 +1,142 @@
+import {Component, OnInit} from '@angular/core';
+import {FormBuilder, FormGroup, Validators} from "@angular/forms";
+import {SettingsService} from "@pdfMarkerModule/services/settings.service";
+import {AppService} from "@coreModule/services/app.service";
+import {AlertService} from "@coreModule/services/alert.service";
+import {ElectronService} from "@coreModule/services/electron.service";
+import {AssignmentService} from "@sharedModule/services/assignment.service";
+import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
+import {IComment} from '@coreModule/utils/comment.class';
+import {MatTableDataSource} from '@angular/material';
+import {MatDialogConfig} from '@angular/material/dialog';
+import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {WorkspaceService} from '@sharedModule/services/workspace.service';
+import {AssignmentDetails} from '@pdfMarkerModule/components/assignment-overview/assignment-overview.component';
+
+@Component({
+  selector: 'pdf-marker-working-folder',
+  templateUrl: './working-folder.component.html',
+  styleUrls: ['./working-folder.component.scss']
+})
+export class WorkingFolderComponent implements OnInit {
+
+  isLoading$ = this.appService.isLoading$;
+  // settingsLMSSelected = "Sakai";
+  // lmsChoices: string[] = ['Sakai'];
+  createFolderForm: FormGroup;
+  readonly displayedColumns: string[] = ['folder', 'actions'];
+  folders: string[];
+  private folderNameList: string[];
+  dataSource: MatTableDataSource<string>;
+
+  constructor(private fb: FormBuilder,
+              private settingsService: SettingsService,
+              private appService: AppService,
+              private alertService: AlertService,
+              private electronService: ElectronService,
+              private assignmentService: AssignmentService,
+              private workspaceService: WorkspaceService) {
+  }
+
+  ngOnInit() {
+    this.isLoading$.next(true);
+    this.settingsService.getConfigurations().subscribe(configurations => {
+      // this.createFolderForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath : null);
+      this.isLoading$.next(false);
+    }, error => {
+      this.isLoading$.next(false);
+    });
+    this.initForm();
+    this.workspaceService.getWorkspaces().subscribe((workspaces: any[]) => {
+      this.populateWorkspaces(workspaces);
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
+      this.appService.isLoading$.next(false);
+    });
+  }
+
+  private populateWorkspaces(folders: string[]) {
+    let values: any[] = [];
+    if (folders) {
+      this.folders = folders;
+      this.folderNameList = folders.map(item => {
+        item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+        return item;
+      });
+      this.folderNameList.forEach(folder => {
+        let value: any = {
+          folder: ''
+        };
+        value.folder = folder;
+        values.push(value);
+      });
+    }
+    this.dataSource = new MatTableDataSource<string>(values);
+  }
+
+  private initForm() {
+    this.createFolderForm = this.fb.group({
+      workingFolders: [null, [Validators.required, Validators.pattern("^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$")]]
+    });
+  }
+
+  onSubmitCreateFolder(event) {
+    this.alertService.clear();
+    if (this.createFolderForm.invalid) {
+      this.alertService.error('Please fill in the correct details!');
+      return;
+    }
+    // Call Service to handle rest calls... also use interceptors
+    this.isLoading$.next(true);
+    this.settingsService.saveNewWorkingFolder(this.createFolderForm.value).subscribe((response) => {
+      this.assignmentService.getAssignments().subscribe(assignments => {
+        this.assignmentService.update(assignments);
+        this.appService.isLoading$.next(false);
+        this.appService.openSnackBar(true, response.message);
+      });
+    }, error => {
+      this.isLoading$.next(false);
+    });
+  }
+
+  deleteFolder(item: IComment) {
+    // this.appService.isLoading$.next(true);
+    // const data = {id: item.id};
+    // this.w.deleteCommentCheck(data).subscribe((inUse: boolean) => {
+    //   if (inUse) {
+    //     const config = new MatDialogConfig();
+    //     config.width = '400px';
+    //     config.maxWidth = '400px';
+    //     config.data = {
+    //       title: 'Confirmation',
+    //       message: item.inUse ? 'This comment is in use, are your sure you want to delete it?' : 'Are you sure you want to delete this comment?'
+    //     };
+    //     const shouldDeleteFn = (shouldDelete: boolean) => {
+    //       if (shouldDelete) {
+    //         this.deleteCommentImpl(item.id, shouldDelete);
+    //       }
+    //     };
+    //
+    //     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+    //   } else {
+    //     this.deleteCommentImpl(item.id, true);
+    //   }
+    // }, error => {
+    //   this.appService.openSnackBar(false, 'Unable to delete comment');
+    //   this.appService.isLoading$.next(false);
+    // });
+  }
+
+  private deleteFolderImpl(id: number, confirmation: boolean) {
+    // const newData = { id, confirmation};
+    // this.commentsService.deleteComment(newData).subscribe((comments: IComment[]) => {
+    //   this.populateComments(comments);
+    //   this.appService.isLoading$.next(false);
+    //   this.appService.openSnackBar(true, 'Comment deleted');
+    // }, error => {
+    //   this.appService.openSnackBar(false, 'Unable to deleted comment');
+    //   this.appService.isLoading$.next(false);
+    // });
+  }
+}

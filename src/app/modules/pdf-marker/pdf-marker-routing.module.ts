@@ -11,6 +11,7 @@ import {AssignmentMarkingRubricComponent} from "@pdfMarkerModule/components/assi
 import {UnsavedChangesGuard} from "@pdfMarkerModule/guards/unsaved-changes.guard";
 import { AssignmentWorkspaceOverviewComponent } from './components/assignment-workspace-overview/assignment-workspace-overview.component';
 import { GenericCommentsComponent } from './components/comments/comments.component';
+import {WorkingFolderComponent} from '@pdfMarkerModule/components/working-folder/working-folder.component';
 
 
 const routes: Routes = [
@@ -23,6 +24,7 @@ const routes: Routes = [
   { path: 'assignment/overview', component: AssignmentOverviewComponent },
   { path: 'assignment/overview/:workspaceName', component: AssignmentOverviewComponent },
   { path: 'assignment/workspaceOverview', component: AssignmentWorkspaceOverviewComponent },
+  { path: 'assignment/workingFolder', component: WorkingFolderComponent },
   { path: 'assignment/marking', component: AssignmentMarkingComponent },
   { path: 'assignment/marking/rubric', component: AssignmentMarkingRubricComponent },
   { path: 'assignment/rubric', component: RubricImportComponent },
