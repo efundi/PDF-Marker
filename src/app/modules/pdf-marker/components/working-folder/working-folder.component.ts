@@ -94,6 +94,7 @@ export class WorkingFolderComponent implements OnInit {
         this.populateWorkspaces(data);
         this.appService.isLoading$.next(false);
         this.appService.openSnackBar(true, response.message);
+        this.createFolderForm.reset();
       });
     }, error => {
       this.isLoading$.next(false);
