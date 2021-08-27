@@ -1,49 +1,55 @@
-import {Inject, Injectable, Optional, PLATFORM_ID} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {AppService} from '@coreModule/services/app.service';
 import {Observable, Subject} from 'rxjs';
 import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {WorkspaceDialogResult} from '@pdfMarkerModule/components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
+import {SettingInfo} from '@pdfMarkerModule/info-objects/setting.info';
+
+const API_PATH = '/api/workspace';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WorkspaceService {
 
-
   private dialogResultSource = new Subject<WorkspaceDialogResult>();
+
   dialogResultSource$ = this.dialogResultSource.asObservable();
 
-
-  constructor(private http: HttpClient,
-              @Inject(PLATFORM_ID) private platformId: any,
-              private appService: AppService) {
+  constructor(private http: HttpClient) {
   }
 
   announceWorkspaceChanges(workspaceModal: WorkspaceDialogResult) {
     this.dialogResultSource.next(workspaceModal);
   }
 
+  createWorkingFolder(settings: SettingInfo): Observable<any> {
+    return this.http.post(`${API_PATH}/create`, settings);
+  }
+
+  deleteWorkspace(data: any): Observable<any> {
+    return this.http.post<any[]>(`${API_PATH}/delete`, data);
+  }
+
+  deleteWorkspaceCheck(data: any): Observable<boolean> {
+    return this.http.post<boolean>(`${API_PATH}/delete/check`, data);
+  }
+
   getWorkspaces(): Observable<any> {
-    const body = {
-    };
+    const body = {};
     const headers = new HttpHeaders({
       'Content-Type': MimeTypesEnum.JSON,
       'Accept': MimeTypesEnum.JSON
     });
-    return this.http.post<string[]>("/api/workspaces", body);
+    return this.http.post<string[]>(API_PATH, body);
   }
-
-  // getWorkspaces(): Observable<string[]> {
-  //   return this.http.get<string[]>('/api/workspaces');
-  // }
 
   updateWorkspaceName(workspaceName: string, newWorkspaceName: string): Observable<string> {
     const body = {
       workspaceName: workspaceName,
       newWorkspaceName: newWorkspaceName
     };
-    return this.http.post<string>("/api/workspace/update", body);
+    return this.http.post<string>(`${API_PATH}/update`, body);
   }
 
   moveWorkspaceAssignments(workspaceName: string, newWorkspaceName: string, selectedAssignments: any[]) {
@@ -52,6 +58,6 @@ export class WorkspaceService {
       workspaceName: newWorkspaceName,
       assignments: selectedAssignments
     };
-    return this.http.post("/api/workspace/move", body);
+    return this.http.post(`${API_PATH}/move`, body);
   }
 }

@@ -115,7 +115,7 @@ export class GenericCommentsComponent implements OnInit {
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Comment deleted');
     }, error => {
-      this.appService.openSnackBar(false, 'Unable to deleted comment');
+      this.appService.openSnackBar(false, 'Unable to delete comment');
       this.appService.isLoading$.next(false);
     });
   }

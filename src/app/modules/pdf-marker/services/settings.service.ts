@@ -14,10 +14,6 @@ export class SettingsService {
     return this.http.post('/api/settings', settings);
   }
 
-  saveNewWorkingFolder(settings: SettingInfo):Observable<any> {
-    return this.http.post('/api/settings/newFolder', settings);
-  }
-
   getConfigurations(): Observable<any> {
     return this.http.get('/api/settings');
   }

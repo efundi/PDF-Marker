@@ -89,9 +89,9 @@ export class WorkingFolderComponent implements OnInit {
     }
     // Call Service to handle rest calls... also use interceptors
     this.isLoading$.next(true);
-    this.settingsService.saveNewWorkingFolder(this.createFolderForm.value).subscribe((response) => {
-      this.assignmentService.getAssignments().subscribe(assignments => {
-        this.assignmentService.update(assignments);
+    this.workspaceService.createWorkingFolder(this.createFolderForm.value).subscribe((response) => {
+      this.workspaceService.getWorkspaces().subscribe(data => {
+        this.populateWorkspaces(data);
         this.appService.isLoading$.next(false);
         this.appService.openSnackBar(true, response.message);
       });
@@ -100,43 +100,40 @@ export class WorkingFolderComponent implements OnInit {
     });
   }
 
-  deleteFolder(item: IComment) {
-    // this.appService.isLoading$.next(true);
-    // const data = {id: item.id};
-    // this.w.deleteCommentCheck(data).subscribe((inUse: boolean) => {
-    //   if (inUse) {
-    //     const config = new MatDialogConfig();
-    //     config.width = '400px';
-    //     config.maxWidth = '400px';
-    //     config.data = {
-    //       title: 'Confirmation',
-    //       message: item.inUse ? 'This comment is in use, are your sure you want to delete it?' : 'Are you sure you want to delete this comment?'
-    //     };
-    //     const shouldDeleteFn = (shouldDelete: boolean) => {
-    //       if (shouldDelete) {
-    //         this.deleteCommentImpl(item.id, shouldDelete);
-    //       }
-    //     };
-    //
-    //     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
-    //   } else {
-    //     this.deleteCommentImpl(item.id, true);
-    //   }
-    // }, error => {
-    //   this.appService.openSnackBar(false, 'Unable to delete comment');
-    //   this.appService.isLoading$.next(false);
-    // });
+  deleteFolder(item: string) {
+    this.appService.isLoading$.next(true);
+    this.workspaceService.deleteWorkspaceCheck(item).subscribe((hasWorkspaceAssignments: boolean) => {
+      const config = new MatDialogConfig();
+      config.width = '400px';
+      config.maxWidth = '400px';
+      config.data = {
+        title: 'Confirmation',
+        message: hasWorkspaceAssignments ? 'This workspace contains assignments, Are your sure you want to delete it?' :
+          'Are you sure you want to delete this workspace?'
+      };
+      const shouldDeleteFn = (shouldDelete: boolean) => {
+        if (shouldDelete) {
+          this.deleteFolderImpl(item, shouldDelete);
+        }
+      };
+
+      this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+
+    }, error => {
+      this.appService.openSnackBar(false, 'Unable to delete workspace');
+      this.appService.isLoading$.next(false);
+    });
   }
 
-  private deleteFolderImpl(id: number, confirmation: boolean) {
-    // const newData = { id, confirmation};
-    // this.commentsService.deleteComment(newData).subscribe((comments: IComment[]) => {
-    //   this.populateComments(comments);
-    //   this.appService.isLoading$.next(false);
-    //   this.appService.openSnackBar(true, 'Comment deleted');
-    // }, error => {
-    //   this.appService.openSnackBar(false, 'Unable to deleted comment');
-    //   this.appService.isLoading$.next(false);
-    // });
+  private deleteFolderImpl(folder: string, confirmation: boolean) {
+    // const newData = { folder, confirmation};
+    this.workspaceService.deleteWorkspace(folder).subscribe((comments: any[]) => {
+      this.populateWorkspaces(comments);
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(true, 'Workspace deleted');
+    }, error => {
+      this.appService.openSnackBar(false, 'Unable to delete workspace');
+      this.appService.isLoading$.next(false);
+    });
   }
 }

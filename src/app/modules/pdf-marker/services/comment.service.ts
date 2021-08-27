@@ -9,11 +9,11 @@ import {IRubric} from '@coreModule/utils/rubric.class';
 })
 export class CommentService {
 
+  constructor(private http: HttpClient) { }
+
   saveComments(data: FormData): Observable<IComment[]> {
     return this.http.post<IComment[]>('/api/comment/save', data);
   }
-
-  constructor(private http: HttpClient) { }
 
   getCommentDetails(): Observable<IComment[]> {
     return this.http.get<IComment[]>('/api/comment/list');
