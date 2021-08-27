@@ -30,9 +30,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
               private appService: AppService,
               private electronService: ElectronService) {
     this.appService.isLoading.subscribe(isloading => {
-      console.log('Pre: ' + this.isLoading$);
+      // console.log('Pre: ' + this.isLoading$);
       this.isLoading$ = isloading;
-      console.log('Post: ' + this.isLoading$);
+      // console.log('Post: ' + this.isLoading$);
     });
   }
 

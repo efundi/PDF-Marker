@@ -16,12 +16,12 @@
       </div>
     </mat-form-field>
     <div class="pdf-spacer"></div>
-    <div class="pdf-spacer"></div>
     <div>
       <button type="button" mat-raised-button color="" [disabled]="createFolderForm.invalid"
               (click)="onSubmitCreateFolder($event)">Create
       </button>
     </div>
+    <div class="pdf-spacer"></div>
   </form>
 
   <div id="pdf-marker-folders-list" *ngIf="folders?.length > 0">
