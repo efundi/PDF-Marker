@@ -95,6 +95,7 @@ export class WorkingFolderComponent implements OnInit {
         this.appService.isLoading$.next(false);
         this.appService.openSnackBar(true, response.message);
         this.createFolderForm.reset();
+        this.refreshSideBar();
       });
     }, error => {
       this.isLoading$.next(false);
@@ -126,12 +127,25 @@ export class WorkingFolderComponent implements OnInit {
     });
   }
 
+  refreshSideBar() {
+    this.appService.isLoading$.next(true);
+    this.assignmentService.getAssignments().subscribe((assignments) => {
+      this.assignmentService.update(assignments);
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(true, "Refreshed list");
+    }, error => {
+      this.appService.isLoading$.next(false);
+      this.appService.openSnackBar(false, "Could not refresh list");
+    });
+  }
+
   private deleteFolderImpl(folder: string, confirmation: boolean) {
     // const newData = { folder, confirmation};
     this.workspaceService.deleteWorkspace(folder).subscribe((comments: any[]) => {
       this.populateWorkspaces(comments);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Workspace deleted');
+      this.refreshSideBar();
     }, error => {
       this.appService.openSnackBar(false, 'Unable to delete workspace');
       this.appService.isLoading$.next(false);
