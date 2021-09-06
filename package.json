@@ -1,6 +1,6 @@
 {
   "name": "pdf-marker",
-  "version": "1.0.65",
+  "version": "2.0.1",
   "description": "PDF Marker",
   "homepage": "https://github.com/efundi/PDF-Marker",
   "main": "main.js",
