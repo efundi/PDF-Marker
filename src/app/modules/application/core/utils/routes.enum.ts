@@ -7,4 +7,7 @@ export enum RoutesEnum {
   ASSIGNMENT_OVERVIEW= "/marker/assignment/overview",
   ASSIGNMENT_MARKER= "/marker/assignment/marking",
   ASSIGNMENT_MARKER_RUBRIC= "/marker/assignment/marking/rubric",
+  ASSIGNMENT_WORKSPACE_OVERVIEW ="/marker/assignment/workspaceOverview",
+  ASSIGNMENT_COMMENTS ="/marker/assignment/comments",
+  ASSIGNMENT_WORKING_FOLDER ="/marker/assignment/workingFolder"
 }

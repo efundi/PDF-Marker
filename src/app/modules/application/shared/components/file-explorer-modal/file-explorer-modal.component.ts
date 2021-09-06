@@ -16,7 +16,7 @@ export class FileExplorerModalComponent implements OnInit {
               @Inject(MAT_DIALOG_DATA) data) {
       this.hierarchyModel = data.hierarchyModel;
       this.hierarchyModelKeys = data.hierarchyModelKeys;
-      this.filename = data.filename
+      this.filename = data.filename;
   }
 
   ngOnInit() {

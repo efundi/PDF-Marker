@@ -1,0 +1,52 @@
+<ng-container>
+  <pdf-marker-alert></pdf-marker-alert>
+
+  <div class="pdf-marker-workspace-overview-assignment-header">
+
+    <h1 class="pdf-marker-assignment-overview-assignment-name">{{workspaceName}} </h1>
+    <span class="pdf-marker-fill-space"></span>
+    <button mat-button mat-icon-button matTooltip="Manage Folders" (click)="manageFolders($event)"><mat-icon>drive_file_rename_outline</mat-icon></button>
+  </div>
+
+  <table mat-table [dataSource]="dataSource">
+    <!-- Assignment Column -->
+    <ng-container matColumnDef="assignmentTitle">
+      <th mat-header-cell *matHeaderCellDef> Assignment Name</th>
+      <td mat-cell *matCellDef="let element">
+        <p class="pdf-marker-workspace-overview-assignment-name">{{element.assignmentTitle}}</p>
+      </td>
+    </ng-container>
+
+    <!-- Submission Count Column -->
+    <ng-container matColumnDef="submissionCount">
+      <th mat-header-cell *matHeaderCellDef> No of Students</th>
+      <td mat-cell *matCellDef="let element">{{element.submissionCount}}</td>
+    </ng-container>
+
+    <!--  Marked Count Column-->
+    <ng-container matColumnDef="progress">
+      <th mat-header-cell *matHeaderCellDef> Marked / Not marked</th>
+      <td mat-cell *matCellDef="let element">{{element.marked}} / {{element.notMarked}}</td>
+    </ng-container>
+    <!-- iS Rubric Column -->
+    <ng-container matColumnDef="type">
+      <th mat-header-cell *matHeaderCellDef> Type</th>
+      <td mat-cell *matCellDef="let element">{{element.type}}</td>
+    </ng-container>
+
+    <!-- Move Folder Column -->
+<!--    <ng-container matColumnDef="curWorkspace">-->
+<!--      <th mat-header-cell *matHeaderCellDef> Move Assignment</th>-->
+<!--      <td mat-cell *matCellDef="let element">-->
+<!--        <mat-select>-->
+<!--          <mat-option>options</mat-option>-->
+<!--        </mat-select>-->
+<!--      </td>-->
+<!--    </ng-container>-->
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+  <mat-paginator [length]="assignmentsLength" [pageSize]="pageSize" [pageSizeOptions]="assignmentPageSizeOptions"
+                 showFirstLastButtons></mat-paginator>
+</ng-container>

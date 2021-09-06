@@ -208,9 +208,9 @@ export class RubricImportComponent implements OnInit, OnDestroy {
       });
   }
 
-  deleteRubric(rubricName: string) {
-    const data = {rubricName};
+  deleteRubric(item: IRubric) {
     this.appService.isLoading$.next(true);
+    const data = {rubricName: item.name};
     this.importService.deleteRubricCheck(data).subscribe((isFound: boolean) => {
       if (isFound) {
         const config = new MatDialogConfig();
@@ -222,13 +222,13 @@ export class RubricImportComponent implements OnInit, OnDestroy {
         };
         const shouldDeleteFn = (shouldDelete: boolean) => {
           if (shouldDelete) {
-            this.deleteRubricImpl(rubricName, shouldDelete);
+            this.deleteRubricImpl(item.name, shouldDelete);
           }
         };
 
         this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
       } else {
-        this.deleteRubricImpl(rubricName, true);
+        this.deleteRubricImpl(item.name, true);
       }
     }, error => {
       this.appService.openSnackBar(false, 'Unable to delete');

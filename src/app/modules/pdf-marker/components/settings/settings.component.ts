@@ -19,6 +19,8 @@ export class SettingsComponent implements OnInit {
   settingsLMSSelected = "Sakai";
   lmsChoices: string[] = ['Sakai'];
 
+
+
   constructor(private fb: FormBuilder,
               private settingsService: SettingsService,
               private appService: AppService,
@@ -58,11 +60,10 @@ export class SettingsComponent implements OnInit {
 
   onSubmit(event) {
     this.alertService.clear();
-    if(this.settingsForm.invalid) {
-      this.alertService.error("Please fill in the correct details!");
+    if (this.settingsForm.invalid) {
+      this.alertService.error('Please fill in the correct details!');
       return;
     }
-
     this.settingsForm.controls.defaultPath.setValue(this.removeTrailingSlashes(this.settingsForm.controls.defaultPath.value));
     // Call Service to handle rest calls... also use interceptors
     this.isLoading$.next(true);
@@ -76,6 +77,7 @@ export class SettingsComponent implements OnInit {
       this.isLoading$.next(false);
     });
   }
+
 
   private removeTrailingSlashes(path: string): string {
     return path.replace(/\\+$/, ''); //Removes one or more trailing slashes

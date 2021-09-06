@@ -1,0 +1,24 @@
+.close-button {
+  float: right;
+  right: -24px;
+}
+
+.pdf-marker-form-labels {
+  font-weight: 500;
+}
+
+.customFlexContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  height: inherit;
+}
+
+.button-right-margin {
+  margin-right: 30px;
+}
+
+.flexGrow3 {
+  flex-grow: 3;
+}

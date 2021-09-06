@@ -1,0 +1,51 @@
+<ng-container>
+  <pdf-marker-alert></pdf-marker-alert>
+  <form [formGroup]="genericCommentsForm">
+    <h1><mat-icon>comment_bank</mat-icon>&nbsp;Generic Comments</h1>
+    <mat-divider></mat-divider>
+    <div class="pdf-spacer"></div>
+    <mat-form-field class="comment-width" hintLabel="Max 50 characters">
+      <mat-label>Add Comment</mat-label>
+      <textarea formControlName="newComment" type="text" placeholder="New Comment" matInput required maxlength="50"></textarea>
+      <mat-hint align="end">{{genericCommentsForm.controls.newComment.value?.length || 0}}/50</mat-hint>
+    </mat-form-field>
+    <div class="pdf-spacer"></div>
+    <div>
+      <button type="button" mat-raised-button color="" [disabled]="genericCommentsForm.invalid" (click)="onSubmit($event)">Save</button>
+    </div>
+  </form>
+  <div id="pdf-marker-rubric-import-comment-list" *ngIf="comments?.length > 0">
+    <br>
+    <table mat-table [dataSource]="dataSource">
+
+      <ng-container matColumnDef="id" style="display: none">
+        <th mat-header-cell *matHeaderCellDef> Title </th>
+        <td mat-cell *matCellDef="let element"><span class="">{{ element.id }}</span></td>
+      </ng-container>
+      <!-- Title Column -->
+      <ng-container matColumnDef="title">
+        <th mat-header-cell *matHeaderCellDef> Comment </th>
+        <td mat-cell *matCellDef="let element"><span class="">{{ element.title }}</span></td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef> Actions </th>
+        <td mat-cell *matCellDef="let element">
+          <span>
+             <!--<button type="button" matTooltip="View" mat-button mat-icon-button><mat-icon>visibility</mat-icon></button>-->
+            <button type="button" matTooltip="Delete" mat-button mat-icon-button  (click)="deleteComment(element)"><mat-icon>delete</mat-icon></button></span></td>
+      </ng-container>
+
+      <!-- In Use Column -->
+      <ng-container matColumnDef="inUse">
+        <th mat-header-cell *matHeaderCellDef> In use </th>
+        <td mat-cell *matCellDef="let element"><span>{{ (element?.inUse) ? 'Yes':'No' }}</span></td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </div>
+
+</ng-container>

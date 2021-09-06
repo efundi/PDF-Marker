@@ -13,6 +13,7 @@ import {IRubricName} from "@coreModule/utils/rubric.class";
 import {AppSelectedPathInfo} from "@coreModule/info-objects/app-selected-path.info";
 import {ElectronService} from "@coreModule/services/electron.service";
 import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
+import {WorkspaceService} from '@sharedModule/services/workspace.service';
 
 @Component({
   selector: 'pdf-marker-import',
@@ -49,7 +50,17 @@ export class ImportComponent implements OnInit {
 
   rubrics: IRubricName[];
 
+  workspaces: string[] = [];
+
+  selected: string;
+
   private actualFilePath: string;
+  assignmentTypeID = "Assignment";
+  assignmentTypes = [
+    {'name': 'Assignment'},
+    {'name': 'Generic'}];
+  selectedType: string;
+  selectedWorkspace: string;
 
   constructor(private fb: FormBuilder,
               private zipService: ZipService,
@@ -59,6 +70,7 @@ export class ImportComponent implements OnInit {
               private appService: AppService,
               private importService: ImportService,
               private assignmentService: AssignmentService,
+              private workspaceService: WorkspaceService,
               private electronService: ElectronService) { }
 
   ngOnInit() {
@@ -93,16 +105,39 @@ export class ImportComponent implements OnInit {
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.openSnackBar(false, "Unable to retrieve rubrics");
+    });
+    this.appService.isLoading$.next(false);
+    this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
+      this.workspaces = [...workspaces];
+      this.workspaces = this.workspaces.map(item => {
+        item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+        return item;
+      });
+      this.workspaces.unshift('Default Workspace');
+      if (this.workspaces.length <= 1) {
+        this.importForm.controls.workspaceFolder.setValue('Default Workspace');
+      }
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to retrieve workspaces");
       this.appService.isLoading$.next(false);
     });
+
     this.initForm();
+
     this.appService.isLoading$.next(false);
+  }
+
+  compareCategoryObjects(object1: any, object2: any) {
+    return object1 && object2 && object1.id == object2.id;
   }
 
   private initForm() {
     this.importForm = this.fb.group({
+      assignmentType: [null],
       assignmentZipFileText: [null],
       assignmentName: [null],
+      workspaceFolder: [null, Validators.required],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required]
     });
@@ -149,25 +184,30 @@ export class ImportComponent implements OnInit {
       this.validMime = false;
       this.setFileDetailsAndAssignmentName(undefined);
     }
-
-    if(this.validMime) {
-      this.zipService.isValidZip(this.fc.assignmentName.value, this.file).subscribe((isValidFormat: boolean) => {
-        this.isValidFormat = isValidFormat;
-        if(!this.isValidFormat)
-          this.alertService.error(this.sakaiService.formatErrorMessage);
-        else {
-          this.clearError();
-        }
-        this.isFileLoaded = true;
+    this.selectedType = this.fc.assignmentType.value;
+      if(this.validMime &&  this.selectedType === "Assignment") {
+      // Is zip, then checks structure.
+              this.zipService.isValidZip(this.fc.assignmentName.value, this.file).subscribe((isValidFormat: boolean) => {
+          this.isValidFormat = isValidFormat;
+          if (!this.isValidFormat)
+            this.alertService.error(this.sakaiService.formatErrorMessage);
+          else {
+            this.clearError();
+          }
+          this.isFileLoaded = true;
+          this.showLoading(false);
+        }, error => {
+          this.showErrorMessage(error);
+          this.showLoading(false);
+        })
+      }
+   else  if(this.validMime &&  this.selectedType === "Generic") {
+      this.isValidFormat = true;
+      this.isFileLoaded = true;
         this.showLoading(false);
-      }, error => {
-        this.showErrorMessage(error);
-        this.showLoading(false);
-      })
-    } else {
+    }  else
       this.showLoading(false);
     }
-  }
 
   private setFileDetailsAndAssignmentName(file: File) {
     this.file = file;
@@ -208,6 +248,11 @@ export class ImportComponent implements OnInit {
     this.importForm.updateValueAndValidity();
   }
 
+  onAssignmentTypeChange(event) {
+    this.selectedType = this.fc.assignmentType.value;
+    this.fc.assignmentType.updateValueAndValidity();
+  }
+
   onPreview() {
     this.appService.isLoading$.next(true);
     this.zipService.getEntries(this.file, true).subscribe();
@@ -216,31 +261,40 @@ export class ImportComponent implements OnInit {
 
   onSubmit(event) {
     this.clearError();
-    if(this.importForm.invalid || !this.validMime || !this.isValidFormat) {
+    if (this.importForm.invalid || !this.validMime || !this.isValidFormat) {
       this.showErrorMessage("Please fill in the correct details!");
       return;
     }
 
     const {
+      assignmentName,
       noRubric,
-      rubric
+      rubric,
+      workspaceFolder
     } = this.importForm.value;
 
-    const importData = {file: this.actualFilePath, 'noRubric': noRubric, 'rubric': rubric };
+    const importData = {
+      file: this.actualFilePath,
+      'workspace': workspaceFolder,
+      'noRubric': noRubric,
+      'rubric': rubric,
+      'assignmentName': assignmentName,
+      'assignmentType': this.selectedType
+    };
     this.appService.isLoading$.next(true);
     this.importService.importAssignmentFile(importData).subscribe((events) => {
 
-      if(events.type === HttpEventType.UploadProgress) {
+        if (events.type === HttpEventType.UploadProgress) {
 
-      } else if(events.type === HttpEventType.Response) {
-        this.appService.isLoading$.next(false);
-        let response: any = events.body;
-        this.alertService.success(response.message);
-        this.resetForm();
+        } else if (events.type === HttpEventType.Response) {
+          this.appService.isLoading$.next(false);
+          let response: any = events.body;
+          this.alertService.success(response.message);
+          this.resetForm();
+        }
       }
-    }, error => this.appService.isLoading$.next(false));
+      , error => this.appService.isLoading$.next(false));
   }
-
   private showLoading(isLoading: boolean) {
     this.appService.isLoading$.next(isLoading);
   }
@@ -261,6 +315,7 @@ export class ImportComponent implements OnInit {
     this.isModalOpened = false;
     this.validMime = false;
     this.isValidFormat = false;
+    this.selectedType = undefined;
     this.fc.noRubric.setValue(this.noRubricDefaultValue);
     this.fc.rubric.enable();
     this.initForm();

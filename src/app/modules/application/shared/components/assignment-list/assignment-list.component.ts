@@ -1,6 +1,7 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {AssignmentService} from "@sharedModule/services/assignment.service";
 import {Subscription} from "rxjs";
+import {WorkspaceService} from '@sharedModule/services/workspace.service';
 
 @Component({
   selector: 'pdf-marker-assignment-list',
@@ -9,15 +10,25 @@ import {Subscription} from "rxjs";
 })
 export class AssignmentListComponent implements OnInit, OnDestroy {
 
+
   assignments: object[];
   subscription: Subscription;
-  constructor(private assignmentService: AssignmentService) { }
+  workspaces: any;
+  workspaceBool = false;
+  constructor(private assignmentService: AssignmentService,
+              private workspaceService: WorkspaceService) { }
 
   ngOnInit() {
+
+    // this.workspaces = this.workspaceService.getWorkspaces();
+    this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
+       this.workspaces = workspaces;
+    });
     this.subscription = this.assignmentService.dataChanged().subscribe(assignments => {
       this.assignments = assignments;
-    })
-  }
+    });
+
+}
 
   ngOnDestroy() {
     this.subscription.unsubscribe();

@@ -14,6 +14,7 @@ import {AssignmentDetails} from "@pdfMarkerModule/components/assignment-overview
 import {SakaiService} from "@coreModule/services/sakai.service";
 import {MatDialogConfig} from "@angular/material/dialog";
 import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
+import {WorkspaceService} from '@sharedModule/services/workspace.service';
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -46,6 +47,11 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private assignmentId :string;
 
+  private workspaceName :string;
+
+  workspaces: string[] = [];
+  selectedWorkspace: string;
+
   // @ts-ignore
   @ViewChild("assignmentName") assignmentName: ElementRef;
 
@@ -57,6 +63,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
               private alertService: AlertService,
               private assignmentService: AssignmentService,
               private appService: AppService,
+              private workspaceService: WorkspaceService,
               private router: Router,
               private activatedRoute: ActivatedRoute,
               private importService: ImportService,
@@ -66,13 +73,19 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     this.initForm();
     this.activatedRoute.params.subscribe(params => {
       let id = params['id'];
+      let workspaceName = params['workspaceName'];
       if(id && !!this.assignmentService.getSelectedAssignment()) {
         this.title = "Manage Submissions";
         const fields = ["assignmentName", "noRubric", "rubric"];
         this.assignmentId = id;
         this.isEdit = true;
         this.fc.assignmentName.setValue(this.assignmentId);
-        this.assignmentService.getAssignmentSettings(id).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
+        if (workspaceName) {
+          this.workspaceName = workspaceName;
+          this.fc.workspaceFolder.setValue(this.workspaceName);
+          fields.push('workspaceFolder');
+        }
+        this.assignmentService.getAssignmentSettings(this.workspaceName, id).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
           this.assignmentSettings = assignmentSettings;
           if (this.assignmentSettings.rubric) {
             this.selectedRubric = this.assignmentSettings.rubric;
@@ -94,6 +107,22 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.openSnackBar(false, "Unable to retrieve rubrics");
+      this.appService.isLoading$.next(false);
+    });
+
+    this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
+      this.workspaces = [...workspaces];
+      this.workspaces = this.workspaces.map(item => {
+        item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+        return item;
+      });
+      this.workspaces.unshift('Default Workspace');
+      if (this.workspaces.length <= 1) {
+        this.createAssignmentForm.controls.workspaceFolder.setValue('Default Workspace');
+      }
+      this.appService.isLoading$.next(false);
+    }, error => {
+      this.appService.openSnackBar(false, "Unable to retrieve workspaces");
       this.appService.isLoading$.next(false);
     });
 
@@ -151,6 +180,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       assignmentName: [null, [Validators.required, Validators.maxLength(50)]],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required],
+      workspaceFolder: [null, Validators.required],
       studentRow: this.fb.array([])
     });
 
@@ -301,13 +331,13 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   onSubmit(event) {
     this.alertService.clear();
-    if(this.createAssignmentForm.invalid || this.studentRow.invalid) {
+    if (this.createAssignmentForm.invalid || this.studentRow.invalid) {
       this.alertService.error("Please fill in the correct details!");
       this.appService.openSnackBar(false, "Please fill in the correct details!");
       return;
     }
 
-    if(this.isEdit)
+    if (this.isEdit)
       this.onEdit();
     else
       this.onCreate();
@@ -317,7 +347,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     const formValue: any = this.createAssignmentForm.value;
     const savedState: any[] = this.studentDetails;
     let formData: FormData = new FormData();
-    const studentData: any= [];
+    const studentData: any = [];
     let savedCount = 0;
     let foundItemsToDelete: boolean = false;
     let foundItemsCount = 0;
@@ -368,6 +398,9 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     formData.append('studentDetails', JSON.stringify(studentData));
     formData.append('isEdit', 'true');
     formData.append('assignmentName', this.assignmentId);
+    if (this.workspaceName) {
+      formData.append('workspace', this.workspaceName);
+    }
 
     this.performUpdate(formData);
     /*if(foundItemsToDelete) {
@@ -397,7 +430,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   private onCreate() {
     const formValue: any = this.createAssignmentForm.value;
     let formData: FormData = new FormData();
-    const studentData: any= [];
+    const studentData: any = [];
     let count = 0;
 
     formValue.studentRow.map((studentRow: any) => {
@@ -413,11 +446,13 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
     const {
       assignmentName,
+      workspaceFolder,
       noRubric,
       rubric
     } = this.createAssignmentForm.value;
 
     formData.append('assignmentName', assignmentName.trim());
+    formData.append( 'workspace', workspaceFolder);
     formData.append('noRubric', noRubric);
     formData.append('rubric', rubric);
     this.performCreate(formData);
@@ -441,7 +476,11 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.assignmentService.getAssignments().subscribe((assignments) => {
         this.isEdit = false;
         this.assignmentService.setSelectedAssignment(model);
-        this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]).then(() => this.assignmentService.update(assignments));
+        if (this.workspaceName) {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.workspaceName]).then(() => this.assignmentService.update(assignments));
+        } else {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]).then(() => this.assignmentService.update(assignments));
+        }
         this.appService.isLoading$.next(false);
       });
     }, error => {
@@ -458,7 +497,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   hasUnsavedChanges() {
-    if(this.isEdit) {
+    if (this.isEdit) {
       let found: boolean = false;
       for (let i = 0; i < this.studentDetails.length; i++) {
         if (this.studentDetails[i].shouldDelete) {

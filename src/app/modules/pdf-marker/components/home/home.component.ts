@@ -16,18 +16,24 @@ import {AppVersionInfo} from "@coreModule/info-objects/app-version.info";
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly title = 'PDF Marker';
   version: AppVersionInfo;
-  isLoading$ = this.appService.isLoading$;
-
+  // isLoading$ = this.appService.isLoading$;
+  isLoading$: boolean;
   breadcrumbs: any;
   isMarkingPage: boolean;
   routeList: string[] = [];
 
   @ViewChild("content", {static: false})
   content: ElementRef;
+
   constructor(private router: Router,
               private activatedRoute: ActivatedRoute,
               private appService: AppService,
               private electronService: ElectronService) {
+    this.appService.isLoading.subscribe(isloading => {
+      // console.log('Pre: ' + this.isLoading$);
+      this.isLoading$ = isloading;
+      // console.log('Post: ' + this.isLoading$);
+    });
   }
 
   ngOnInit() {
