@@ -20,7 +20,7 @@ export class MenuComponent implements OnInit {
     { id: "settings", title: "App Settings", icon: "build", href: RoutesEnum.ASSIGNMENT_SETTINGS },
     { id: "rubrics",  title: "Rubrics", icon: "apps", href: RoutesEnum.ASSIGNMENT_RUBRICS },
     { id: "comments",  title: "Generic Comments", icon: "comment_bank", href: RoutesEnum.ASSIGNMENT_COMMENTS },
-    { id: "workingFoler",  title: "Working Folders", icon: "folder", href: RoutesEnum.ASSIGNMENT_WORKING_FOLDER }
+    { id: "workingFolder",  title: "Working Folders", icon: "folder", href: RoutesEnum.ASSIGNMENT_WORKING_FOLDER }
   ];
   constructor() { }
 
