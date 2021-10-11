@@ -286,7 +286,11 @@ const createWorkingFolder = (req, res) => {
 
   const configData = readFileSync(CONFIG_DIR + CONFIG_FILE);
   const config = JSON.parse(configData.toString());
-  mkdirSync(config.defaultPath + sep + req.body.workingFolders);
+  if (!existsSync(config.defaultPath + sep + req.body.workingFolders)) {
+    mkdirSync(config.defaultPath + sep + req.body.workingFolders);
+  } else {
+    return res.status(404).send({message: "Folder with name '" + req.body.workingFolders + "' already exists."});
+  }
   console.log(config);
   if (isNullOrUndefined(config.folders)) {
     config.folders = [];
