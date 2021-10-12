@@ -46,7 +46,6 @@ export class WorkingFolderComponent implements OnInit {
     }, error => {
       this.isLoading$.next(false);
     });
-    this.initForm();
     this.workspaceService.getWorkspaces().subscribe((workspaces: any[]) => {
       this.populateWorkspaces(workspaces);
       this.appService.isLoading$.next(false);
@@ -54,6 +53,7 @@ export class WorkingFolderComponent implements OnInit {
       this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
       this.appService.isLoading$.next(false);
     });
+    this.initForm();
   }
 
   private populateWorkspaces(folders: string[]) {
