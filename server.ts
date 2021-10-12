@@ -63,7 +63,7 @@ const csvtojson = require('csvtojson');
 const hexRgb = require('hex-rgb');
 const rgbHex = require('rgb-hex');
 const pathinfo = require('locutus/php/filesystem/pathinfo');
-
+const trash = require('trash');
 
 const CONFIG_FILE = 'config.json';
 const SETTING_FILE = '.settings.json';
@@ -94,6 +94,7 @@ const INVALID_PATH_PROVIDED = 'Invalid path provided!';
 const INVALID_STUDENT_FOLDER = 'Invalid student folder';
 
 const COULD_NOT_READ_COMMENT_LIST = 'Could not read list of comments!';
+const COULD_NOT_READ_WORKSPACE_LIST = 'Could not read list of working folders!';
 const NOT_PROVIDED_COMMENT = 'Comment must be provided!';
 /**/
 
@@ -413,7 +414,7 @@ const deleteWorkspaceConfirmation = (req, res) => {
   if (existsSync(CONFIG_DIR + CONFIG_FILE)) {
     return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, async (data) => {
       if (!isJson(data))
-        return sendResponse(req, res, 400, COULD_NOT_READ_COMMENT_LIST);
+        return sendResponse(req, res, 400, COULD_NOT_READ_WORKSPACE_LIST);
       console.log(data);
       const config = JSON.parse(data.toString());
       const folders = config.folders;
@@ -436,7 +437,11 @@ const deleteWorkspaceConfirmation = (req, res) => {
         }
 
         if (existsSync(folders[indexFound])) {
-          deleteFolderRecursive(folders[indexFound]);
+          try {
+            deleteFolderRecursive(folders[indexFound], false);
+          } catch (e) {
+            return sendResponse(req, res, 500, e);
+          }
         }
         folders.splice(indexFound, 1);
         config.folders = folders;
@@ -622,7 +627,7 @@ const zipFileUploadCallback = (req, res, data) => {
                   });
               }).catch((error) => {
                 if (existsSync(config.defaultPath + sep + newFolder))
-                  deleteFolderRecursive(config.defaultPath + sep + newFolder);
+                  deleteFolderRecursive(config.defaultPath + sep + newFolder, true);
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
@@ -640,7 +645,7 @@ const zipFileUploadCallback = (req, res, data) => {
                   });
               }).catch((error) => {
                 if (existsSync(config.defaultPath + sep + newFolder))
-                  deleteFolderRecursive(config.defaultPath + sep + newFolder);
+                  deleteFolderRecursive(config.defaultPath + sep + newFolder, true);
                 return sendResponse(req, res, 501, error.message);
               });
             }
@@ -661,7 +666,7 @@ const zipFileUploadCallback = (req, res, data) => {
                     });
                 }).catch((error) => {
                 if (existsSync(config.defaultPath + sep + oldPath))
-                  deleteFolderRecursive(config.defaultPath + sep + oldPath);
+                  deleteFolderRecursive(config.defaultPath + sep + oldPath, true);
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
@@ -679,7 +684,7 @@ const zipFileUploadCallback = (req, res, data) => {
                   });
               }).catch((error) => {
                 if (existsSync(config.defaultPath + sep + newFolder))
-                  deleteFolderRecursive(config.defaultPath + sep + newFolder);
+                  deleteFolderRecursive(config.defaultPath + sep + newFolder, true);
                 return sendResponse(req, res, 501, error.message);
               });
             }
@@ -851,7 +856,7 @@ const deleteCommentConfirmation = (req, res) => {
           return sendResponse(req, res, 500, COULD_NOT_READ_COMMENT_LIST);
         }
 
-      return sendResponseData(req, res, 200, newComments);
+        return sendResponseData(req, res, 200, newComments);
       }
     });
   }
@@ -2823,7 +2828,7 @@ const updateAssignment = (req, res) => {
           if (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') {
             if (existsSync(config.defaultPath + sep + assignmentName + sep + studentFolder)) {
               if (studentInfo.remove) {
-                deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder);
+                deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder, true);
               } else {
                 const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
                 if (studentRecord) {
@@ -2846,7 +2851,7 @@ const updateAssignment = (req, res) => {
           } else {
             if (existsSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + studentFolder)) {
               if (studentInfo.remove) {
-                deleteFolderRecursive(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + studentFolder);
+                deleteFolderRecursive(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + studentFolder, true);
               } else {
                 const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
                 if (studentRecord) {
@@ -2918,7 +2923,7 @@ const isJson = (str) => {
 };
 
 const extractZipFile = async (file, destination, newFolder, oldFolder, assignmentName, assignmentType) => {
-  //TODO Should we validate the zip structure based on assignment type?
+  // TODO Should we validate the zip structure based on assignment type?
   if (assignmentType === 'Generic') {
     let skippedFirst = 1;
     return await createReadStream(file)
@@ -3068,17 +3073,33 @@ const hierarchyModel = (pathInfos, configFolder) => {
   return model;
 };
 
-const deleteFolderRecursive = (path) => {
-  if (existsSync(path)) {
-    readdirSync(path).forEach(function(file, index) {
-      const curPath = path + '/' + file;
-      if (isFolder(curPath)) { // recurse
-        deleteFolderRecursive(curPath);
-      } else { // delete file
-        unlinkSync(curPath);
+const deleteFolderRecursive = (path, isHardDelete) => {
+  if (!isHardDelete) {
+    if (existsSync(path)) {
+      const files = fs.readdirSync(path);
+      if (files.length > 0) {
+        const assignmentFolder = files[0];
+        const assignmentPath = path + sep + assignmentFolder;
+        const promise = trash(assignmentPath);
+
+        promise.then(function(value) {
+          rmdirSync(path);
+        });
       }
-    });
-    rmdirSync(path);
+
+    }
+  } else {
+    if (existsSync(path)) {
+      readdirSync(path).forEach(function(file, index) {
+        const curPath = path + '/' + file;
+        if (isFolder(curPath)) { // recurse
+          deleteFolderRecursive(curPath, isHardDelete);
+        } else { // delete file
+          unlinkSync(curPath);
+        }
+      });
+      rmdirSync(path);
+    }
   }
 };
 

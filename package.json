@@ -87,6 +87,7 @@
     "rgb-hex": "^3.0.0",
     "rxjs": "~6.4.0",
     "simple-excel-to-json": "^2.2.1",
+    "trash": "^7.2.0",
     "tslib": "^1.10.0",
     "unzipper": "^0.10.10",
     "word-wrap": "^1.2.3",
