@@ -402,7 +402,7 @@ const moveWorkspaceAssignments = (req, res) => {
 
 app.post('/api/workspace/move', moveWorkspaceAssignments);
 
-const deleteWorkspaceConfirmation = (req, res) => {
+const deleteWorkspaceConfirmation = async (req, res) => {
   if (!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
 
@@ -438,7 +438,7 @@ const deleteWorkspaceConfirmation = (req, res) => {
 
         if (existsSync(folders[indexFound])) {
           try {
-            deleteFolderRecursive(folders[indexFound], false);
+           await moveToRecycleBin(folders[indexFound]);
           } catch (e) {
             return sendResponse(req, res, 500, e);
           }
@@ -627,7 +627,7 @@ const zipFileUploadCallback = (req, res, data) => {
                   });
               }).catch((error) => {
                 if (existsSync(config.defaultPath + sep + newFolder))
-                  deleteFolderRecursive(config.defaultPath + sep + newFolder, true);
+                  deleteFolderRecursive(config.defaultPath + sep + newFolder);
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
@@ -645,7 +645,7 @@ const zipFileUploadCallback = (req, res, data) => {
                   });
               }).catch((error) => {
                 if (existsSync(config.defaultPath + sep + newFolder))
-                  deleteFolderRecursive(config.defaultPath + sep + newFolder, true);
+                  deleteFolderRecursive(config.defaultPath + sep + newFolder);
                 return sendResponse(req, res, 501, error.message);
               });
             }
@@ -666,7 +666,7 @@ const zipFileUploadCallback = (req, res, data) => {
                     });
                 }).catch((error) => {
                 if (existsSync(config.defaultPath + sep + oldPath))
-                  deleteFolderRecursive(config.defaultPath + sep + oldPath, true);
+                  deleteFolderRecursive(config.defaultPath + sep + oldPath);
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
@@ -684,7 +684,7 @@ const zipFileUploadCallback = (req, res, data) => {
                   });
               }).catch((error) => {
                 if (existsSync(config.defaultPath + sep + newFolder))
-                  deleteFolderRecursive(config.defaultPath + sep + newFolder, true);
+                  deleteFolderRecursive(config.defaultPath + sep + newFolder);
                 return sendResponse(req, res, 501, error.message);
               });
             }
@@ -2828,7 +2828,7 @@ const updateAssignment = (req, res) => {
           if (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') {
             if (existsSync(config.defaultPath + sep + assignmentName + sep + studentFolder)) {
               if (studentInfo.remove) {
-                deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder, true);
+                deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder);
               } else {
                 const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
                 if (studentRecord) {
@@ -2851,7 +2851,7 @@ const updateAssignment = (req, res) => {
           } else {
             if (existsSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + studentFolder)) {
               if (studentInfo.remove) {
-                deleteFolderRecursive(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + studentFolder, true);
+                deleteFolderRecursive(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + studentFolder);
               } else {
                 const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
                 if (studentRecord) {
@@ -3073,33 +3073,31 @@ const hierarchyModel = (pathInfos, configFolder) => {
   return model;
 };
 
-const deleteFolderRecursive = (path, isHardDelete) => {
-  if (!isHardDelete) {
-    if (existsSync(path)) {
-      const files = fs.readdirSync(path);
-      if (files.length > 0) {
-        const assignmentFolder = files[0];
-        const assignmentPath = path + sep + assignmentFolder;
-        const promise = trash(assignmentPath);
+const moveToRecycleBin = async (path) => {
+  if (existsSync(path)) {
+    const files = fs.readdirSync(path);
+    if (files.length > 0) {
+      const assignmentFolder = files[0];
+      const assignmentPath = path + sep + assignmentFolder;
+      // Send assignments to recyclebin
+      await trash(assignmentPath);
+    }
+    // Hard delete workspace folder
+    rmdirSync(path);
+  }
+};
 
-        promise.then(function(value) {
-          rmdirSync(path);
-        });
+const deleteFolderRecursive = (path) => {
+  if (existsSync(path)) {
+    readdirSync(path).forEach(function(file, index) {
+      const curPath = path + '/' + file;
+      if (isFolder(curPath)) { // recurse
+        deleteFolderRecursive(curPath);
+      } else { // delete file
+        unlinkSync(curPath);
       }
-
-    }
-  } else {
-    if (existsSync(path)) {
-      readdirSync(path).forEach(function(file, index) {
-        const curPath = path + '/' + file;
-        if (isFolder(curPath)) { // recurse
-          deleteFolderRecursive(curPath, isHardDelete);
-        } else { // delete file
-          unlinkSync(curPath);
-        }
-      });
-      rmdirSync(path);
-    }
+    });
+    rmdirSync(path);
   }
 };
 
