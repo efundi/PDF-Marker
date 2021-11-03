@@ -63,7 +63,7 @@ const csvtojson = require('csvtojson');
 const hexRgb = require('hex-rgb');
 const rgbHex = require('rgb-hex');
 const pathinfo = require('locutus/php/filesystem/pathinfo');
-
+const trash = require('trash');
 
 const CONFIG_FILE = 'config.json';
 const SETTING_FILE = '.settings.json';
@@ -94,6 +94,7 @@ const INVALID_PATH_PROVIDED = 'Invalid path provided!';
 const INVALID_STUDENT_FOLDER = 'Invalid student folder';
 
 const COULD_NOT_READ_COMMENT_LIST = 'Could not read list of comments!';
+const COULD_NOT_READ_WORKSPACE_LIST = 'Could not read list of working folders!';
 const NOT_PROVIDED_COMMENT = 'Comment must be provided!';
 /**/
 
@@ -401,7 +402,7 @@ const moveWorkspaceAssignments = (req, res) => {
 
 app.post('/api/workspace/move', moveWorkspaceAssignments);
 
-const deleteWorkspaceConfirmation = (req, res) => {
+const deleteWorkspaceConfirmation = async (req, res) => {
   if (!checkClient(req, res))
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
 
@@ -413,7 +414,7 @@ const deleteWorkspaceConfirmation = (req, res) => {
   if (existsSync(CONFIG_DIR + CONFIG_FILE)) {
     return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, async (data) => {
       if (!isJson(data))
-        return sendResponse(req, res, 400, COULD_NOT_READ_COMMENT_LIST);
+        return sendResponse(req, res, 400, COULD_NOT_READ_WORKSPACE_LIST);
       console.log(data);
       const config = JSON.parse(data.toString());
       const folders = config.folders;
@@ -436,7 +437,11 @@ const deleteWorkspaceConfirmation = (req, res) => {
         }
 
         if (existsSync(folders[indexFound])) {
-          deleteFolderRecursive(folders[indexFound]);
+          try {
+           await moveToRecycleBin(folders[indexFound]);
+          } catch (e) {
+            return sendResponse(req, res, 500, e);
+          }
         }
         folders.splice(indexFound, 1);
         config.folders = folders;
@@ -851,7 +856,7 @@ const deleteCommentConfirmation = (req, res) => {
           return sendResponse(req, res, 500, COULD_NOT_READ_COMMENT_LIST);
         }
 
-      return sendResponseData(req, res, 200, newComments);
+        return sendResponseData(req, res, 200, newComments);
       }
     });
   }
@@ -2918,7 +2923,7 @@ const isJson = (str) => {
 };
 
 const extractZipFile = async (file, destination, newFolder, oldFolder, assignmentName, assignmentType) => {
-  //TODO Should we validate the zip structure based on assignment type?
+  // TODO Should we validate the zip structure based on assignment type?
   if (assignmentType === 'Generic') {
     let skippedFirst = 1;
     return await createReadStream(file)
@@ -3066,6 +3071,20 @@ const hierarchyModel = (pathInfos, configFolder) => {
   }, {});
 
   return model;
+};
+
+const moveToRecycleBin = async (path) => {
+  if (existsSync(path)) {
+    const files = fs.readdirSync(path);
+    if (files.length > 0) {
+      const assignmentFolder = files[0];
+      const assignmentPath = path + sep + assignmentFolder;
+      // Send assignments to recyclebin
+      await trash(assignmentPath);
+    }
+    // Hard delete workspace folder
+    rmdirSync(path);
+  }
 };
 
 const deleteFolderRecursive = (path) => {

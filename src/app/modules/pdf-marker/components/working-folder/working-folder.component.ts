@@ -40,6 +40,7 @@ export class WorkingFolderComponent implements OnInit {
 
   ngOnInit() {
     this.isLoading$.next(true);
+    this.initForm();
     this.settingsService.getConfigurations().subscribe(configurations => {
       // this.createFolderForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath : null);
       this.isLoading$.next(false);
@@ -53,7 +54,7 @@ export class WorkingFolderComponent implements OnInit {
       this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
       this.appService.isLoading$.next(false);
     });
-    this.initForm();
+
   }
 
   private populateWorkspaces(folders: string[]) {
@@ -141,8 +142,8 @@ export class WorkingFolderComponent implements OnInit {
 
   private deleteFolderImpl(folder: string, confirmation: boolean) {
     // const newData = { folder, confirmation};
-    this.workspaceService.deleteWorkspace(folder).subscribe((comments: any[]) => {
-      this.populateWorkspaces(comments);
+    this.workspaceService.deleteWorkspace(folder).subscribe((folders: any[]) => {
+      this.populateWorkspaces(folders);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Workspace deleted');
       this.refreshSideBar();
