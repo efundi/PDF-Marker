@@ -86,21 +86,19 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
     this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
       this.workspaceList = workspaces;
-      const workspaceNames = workspaces.map(item => {
-        item = item.substr(item.lastIndexOf("\\") + 1, item.length);
-        return item;
-      });
-
       const folderOrFileKeys = Object.keys(hierarchyModel);
-      // if (folderOrFileKeys.length > 1) {
-      //   folderOrFileKeys = Object.entries(hierarchyModel)
-      //     .find(pair => pair[0] === objectName);
-      // }
       let isWorkspace = false;
-      if (folderOrFileKeys.length > 0) {
-        const assignmentName: string = folderOrFileKeys[0];
-        if (workspaceNames.includes(objectName)) {
-          isWorkspace = true;
+      if (workspaces) {
+        const workspaceNames = workspaces.map(item => {
+          item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+          return item;
+        });
+
+        if (folderOrFileKeys.length > 0) {
+          const assignmentName: string = folderOrFileKeys[0];
+          if (workspaceNames.includes(objectName)) {
+            isWorkspace = true;
+          }
         }
       }
       if (!this.isAssignmentRoot(objectName, hierarchyModel) && isWorkspace) {

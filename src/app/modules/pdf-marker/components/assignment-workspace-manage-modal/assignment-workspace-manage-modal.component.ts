@@ -56,14 +56,16 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
     this.assignments = this.data.assignments;
     this.manageForm.controls.workspaceName.setValue(this.data.workspaceName);
     this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
-      this.workspaceList = workspaces;
-      this.workspaceNameList = workspaces.map(item => {
-        item = item.substr(item.lastIndexOf("\\") + 1, item.length);
-        return item;
-      });
-      const foundIndex = this.workspaceNameList.findIndex(x => x === this.data.workspaceName);
-      this.workspaceList.splice(foundIndex, 1);
-      this.workspaceNameList.splice(foundIndex, 1);
+      if (workspaces) {
+        this.workspaceList = workspaces;
+        this.workspaceNameList = workspaces.map(item => {
+          item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+          return item;
+        });
+        const foundIndex = this.workspaceNameList.findIndex(x => x === this.data.workspaceName);
+        this.workspaceList.splice(foundIndex, 1);
+        this.workspaceNameList.splice(foundIndex, 1);
+      }
       this.workspaceList.unshift('Default Workspace');
       this.workspaceNameList.unshift('Default Workspace');
     });

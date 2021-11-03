@@ -16,7 +16,6 @@ import {MarkTypeIconComponent} from "@pdfMarkerModule/components/mark-type-icon/
 import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
 import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-marking.component';
 import {CreateAssignmentComponent} from './components/create-assignment/create-assignment.component';
-import {CreateFolderComponent} from './components/create-folder/create-folder.component';
 
 import {PdfJsViewerModule} from 'ng2-pdfjs-viewer';
 import {ColorPickerModule} from "ngx-color-picker";
@@ -40,7 +39,6 @@ import { WorkingFolderComponent } from './components/working-folder/working-fold
     AssignmentWorkspaceManageModalComponent,
     AssignmentWorkspaceOverviewComponent,
     CreateAssignmentComponent,
-    CreateFolderComponent,
     FinaliseMarkingComponent,
     GenericCommentsComponent,
     HomeComponent,

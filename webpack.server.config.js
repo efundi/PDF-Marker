@@ -10,7 +10,8 @@ module.exports = {
     server: './server.ts'
   },
   externals: {
-    './dist/server/main': 'require("./server/main")'
+    './dist/server/main': 'require("./server/main")',
+    'trash' : 'commonjs trash'
   },
   target: 'node',
   resolve: { extensions: ['.ts', '.js'] },

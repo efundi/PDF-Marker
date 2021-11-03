@@ -34,9 +34,9 @@
       <input formControlName="assignmentName" type="text" [readonly]="isAssignmentName" matInput required>
     </mat-form-field>
     <div class="pdf-spacer"></div>
-    <mat-label class="pdf-marker-form-labels">Workspace Folder:</mat-label>
+    <mat-label class="pdf-marker-form-labels">Working Folder:</mat-label>
     <mat-form-field>
-      <mat-label>Select Workspace</mat-label>
+      <mat-label>Select Folder</mat-label>
       <mat-select formControlName="workspaceFolder" required>
         <mat-option *ngFor="let workspace of workspaces" [value]="workspace">{{workspace}}</mat-option>
       </mat-select>

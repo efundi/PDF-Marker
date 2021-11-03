@@ -111,11 +111,13 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     });
 
     this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
-      this.workspaces = [...workspaces];
-      this.workspaces = this.workspaces.map(item => {
-        item = item.substr(item.lastIndexOf("\\") + 1, item.length);
-        return item;
-      });
+      if (workspaces) {
+        this.workspaces = [...workspaces];
+        this.workspaces = this.workspaces.map(item => {
+          item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+          return item;
+        });
+      }
       this.workspaces.unshift('Default Workspace');
       if (this.workspaces.length <= 1) {
         this.createAssignmentForm.controls.workspaceFolder.setValue('Default Workspace');
