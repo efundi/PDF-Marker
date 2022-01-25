@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {AppVersionInfo} from "@coreModule/info-objects/app-version.info";
 import {RoutesEnum} from "@coreModule/utils/routes.enum";
 import {Router} from "@angular/router";
@@ -19,8 +19,16 @@ export class HeaderComponent implements OnInit {
   @Input()
   appVersion: AppVersionInfo;
 
+  @Output()
+  toggleMenu: EventEmitter<any> = new EventEmitter<any>();
+
   ngOnInit() {
   }
+
+  menuToggleClicked() {
+    this.toggleMenu.emit({});
+  }
+
   goHome() {
     this.router.navigate([RoutesEnum.MARKER]);
   }

@@ -1,26 +1,10 @@
-<pdf-marker-header [appName]="title" [appVersion]="version"></pdf-marker-header>
+<pdf-marker-header [appName]="title" [appVersion]="version" (toggleMenu)="drawer.toggle()"></pdf-marker-header>
 <mat-progress-bar class="pdf-marker-progress-bar" *ngIf="isLoading$" mode="indeterminate"></mat-progress-bar>
 <mat-sidenav-container class="sidenav-container" autosize>
   <mat-sidenav #drawer class="sidenav" mode="side" opened>
     <pdf-marker-side-navigation></pdf-marker-side-navigation>
   </mat-sidenav>
   <mat-sidenav-content #content>
-    <mat-toolbar>
-      <button
-        tool
-        type="button"
-        aria-label="Toggle sidenav"
-        mat-icon-button (click)="drawer.toggle()">
-        <mat-icon matTooltip="Toggle Menu" aria-label="Side nav toggle icon">swap_horiz</mat-icon>
-      </button>
-      <!--
-      <div class="pdf-marker-breadcrumbs">
-        <span *ngFor="let route of routeList; let last = last">
-          <span class="pdf-marker-route" *ngIf="route !== ''">{{ route }}<span *ngIf="!last">&nbsp;<mat-icon>arrow_right</mat-icon>&nbsp;</span></span>
-        </span>
-      </div>
-      -->
-    </mat-toolbar>
     <div class="pdf-marker-content-container">
       <router-outlet></router-outlet>
     </div>
