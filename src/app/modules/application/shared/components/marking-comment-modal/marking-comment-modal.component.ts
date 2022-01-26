@@ -4,7 +4,7 @@ import {FormBuilder, FormControl, FormGroup, Validators} from "@angular/forms";
 import {AppService} from "@coreModule/services/app.service";
 import {IComment} from '@coreModule/utils/comment.class';
 import {CommentService} from '@pdfMarkerModule/services/comment.service';
-import {MatSelectChange} from '@angular/material/select/typings/select';
+import {MatSelectChange} from "@angular/material/select";
 
 @Component({
   selector: 'pdf-marker-marking-comment-modal',

@@ -31,7 +31,10 @@ function createWindow() {
     width: size.width,
     height: size.height,
     webPreferences: {
-      nodeIntegration: true
+      // TODO this is a security risk, try this instead
+      // https://github.com/electron/electron/issues/9920#issuecomment-575839738
+      nodeIntegration: true,
+      contextIsolation: false
     },
   });
 

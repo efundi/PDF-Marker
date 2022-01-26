@@ -4,7 +4,6 @@ import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
 import {AppService} from '@coreModule/services/app.service';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
-import {MatSelectionListChange} from '@angular/material';
 import {WorkspaceDetails} from '@pdfMarkerModule/components/assignment-workspace-overview/assignment-workspace-overview.component';
 
 export interface WorkspaceDialogResult {

@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {ZipService} from "../../../application/core/services/zip.service";
-import {MatDialog, MatDialogConfig} from "@angular/material";
+import {MatDialog, MatDialogConfig} from "@angular/material/dialog";
 import {FileExplorerModalComponent} from "../../../application/shared/components/file-explorer-modal/file-explorer-modal.component";
 import {AlertService} from "../../../application/core/services/alert.service";
 import {SakaiService} from "../../../application/core/services/sakai.service";
