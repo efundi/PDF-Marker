@@ -225,9 +225,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         case IconTypeEnum.ACK_MARK  :
         case IconTypeEnum.CROSS     :
         case IconTypeEnum.NUMBER    : this.createMarkIcon(event);
-                                      break;
+          break;
         default:  console.log("No icon type found!");
-                  break;
+          break;
       }
     }
   }
@@ -247,19 +247,19 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   onControl(control: string) {
     switch (control) {
       case 'save'     :   this.saveMarks();
-                          break;
+        break;
       case 'clearAll' :   this.clearMarks();
-                          break;
+        break;
       case 'settings' :   this.settings();
-                          break;
+        break;
       case 'finalise' :   this.finalise();
-                          break;
+        break;
       case 'prevPage' :   this.onPagedChanged(this.currentPage - 1);
-                          break;
+        break;
       case 'nextPage' :   this.onPagedChanged(this.currentPage + 1);
-                          break;
+        break;
       default         :   console.log("No control '" + control + "' found!");
-                          break;
+        break;
     }
   }
 

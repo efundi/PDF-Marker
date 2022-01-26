@@ -43,7 +43,7 @@ export class AssignmentService {
               private appService: AppService,
               private zipService: ZipService) {
 
-    const transferKey: StateKey<string> = makeStateKey<string>('ListAssignments');
+    const transferKey: StateKey<any[]> = makeStateKey<any[]>('ListAssignments');
     if (isPlatformServer(this.platformId)) {
       this.assignmentList((err, assignmentList) => {
         if (err) {

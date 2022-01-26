@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatTableDataSource } from '@angular/material';
 import { AlertService } from '@coreModule/services/alert.service';
 import { AppService } from '@coreModule/services/app.service';
 import { IComment } from '@coreModule/utils/comment.class';
@@ -8,6 +7,7 @@ import { CommentService } from '@pdfMarkerModule/services/comment.service';
 import { SettingsService } from '@pdfMarkerModule/services/settings.service';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {MatTableDataSource} from "@angular/material/table";
 
 @Component({
   selector: 'pdf-marker-comments',

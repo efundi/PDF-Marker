@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -34,8 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var _this = this;
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 var electron_1 = require("electron");
 var electron_updater_1 = require("electron-updater");
 var path = require("path");
@@ -64,12 +64,15 @@ function createWindow() {
         width: size.width,
         height: size.height,
         webPreferences: {
-            nodeIntegration: true
-        }
+            // TODO this is a security risk, try this instead
+            // https://github.com/electron/electron/issues/9920#issuecomment-575839738
+            nodeIntegration: true,
+            contextIsolation: false
+        },
     });
     if (serve) {
         require('electron-reload')(__dirname, {
-            electron: require(__dirname + "/node_modules/electron")
+            electron: require("".concat(__dirname, "/node_modules/electron"))
         });
         mainWindow.loadURL('http://localhost:4200');
     }
@@ -144,7 +147,7 @@ try {
     electron_1.ipcMain.on('open_external_link', function (event, args) {
         electron_1.shell.openExternal(args.resource).then(function () {
             event.sender.send('on_open_external_link', { results: true });
-        })["catch"](function (reason) {
+        }).catch(function (reason) {
             event.sender.send('on_open_external_link', { selectedPath: null, error: reason });
         });
     });
@@ -159,7 +162,7 @@ try {
             else {
                 event.sender.send('on_get_folder', { selectedPath: data.filePaths[0] });
             }
-        })["catch"]((function (reason) {
+        }).catch((function (reason) {
             event.sender.send('on_get_folder', { selectedPath: null, error: reason });
         }));
     });
@@ -177,7 +180,7 @@ try {
             else {
                 event.sender.send('on_get_file', { selectedPath: data.filePaths[0] });
             }
-        })["catch"]((function (reason) {
+        }).catch((function (reason) {
             event.sender.send('on_get_file', { selectedPath: null, error: reason });
         }));
     });
@@ -189,7 +192,7 @@ try {
                 { name: args.name, extensions: args.extension }
             ],
             properties: ['openFile']
-        }).then(function (data) { return __awaiter(_this, void 0, void 0, function () {
+        }).then(function (data) { return __awaiter(void 0, void 0, void 0, function () {
             var doc, docInJSON, rowCount, levelCount, errorMessage, errorFound, validLevelLength, startMessagePrefix, startMessageSuffix, notProvided, rubric, index, criteriaData, levels, i, achievementMark, achievementFeedback, achievementTitle;
             return __generator(this, function (_a) {
                 if (data.canceled) {
@@ -220,11 +223,11 @@ try {
                                     errorMessage = '';
                                     errorFound = false;
                                     if (isBlank(criteriaData.Criterion_name)) {
-                                        errorMessage = joinError(errorMessage, "Criteria name " + notProvided);
+                                        errorMessage = joinError(errorMessage, "Criteria name ".concat(notProvided));
                                         errorFound = true;
                                     }
                                     if (isBlank(criteriaData.Criterion_description)) {
-                                        errorMessage = joinError(errorMessage, "Criteria description " + notProvided);
+                                        errorMessage = joinError(errorMessage, "Criteria description ".concat(notProvided));
                                         errorFound = true;
                                     }
                                     if (errorFound && index === 2) {
@@ -239,20 +242,20 @@ try {
                                         achievementFeedback = 'Achievement_level_' + i + '_feedback';
                                         achievementTitle = 'Achievement_level_' + i + '_title';
                                         if (isBlank(criteriaData[achievementMark])) {
-                                            errorMessage = joinError(errorMessage, "" + startMessagePrefix + rowCount + startMessageSuffix + achievementMark + " " + notProvided);
+                                            errorMessage = joinError(errorMessage, "".concat(startMessagePrefix).concat(rowCount).concat(startMessageSuffix).concat(achievementMark, " ").concat(notProvided));
                                             errorFound = true;
                                         }
                                         if (isNaN(criteriaData[achievementMark])) {
-                                            errorMessage = joinError(errorMessage, "" + startMessagePrefix + rowCount + startMessageSuffix + achievementMark + " is not a valid number");
+                                            errorMessage = joinError(errorMessage, "".concat(startMessagePrefix).concat(rowCount).concat(startMessageSuffix).concat(achievementMark, " is not a valid number"));
                                             errorFound = true;
                                         }
                                         criteriaData[achievementMark] = parseInt('' + criteriaData[achievementMark], 10);
                                         if (isBlank(criteriaData[achievementTitle])) {
-                                            errorMessage = joinError(errorMessage, "" + startMessagePrefix + rowCount + startMessageSuffix + achievementTitle + " " + notProvided);
+                                            errorMessage = joinError(errorMessage, "".concat(startMessagePrefix).concat(rowCount).concat(startMessageSuffix).concat(achievementTitle, " ").concat(notProvided));
                                             errorFound = true;
                                         }
                                         if (isBlank(criteriaData[achievementFeedback])) {
-                                            errorMessage = joinError(errorMessage, "" + startMessagePrefix + rowCount + startMessageSuffix + achievementFeedback + " " + notProvided);
+                                            errorMessage = joinError(errorMessage, "".concat(startMessagePrefix).concat(rowCount).concat(startMessageSuffix).concat(achievementFeedback, " ").concat(notProvided));
                                             errorFound = true;
                                         }
                                         if (errorFound && i === 1) {
@@ -273,7 +276,7 @@ try {
                                         };
                                     }
                                     if (index !== 2 && levels.length !== validLevelLength) {
-                                        errorMessage = joinError(errorMessage, "" + startMessagePrefix + rowCount + startMessageSuffix + " The provided number of achievement levels do not match first row achievement levels");
+                                        errorMessage = joinError(errorMessage, "".concat(startMessagePrefix).concat(rowCount).concat(startMessageSuffix, " The provided number of achievement levels do not match first row achievement levels"));
                                         return [2 /*return*/, event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: errorMessage } })];
                                     }
                                     rubric.criterias.push({
@@ -298,7 +301,7 @@ try {
                 }
                 return [2 /*return*/];
             });
-        }); })["catch"]((function (reason) {
+        }); }).catch((function (reason) {
             event.sender.send('on_excel_to_json', { selectedPath: null, error: reason });
         }));
     });
@@ -312,7 +315,7 @@ try {
         });
         if (filePath) {
             try {
-                fs_1.writeFileSync(filePath, new Buffer(args.buffer));
+                (0, fs_1.writeFileSync)(filePath, new Buffer(args.buffer));
                 event.sender.send('on_save_file', { selectedPath: filePath });
             }
             catch (e) {
@@ -339,6 +342,7 @@ function isBlank(data) {
 function joinError(currentMessage, newMessage) {
     if (currentMessage === void 0) { currentMessage = ''; }
     if (newMessage === void 0) { newMessage = ''; }
-    currentMessage += (!isBlank(currentMessage)) ? ", " + newMessage : newMessage;
+    currentMessage += (!isBlank(currentMessage)) ? ", ".concat(newMessage) : newMessage;
     return currentMessage;
 }
+//# sourceMappingURL=main.js.map

@@ -5,13 +5,10 @@ import {AppService} from "@coreModule/services/app.service";
 import {AlertService} from "@coreModule/services/alert.service";
 import {ElectronService} from "@coreModule/services/electron.service";
 import {AssignmentService} from "@sharedModule/services/assignment.service";
-import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
-import {IComment} from '@coreModule/utils/comment.class';
-import {MatTableDataSource} from '@angular/material';
+import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
-import {AssignmentDetails} from '@pdfMarkerModule/components/assignment-overview/assignment-overview.component';
 
 @Component({
   selector: 'pdf-marker-working-folder',
