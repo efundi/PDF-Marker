@@ -4,7 +4,7 @@ import {Observable, throwError} from "rxjs";
 import {AlertService} from "@coreModule/services/alert.service";
 import {catchError} from "rxjs/operators";
 import {AppService} from "@coreModule/services/app.service";
-import { environment } from "../../../../../environments/environment.prod";
+import { environment } from "../../../../../environments/environment";
 
 @Injectable()
 export class PdfMarkerErrorInterceptorService implements HttpInterceptor {

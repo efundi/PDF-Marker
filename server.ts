@@ -72,7 +72,8 @@ const GRADES_FILE = 'grades.csv';
 const RUBRICS_FILE = 'rubrics.json';
 const SUBMISSION_FOLDER = 'Submission attachment(s)';
 const FEEDBACK_FOLDER = 'Feedback Attachment(s)';
-const CONFIG_DIR = process.env.APPDATA + sep + 'pdf-config' + sep;
+const APP_DATA_DIR = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share")
+const CONFIG_DIR = APP_DATA_DIR + sep + 'pdf-config' + sep;
 const UPLOADS_DIR = '.' + sep + 'uploads';
 const COMMENTS_FILE = 'comments.json';
 
@@ -132,7 +133,7 @@ const assignmentList = (callback) => {
 const app = express();
 app.use(express.json());
 
-const PORT = process.env.PORT || 4200;
+const PORT = process.env.PORT || 4300;
 const DIST_FOLDER = join(process.cwd(), 'dist/browser');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
