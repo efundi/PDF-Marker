@@ -1,11 +1,11 @@
-import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {AssignmentService} from "@sharedModule/services/assignment.service";
-import {ActivatedRoute, NavigationEnd, PRIMARY_OUTLET, Router} from "@angular/router";
-import {filter, map} from "rxjs/operators";
-import {AppService} from "@coreModule/services/app.service";
-import {RoutesEnum} from "@coreModule/utils/routes.enum";
-import {ElectronService} from "@coreModule/services/electron.service";
-import {AppVersionInfo} from "@coreModule/info-objects/app-version.info";
+import {AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AssignmentService} from '@sharedModule/services/assignment.service';
+import {ActivatedRoute, NavigationEnd, PRIMARY_OUTLET, Router} from '@angular/router';
+import {filter, map} from 'rxjs/operators';
+import {AppService} from '@coreModule/services/app.service';
+import {RoutesEnum} from '@coreModule/utils/routes.enum';
+import {ElectronService} from '@coreModule/services/electron.service';
+import {AppVersionInfo} from '@coreModule/info-objects/app-version.info';
 
 @Component({
   selector: 'pdf-marker-home',
@@ -22,7 +22,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   isMarkingPage: boolean;
   routeList: string[] = [];
 
-  @ViewChild("content", {static: false})
+  @ViewChild('content', {static: false})
   content: ElementRef;
 
   constructor(private router: Router,
@@ -38,8 +38,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.electronService.getAppVersionObservable().subscribe((appVersionInfo: AppVersionInfo) => {
-      if(appVersionInfo && appVersionInfo.version)
+      if (appVersionInfo && appVersionInfo.version) {
         this.version = appVersionInfo;
+      }
     });
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
@@ -50,14 +51,14 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       }))
       .pipe(filter(route => route.outlet === PRIMARY_OUTLET))
       .subscribe(route => {
-        let snapshot = this.router.routerState.snapshot;
+        const snapshot = this.router.routerState.snapshot;
         this.breadcrumbs = [];
         this.routeList = [];
-        let url = snapshot.url;
-        let routeData = route.snapshot.data;
+        const url = snapshot.url;
+        const routeData = route.snapshot.data;
 
-        let label = routeData['breadcrumb'];
-        let params = snapshot.root.params;
+        const label = routeData['breadcrumb'];
+        const params = snapshot.root.params;
 
         this.breadcrumbs = {
           url: url,
@@ -65,14 +66,16 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
           params: params
         };
 
-        this.breadcrumbs.url.split("/").forEach(route => {
-          this.routeList.push(decodeURI(route))
+        this.breadcrumbs.url.split('/').forEach(route => {
+          this.routeList.push(decodeURI(route));
         });
 
-        if (this.router.url === RoutesEnum.ASSIGNMENT_MARKER)
+        if (this.router.url === RoutesEnum.ASSIGNMENT_MARKER) {
           this.isMarkingPage = true;
-        else
+        }
+        else {
           this.isMarkingPage = false;
+        }
       });
   }
 

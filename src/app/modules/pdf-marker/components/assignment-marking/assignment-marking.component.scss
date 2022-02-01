@@ -1,44 +1,10 @@
 .pdf-marker-assignment-marking-controls {
-  height: 10%;
-  min-width: 64px;
+  height: 65px;
   position: sticky;
-  top: -1px;
+  top: 0;
   left: 0;
   width: inherit;
   z-index: 1000;
-}
-
-.pdf-marker-dropzone {
-  cursor: copy;
-}
-
-.boundary {
-  height: 90%;
-  position: relative;
-  overflow: hidden;
-  margin: 1px auto -8px auto;
-
-  .boundary-drop-zone {
-    position:absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 100%;
-    opacity: 0;
-  }
-
-  .pdf-marker-mark-type-icon {
-    z-index: 1 !important;
-  }
-}
-
-.boundary::-webkit-scrollbar {
-  width: 7px;
-  background: transparent;
-}
-
-.boundary::-webkit-scrollbar-thumb {
-  background: #888;
 }
 
 .pdf-marker-assignment-marking-visible-pdf {
@@ -49,8 +15,80 @@
   border: 1px solid #eee;
 }
 
-ng2-pdfjs-viewer {
-  iframe {
-    border: none !important;
+.marking-container {
+
+  display: flex;
+  flex-direction: row;
+
+
+  .rubric-wrapper{
+    display: none;
+    // 100% screen - top header and icons bar
+    overflow-y: auto;
+    background: #fff;
+    //padding: 1rem;
+    border: solid 1px rgba(0,0,0,.12);
+    margin-right: -23px;
+  }
+
+  .rubric-wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: #F5F5F5;
+  }
+
+  .rubric-wrapper::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: #555;
+  }
+
+  .pages-wrapper {
+    display: none;
+    flex-grow: 1;
+    overflow-x: auto;
+    background: #999999;
+
+    /* view height - navbars + borders */
+    height: calc(100vh - 132px);
+    margin-right: -23px;
+  }
+
+  .pages-wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: #F5F5F5;
+  }
+
+  .pages-wrapper::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: #6f327a;
+  }
+}
+
+.marking-container.show-pdf {
+  .pages-wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+
+.marking-container.show-rubric {
+  .rubric-wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+}
+.marking-container.show-rubric.show-pdf {
+  .rubric-wrapper {
+    margin-left: 1rem;
+    /* view height - navbars + borders */
+    height: calc(100vh - 132px);
+    width: 816px;
+    max-width: 816px;
+  }
+
+  .pages-wrapper {
+    margin-right: 0;
   }
 }

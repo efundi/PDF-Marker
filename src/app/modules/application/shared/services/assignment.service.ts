@@ -1,16 +1,17 @@
 import {Inject, Injectable, Optional, PLATFORM_ID} from '@angular/core';
-import {HttpClient, HttpHeaders} from "@angular/common/http";
-import {BehaviorSubject, Observable, ReplaySubject, Subject} from "rxjs";
-import {makeStateKey, StateKey, TransferState} from "@angular/platform-browser";
-import {isPlatformServer} from "@angular/common";
-import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
-import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
-import {RoutesEnum} from "@coreModule/utils/routes.enum";
-import {Router} from "@angular/router";
-import {AppService} from "@coreModule/services/app.service";
-import {IRubric} from "@coreModule/utils/rubric.class";
-import {ZipService} from "@coreModule/services/zip.service";
+import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {BehaviorSubject, Observable, ReplaySubject, Subject} from 'rxjs';
+import {makeStateKey, StateKey, TransferState} from '@angular/platform-browser';
+import {isPlatformServer} from '@angular/common';
+import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
+import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
+import {RoutesEnum} from '@coreModule/utils/routes.enum';
+import {Router} from '@angular/router';
+import {AppService} from '@coreModule/services/app.service';
+import {IRubric} from '@coreModule/utils/rubric.class';
+import {ZipService} from '@coreModule/services/zip.service';
 import {sep} from 'path';
+import {MarkInfo} from '@sharedModule/info-objects/mark.info';
 
 @Injectable({
   providedIn: 'root'
@@ -47,7 +48,7 @@ export class AssignmentService {
     if (isPlatformServer(this.platformId)) {
       this.assignmentList((err, assignmentList) => {
         if (err) {
-          console.log("Error ", err);
+          console.log('Error ', err);
         } else {
           this.assignments = assignmentList;
           this.transferState.set(transferKey, this.assignments);
@@ -58,10 +59,10 @@ export class AssignmentService {
         this.assignments = this.transferState.get<object[]>(transferKey, assignments);
         this.assignmentListSource$.next(this.assignments);
       }, error => {
-        //this.assignments = this.transferState.get<object[]>(transferKey, []);
-      })
+        // this.assignments = this.transferState.get<object[]>(transferKey, []);
+      });
     }
-    //this.assignmentListSource$.next(this.assignments);
+    // this.assignmentListSource$.next(this.assignments);
     this.onWorkspaceSourceChange = this.workspaceSourceSubject.asObservable();
     this.onAssignmentSourceChange = this.selectedAssignmentSource.asObservable();
   }
@@ -81,7 +82,7 @@ export class AssignmentService {
 
   getAssignmentSettings(workspaceName: string = null, assignmentName: string = null): Observable<AssignmentSettingsInfo> {
     if (!assignmentName) {
-      assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split("/").length > 0) ? this.selectedPdfLocation.split("/")[0] : "");
+      assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split('/').length > 0) ? this.selectedPdfLocation.split('/')[0] : '');
     }
     if (workspaceName) {
       assignmentName = workspaceName + sep + assignmentName;
@@ -110,31 +111,33 @@ export class AssignmentService {
       'Accept': MimeTypesEnum.JSON
     });
     const body = {location: pdfFileLocation};
-    return this.http.post<Blob>("/api/pdf/file", body, {headers, responseType: 'blob' as 'json'});
+    return this.http.post<Blob>('/api/pdf/file', body, {headers, responseType: 'blob' as 'json'});
   }
 
   configure(pdfLocation: string, blobData: Blob) {
     const blob = new Blob([blobData], {type: MimeTypesEnum.PDF});
     const fileUrl = URL.createObjectURL(blob);
-    var assignmentName = "";
-    var count = (pdfLocation.match(new RegExp("/", "g")) || []).length;
+    let assignmentName = '';
+    const count = (pdfLocation.match(new RegExp('/', 'g')) || []).length;
     if (count > 3) {
-      var splitArray = pdfLocation.split("/");
-      assignmentName = splitArray[0] + "/" + splitArray[1];
+      const splitArray = pdfLocation.split('/');
+      assignmentName = splitArray[0] + '/' + splitArray[1];
+    } else {
+      assignmentName = ((pdfLocation && pdfLocation.split('/').length > 0) ? pdfLocation.split('/')[0] : '');
     }
-    else
-    assignmentName = ((pdfLocation && pdfLocation.split("/").length > 0) ? pdfLocation.split("/")[0] : "");
-    this.getAssignmentSettings(null, assignmentName).subscribe((assignmentSettingsInfo: AssignmentSettingsInfo) => {
-      this.setAssignmentSettings(assignmentSettingsInfo);
-      this.setSelectedPdfURL(fileUrl, pdfLocation);
-      this.setSelectedPdfBlob(blob);
-      if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER && assignmentSettingsInfo.rubric === null)
-        this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER]);
-      else if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC && assignmentSettingsInfo.rubric !== null)
-        this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER_RUBRIC]);
-    }, error => {
-      this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(false, "Unable to read assignment settings");
+    this.getAssignmentSettings(null, assignmentName).subscribe({
+      next: (assignmentSettingsInfo: AssignmentSettingsInfo) => {
+        this.setAssignmentSettings(assignmentSettingsInfo);
+        this.setSelectedPdfURL(fileUrl, pdfLocation);
+        this.setSelectedPdfBlob(blob);
+        if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER) {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER]);
+        }
+      },
+      error: (error) => {
+        this.appService.isLoading$.next(false);
+        this.appService.openSnackBar(false, 'Unable to read assignment settings');
+      }
     });
   }
 
@@ -142,9 +145,9 @@ export class AssignmentService {
     const assignmentsHierarchy = [];
     const workspacesHierarchy = [];
     assignments.forEach(folderOrFile => {
-      let folderOrFileKeys = Object.keys(folderOrFile);
+      const folderOrFileKeys = Object.keys(folderOrFile);
       if (folderOrFileKeys.length > 0) {
-        let assignmentName: string = folderOrFileKeys[0];
+        const assignmentName: string = folderOrFileKeys[0];
         if (assignmentName) {
           if (this.zipService.isValidAssignmentObject(folderOrFile[assignmentName])) {
             assignmentsHierarchy.push(folderOrFile);
@@ -224,17 +227,17 @@ export class AssignmentService {
     return this.selectedPdfURLSource$.asObservable();
   }
 
-  saveMarks(marks: any[], totalMark: number = 0) {
+  saveMarks(marks: MarkInfo[][], totalMark: number = 0): Observable<any> {
     const body = {
       location: this.selectedPdfLocation,
       marks: marks,
       totalMark: totalMark
     };
 
-    return this.http.post("/api/assignment/marks/save", body);
+    return this.http.post('/api/assignment/marks/save', body);
   }
 
-  saveRubricMarks(rubricName: string = "", marks: any[], totalMark: number = 0) {
+  saveRubricMarks(rubricName: string = '', marks: any[], totalMark: number = 0) {
     const body = {
       location: this.selectedPdfLocation,
       marks: marks,
@@ -242,21 +245,21 @@ export class AssignmentService {
       rubricName: rubricName
     };
 
-    return this.http.post("/api/assignment/rubric/marks/save", body);
+    return this.http.post('/api/assignment/rubric/marks/save', body);
   }
 
-  getSavedMarks() {
+  getSavedMarks(): Observable<MarkInfo[]> {
     const body = {
       location: this.selectedPdfLocation
     };
-    return this.http.post("/api/assignment/marks/fetch", body);
+    return this.http.post<MarkInfo[]>('/api/assignment/marks/fetch', body);
   }
 
   getAssignmentGlobalSettings() {
     const body = {
       location: this.selectedPdfLocation
     };
-    return this.http.post("/api/assignment/globalSettings", body);
+    return this.http.post('/api/assignment/globalSettings', body);
   }
 
   getSelectedPdfLocation(): string {
@@ -269,7 +272,7 @@ export class AssignmentService {
       totalMark: grade
     };
 
-    return this.http.post("/api/assignment/student/grade", body);
+    return this.http.post('/api/assignment/student/grade', body);
   }
 
   finalizeAndExport(workspaceName: string = null, assignmentName: string) {
@@ -281,7 +284,7 @@ export class AssignmentService {
       'Content-Type': MimeTypesEnum.JSON,
       'Accept': MimeTypesEnum.JSON
     });
-    return this.http.post<Blob>("/api/assignment/finalize", body, {
+    return this.http.post<Blob>('/api/assignment/finalize', body, {
       reportProgress: true,
       observe: 'events',
       headers,
@@ -300,7 +303,7 @@ export class AssignmentService {
       'Content-Type': MimeTypesEnum.JSON,
       'Accept': MimeTypesEnum.JSON
     });
-    return this.http.post<Blob>("/api/assignment/finalize/rubric", body, {
+    return this.http.post<Blob>('/api/assignment/finalize/rubric', body, {
       reportProgress: true,
       observe: 'events',
       headers,
@@ -309,11 +312,11 @@ export class AssignmentService {
   }
 
   createAssignment(createAssignmentInfo: any): Observable<object> {
-    return this.http.post("/api/assignment/create", createAssignmentInfo);
+    return this.http.post('/api/assignment/create', createAssignmentInfo);
   }
 
   updateAssignment(updateAssignmentInfo: any): Observable<object> {
-    return this.http.put<object>("/api/assignment/update", updateAssignmentInfo);
+    return this.http.put<object>('/api/assignment/update', updateAssignmentInfo);
   }
 
   updateAssignmentRubric(rubric: string, assignmentName: string): Observable<IRubric> {
@@ -322,6 +325,6 @@ export class AssignmentService {
       assignmentName: assignmentName
     };
 
-    return this.http.post<IRubric>("/api/assignment/rubric/update", body);
+    return this.http.post<IRubric>('/api/assignment/rubric/update', body);
   }
 }

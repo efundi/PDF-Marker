@@ -14,7 +14,12 @@ module.exports = {
     'trash' : 'commonjs trash'
   },
   target: 'node',
-  resolve: { extensions: ['.ts', '.js'] },
+  resolve: {
+    // alias : {
+    //   canvas : false
+    // },
+    extensions: ['.ts', '.js']
+  },
   optimization: {
     minimize: false
   },

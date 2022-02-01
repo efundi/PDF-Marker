@@ -1,0 +1,11 @@
+<div class="page-wrapper boundary pdf-marker-assignment-marking-container" #pageWrapper>
+  <canvas #pdfCanvas> </canvas>
+  <div class="annotation-layer" #annotationLayer></div>
+  <div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)"></div>
+  <pdf-marker-mark-type-icon
+    class="pdf-marker-mark-type-icon"
+    *ngFor="let mark of marks; let i = index"
+    [mark]="mark"
+    [index]="i">
+  </pdf-marker-mark-type-icon>
+</div>

@@ -99,6 +99,35 @@ const COULD_NOT_READ_WORKSPACE_LIST = 'Could not read list of working folders!';
 const NOT_PROVIDED_COMMENT = 'Comment must be provided!';
 /**/
 
+/*
+ * These next few lines are to create mocks for Angular SSR
+ * PDF.js requires access to some DOM level functions that
+ * isn't available on the server side. We will be creating mocks here
+ */
+// ssr DOM
+const domino = require('domino');
+// for mock global window by domino
+const win = domino.createWindow("<html>");
+// mock
+global['window'] = win;
+// not implemented property and functions
+Object.defineProperty(win.document.body.style, 'transform', {
+  value: () => {
+    return {
+      enumerable: true,
+      configurable: true,
+    };
+  },
+});
+// mock documnet
+global['document'] = win.document;
+global['HTMLAnchorElement'] = win.HTMLAnchorElement;
+
+global.window.requestAnimationFrame = function(callback){
+  callback(0)
+  return 0;
+};
+
 const assignmentList = (callback) => {
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err)

@@ -1,13 +1,40 @@
-<ng-container>
-  <div class="pdf-marker-assignment-marking-controls" *ngIf="isPdfLoaded">
-    <pdf-marker-icons [selectedColour]="colour" [currentPage]="currentPage" [pages]="pdfPages" (selection)="onSelectedIcon($event)" (control)="onControl($event)" (pageNumber)="onPageNumberChange($event)" (colour)="onColourChanged($event)" (colourPickerClose)="onColourPickerClose($event)"></pdf-marker-icons>
-  </div>
-  <div #container class="boundary" [class.pdf-marker-assignment-marking-container]="isPdfLoaded">
-    <div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)" (wheel)="onMouseWheel($event)"></div>
-    <template style="height: 100%" #containerRef></template>
-    <ng2-pdfjs-viewer autoscroll="true" *ngIf="pdfPath" #pdfViewerAutoLoad [print]="false" [download]="false" [find]="false" [fullScreen]="false" [openFile]="false"
-                      [viewBookmark]="false" zoom="100" [page]="currentPage" pagemode="none" [pdfSrc]="pdfPath" viewerId="pdfMarker" (onDocumentLoad)="pagesLoaded($event)" (onPageChange)="onPaged($event)"></ng2-pdfjs-viewer>
-  </div>
-  <br><br>
-</ng-container>
+<div class="pdf-marker-assignment-marking-controls" *ngIf="isPdfLoaded">
+  <pdf-marker-icons
+    [currentPage]="currentPage"
+    (currentPageChange)="onPagedChanged($event)"
+    [pages]="pdfDocument.numPages"
+    [containsRubric]="!!rubric"
+    (control)="onControl($event)">
+  </pdf-marker-icons>
+</div>
 
+<div class="marking-container"
+     [class.show-rubric]="showRubric"
+     [class.show-pdf]="showPdf">
+  <div
+    class="pages-wrapper"
+    *ngIf="isPdfLoaded"
+    scrollSpy
+    scrollTarget=".pages-wrapper"
+    [spiedTags]="['PDF-MARKER-ASSIGNMENT-MARKING-PAGE']"
+    (sectionChange)="onSectionChange($event)" >
+    <pdf-marker-assignment-marking-page
+      [attr.id]="pageIndex"
+      #pdfPage
+      *ngFor="let item of repeatPerPage(); let pageIndex = index"
+      [pageIndex]="pageIndex"
+      [marks]="marks[pageIndex]"
+      [pdf]="pdfDocument">
+    </pdf-marker-assignment-marking-page>
+  </div>
+
+  <div class="rubric-wrapper" *ngIf="isPdfLoaded && !!rubric" >
+    <pdf-marker-rubric-view-marking
+      style="margin: 1rem"
+      [rubricMarking]="rubric"
+      [rubricSelections]="marks"
+      (marksUpdated)="onMarksUpdated($event)">
+    </pdf-marker-rubric-view-marking>
+  </div>
+
+</div>

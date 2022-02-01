@@ -52,8 +52,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   workspaces: string[] = [];
   selectedWorkspace: string;
 
-  // @ts-ignore
-  @ViewChild("assignmentName") assignmentName: ElementRef;
+  @ViewChild("assignmentName", {static: true})
+  assignmentName: ElementRef;
 
   private assignmentSettings: AssignmentSettingsInfo;
 

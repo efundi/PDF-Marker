@@ -1,0 +1,299 @@
+[
+  [
+    {
+      "coordinates": {
+        "x": 158,
+        "y": 117
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 1
+    },
+    {
+      "coordinates": {
+        "x": 526,
+        "y": 77
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 1
+    },
+    {
+      "coordinates": {
+        "x": 190,
+        "y": 277
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 1
+    },
+    {
+      "coordinates": {
+        "x": 156,
+        "y": 58
+      },
+      "iconName": "halfTick",
+      "iconType": "HALF_MARK",
+      "totalMark": 0.5,
+      "colour": "#6F327A",
+      "pageNumber": 1
+    },
+    {
+      "coordinates": {
+        "x": 305,
+        "y": 203
+      },
+      "iconName": "halfTick",
+      "iconType": "HALF_MARK",
+      "totalMark": 0.5,
+      "colour": "#6F327A",
+      "pageNumber": 1
+    },
+    {
+      "coordinates": {
+        "x": 79,
+        "y": 212
+      },
+      "iconName": "spellcheck",
+      "iconType": "ACK_MARK",
+      "colour": "#6F327A",
+      "pageNumber": 1
+    },
+    {
+      "coordinates": {
+        "x": 353,
+        "y": 233
+      },
+      "iconName": "halfTick",
+      "iconType": "HALF_MARK",
+      "totalMark": 0.5,
+      "colour": "#6F327A",
+      "pageNumber": 1
+    },
+    {
+      "coordinates": {
+        "x": 380,
+        "y": 870
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 1
+    },
+    {
+      "coordinates": {
+        "x": 116,
+        "y": 876
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 1
+    },
+    {
+      "coordinates": {
+        "x": 157,
+        "y": 779
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 1
+    }
+  ],
+  null,
+  null,
+  [
+    {
+      "coordinates": {
+        "x": 281,
+        "y": 221
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 4
+    }
+  ],
+  [
+    {
+      "coordinates": {
+        "x": 261,
+        "y": 314
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 5
+    },
+    {
+      "coordinates": {
+        "x": 236,
+        "y": 435
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 5
+    },
+    {
+      "coordinates": {
+        "x": 233,
+        "y": 589
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 5
+    },
+    {
+      "coordinates": {
+        "x": 489,
+        "y": 559
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 5
+    },
+    {
+      "coordinates": {
+        "x": 241,
+        "y": 213
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 5
+    },
+    {
+      "coordinates": {
+        "x": 309,
+        "y": 168
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 5
+    },
+    {
+      "coordinates": {
+        "x": 526,
+        "y": 175
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 5
+    },
+    {
+      "coordinates": {
+        "x": 599,
+        "y": 138
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 5
+    },
+    {
+      "coordinates": {
+        "x": 715,
+        "y": 241
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 5
+    }
+  ],
+  [
+    {
+      "coordinates": {
+        "x": 250,
+        "y": 206
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 6
+    },
+    {
+      "coordinates": {
+        "x": 417,
+        "y": 380
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 6
+    },
+    {
+      "coordinates": {
+        "x": 418,
+        "y": 262
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 6
+    },
+    {
+      "coordinates": {
+        "x": 296,
+        "y": 72
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 6
+    }
+  ],
+  [
+    {
+      "coordinates": {
+        "x": 329,
+        "y": 476
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 7
+    },
+    {
+      "coordinates": {
+        "x": 307,
+        "y": 302
+      },
+      "iconName": "check",
+      "iconType": "FULL_MARK",
+      "totalMark": 1,
+      "colour": "#6F327A",
+      "pageNumber": 7
+    }
+  ]
+]

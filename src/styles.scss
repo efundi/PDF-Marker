@@ -64,8 +64,13 @@
 
 /*Variables*/
 $pdf-marker-primary: #6f327a;
+$pdf-marker-secondary: #555;
 
-html, body { height: 100%; font-family: Roboto, "Helvetica Neue", sans-serif !important; min-height: 695px; min-height: 650px;}
+html, body {
+  height: 100%;
+  font-family: Roboto, "Helvetica Neue", sans-serif !important;
+}
+
 body { margin: 0; }
 
 ng2-pdfjs-viewer {
@@ -159,7 +164,9 @@ button {
 }
 
 .mat-drawer-container {
-  height: 100%;
+
+  /* Height - height of navbar */
+  height: calc(100vh - 65px);
   background: #F5F5F5 !important;
 
   .mat-drawer {
@@ -182,8 +189,8 @@ button {
     padding-left: 23px;
     padding-right: 23px;
     background: #F5F5F5;
-    display: table;
-    width: 95%;
+    //display: table;
+    //width: 95%;
   }
 
   mat-toolbar {
@@ -191,9 +198,23 @@ button {
   }
 }
 
+.table-responsive {
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch
+}
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: #F5F5F5;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: $pdf-marker-secondary;
+}
+
 .mat-expansion-panel {
   background: transparent !important;
-  width: 98%;
   padding: 0!important;
   margin: 0;
 }
@@ -335,4 +356,11 @@ pdf-marker-rubric-criteria {
 pdf-marker-rubric-criteria-level-block {
   display: flex;
   flex-direction: column;
+}
+
+
+/** Place the progress bar over other elements to avoid the page jumping */
+.mat-progress-bar{
+  position: absolute !important;
+  z-index: 99999;
 }
