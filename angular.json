@@ -32,6 +32,7 @@
               "src/styles.scss"
             ],
             "scripts": [
+              "./node_modules/pdfjs-dist/legacy/build/pdf.worker.js"
             ],
             "buildOptimizer": false,
             "sourceMap": true,
@@ -150,6 +151,9 @@
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
                 }
+              ],
+              "externalDependencies" : [
+                "canvas"
               ],
               "sourceMap": false,
               "optimization": {

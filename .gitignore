@@ -49,3 +49,6 @@ testem.log
 Thumbs.db
 
 electron-builder.*
+
+# Uncomment temporarily if you want to commit default changes
+electron-builder.yml

@@ -1,14 +1,13 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import {WelcomeComponent} from "@pdfMarkerModule/components/welcome/welcome.component";
-import {ImportComponent} from "@pdfMarkerModule/components/import/import.component";
+import {WelcomeComponent} from '@pdfMarkerModule/components/welcome/welcome.component';
+import {ImportComponent} from '@pdfMarkerModule/components/import/import.component';
 import {SettingsComponent} from '@pdfMarkerModule/components/settings/settings.component';
-import {AssignmentOverviewComponent} from "@pdfMarkerModule/components/assignment-overview/assignment-overview.component";
-import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
+import {AssignmentOverviewComponent} from '@pdfMarkerModule/components/assignment-overview/assignment-overview.component';
+import {AssignmentMarkingComponent} from '@pdfMarkerModule/components/assignment-marking/assignment-marking.component';
 import { CreateAssignmentComponent } from './components/create-assignment/create-assignment.component';
-import {RubricImportComponent} from "@pdfMarkerModule/components/rubric-import/rubric-import.component";
-import {AssignmentMarkingRubricComponent} from "@pdfMarkerModule/components/assignment-marking-rubric/assignment-marking-rubric.component";
-import {UnsavedChangesGuard} from "@pdfMarkerModule/guards/unsaved-changes.guard";
+import {RubricImportComponent} from '@pdfMarkerModule/components/rubric-import/rubric-import.component';
+import {UnsavedChangesGuard} from '@pdfMarkerModule/guards/unsaved-changes.guard';
 import { AssignmentWorkspaceOverviewComponent } from './components/assignment-workspace-overview/assignment-workspace-overview.component';
 import { GenericCommentsComponent } from './components/comments/comments.component';
 import {WorkingFolderComponent} from '@pdfMarkerModule/components/working-folder/working-folder.component';
@@ -26,7 +25,6 @@ const routes: Routes = [
   { path: 'assignment/workspaceOverview', component: AssignmentWorkspaceOverviewComponent },
   { path: 'assignment/workingFolder', component: WorkingFolderComponent },
   { path: 'assignment/marking', component: AssignmentMarkingComponent },
-  { path: 'assignment/marking/rubric', component: AssignmentMarkingRubricComponent },
   { path: 'assignment/rubric', component: RubricImportComponent },
   { path: 'assignment/comments', component: GenericCommentsComponent },
   { path: '**', redirectTo: '', pathMatch: 'full'}

@@ -1,78 +1,74 @@
-import {Component, ComponentRef, OnInit} from '@angular/core';
-import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
-import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {MatDialogConfig} from "@angular/material/dialog";
-import {AppService} from "@coreModule/services/app.service";
-import {MarkingCommentModalComponent} from "@sharedModule/components/marking-comment-modal/marking-comment-modal.component";
-import {AssignmentMarkingComponent} from "@pdfMarkerModule/components/assignment-marking/assignment-marking.component";
+import {Component, ComponentRef, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Renderer2} from '@angular/core';
+import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {MatDialogConfig} from '@angular/material/dialog';
+import {AppService} from '@coreModule/services/app.service';
+import {
+  MarkingCommentModalComponent
+} from '@sharedModule/components/marking-comment-modal/marking-comment-modal.component';
+import {MarkInfo} from '@sharedModule/info-objects/mark.info';
+import {cloneDeep, isEqual} from 'lodash-es';
+import {CdkDragEnd} from '@angular/cdk/drag-drop/drag-events';
+import {
+  AssignmentMarkingPageComponent
+} from '@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component';
 
 @Component({
   selector: 'pdf-marker-mark-type-icon',
   templateUrl: './mark-type-icon.component.html',
   styleUrls: ['./mark-type-icon.component.scss']
 })
-export class MarkTypeIconComponent implements OnInit {
+export class MarkTypeIconComponent implements OnInit, OnDestroy {
 
-  iconName: string;
+  static readonly widthAndHeight: number = 36;
 
-  private readonly widthAndHeight: number = 36;
 
-  private coordinates = {
-    x: 0,
-    y: 0
-  };
-
-  private componentReferene: ComponentRef<MarkTypeIconComponent>;
-
-  private isDeleted: boolean = false;
-
-  private totalMark: number = undefined;
-
-  private readonly defaultColour: string = "#6F327A";
-
-  private pageNumber: number;
-
-  private assignmentMarkingComponentRef: AssignmentMarkingComponent;
 
   iconForm: FormGroup;
-
-  comment: string;
-
-  hasComment: boolean;
-
-  sectionLabel: string;
-
-  markType: IconTypeEnum;
-
-  iconTypeEnum = IconTypeEnum;
-
   showOptions: boolean;
-
-  colour: string;
 
   config: MatDialogConfig;
 
-  isDisplay: boolean;
+  /**
+   * The mark represented by this component
+   */
+  @Input()
+  mark: MarkInfo;
 
-  private red: number;
+  /**
+   * The mark represented by this component
+   */
+  @Input()
+  index: number;
 
-  private green: number;
+  iconTypeEnum = IconTypeEnum;
 
-  private blue: number;
+
 
   constructor(private fb: FormBuilder,
-              private appService: AppService) {}
+              private appService: AppService,
+              private elementRef: ElementRef,
+              private renderer: Renderer2,
+              private assignmentMarkingPageComponent: AssignmentMarkingPageComponent) {}
+
+  ngOnDestroy() {
+  }
 
   ngOnInit() {
+    console.log(this.mark);
+
+    this.renderer.setStyle(this.elementRef.nativeElement, 'top', this.mark.coordinates.y + 'px');
+    this.renderer.setStyle(this.elementRef.nativeElement, 'left', this.mark.coordinates.x + 'px');
+
     this.initForm();
   }
 
   private initForm() {
-    if(this.markType === IconTypeEnum.NUMBER) {
+    if (this.mark.iconType === IconTypeEnum.NUMBER) {
       this.iconForm = this.fb.group({
-        totalMark: [(this.totalMark) ? this.totalMark:0, Validators.required]
+        totalMark: [(this.mark.totalMark) ? this.mark.totalMark : 0, Validators.required]
       });
-    } else if(this.markType === IconTypeEnum.COMMENT) {
+    } else if (this.mark.iconType === IconTypeEnum.COMMENT) {
       this.iconForm = this.fb.group({
         comment: [null, Validators.required]
       });
@@ -81,222 +77,138 @@ export class MarkTypeIconComponent implements OnInit {
     }
   }
 
-  onEdit(event) {
-    this.openMarkingCommentModal("Marking Comment", "");
+  /**
+   * Callback when the edit button is clicked
+   * @param event
+   */
+  onEdit(event: MouseEvent) {
+    this.openMarkingCommentModal('Marking Comment', '');
     event.stopPropagation();
   }
 
-  onRemove(event) {
-    this.isDeleted = true;
-    this.assignmentMarkingComponentRef.saveMarks().then((isSaved: boolean) => {
-      if(isSaved) {
-        if(this.componentReferene)
-          this.componentReferene.destroy();
-        this.appService.openSnackBar(true, "Removed");
-      } else {
-        this.isDeleted = false;
-        this.appService.openSnackBar(false, "Unable to remove");
-      }
-    }).catch(() => {
-      this.isDeleted = false;
-      this.appService.openSnackBar(false, "Unable to remove");
-    });
-    if(event)
+  /**
+   * Callback when the remove button is clicked
+   * @param event
+   */
+  onRemove(event?: MouseEvent) {
+    if (event) {
       event.stopPropagation();
+    }
+    this.assignmentMarkingPageComponent.onMarkChanged(this.index, null).subscribe();
   }
 
-  onClicked(event) {
+  /**
+   * Callback when the icon is clicked
+   * @param event
+   */
+  onClicked(event: MouseEvent) {
     event.stopPropagation();
   }
 
-  onMouseOver(event) {
+  /**
+   * Callback when the mouse is over the icon
+   * @param event
+   */
+  onMouseOver(event: MouseEvent) {
     this.showOptions = true;
     event.stopPropagation();
   }
 
-  onMouseLeave(event) {
+  /**
+   * Callback when the mouse leaves the icon
+   * @param event
+   */
+  onMouseLeave(event: MouseEvent) {
     this.showOptions = false;
     event.stopPropagation();
   }
 
-  onDragedEnded(event) {
-    this.coordinates.x += event.distance.x;
-    this.coordinates.y += event.distance.y;
+  /**
+   * Callback after dragging has completed
+   * @param event
+   */
+  onDragEnded(event: CdkDragEnd) {
+    // Keep a copy of the original mark - incase the save fails and we need to reset
+    const updatedMark: MarkInfo = cloneDeep(this.mark);
 
-    this.assignmentMarkingComponentRef.saveMarks().then((isSaved: boolean) => {
-      if(isSaved) {
-        this.appService.openSnackBar(true, "Saved");
-      } else {
-        this.appService.openSnackBar(false, "Unable to save");
+    // Update coordinates to the new location based on the distance moved in the event
+    updatedMark.coordinates.x += event.distance.x;
+    updatedMark.coordinates.y += event.distance.y;
+
+    this.assignmentMarkingPageComponent.onMarkChanged(this.index, updatedMark)
+      .subscribe({
+        next: (success) => {
+          // If the save was not a success, reset the mark to original location
+          this.mark.coordinates.x = updatedMark.coordinates.x;
+          this.mark.coordinates.y = updatedMark.coordinates.y;
+        },
+        error: () => {
+
+        },
+        complete: () => {
+          // D&D uses transform to move the element, take the movement and instead apply it to the top/left positioning
+          this.renderer.setStyle(this.elementRef.nativeElement, 'top', this.mark.coordinates.y + 'px');
+          this.renderer.setStyle(this.elementRef.nativeElement, 'left', this.mark.coordinates.x + 'px');
+
+          // Clear drag transforms - we've already placed the icon at the correct top/left position
+          event.source.reset();
+        }
+      });
+  }
+
+  onTotalMarkChange(event: MouseEvent) {
+    const number = parseInt(this.iconForm.controls.totalMark.value, 10);
+    if (!isNaN(number)) {
+      const updatedMark: MarkInfo = cloneDeep(this.mark);
+      updatedMark.totalMark = number;
+      if (!isEqual(updatedMark, this.mark)) {
+        // Only update if something has changed
+        this.assignmentMarkingPageComponent.onMarkChanged(this.index, updatedMark).subscribe(
+          {
+            next : () => {
+              this.mark.totalMark = updatedMark.totalMark;
+            },
+            error: () => {
+              // If an invalid number is entered, reset
+              this.iconForm.reset({
+                totalMark: (this.mark.totalMark) ? this.mark.totalMark : 0
+              });
+            }}
+        );
       }
-    }).catch(() => {
-      this.appService.openSnackBar(false, "Unable to save");
-    });
-  }
-
-  onTotalMarkChange(event) {
-    const number = parseInt(this.iconForm.controls.totalMark.value);
-    if(!isNaN(number)) {
-      this.totalMark = number;
-      this.iconForm.controls.totalMark.setValue(this.totalMark);
     } else {
-      this.iconForm.controls.totalMark.setValue((this.totalMark) ? this.totalMark:0);
+      // If an invalid number is entered, reset
+      this.iconForm.reset({
+        totalMark: (this.mark.totalMark) ? this.mark.totalMark : 0
+      });
     }
-  }
-
-  setComponentRef(componentReference: ComponentRef<MarkTypeIconComponent>) {
-    this.componentReferene = componentReference;
-    this.coordinates.x = parseInt(this.componentReferene.location.nativeElement.style.left.replace("px", ""));
-    this.coordinates.y = parseInt(this.componentReferene.location.nativeElement.style.top.replace("px", ""));
-  }
-
-  setAssignmentMarkingRef(assignmentMarkingComponentRef: AssignmentMarkingComponent) {
-    this.assignmentMarkingComponentRef = assignmentMarkingComponentRef;
-  }
-
-  getComponentRef() {
-    return this.componentReferene;
-  }
-
-  getCoordinates() {
-    return this.coordinates;
-  }
-
-  setTotalMark(totalMark: number) {
-    if (this.iconForm) {
-      this.iconForm.controls.totalMark.setValue(totalMark);
-    }
-    this.totalMark = totalMark;
-  }
-
-  getTotalMark(): number {
-    return this.totalMark;
-  }
-
-  setComment(comment: string) {
-    if (comment !== null && comment !== " " && comment !== "") {
-      this.hasComment = true;
-      this.comment = comment;
-    } else {
-      this.comment = " "; // this is a placeholder for showing the pop up in adobe. Adobe seems to need a comment to do this.
-      this.hasComment = false;
-    }
-  }
-
-  getComment(): string {
-    return this.comment;
-  }
-
-  setSectionLabel(label: string) {
-    this.sectionLabel = label;
-  }
-
-  getSectionLabel(): string {
-    return this.sectionLabel;
-  }
-
-  setMarkType(markType: IconTypeEnum) {
-    this.markType = markType;
-  }
-
-  setIsDeleted(isDeleted: boolean) {
-    this.isDeleted = isDeleted;
-  }
-
-  getMarkType(): IconTypeEnum {
-    return this.markType;
-  }
-
-  setColour(colour: string) {
-    this.colour = this.isColour(colour) ? colour:this.defaultColour;
-  }
-
-  getColour(): string {
-    return this.colour;
-  }
-
-  setPageNumber(pageNumber: number) {
-    this.pageNumber = pageNumber;
-  }
-
-  getPageNumber(): number {
-    return this.pageNumber;
-  }
-
-  setIconName(iconName: string) {
-    this.iconName = iconName;
-  }
-
-  getIconName(): string {
-    return this.iconName;
-  }
-
-  isColour(colour: string): boolean {
-    const style = new Option().style;
-    style.color = colour;
-    if(style.color !== "") {
-      const regEx = /\(([0-9]+), ([0-9]+), ([0-9]+)\)/g;
-      const matches = regEx.exec(style.color);
-      if(matches && matches.length == 4) {
-        this.red = this.getRgbScale(+matches[1]);
-        this.green = this.getRgbScale(+matches[2]);
-        this.blue = this.getRgbScale(+matches[3]);
-      }
-    }
-    return style.color !== "";
-  }
-
-  private getRgbScale(rgbValue: number): number {
-    return +parseFloat(((rgbValue / 255) + "")).toFixed(2);
-  }
-
-  get deleted(): boolean {
-    return this.isDeleted;
-  }
-
-  get dimensions() {
-    return this.widthAndHeight;
-  }
-
-  get redColour() {
-    return this.red;
-  }
-
-  get greenColour() {
-    return this.green;
-  }
-
-  get blueColour() {
-    return this.blue;
   }
 
   private openMarkingCommentModal(title: string = 'Marking Comment', message: string) {
     const config = new MatDialogConfig();
-    config.width = "400px";
-    config.maxWidth = "500px";
+    config.width = '400px';
+    config.maxWidth = '500px';
     config.data = {
-      markingComment: this.comment,
-      sectionLabel: this.sectionLabel,
-      totalMark: this.totalMark,
-      componentRef: this.componentReferene
+      markingComment: this.mark.comment,
+      sectionLabel: this.mark.sectionLabel,
+      totalMark: this.mark.totalMark,
     };
 
     const handleCommentFN = (formData: any) => {
-      console.log("Form Data is", formData);
-      this.totalMark = formData.totalMark;
-      this.sectionLabel = formData.sectionLabel;
-      this.comment = formData.markingComment;
+      const updateMark = cloneDeep(this.mark);
+      console.log('Form Data is', formData);
+      updateMark.totalMark = formData.totalMark;
+      updateMark.sectionLabel = formData.sectionLabel;
+      updateMark.comment = formData.markingComment;
 
-      if(this.iconForm) {
-        this.iconForm.controls.totalMark.setValue(this.totalMark);
+      if (this.iconForm) {
+        this.iconForm.controls.totalMark.setValue(this.mark.totalMark);
       }
 
-      this.assignmentMarkingComponentRef.saveMarks().then((isSaved: boolean) => {
-        if(isSaved) {
-          this.appService.openSnackBar(true, "Saved");
-        } else {
-          this.appService.openSnackBar(false, "Unable to save");
-        }
+      this.assignmentMarkingPageComponent.onMarkChanged(this.index, updateMark).subscribe(() => {
+          this.mark.totalMark = updateMark.totalMark;
+          this.mark.sectionLabel = updateMark.sectionLabel;
+          this.mark.comment = updateMark.markingComment;
       });
     };
     this.appService.createDialog(MarkingCommentModalComponent, config, handleCommentFN);

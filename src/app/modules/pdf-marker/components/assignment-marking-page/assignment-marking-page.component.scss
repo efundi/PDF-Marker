@@ -1,0 +1,83 @@
+
+.pdf-marker-dropzone {
+  cursor: copy;
+}
+
+.boundary {
+  height: 90%;
+  position: relative;
+  overflow: hidden;
+  margin: 1px auto -8px auto;
+
+  .boundary-drop-zone {
+    position:absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    opacity: 0;
+  }
+
+  .pdf-marker-mark-type-icon {
+    z-index: 1 !important;
+  }
+}
+
+.boundary::-webkit-scrollbar {
+  width: 7px;
+  background: transparent;
+}
+
+.boundary::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+.pdf-marker-assignment-marking-visible-pdf {
+  visibility: hidden;
+}
+
+.pdf-marker-assignment-marking-container {
+  border: 1px solid #eee;
+}
+
+
+.page-wrapper {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+  position: relative;
+  background: #fff;
+
+  .annotation-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    opacity: 0.2;
+    line-height: 1.0;
+  }
+
+  .annotation-layer > section {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+  }
+
+  .annotation-layer > .linkAnnotation > a {
+    position: absolute;
+    font-size: 1em;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    &.internalLink{
+      // Hide internal links for now until we can support navigating to it
+      display: none;
+    }
+  }
+}
