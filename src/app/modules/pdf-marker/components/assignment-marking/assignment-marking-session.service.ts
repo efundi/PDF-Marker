@@ -10,10 +10,22 @@ export class AssignmentMarkingSessionService implements OnDestroy {
 
   colourChanged: EventEmitter<string> = new EventEmitter<string>();
   iconChanged: EventEmitter<IconInfo> = new EventEmitter<IconInfo>();
+  zoomChanged: EventEmitter<number> = new EventEmitter<number>();
 
   private _colour = AssignmentMarkingSessionService.DEFAULT_COLOR;
-
   private _icon: IconInfo;
+  private _zoom = 1.0;
+
+  set zoom(zoom: number) {
+    if (zoom !== this._zoom) {
+      this._zoom = zoom;
+      this.zoomChanged.emit(zoom);
+    }
+  }
+
+  get zoom() {
+    return this._zoom;
+  }
 
   set colour(colour: string) {
     if (AssignmentMarkingSessionService.isColour(colour)) {
