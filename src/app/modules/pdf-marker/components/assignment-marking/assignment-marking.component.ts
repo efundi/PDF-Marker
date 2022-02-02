@@ -18,7 +18,7 @@ import {AppService} from '@coreModule/services/app.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
 import {FinaliseMarkingComponent} from '@pdfMarkerModule/components/finalise-marking/finalise-marking.component';
-import {getDocument, GlobalWorkerOptions, PDFDocumentProxy} from 'pdfjs-dist';
+import {getDocument, PDFDocumentProxy, GlobalWorkerOptions} from 'pdfjs-dist';
 import {cloneDeep, isNil, times} from 'lodash-es';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
 import {catchError, map} from 'rxjs/operators';
@@ -30,7 +30,8 @@ import {
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
 import {IRubric} from '@coreModule/utils/rubric.class';
 
-GlobalWorkerOptions.workerSrc = 'pdf.worker.js';
+
+GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
 
 
 @Component({
@@ -371,6 +372,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.selectedPdfSubscription.unsubscribe();
     this.colorChangeSubscription.unsubscribe();
+
+    if (this.pdfDocument) {
+      this.pdfDocument.cleanup();
+    }
   }
 
   onSectionChange($event: string) {
@@ -381,40 +386,4 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.currentPage = pageIndex + 1;
   }
 
-
-  toggleMarkingContainer() {
-    // this.pdfContainerShow = true;
-    // this.rubricContainerShow = false;
-    // this.rubricContainer.nativeElement.style.display = 'none';
-    // this.pdfContainer.nativeElement.style.margin = 'auto';
-    // this.pdfContainer.nativeElement.styleheight = (this.maxHeight / this.pdfPages) + 'px';
-    // this.pdfContainer.nativeElement.stylewidth =  '816px';
-    // this.pdfContainer.nativeElement.style.display = 'block';
-  }
-
-  toggleRubricContainer() {
-    // this.rubricContainerShow = true;
-    // this.pdfContainerShow = false;
-    // this.pdfContainer.nativeElement.style.display = 'none';
-    // this.rubricContainer.nativeElement.style.margin = 'auto';
-    // this.rubricContainer.nativeElement.styleheight = (this.maxHeight / this.pdfPages) + 'px';
-    // this.rubricContainer.nativeElement.stylewidth =  '816px';
-    // this.rubricContainer.nativeElement.style.display = 'block';
-
-  }
-
-  toggleBothContainers() {
-    // this.pdfContainerShow = true;
-    // this.rubricContainerShow = true;
-    // this.pdfContainer.nativeElement.style.display = 'block';
-    // this.rubricContainer.nativeElement.style.display = 'block';
-    // this.pdfContainer.nativeElement.style.margin = 'none';
-    // this.rubricContainer.nativeElement.style.margin = 'none';
-    // this.rubricContainer.nativeElement.styleheight = ((this.maxHeight / this.pdfPages) / 2) - 5 + 'px';
-    // this.pdfContainer.nativeElement.styleheight =  ((this.maxHeight / this.pdfPages) / 2) - 5 + 'px';
-  }
-
-  onMarksUpdated($event: any[]) {
-
-  }
 }

@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {IRubric, IRubricCriteria} from '@coreModule/utils/rubric.class';
 
 @Component({
@@ -6,7 +6,7 @@ import {IRubric, IRubricCriteria} from '@coreModule/utils/rubric.class';
   templateUrl: './rubric-view-marking.component.html',
   styleUrls: ['./rubric-view-marking.component.scss']
 })
-export class RubricViewMarkingComponent implements OnInit, OnDestroy {
+export class RubricViewMarkingComponent implements OnInit {
 
   rubricBlocks:  IRubricCriteria[];
   rubricName: string;
@@ -16,9 +16,6 @@ export class RubricViewMarkingComponent implements OnInit, OnDestroy {
 
   @Input()
   rubricSelections: any[] = [];
-
-  @Output()
-  marksUpdated: EventEmitter<any[]> = new EventEmitter<any[]>();
 
   constructor() {
   }
@@ -33,13 +30,7 @@ export class RubricViewMarkingComponent implements OnInit, OnDestroy {
     this.buildRubricForMarking(this.rubricMarking);
   }
 
-  ngOnDestroy() {
-    this.marksUpdated.complete();
-    this.marksUpdated.unsubscribe();
-  }
-
   onMarksUpdated(marksUpdated: any[] = []) {
     this.rubricSelections = marksUpdated;
-    this.marksUpdated.emit(this.rubricSelections);
   }
 }

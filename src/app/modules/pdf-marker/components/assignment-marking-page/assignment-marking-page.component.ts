@@ -34,6 +34,7 @@ const pdfLinkService = new PDFLinkService({
 
 const DPI_SCALE = window.devicePixelRatio || 1;
 
+
 /**
  * This constant is the match the scale of PDF < v3 where a different rendering component was used
  * The constant is required to keep the coordinates and page size simmiliar to < v3
@@ -113,6 +114,8 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   ngOnDestroy() {
     this.iconSubscription.unsubscribe();
     this.zoomSubscription.unsubscribe();
+
+    this.page.cleanup();
   }
 
   ngOnInit(): void {
@@ -207,6 +210,11 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
 
     this.page.getAnnotations().then(annotationData => {
 
+      // First remove all existing annotations
+      while (this.annotationLayer.nativeElement.firstChild) {
+        this.annotationLayer.nativeElement.removeChild(this.annotationLayer.nativeElement.lastChild);
+      }
+
       AnnotationLayer.render({
         viewport: viewport.clone({ dontFlip: true }),
         div: this.annotationLayer.nativeElement,
@@ -247,8 +255,14 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   private onSelectedIcon(selectedIcon?: IconInfo) {
     if (selectedIcon) {
       this.renderer.addClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
+
+      // Hide the annotation layer which can be in the way of the dropzone
+      this.renderer.setStyle(this.annotationLayer.nativeElement, 'display', 'none');
     } else {
       this.renderer.removeClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
+
+      // Put back the annotation layer
+      this.renderer.removeStyle(this.annotationLayer.nativeElement, 'display');
     }
   }
 
