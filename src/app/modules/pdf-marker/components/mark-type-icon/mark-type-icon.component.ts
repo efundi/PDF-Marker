@@ -1,4 +1,4 @@
-import {Component, ComponentRef, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Renderer2} from '@angular/core';
+import {Component, ElementRef, Input, OnDestroy, OnInit, Renderer2} from '@angular/core';
 import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {MatDialogConfig} from '@angular/material/dialog';
@@ -14,7 +14,7 @@ import {
 } from '@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component';
 import {
   AssignmentMarkingSessionService
-} from "@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service";
+} from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
 
 @Component({
   selector: 'pdf-marker-mark-type-icon',
@@ -61,12 +61,22 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
   private positionTick() {
     const zoom = this.assignmentMarkingSessionService.zoom;
 
-    const ICON_MIDDEL = (MarkTypeIconComponent.widthAndHeight / 2);
+    /*
+     * The coordinates are saved at the top left of the icon, find the middle
+     * of the icon to properly position at any zoom level (the icon stays the same size)
+     */
+    const ICON_MIDDLE = (MarkTypeIconComponent.widthAndHeight / 2);
 
-    const top = ((this.mark.coordinates.y + ICON_MIDDEL) * zoom) - ICON_MIDDEL;
-    const left = ((this.mark.coordinates.x + ICON_MIDDEL) * zoom) - ICON_MIDDEL;
+    /*
+     * Add the middle of the icon to the original coordinate
+     * Multiply by the zoom
+     * Subtract the middle from the icon
+     * Now the icon will be placed correctly for the zoom level
+     */
+    const top = ((this.mark.coordinates.y + ICON_MIDDLE) * zoom) - ICON_MIDDLE;
+    const left = ((this.mark.coordinates.x + ICON_MIDDLE) * zoom) - ICON_MIDDLE;
 
-
+    // Now position the icon
     this.renderer.setStyle(this.elementRef.nativeElement, 'top', top + 'px');
     this.renderer.setStyle(this.elementRef.nativeElement, 'left', left + 'px');
 
@@ -147,12 +157,11 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
     const updatedMark: MarkInfo = cloneDeep(this.mark);
 
     // Update coordinates to the new location based on the distance moved in the event
-    const ICON_MIDDEL = (MarkTypeIconComponent.widthAndHeight / 2);
     const zoom = this.assignmentMarkingSessionService.zoom;
 
+    // The actual distance moved at 100% zoom
     const changeX = event.distance.x / zoom;
     const changeY = event.distance.y / zoom;
-
 
     updatedMark.coordinates.x += changeX;
     updatedMark.coordinates.y += changeY;
@@ -165,10 +174,10 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
           this.mark.coordinates.y = updatedMark.coordinates.y;
         },
         error: () => {
-
+          // Nothing to do here, the icon will be placed at original position on complete
         },
         complete: () => {
-          // D&D uses transform to move the element, take the movement and instead apply it to the top/left positioning
+          // Reposition the icon
           this.positionTick();
 
           // Clear drag transforms - we've already placed the icon at the correct top/left position
@@ -217,7 +226,6 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
 
     const handleCommentFN = (formData: any) => {
       const updateMark = cloneDeep(this.mark);
-      console.log('Form Data is', formData);
       updateMark.totalMark = formData.totalMark;
       updateMark.sectionLabel = formData.sectionLabel;
       updateMark.comment = formData.markingComment;

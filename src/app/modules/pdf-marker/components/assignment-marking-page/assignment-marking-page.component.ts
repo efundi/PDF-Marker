@@ -1,12 +1,13 @@
 import {
   AfterViewInit,
   Component,
-  ComponentFactory, ComponentRef,
   ElementRef,
-  Input, OnDestroy,
+  Input,
+  OnDestroy,
   OnInit,
   Renderer2,
-  ViewChild, ViewContainerRef
+  ViewChild,
+  ViewContainerRef
 } from '@angular/core';
 import {AnnotationLayer, PDFDocumentProxy, PDFPageProxy} from 'pdfjs-dist';
 import {EventBus, PDFLinkService} from 'pdfjs-dist/web/pdf_viewer';
@@ -19,7 +20,7 @@ import {AppService} from '@coreModule/services/app.service';
 import {AssignmentMarkingComponent} from '@pdfMarkerModule/components/assignment-marking/assignment-marking.component';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
 import {Observable, Subscription} from 'rxjs';
-import {isNil, cloneDeep} from 'lodash-es';
+import {cloneDeep, isNil} from 'lodash-es';
 import {
   AssignmentMarkingSessionService
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
@@ -120,26 +121,33 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     });
 
     this.zoomSubscription = this.assignmentMarkingSessionService.zoomChanged.subscribe((zoom) => {
-      // TODO first cleanup
       this.renderPage();
     });
   }
 
+  /**
+   * Create a new mark at the clicked position
+   * @param event
+   * @private
+   */
   private createMark(event: MouseEvent): MarkInfo {
-    // We need to device by the zoom level
     const zoom = this.assignmentMarkingSessionService.zoom;
-    const pageNumber = this.pageIndex + 1;
-
-    let top = (event.offsetY / zoom) - (MarkTypeIconComponent.widthAndHeight / 2) ;
-    let left = (event.offsetX / zoom) - (MarkTypeIconComponent.widthAndHeight / 2);
-
-    // const minWidth = this.markerContainer.nativeElement.scrollWidth - MarkTypeIconComponent.widthAndHeight;
-    // const minHeight = this.markerContainer.nativeElement.scrollHeight - MarkTypeIconComponent.widthAndHeight;
-    //
-    // top = ((top < 0) ? 0 : ((top > minHeight) ? minHeight : top));
-    // left = ((left < 0) ? 0 : ((left > minWidth) ? minWidth : left));
-
     const colour = this.assignmentMarkingSessionService.colour;
+
+    /*
+     * The coordinates are saved at the top left of the icon, find the middle
+     * of the icon to properly position at any zoom level (the icon stays the same size)
+     */
+    const ICON_MIDDLE = (MarkTypeIconComponent.widthAndHeight / 2);
+
+    /*
+    * Divide by the zoom
+    * Subtract the middle from the icon
+    * Now the icon will be placed correctly for the zoom level
+    */
+    const top = (event.offsetY / zoom) - ICON_MIDDLE ;
+    const left = (event.offsetX / zoom) - ICON_MIDDLE;
+
 
     const mark: MarkInfo = {
       coordinates: {
@@ -149,7 +157,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       iconName: this.assignmentMarkingSessionService.icon.icon,
       iconType: this.assignmentMarkingSessionService.icon.type,
       colour,
-      pageNumber: pageNumber,
+      pageNumber: this.pageIndex + 1,
     };
 
     if (mark.iconType === IconTypeEnum.FULL_MARK) {
@@ -180,7 +188,9 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
 
   private renderPage() {
     const zoom = this.assignmentMarkingSessionService.zoom;
-    const viewport = this.page.getViewport({ scale: (zoom * PDF_SCALE_CONSTANT) }); // TODO get zoom
+
+    // Get the viewport at the current zoom * PDF scale constant
+    const viewport = this.page.getViewport({ scale: (zoom * PDF_SCALE_CONSTANT) });
 
     // Support HiDPI-screens by setting the width applying DPI Scaling
     this.renderer.setAttribute(this.pdfCanvas.nativeElement, 'width', Math.floor(viewport.width * DPI_SCALE) + '');
@@ -196,8 +206,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     const ctx = this.pdfCanvas.nativeElement.getContext('2d');
 
     this.page.getAnnotations().then(annotationData => {
-      this.renderer.addClass(this.annotationLayer.nativeElement, 'annotation-layer');
-
 
       AnnotationLayer.render({
         viewport: viewport.clone({ dontFlip: true }),
