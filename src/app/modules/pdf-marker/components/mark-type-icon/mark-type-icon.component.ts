@@ -12,6 +12,9 @@ import {CdkDragEnd} from '@angular/cdk/drag-drop/drag-events';
 import {
   AssignmentMarkingPageComponent
 } from '@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component';
+import {
+  AssignmentMarkingSessionService
+} from "@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service";
 
 @Component({
   selector: 'pdf-marker-mark-type-icon',
@@ -49,18 +52,30 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
               private appService: AppService,
               private elementRef: ElementRef,
               private renderer: Renderer2,
-              private assignmentMarkingPageComponent: AssignmentMarkingPageComponent) {}
+              private assignmentMarkingPageComponent: AssignmentMarkingPageComponent,
+              private assignmentMarkingSessionService: AssignmentMarkingSessionService) {}
 
   ngOnDestroy() {
   }
 
+  private positionTick() {
+    const zoom = this.assignmentMarkingSessionService.zoom;
+
+    const ICON_MIDDEL = (MarkTypeIconComponent.widthAndHeight / 2);
+
+    const top = ((this.mark.coordinates.y + ICON_MIDDEL) * zoom) - ICON_MIDDEL;
+    const left = ((this.mark.coordinates.x + ICON_MIDDEL) * zoom) - ICON_MIDDEL;
+
+
+    this.renderer.setStyle(this.elementRef.nativeElement, 'top', top + 'px');
+    this.renderer.setStyle(this.elementRef.nativeElement, 'left', left + 'px');
+
+  }
+
   ngOnInit() {
-    console.log(this.mark);
-
-    this.renderer.setStyle(this.elementRef.nativeElement, 'top', this.mark.coordinates.y + 'px');
-    this.renderer.setStyle(this.elementRef.nativeElement, 'left', this.mark.coordinates.x + 'px');
-
+    this.positionTick();
     this.initForm();
+    this.assignmentMarkingSessionService.zoomChanged.subscribe(() => this.positionTick());
   }
 
   private initForm() {
@@ -132,8 +147,15 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
     const updatedMark: MarkInfo = cloneDeep(this.mark);
 
     // Update coordinates to the new location based on the distance moved in the event
-    updatedMark.coordinates.x += event.distance.x;
-    updatedMark.coordinates.y += event.distance.y;
+    const ICON_MIDDEL = (MarkTypeIconComponent.widthAndHeight / 2);
+    const zoom = this.assignmentMarkingSessionService.zoom;
+
+    const changeX = event.distance.x / zoom;
+    const changeY = event.distance.y / zoom;
+
+
+    updatedMark.coordinates.x += changeX;
+    updatedMark.coordinates.y += changeY;
 
     this.assignmentMarkingPageComponent.onMarkChanged(this.index, updatedMark)
       .subscribe({
@@ -147,8 +169,7 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
         },
         complete: () => {
           // D&D uses transform to move the element, take the movement and instead apply it to the top/left positioning
-          this.renderer.setStyle(this.elementRef.nativeElement, 'top', this.mark.coordinates.y + 'px');
-          this.renderer.setStyle(this.elementRef.nativeElement, 'left', this.mark.coordinates.x + 'px');
+          this.positionTick();
 
           // Clear drag transforms - we've already placed the icon at the correct top/left position
           event.source.reset();

@@ -5,6 +5,7 @@ import {IconInfo} from '@pdfMarkerModule/info-objects/icon.info';
 import {
   AssignmentMarkingSessionService
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
+import {Subscription} from "rxjs";
 
 export enum KEY_CODE {
   RIGHT_ARROW = 39,
@@ -44,6 +45,26 @@ export class IconsComponent implements OnInit, OnChanges {
 
   iconForm: FormGroup;
 
+  readonly zoomOptions = [{
+    label: '400%',
+    value: 4.0
+  }, {
+    label: '200%',
+    value: 2.0
+  }, {
+    label: '100%',
+    value: 1.00
+  }, {
+    label: '66%',
+    value: 0.66
+  }, {
+    label: '50%',
+    value: 0.50
+  }, {
+    label: '33%',
+    value: 0.33
+  }];
+
   readonly markIcons: IconInfo[] = [
     { icon: 'check', type: IconTypeEnum.FULL_MARK, toolTip: 'Single Mark' },
     { icon: 'halfTick', type: IconTypeEnum.HALF_MARK, toolTip: 'Half Mark' },
@@ -52,6 +73,9 @@ export class IconsComponent implements OnInit, OnChanges {
     { icon: 'comment', type: IconTypeEnum.NUMBER, toolTip: 'Comment and Mark'},
 
   ];
+
+  private zoomFormSubscription: Subscription;
+
   constructor(private fb: FormBuilder,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) {}
  /** constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
@@ -69,8 +93,17 @@ export class IconsComponent implements OnInit, OnChanges {
 
   private initForm() {
     this.iconForm = this.fb.group({
-      pageNumber: [(this.currentPage) ? this.currentPage.toString() : '1', Validators.required]
+      pageNumber: [(this.currentPage) ? this.currentPage.toString() : '1', Validators.required],
+      zoom: [1.00, Validators.required],
     });
+
+    this.zoomFormSubscription = this.iconForm.controls.zoom.valueChanges.subscribe((value) => {
+      this.assignmentMarkingSessionService.zoom = value;
+    });
+  }
+
+  onZoomSelected($event: MouseEvent) {
+    $event.stopImmediatePropagation();
   }
 
   onIconClick(event, selectedIcon: IconInfo) {

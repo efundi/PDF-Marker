@@ -3,12 +3,12 @@ import {
   Component,
   ComponentFactory, ComponentRef,
   ElementRef,
-  Input,
+  Input, OnDestroy,
   OnInit,
   Renderer2,
   ViewChild, ViewContainerRef
 } from '@angular/core';
-import {AnnotationLayer, PDFDocumentProxy} from 'pdfjs-dist';
+import {AnnotationLayer, PDFDocumentProxy, PDFPageProxy} from 'pdfjs-dist';
 import {EventBus, PDFLinkService} from 'pdfjs-dist/web/pdf_viewer';
 import {MarkTypeIconComponent} from '@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component';
 import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
@@ -33,12 +33,18 @@ const pdfLinkService = new PDFLinkService({
 
 const DPI_SCALE = window.devicePixelRatio || 1;
 
+/**
+ * This constant is the match the scale of PDF < v3 where a different rendering component was used
+ * The constant is required to keep the coordinates and page size simmiliar to < v3
+ * */
+const PDF_SCALE_CONSTANT = 1.33;
+
 @Component({
   selector: 'pdf-marker-assignment-marking-page',
   templateUrl: './assignment-marking-page.component.html',
   styleUrls: ['./assignment-marking-page.component.scss']
 })
-export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit {
+export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /**
    * Index of the PDF page that will be rendered here
@@ -94,31 +100,44 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit {
   private pdfCanvas: ElementRef<HTMLCanvasElement>;
 
   private iconSubscription: Subscription;
+  private zoomSubscription: Subscription;
+  private page: PDFPageProxy;
 
   constructor(private renderer: Renderer2,
               private appService: AppService,
               private assignmentMarkingComponent: AssignmentMarkingComponent,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) { }
 
-  ngOnInit(): void {
-    console.log(`page=${this.pageIndex}`);
 
+  ngOnDestroy() {
+    this.iconSubscription.unsubscribe();
+    this.zoomSubscription.unsubscribe();
+  }
+
+  ngOnInit(): void {
     this.iconSubscription = this.assignmentMarkingSessionService.iconChanged.subscribe((icon) => {
       this.onSelectedIcon(icon);
+    });
+
+    this.zoomSubscription = this.assignmentMarkingSessionService.zoomChanged.subscribe((zoom) => {
+      // TODO first cleanup
+      this.renderPage();
     });
   }
 
   private createMark(event: MouseEvent): MarkInfo {
+    // We need to device by the zoom level
+    const zoom = this.assignmentMarkingSessionService.zoom;
     const pageNumber = this.pageIndex + 1;
 
-    let top = event.offsetY - (MarkTypeIconComponent.widthAndHeight / 2) ;
-    let left = event.offsetX -  (MarkTypeIconComponent.widthAndHeight / 2);
+    let top = (event.offsetY / zoom) - (MarkTypeIconComponent.widthAndHeight / 2) ;
+    let left = (event.offsetX / zoom) - (MarkTypeIconComponent.widthAndHeight / 2);
 
-    const minWidth = this.markerContainer.nativeElement.scrollWidth - MarkTypeIconComponent.widthAndHeight;
-    const minHeight = this.markerContainer.nativeElement.scrollHeight - MarkTypeIconComponent.widthAndHeight;
-
-    top = ((top < 0) ? 0 : ((top > minHeight) ? minHeight : top));
-    left = ((left < 0) ? 0 : ((left > minWidth) ? minWidth : left));
+    // const minWidth = this.markerContainer.nativeElement.scrollWidth - MarkTypeIconComponent.widthAndHeight;
+    // const minHeight = this.markerContainer.nativeElement.scrollHeight - MarkTypeIconComponent.widthAndHeight;
+    //
+    // top = ((top < 0) ? 0 : ((top > minHeight) ? minHeight : top));
+    // left = ((left < 0) ? 0 : ((left > minWidth) ? minWidth : left));
 
     const colour = this.assignmentMarkingSessionService.colour;
 
@@ -159,51 +178,59 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit {
     return mark;
   }
 
+  private renderPage() {
+    const zoom = this.assignmentMarkingSessionService.zoom;
+    const viewport = this.page.getViewport({ scale: (zoom * PDF_SCALE_CONSTANT) }); // TODO get zoom
+
+    // Support HiDPI-screens by setting the width applying DPI Scaling
+    this.renderer.setAttribute(this.pdfCanvas.nativeElement, 'width', Math.floor(viewport.width * DPI_SCALE) + '');
+    this.renderer.setAttribute(this.pdfCanvas.nativeElement, 'height',  Math.floor(viewport.height * DPI_SCALE) + '');
+
+    // Set the render size in pixels
+    this.renderer.setStyle(this.pdfCanvas.nativeElement, 'height',  Math.floor(viewport.height) + 'px');
+    this.renderer.setStyle(this.pdfCanvas.nativeElement, 'width',  Math.floor(viewport.width) + 'px');
+
+    // Size the page wrapper so that it centers properly
+    this.renderer.setStyle(this.pageWrapper.nativeElement, 'height',  Math.floor(viewport.height) + 'px');
+    this.renderer.setStyle(this.pageWrapper.nativeElement, 'width',  Math.floor(viewport.width) + 'px');
+    const ctx = this.pdfCanvas.nativeElement.getContext('2d');
+
+    this.page.getAnnotations().then(annotationData => {
+      this.renderer.addClass(this.annotationLayer.nativeElement, 'annotation-layer');
+
+
+      AnnotationLayer.render({
+        viewport: viewport.clone({ dontFlip: true }),
+        div: this.annotationLayer.nativeElement,
+        annotations: annotationData,
+        page: this.page,
+        renderForms: false,
+        linkService: pdfLinkService,
+        downloadManager: null
+      });
+    });
+
+    const transform = DPI_SCALE !== 1
+      ? [DPI_SCALE, 0, 0, DPI_SCALE, 0, 0]
+      : null;
+
+    const renderTask = this.page.render({
+      canvasContext: ctx,
+      viewport,
+      transform
+    });
+    return renderTask.promise;
+  }
+
   ngAfterViewInit() {
 
     this.appService.isLoading$.next(true);
+
     // TODO an improvement here could be to wait until the page is in view before attempting to render it
     this.pdf.getPage(this.pageIndex + 1).then((page) => {
-      const viewport = page.getViewport({ scale: 1.33 }); // TODO get zoom
+      this.page = page;
+      return this.renderPage();
 
-      // Support HiDPI-screens by setting the width applying DPI Scaling
-      this.renderer.setAttribute(this.pdfCanvas.nativeElement, 'width', Math.floor(viewport.width * DPI_SCALE) + '');
-      this.renderer.setAttribute(this.pdfCanvas.nativeElement, 'height',  Math.floor(viewport.height * DPI_SCALE) + '');
-
-      // Set the render size in pixels
-      this.renderer.setStyle(this.pdfCanvas.nativeElement, 'height',  Math.floor(viewport.height) + 'px');
-      this.renderer.setStyle(this.pdfCanvas.nativeElement, 'width',  Math.floor(viewport.width) + 'px');
-
-      // Size the page wrapper so that it centers properly
-      this.renderer.setStyle(this.pageWrapper.nativeElement, 'height',  Math.floor(viewport.height) + 'px');
-      this.renderer.setStyle(this.pageWrapper.nativeElement, 'width',  Math.floor(viewport.width) + 'px');
-      const ctx = this.pdfCanvas.nativeElement.getContext('2d');
-
-      page.getAnnotations().then(annotationData => {
-        this.renderer.addClass(this.annotationLayer.nativeElement, 'annotation-layer');
-
-
-        AnnotationLayer.render({
-          viewport: viewport.clone({ dontFlip: true }),
-          div: this.annotationLayer.nativeElement,
-          annotations: annotationData,
-          page: page,
-          renderForms: false,
-          linkService: pdfLinkService,
-          downloadManager: null
-        });
-      });
-
-      const transform = DPI_SCALE !== 1
-        ? [DPI_SCALE, 0, 0, DPI_SCALE, 0, 0]
-        : null;
-
-      const renderTask = page.render({
-        canvasContext: ctx,
-        viewport,
-        transform
-      });
-      return renderTask.promise;
     }).then(() => {
       this.appService.isLoading$.next(false);
     });

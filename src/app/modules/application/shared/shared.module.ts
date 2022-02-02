@@ -40,6 +40,7 @@ import {RubricViewMarkingComponent} from './components/rubric-view-marking/rubri
 import {RubricCriteriaComponent} from './components/rubric-criteria/rubric-criteria.component';
 import { RubricComponent } from './components/rubric/rubric.component';
 import {MatOption, MatOptionModule} from "@angular/material/core";
+import {MatRadioModule} from "@angular/material/radio";
 
 
 const SHARED_MODULES = [
@@ -65,13 +66,28 @@ const SHARED_MODULES = [
   FormsModule,
   ReactiveFormsModule,
   HttpClientModule,
-  MatSnackBarModule
+  MatSnackBarModule,
+  MatRadioModule
 ];
 
 const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, SideNavigationComponent, SnackBarComponent, RubricViewModalComponent];
 
 @NgModule({
-  declarations: [FileExplorerComponent, FileExplorerModalComponent, AlertComponent, AssignmentListComponent, SideNavigationComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, SnackBarComponent, RubricViewModalComponent, RubricCriteriaLevelBlockComponent, RubricViewMarkingComponent, RubricCriteriaComponent, RubricComponent],
+  declarations: [
+    FileExplorerComponent,
+    FileExplorerModalComponent,
+    AlertComponent,
+    AssignmentListComponent,
+    SideNavigationComponent,
+    YesAndNoConfirmationDialogComponent,
+    MarkingCommentModalComponent,
+    SnackBarComponent,
+    RubricViewModalComponent,
+    RubricCriteriaLevelBlockComponent,
+    RubricViewMarkingComponent,
+    RubricCriteriaComponent,
+    RubricComponent
+  ],
   imports: [
     CommonModule,
     MatIconModule,
@@ -86,13 +102,18 @@ const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, Al
     MatInputModule,
     MatOptionModule,
     MatSelectModule,
+    MatRadioModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true },
     { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
     AssignmentService
   ],
-  exports: [...SHARED_MODULES, ...SHARED_COMPONENTS, RubricViewMarkingComponent],
+  exports: [
+    ...SHARED_MODULES,
+    ...SHARED_COMPONENTS,
+    RubricViewMarkingComponent
+  ],
   entryComponents: [ FileExplorerModalComponent, YesAndNoConfirmationDialogComponent, MarkingCommentModalComponent, SnackBarComponent, RubricViewModalComponent ],
 })
 export class SharedModule { }

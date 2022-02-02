@@ -57,15 +57,25 @@
     class="pdf-marker-icons-pdf-nav-buttons">
     <mat-icon class="pdf-marker-icons-pdf-nav-icons" [class.pdf-marker-icons-pdf-nav-icons-disabled]="currentPage == pages">arrow_downward</mat-icon>
   </button>
-  <form [formGroup]="iconForm">
-    <span>
+  <form [formGroup]="iconForm" style="display: flex; flex-direction: row">
+    <div style="margin-top: auto; margin-bottom: auto;">
       <input
         matInput
         type="text"
         formControlName="pageNumber"
         (change)="onPageNumberChange($event)" [style.width]="(iconForm.get('pageNumber')?.value + '')?.length + 'ch'">
       / {{ pages }}
-    </span>
+    </div>
+
+    <div>
+      <mat-form-field class="zoom-select">
+        <mat-select formControlName="zoom">
+          <mat-option *ngFor="let zoomOption of zoomOptions" [value]="zoomOption.value">
+            {{zoomOption.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
   </form>
   <span class="pdf-marker-fill-space"></span>
   <button
