@@ -25,14 +25,18 @@
             "aot": false,
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "pdf.worker.*",
+                "input": "node_modules/pdfjs-dist/build/",
+                "output": ""
+              }
             ],
             "styles": [
               "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
               "src/styles.scss"
             ],
             "scripts": [
-              "./node_modules/pdfjs-dist/legacy/build/pdf.worker.js"
             ],
             "buildOptimizer": false,
             "sourceMap": true,
