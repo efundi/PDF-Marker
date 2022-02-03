@@ -1,6 +1,7 @@
 import {EventEmitter, Injectable, OnDestroy} from '@angular/core';
 import {IconInfo} from '@pdfMarkerModule/info-objects/icon.info';
 import {isEqual} from 'lodash';
+import {DEFAULT_HIGHLIGHTER, HighlighterColor} from '@sharedModule/info-objects/highlighter-color';
 
 @Injectable()
 export class AssignmentMarkingSessionService implements OnDestroy {
@@ -8,7 +9,7 @@ export class AssignmentMarkingSessionService implements OnDestroy {
 
   static readonly DEFAULT_COLOR: string = '#6F327A';
 
-  highlighterColourChanged: EventEmitter<string> = new EventEmitter<string>();
+  highlighterColourChanged: EventEmitter<HighlighterColor> = new EventEmitter<HighlighterColor>();
   colourChanged: EventEmitter<string> = new EventEmitter<string>();
   iconChanged: EventEmitter<IconInfo> = new EventEmitter<IconInfo>();
   zoomChanged: EventEmitter<number> = new EventEmitter<number>();
@@ -16,17 +17,17 @@ export class AssignmentMarkingSessionService implements OnDestroy {
   private _colour = AssignmentMarkingSessionService.DEFAULT_COLOR;
   private _icon: IconInfo;
   private _zoom = 1.0;
-  private _highlighterColour = 'rgba(255, 255, 0, 0.5)';
+  private _highlighterColour: HighlighterColor = DEFAULT_HIGHLIGHTER;
 
 
-  set highlighterColour(colour: string) {
+  set highlighterColour(colour: HighlighterColor) {
     if (colour !== this._highlighterColour) {
       this._highlighterColour = colour;
       this.highlighterColourChanged.emit(colour);
     }
   }
 
-  get highlighterColour(){
+  get highlighterColour(): HighlighterColor {
     return this._highlighterColour;
   }
 

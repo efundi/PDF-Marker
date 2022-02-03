@@ -45,6 +45,7 @@
         </mat-icon>
       </button>
       <span
+        [matMenuTriggerFor]="highlightMenu"
         [style.background]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedHighlightColour"
         [style.border-color]="((containsRubric) ? 'rgba(0,0,0,.26)':selectedHighlightColour)"
         class="pdf-marker-assignment-marking-settings-highlighter-choice">
@@ -92,7 +93,7 @@
 
     <div>
       <mat-form-field class="zoom-select">
-        <mat-select formControlName="zoom">
+        <mat-select formControlName="zoom" panelClass="zoom-select-popup">
           <mat-option *ngFor="let zoomOption of zoomOptions" [value]="zoomOption.value">
             {{zoomOption.label}}
           </mat-option>
@@ -157,3 +158,13 @@
   </button>
   <span class="pdf-marker-fill-space"></span>
 </mat-toolbar>
+<mat-menu #highlightMenu="matMenu" class="highlight-menu vertical" >
+  <div class="highlight-options">
+    <div class="highlight-option"
+         [class.selected]="highlightOption === selectedHighlightColour"
+         (click)="selectHighlighter(highlightOption)"
+         *ngFor="let highlightOption of highlightOptions">
+      <div class="highlight-option-brush" [style.background-color]="highlightOption.preview"></div>
+    </div>
+  </div>
+</mat-menu>

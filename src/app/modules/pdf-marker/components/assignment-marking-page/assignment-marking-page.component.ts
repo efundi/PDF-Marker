@@ -28,6 +28,9 @@ import {IconInfo} from '@pdfMarkerModule/info-objects/icon.info';
 import {
   MarkTypeHighlightComponent
 } from "@pdfMarkerModule/components/mark-type-highlight/mark-type-highlight.component";
+import {
+  MarkingHighlightModalComponent
+} from "@sharedModule/components/marking-highlight-modal/marking-highlight-modal.component";
 
 const eventBus = new EventBus();
 
@@ -318,7 +321,10 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     this.clearHighlighter();
   }
 
-  private createMarkHighlight(){
+  private createMarkHighlight() {
+    // Minimum width to be considered a highlight
+    const MIN_HIGHLIGHT = 20;
+
     const zoom = this.assignmentMarkingSessionService.zoom;
 
     const leftPx = this.highlighter.nativeElement.style.left;
@@ -332,6 +338,11 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     top = top / zoom;
     width = width / zoom;
 
+    if (width < MIN_HIGHLIGHT) {
+      // Highlight is too small
+      return;
+    }
+
 
     const mark: MarkInfo = {
       coordinates: {
@@ -343,11 +354,17 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       iconType: this.assignmentMarkingSessionService.icon.type,
       colour: this.highlighter.nativeElement.style.background,
       pageNumber: this.pageIndex + 1,
+      totalMark: 0,
+      comment: null
     };
 
     const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
     updatedMarks.push(mark);
-    this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe();
+    this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe({
+      complete: () => {
+        this.clearHighlighter();
+      }
+    });
   }
 
   private createMarkIcon(event: MouseEvent) {
@@ -398,7 +415,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       this.renderer.setStyle(this.highlighter.nativeElement, 'top', (e.offsetY - (height / 2)) + 'px');
       this.renderer.setStyle(this.highlighter.nativeElement, 'width', '0');
       this.renderer.setStyle(this.highlighter.nativeElement, 'height', height + 'px');
-      this.renderer.setStyle(this.highlighter.nativeElement, 'background', this.assignmentMarkingSessionService.highlighterColour);
+      this.renderer.setStyle(this.highlighter.nativeElement, 'background', this.assignmentMarkingSessionService.highlighterColour.colour);
 
       this.renderer.setAttribute(this.highlighter.nativeElement, 'data-left', e.offsetX + '');
     });
@@ -409,7 +426,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     this.drag = false;
     this.ngZone.run(() => {
       this.createMarkHighlight();
-      this.clearHighlighter();
     });
   }
 

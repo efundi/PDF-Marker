@@ -400,3 +400,47 @@ pdf-marker-rubric-criteria-level-block {
     display: none;
   }
 }
+
+
+.highlight-menu{
+  background: #000;
+  min-height: unset !important;
+}
+
+.highlight-menu.vertical{
+  min-width: unset !important;
+  .highlight-options {
+    flex-direction: column;
+  }
+}
+
+
+.highlight-options {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -8px;
+  margin-bottom: -8px;
+  .highlight-option {
+    padding: 0.5rem;
+    cursor: pointer;
+
+    &.selected {
+      background: #222;
+    }
+
+    &:hover{
+      background: #333;
+    }
+
+    .highlight-option-brush{
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+    }
+  }
+}
+
+/** Hide the scrollbars on the zoom select popup */
+.zoom-select-popup{
+  max-height: unset !important;
+}

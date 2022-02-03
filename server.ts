@@ -2591,7 +2591,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     if (Array.isArray(marks[pageCount - 1])) {
       marks[pageCount - 1].forEach(markObj => {
         const coords = markObj.coordinates;
-        if (markObj.iconType === IconTypeEnum.NUMBER) {
+        if (markObj.iconType === IconTypeEnum.NUMBER || markObj.iconType === IconTypeEnum.HIGHLIGHT) {
           totalMark += (markObj.totalMark) ? markObj.totalMark : 0;
           try {
             pdfFactory.createTextAnnotation(

@@ -1,17 +1,18 @@
 import {Component, Inject, OnInit} from '@angular/core';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
-import {AppService} from '@coreModule/services/app.service';
 import {IComment} from '@coreModule/utils/comment.class';
+import {AppService} from '@coreModule/services/app.service';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {CommentService} from '@pdfMarkerModule/services/comment.service';
 import {MatSelectChange} from '@angular/material/select';
 
 @Component({
-  selector: 'pdf-marker-marking-comment-modal',
-  templateUrl: './marking-comment-modal.component.html',
-  styleUrls: ['./marking-comment-modal.component.scss']
+  selector: 'pdf-marker-marking-highlight-modal',
+  templateUrl: './marking-highlight-modal.component.html',
+  styleUrls: ['./marking-highlight-modal.component.scss']
 })
-export class MarkingCommentModalComponent implements OnInit {
+export class MarkingHighlightModalComponent implements OnInit {
+
 
   commentForm: FormGroup;
   private title: string;
@@ -35,7 +36,7 @@ export class MarkingCommentModalComponent implements OnInit {
   commentCaretPos = 0;
 
   constructor(private appService: AppService,
-              private dialogRef: MatDialogRef<MarkingCommentModalComponent>,
+              private dialogRef: MatDialogRef<MarkingHighlightModalComponent>,
               @Inject(MAT_DIALOG_DATA) config,
               private fb: FormBuilder,
               private commentService: CommentService) {
@@ -63,7 +64,7 @@ export class MarkingCommentModalComponent implements OnInit {
 
     this.markingCommentObj = {
       sectionLabel: this.commentForm.controls.sectionLabel.value,
-      totalMark: this.commentForm.controls.totalMark.value,
+      totalMark: 0,
       markingComment: this.commentForm.controls.markingComment.value,
       genericComment: this.commentForm.controls.genericComment.value
     };
@@ -73,12 +74,11 @@ export class MarkingCommentModalComponent implements OnInit {
 
   }
   private initForm() {
-      this.commentForm = this.fb.group({
-        sectionLabel: new FormControl(null, Validators.required),
-        genericComment: new FormControl(null),
-        markingComment: new FormControl(null),
-        totalMark: new FormControl(null, Validators.required)
-      });
+    this.commentForm = this.fb.group({
+      sectionLabel: new FormControl(null, Validators.required),
+      genericComment: new FormControl(null),
+      markingComment: new FormControl(null),
+    });
   }
 
   onCancel($event: MouseEvent) {
@@ -87,14 +87,14 @@ export class MarkingCommentModalComponent implements OnInit {
     } else {
       const markingRemove = {removeIcon: true};
       this.dialogRef.close(markingRemove);
-      }
+    }
   }
 
   onSubmit($event: MouseEvent) {
     if (this.commentForm.valid) {
       this.markingCommentObj = {
         sectionLabel: this.commentForm.controls.sectionLabel.value,
-        totalMark: this.commentForm.controls.totalMark.value,
+        totalMark: 0,
         markingComment: this.commentForm.controls.markingComment.value,
         genericComment: this.commentForm.controls.genericComment.value
       };
@@ -122,4 +122,5 @@ export class MarkingCommentModalComponent implements OnInit {
       this.commentCaretPos = oField.selectionStart;
     }
   }
+
 }

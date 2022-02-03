@@ -48,9 +48,10 @@ mat-toolbar {
       margin-left: 7px;
       text-align: center;
       height: 2px;
-      border: 1px solid;
+      border: 1px solid transparent;
       position: absolute;
       top: 90%;
+      cursor: pointer;
     }
 
     .pdf-marker-assignment-marking-settings-color-pallette {
@@ -107,3 +108,7 @@ mat-toolbar {
 
 }
 
+
+.zoom-select-popup{
+  max-height: unset !important;
+}

@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Input, OnInit, Renderer2, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, Renderer2, ViewChild} from '@angular/core';
 import {
   AssignmentMarkingSessionService
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
@@ -8,6 +8,13 @@ import {
 } from '@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
 import {cloneDeep} from 'lodash-es';
+import {MatDialogConfig} from '@angular/material/dialog';
+import {AppService} from '@coreModule/services/app.service';
+import {
+  MarkingHighlightModalComponent
+} from '@sharedModule/components/marking-highlight-modal/marking-highlight-modal.component';
+import {HIGHLIGHTER_OPTIONS, HighlighterColor} from "@sharedModule/info-objects/highlighter-color";
+import {MatMenuTrigger} from "@angular/material/menu";
 
 
 @Component({
@@ -15,7 +22,7 @@ import {cloneDeep} from 'lodash-es';
   templateUrl: './mark-type-highlight.component.html',
   styleUrls: ['./mark-type-highlight.component.scss']
 })
-export class MarkTypeHighlightComponent implements OnInit, AfterViewInit {
+export class MarkTypeHighlightComponent implements OnInit, AfterViewInit, OnDestroy {
 
   static HIGHLIGHT_HEIGHT = 20;
 
@@ -30,26 +37,41 @@ export class MarkTypeHighlightComponent implements OnInit, AfterViewInit {
   @ViewChild('highlight', {static: true})
   private highlight: ElementRef<HTMLDivElement>;
 
-  selectedHighlightColour: any;
+  @ViewChild('menuTrigger', {static: true})
+  private menuTrigger: MatMenuTrigger;
 
-  readonly highlightOptions = [
-    'rgba(255, 255, 0, 0.5)',
-    'rgba(0, 255, 0, 0.5)',
-    'rgba(0, 255, 255, 0.5)',
-    'rgba(255, 0, 0, 0.5)'
-  ];
+  selectedHighlightColour: HighlighterColor;
 
+
+  private menuOpenSubscription: Subscription;
+  private menuClosedSubscription: Subscription;
+
+
+  readonly highlightOptions = HIGHLIGHTER_OPTIONS;
 
   constructor(
     private assignmentMarkingSessionService: AssignmentMarkingSessionService,
     private assignmentMarkingPageComponent: AssignmentMarkingPageComponent,
+    private appService: AppService,
     private elementRef: ElementRef,
     private renderer: Renderer2) {
 
   }
 
   ngAfterViewInit() {
+    this.menuOpenSubscription = this.menuTrigger.menuOpened.subscribe(() => {
+      this.renderer.setStyle(this.elementRef.nativeElement, 'z-index', '5');
+    });
+    this.menuClosedSubscription = this.menuTrigger.menuClosed.subscribe(() => {
+      this.renderer.removeStyle(this.elementRef.nativeElement, 'z-index');
+    });
     this.render();
+  }
+
+  ngOnDestroy() {
+    this.zoomSubscription.unsubscribe();
+    this.menuOpenSubscription.unsubscribe();
+    this.menuClosedSubscription.unsubscribe();
   }
 
   ngOnInit(): void {
@@ -62,21 +84,22 @@ export class MarkTypeHighlightComponent implements OnInit, AfterViewInit {
     const left = zoom * this.mark.coordinates.x;
     const top = zoom * this.mark.coordinates.y;
     const width = zoom * this.mark.coordinates.width;
-    const height = (zoom * MarkTypeHighlightComponent.HIGHLIGHT_HEIGHT) + 2; // +2 for the dotted border
+    const height = (zoom * MarkTypeHighlightComponent.HIGHLIGHT_HEIGHT); // +2 for the dotted border
 
-    this.renderer.setStyle(this.elementRef.nativeElement, 'left', left + 'px');
-    this.renderer.setStyle(this.elementRef.nativeElement, 'top', top + 'px');
+
+    this.renderer.setStyle(this.elementRef.nativeElement, 'left', (left) + 'px'); // -1 for dotted border
+    this.renderer.setStyle(this.elementRef.nativeElement, 'top', (top) + 'px'); // -1 for dotted border
     this.renderer.setStyle(this.highlight.nativeElement, 'width', width + 'px');
     this.renderer.setStyle(this.highlight.nativeElement, 'height', height + 'px');
     this.renderer.setStyle(this.highlight.nativeElement, 'background', this.mark.colour);
   }
 
 
-  selectHighlighter(highlightOption: string) {
+  selectHighlighter(highlightOption: HighlighterColor) {
     this.selectedHighlightColour = highlightOption;
     this.assignmentMarkingSessionService.highlighterColour = highlightOption;
     const updatedMark: MarkInfo = cloneDeep(this.mark);
-    updatedMark.colour = highlightOption;
+    updatedMark.colour = highlightOption.colour;
     this.assignmentMarkingPageComponent.onMarkChanged(this.index, updatedMark).subscribe(
       {
         next : () => {
@@ -98,5 +121,33 @@ export class MarkTypeHighlightComponent implements OnInit, AfterViewInit {
       event.stopPropagation();
     }
     this.assignmentMarkingPageComponent.onMarkChanged(this.index, null).subscribe();
+  }
+
+  /**
+   * Callback when the edit button is clicked
+   * @param event
+   */
+  onEdit(event: MouseEvent) {
+    event.stopPropagation();
+
+    const config = new MatDialogConfig();
+    config.width = '400px';
+    config.maxWidth = '500px';
+    config.data = {
+      markingComment: this.mark.comment,
+      sectionLabel: this.mark.sectionLabel,
+      totalMark: this.mark.totalMark,
+    };
+
+    const handleCommentFN = (formData: any) => {
+      const updateMark = cloneDeep(this.mark);
+      updateMark.sectionLabel = formData.sectionLabel;
+      updateMark.comment = formData.markingComment;
+      this.assignmentMarkingPageComponent.onMarkChanged(this.index, updateMark).subscribe(() => {
+        this.mark.sectionLabel = updateMark.sectionLabel;
+        this.mark.comment = updateMark.markingComment;
+      });
+    };
+    this.appService.createDialog(MarkingHighlightModalComponent, config, handleCommentFN);
   }
 }

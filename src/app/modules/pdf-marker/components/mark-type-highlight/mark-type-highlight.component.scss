@@ -12,11 +12,19 @@
   }
 }
 
-.pdf-marker-mark-type-highlight-container{
-  border: 1px dotted transparent;
 
-  &:hover {
-    border: 1px dotted #888;
+
+.pdf-marker-mark-type-highlight-container{
+
+  .highlight {
+    //border: 1px dotted transparent;
+  }
+
+  &:hover, &.pallet-open{
+
+    .highlight {
+      border: 1px dotted #888;
+    }
 
     .tools {
       display: flex;
@@ -27,50 +35,31 @@
     display: none;
     flex-direction: row;
 
+
+
     .mat-icon {
-      font-size: 14px;
+      font-size: 1rem;
       height: fit-content;
-      color: #fff;
+      color: #dedede;
       display: inline-block;
       cursor: pointer;
       width: auto;
       text-align: center;
       padding: 2px;
+
+      &:hover{
+        color: #fff;
+      }
     }
-    .icon-delete {
-      background: #a94442;
-    }
+    .tool-container {
+      background: #000;
+      border-radius: 3px;
+      padding: 3px;
 
-    .icon-color {
-      background: #fff;
-    }
-    .icon-edit {
-      background: #3c763d;
-    }
-  }
-
-}
-
-
-.highlight-options {
-  display: flex;
-  justify-content: space-between;
-
-  .highlight-option {
-    padding: 0.5rem;
-    cursor: pointer;
-
-    &.selected {
-      background: #dedede;
-    }
-
-    &:hover{
-      background: #cecece;
-    }
-
-    .highlight-option-brush{
-      width: 40px;
-      height: 40px;
+      mat-icon:not(first-child){
+        margin-left: 5px;
+      }
     }
   }
+
 }

@@ -6,6 +6,7 @@ import {
   AssignmentMarkingSessionService
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
 import {Subscription} from 'rxjs';
+import {HIGHLIGHTER_OPTIONS, HighlighterColor} from "@sharedModule/info-objects/highlighter-color";
 
 export enum KEY_CODE {
   RIGHT_ARROW = 39,
@@ -77,6 +78,7 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
 
   private zoomFormSubscription: Subscription;
   private highlightSubscription: Subscription;
+  highlightOptions = HIGHLIGHTER_OPTIONS;
 
   constructor(private fb: FormBuilder,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) {}
@@ -97,7 +99,7 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
   ngOnInit() {
     this.initForm();
     this.selectedColour = this.assignmentMarkingSessionService.colour;
-    this.selectedHighlightColour = this.assignmentMarkingSessionService.highlighterColour.replace(/[\d\.]+\)$/g, '1)');
+    this.selectedHighlightColour = this.assignmentMarkingSessionService.highlighterColour.preview;
   }
 
   private initForm() {
@@ -111,7 +113,7 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
     });
 
     this.highlightSubscription = this.assignmentMarkingSessionService.highlighterColourChanged.subscribe((value) => {
-      this.selectedHighlightColour = value.replace(/[\d\.]+\)$/g, '1)');
+      this.selectedHighlightColour = value.preview;
     });
   }
 
@@ -177,4 +179,7 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  selectHighlighter(highlightOption: HighlighterColor) {
+    this.assignmentMarkingSessionService.highlighterColour = highlightOption;
+  }
 }
