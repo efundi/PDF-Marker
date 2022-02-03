@@ -12,7 +12,7 @@
       *ngIf="iconData.icon !== 'halfTick' && iconData.icon !== 'brush'"
       [matTooltip]="iconData.toolTip"
       [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
-      (click)="onIconClick($event, iconData)"
+      (click)="onIconClick(iconData, $event)"
       mat-button
       mat-icon-button>
       <mat-icon [class.pdf-icon-disabled]="containsRubric">{{ iconData.icon }}</mat-icon>
@@ -22,7 +22,7 @@
       *ngIf="iconData.icon === 'halfTick' && iconData.icon !== 'brush'"
       [matTooltip]="iconData.toolTip"
       [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
-      (click)="onIconClick($event, iconData)"
+      (click)="onIconClick(iconData, $event)"
       mat-button
       mat-icon-button>
       <mat-icon class="pdf-marker-icons-svg-class"
@@ -37,7 +37,7 @@
         [disabled]="containsRubric"
         [matTooltip]="iconData.toolTip"
         [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
-        (click)="onIconClick($event, iconData)"
+        (click)="onIconClick(iconData, $event)"
         mat-button
         mat-icon-button>
         <mat-icon [class.pdf-icon-disabled]="containsRubric" >
@@ -47,7 +47,6 @@
       <span
         [matMenuTriggerFor]="highlightMenu"
         [style.background]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedHighlightColour"
-        [style.border-color]="((containsRubric) ? 'rgba(0,0,0,.26)':selectedHighlightColour)"
         class="pdf-marker-assignment-marking-settings-highlighter-choice">
     </span>
     </div>

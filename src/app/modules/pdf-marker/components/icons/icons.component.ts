@@ -121,8 +121,10 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
     $event.stopImmediatePropagation();
   }
 
-  onIconClick(event, selectedIcon: IconInfo) {
-    event.stopPropagation();
+  onIconClick(selectedIcon: IconInfo, event?: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     if (this.selecetedIcon === selectedIcon) {
       this.assignmentMarkingSessionService.icon = undefined;
       this.selecetedIcon = undefined;
@@ -181,5 +183,7 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
 
   selectHighlighter(highlightOption: HighlighterColor) {
     this.assignmentMarkingSessionService.highlighterColour = highlightOption;
+    this.assignmentMarkingSessionService.icon = this.markIcons[5];
+    this.selecetedIcon = this.markIcons[5];
   }
 }

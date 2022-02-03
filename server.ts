@@ -52,6 +52,7 @@ import {IRubric, IRubricName} from './src/app/modules/application/core/utils/rub
 import {AssignmentSettingsInfo} from './src/app/modules/pdf-marker/info-objects/assignment-settings.info';
 import {IComment} from './src/app/modules/application/core/utils/comment.class';
 import {MarkInfo} from './src/app/modules/application/shared/info-objects/mark.info';
+import {isEmpty} from 'lodash-es';
 
 const zipDir = require('zip-dir');
 const JSZip = require('jszip');
@@ -2591,7 +2592,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     if (Array.isArray(marks[pageCount - 1])) {
       marks[pageCount - 1].forEach(markObj => {
         const coords = markObj.coordinates;
-        if (markObj.iconType === IconTypeEnum.NUMBER || markObj.iconType === IconTypeEnum.HIGHLIGHT) {
+        if (markObj.iconType === IconTypeEnum.NUMBER) {
           totalMark += (markObj.totalMark) ? markObj.totalMark : 0;
           try {
             pdfFactory.createTextAnnotation(
@@ -2610,6 +2611,25 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
             commentPointer++;
           }
           sectionMarks.push(markObj.sectionLabel + ' = ' + markObj.totalMark);
+        }
+        if (markObj.iconType === IconTypeEnum.HIGHLIGHT && !isEmpty(markObj.comment)) {
+          try {
+            pdfFactory.createTextAnnotation(
+              pageCount - 1,
+              [
+                (coords.x * 72 / 96),
+                pdfPage.getHeight() - (coords.y * 72 / 96) - 24,
+                pdfPage.getWidth() - (coords.y * 72 / 96),
+                pdfPage.getHeight() - (coords.y * 72 / 96)
+              ],
+              markObj.comment,
+              markObj.sectionLabel);
+          } catch (e) {
+            commentErrorFound = true;
+            commentPointers.push('*' + commentPointer + ': ' + markObj.comment);
+            commentPointer++;
+          }
+          sectionMarks.push(markObj.sectionLabel);
         }
       });
     }
@@ -2667,6 +2687,17 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
               opacity: +colorComponents[3]
             };
             pdfPage.drawRectangle(highlightOptions);
+            if (commentErrorFound) {
+              const textOption: PDFPageDrawTextOptions = {
+                x: (coords.x * 72 / 96),
+                y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 15,
+                size: 10
+              };
+              pdfPage.drawText('*' + commentPointer, textOption);
+              commentPointer++;
+            }
+
+
           }
         } else {
           if (commentErrorFound) {
