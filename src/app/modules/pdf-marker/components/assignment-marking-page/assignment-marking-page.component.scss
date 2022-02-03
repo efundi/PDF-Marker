@@ -1,6 +1,10 @@
 
-.pdf-marker-dropzone {
+.cursor-copy {
   cursor: copy;
+}
+
+.cursor-text {
+  cursor: text;
 }
 
 .boundary {
@@ -10,12 +14,14 @@
   margin: 1px auto -8px auto;
 
   .boundary-drop-zone {
+    display: none;
     position:absolute;
     left: 0;
     top: 0;
     height: 100%;
     width: 100%;
     opacity: 0;
+    z-index: 2;
   }
 
   .pdf-marker-mark-type-icon {
@@ -47,6 +53,9 @@
   margin-bottom: 1rem;
   position: relative;
   background: #fff;
+}
 
-
+.highlight{
+  position: absolute;
+  display: none;
 }

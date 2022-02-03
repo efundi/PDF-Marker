@@ -8,6 +8,7 @@ export class AssignmentMarkingSessionService implements OnDestroy {
 
   static readonly DEFAULT_COLOR: string = '#6F327A';
 
+  highlighterColourChanged: EventEmitter<string> = new EventEmitter<string>();
   colourChanged: EventEmitter<string> = new EventEmitter<string>();
   iconChanged: EventEmitter<IconInfo> = new EventEmitter<IconInfo>();
   zoomChanged: EventEmitter<number> = new EventEmitter<number>();
@@ -15,6 +16,19 @@ export class AssignmentMarkingSessionService implements OnDestroy {
   private _colour = AssignmentMarkingSessionService.DEFAULT_COLOR;
   private _icon: IconInfo;
   private _zoom = 1.0;
+  private _highlighterColour = 'rgba(255, 255, 0, 0.5)';
+
+
+  set highlighterColour(colour: string) {
+    if (colour !== this._highlighterColour) {
+      this._highlighterColour = colour;
+      this.highlighterColourChanged.emit(colour);
+    }
+  }
+
+  get highlighterColour(){
+    return this._highlighterColour;
+  }
 
   set zoom(zoom: number) {
     if (zoom !== this._zoom) {

@@ -37,6 +37,27 @@ mat-toolbar {
     }
   }
 
+  .pdf-marker-assignment-marking-settings-highlighter {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .pdf-marker-assignment-marking-settings-highlighter-choice {
+      display: block;
+      width: 25px;
+      margin-left: 7px;
+      text-align: center;
+      height: 2px;
+      border: 1px solid;
+      position: absolute;
+      top: 90%;
+    }
+
+    .pdf-marker-assignment-marking-settings-color-pallette {
+      border: 1px solid;
+    }
+  }
+
   .pdf-marker-assignment-marking-settings-color {
     display: flex;
     flex-direction: row;
@@ -85,3 +106,4 @@ mat-toolbar {
   width: 4rem;
 
 }
+

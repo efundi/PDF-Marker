@@ -9,7 +9,7 @@
   <ng-container *ngFor="let iconData of markIcons">
     <button
       [disabled]="containsRubric"
-      *ngIf="iconData.icon !== 'halfTick'"
+      *ngIf="iconData.icon !== 'halfTick' && iconData.icon !== 'brush'"
       [matTooltip]="iconData.toolTip"
       [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
       (click)="onIconClick($event, iconData)"
@@ -19,14 +19,37 @@
     </button>
     <button
       [disabled]="containsRubric"
-      *ngIf="iconData.icon === 'halfTick'"
+      *ngIf="iconData.icon === 'halfTick' && iconData.icon !== 'brush'"
       [matTooltip]="iconData.toolTip"
       [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
       (click)="onIconClick($event, iconData)"
       mat-button
       mat-icon-button>
-      <mat-icon class="pdf-marker-icons-svg-class" [svgIcon]="iconData.icon" [class.pdf-icon-disabled]="containsRubric" ></mat-icon>
+      <mat-icon class="pdf-marker-icons-svg-class"
+                [svgIcon]="iconData.icon"
+                [class.pdf-icon-disabled]="containsRubric" >
+      </mat-icon>
     </button>
+    <div
+      *ngIf="iconData.icon === 'brush'"
+      class="pdf-marker-assignment-marking-settings-highlighter">
+      <button
+        [disabled]="containsRubric"
+        [matTooltip]="iconData.toolTip"
+        [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
+        (click)="onIconClick($event, iconData)"
+        mat-button
+        mat-icon-button>
+        <mat-icon [class.pdf-icon-disabled]="containsRubric" >
+          {{ iconData.icon }}
+        </mat-icon>
+      </button>
+      <span
+        [style.background]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedHighlightColour"
+        [style.border-color]="((containsRubric) ? 'rgba(0,0,0,.26)':selectedHighlightColour)"
+        class="pdf-marker-assignment-marking-settings-highlighter-choice">
+    </span>
+    </div>
   </ng-container>
   <button
     [disabled]="containsRubric"

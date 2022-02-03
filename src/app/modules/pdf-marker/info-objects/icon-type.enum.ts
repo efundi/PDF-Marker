@@ -4,5 +4,6 @@ export enum IconTypeEnum {
   ACK_MARK  = "ACK_MARK",
   CROSS     = "CROSS",
   NUMBER    = "NUMBER",
-  COMMENT   = "COMMENT"
+  COMMENT   = "COMMENT",
+  HIGHLIGHT   = "HIGHLIGHT",
 }

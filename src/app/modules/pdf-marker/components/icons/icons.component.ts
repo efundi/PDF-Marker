@@ -1,11 +1,11 @@
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output} from '@angular/core';
 import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
 import {IconInfo} from '@pdfMarkerModule/info-objects/icon.info';
 import {
   AssignmentMarkingSessionService
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
-import {Subscription} from "rxjs";
+import {Subscription} from 'rxjs';
 
 export enum KEY_CODE {
   RIGHT_ARROW = 39,
@@ -17,7 +17,7 @@ export enum KEY_CODE {
   templateUrl: './icons.component.html',
   styleUrls: ['./icons.component.scss']
 })
-export class IconsComponent implements OnInit, OnChanges {
+export class IconsComponent implements OnInit, OnChanges, OnDestroy {
 
 
   @Output()
@@ -42,6 +42,7 @@ export class IconsComponent implements OnInit, OnChanges {
 
 
   selectedColour: string;
+  selectedHighlightColour: string;
 
   iconForm: FormGroup;
 
@@ -71,24 +72,32 @@ export class IconsComponent implements OnInit, OnChanges {
     { icon: 'spellcheck', type: IconTypeEnum.ACK_MARK, toolTip: 'Acknowledge Tick' },
     { icon: 'close', type: IconTypeEnum.CROSS, toolTip: 'Cross Mark'},
     { icon: 'comment', type: IconTypeEnum.NUMBER, toolTip: 'Comment and Mark'},
-
+    { icon: 'brush', type: IconTypeEnum.HIGHLIGHT, toolTip: 'Highlight'},
   ];
 
   private zoomFormSubscription: Subscription;
+  private highlightSubscription: Subscription;
 
   constructor(private fb: FormBuilder,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) {}
- /** constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
+  /** constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
     this.matIconRegistry
       .addSvgIcon("halfTick", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/halftick.svg"))
       .addSvgIcon("layout-expand-left", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-left.svg"))
       .addSvgIcon("layout-expand-right", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-right.svg"))
       .addSvgIcon("layout-default", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-default.svg"));
   }
-*/
+   */
+
+  ngOnDestroy() {
+    this.highlightSubscription.unsubscribe();
+    this.zoomFormSubscription.unsubscribe();
+  }
+
   ngOnInit() {
     this.initForm();
     this.selectedColour = this.assignmentMarkingSessionService.colour;
+    this.selectedHighlightColour = this.assignmentMarkingSessionService.highlighterColour.replace(/[\d\.]+\)$/g, '1)');
   }
 
   private initForm() {
@@ -99,6 +108,10 @@ export class IconsComponent implements OnInit, OnChanges {
 
     this.zoomFormSubscription = this.iconForm.controls.zoom.valueChanges.subscribe((value) => {
       this.assignmentMarkingSessionService.zoom = value;
+    });
+
+    this.highlightSubscription = this.assignmentMarkingSessionService.highlighterColourChanged.subscribe((value) => {
+      this.selectedHighlightColour = value.replace(/[\d\.]+\)$/g, '1)');
     });
   }
 
@@ -163,4 +176,5 @@ export class IconsComponent implements OnInit, OnChanges {
       this.iconForm.controls.pageNumber.setValue(this.currentPage.toString());
     }
   }
+
 }

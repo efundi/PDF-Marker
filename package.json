@@ -78,7 +78,7 @@
     "lodash-es": "^4.17.21",
     "multer": "^1.4.2",
     "ng2-pdfjs-viewer": "^5.0.1",
-    "ngx-color-picker": "^8.2.0",
+    "ngx-color-picker": "^11.0.0",
     "ngx-filesaver": "^8.1.0",
     "pdf-lib": "^1.4.0",
     "pdfjs-dist": "^2.12.313",

@@ -1,0 +1,76 @@
+:host {
+  position: absolute;
+  z-index: 1;
+
+  /**
+    * It can happen that 2 highlights are on top of each other
+    * or that the buttons the manage the highlight is below another highlight
+    * to avoid getting stuck, move this item higher to allow clicking the tools
+    */
+  &:hover{
+    z-index: 5;
+  }
+}
+
+.pdf-marker-mark-type-highlight-container{
+  border: 1px dotted transparent;
+
+  &:hover {
+    border: 1px dotted #888;
+
+    .tools {
+      display: flex;
+    }
+  }
+
+  .tools {
+    display: none;
+    flex-direction: row;
+
+    .mat-icon {
+      font-size: 14px;
+      height: fit-content;
+      color: #fff;
+      display: inline-block;
+      cursor: pointer;
+      width: auto;
+      text-align: center;
+      padding: 2px;
+    }
+    .icon-delete {
+      background: #a94442;
+    }
+
+    .icon-color {
+      background: #fff;
+    }
+    .icon-edit {
+      background: #3c763d;
+    }
+  }
+
+}
+
+
+.highlight-options {
+  display: flex;
+  justify-content: space-between;
+
+  .highlight-option {
+    padding: 0.5rem;
+    cursor: pointer;
+
+    &.selected {
+      background: #dedede;
+    }
+
+    &:hover{
+      background: #cecece;
+    }
+
+    .highlight-option-brush{
+      width: 40px;
+      height: 40px;
+    }
+  }
+}

@@ -1,11 +1,33 @@
 <div class="page-wrapper boundary pdf-marker-assignment-marking-container" #pageWrapper>
   <canvas #pdfCanvas> </canvas>
-  <div #markerContainer class="boundary-drop-zone" (click)="onDropClick($event)"></div>
+  <div
+    #highlighter
+    class="highlight"
+  ></div>
   <div class="annotation-layer" #annotationLayer></div>
-  <pdf-marker-mark-type-icon
-    class="pdf-marker-mark-type-icon"
-    *ngFor="let mark of marks; let i = index"
-    [mark]="mark"
-    [index]="i">
-  </pdf-marker-mark-type-icon>
+
+
+  <ng-container
+    *ngFor="let mark of marks; let i = index">
+
+    <pdf-marker-mark-type-highlight
+      *ngIf="mark.iconType === IconTypeEnum.HIGHLIGHT"
+      [mark]="mark"
+      [index]="i">
+    </pdf-marker-mark-type-highlight>
+
+    <pdf-marker-mark-type-icon
+      *ngIf="mark.iconType !== IconTypeEnum.HIGHLIGHT"
+      class="pdf-marker-mark-type-icon"
+      [mark]="mark"
+      [index]="i">
+    </pdf-marker-mark-type-icon>
+  </ng-container>
+
+  <div
+    #markerContainer
+    class="boundary-drop-zone"
+    (mousedown)="mouseDown($event)"
+    (click)="onDropClick($event)">
+  </div>
 </div>

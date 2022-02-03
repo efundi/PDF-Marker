@@ -2,7 +2,7 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
-  Input,
+  Input, NgZone,
   OnDestroy,
   OnInit,
   Renderer2,
@@ -25,6 +25,9 @@ import {
   AssignmentMarkingSessionService
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
 import {IconInfo} from '@pdfMarkerModule/info-objects/icon.info';
+import {
+  MarkTypeHighlightComponent
+} from "@pdfMarkerModule/components/mark-type-highlight/mark-type-highlight.component";
 
 const eventBus = new EventBus();
 
@@ -88,6 +91,13 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   private markerContainer: ElementRef<HTMLDivElement>;
 
   /**
+   * Reference to the highlighter container
+   * @private
+   */
+  @ViewChild('highlighter', {static: true})
+  private highlighter: ElementRef<HTMLDivElement>;
+
+  /**
    * Reference to the markers
    * @private
    */
@@ -105,10 +115,17 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   private zoomSubscription: Subscription;
   private page: PDFPageProxy;
 
+  IconTypeEnum = IconTypeEnum;
+
+  unlisteners = [];
+
+  drag = false;
+
   constructor(private renderer: Renderer2,
               private appService: AppService,
               private assignmentMarkingComponent: AssignmentMarkingComponent,
-              private assignmentMarkingSessionService: AssignmentMarkingSessionService) { }
+              private assignmentMarkingSessionService: AssignmentMarkingSessionService,
+              private ngZone: NgZone) { }
 
 
   ngOnDestroy() {
@@ -133,7 +150,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
    * @param event
    * @private
    */
-  private createMark(event: MouseEvent): MarkInfo {
+  private createIconMark(event: MouseEvent): MarkInfo {
     const zoom = this.assignmentMarkingSessionService.zoom;
     const colour = this.assignmentMarkingSessionService.colour;
 
@@ -252,22 +269,89 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     });
   }
 
+  /**
+   * Callback when a tool is changed
+   * @param selectedIcon Either a new tool, or null
+   * @private
+   */
   private onSelectedIcon(selectedIcon?: IconInfo) {
+
+    // Reset views
+    this.unregisterHighlighter();
+    this.renderer.removeClass(this.markerContainer.nativeElement, 'cursor-copy');
+    this.renderer.removeClass(this.markerContainer.nativeElement, 'cursor-text');
+    this.renderer.removeStyle(this.markerContainer.nativeElement, 'display');
+    // this.renderer.removeStyle(this.annotationLayer.nativeElement, 'display');
+
     if (selectedIcon) {
-      this.renderer.addClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
+      if (selectedIcon.type !== IconTypeEnum.HIGHLIGHT) {
+        this.renderer.addClass(this.markerContainer.nativeElement, 'cursor-copy');
+      } else {
+        this.renderer.addClass(this.markerContainer.nativeElement, 'cursor-text');
+        this.registerHighlighter();
+      }
 
       // Hide the annotation layer which can be in the way of the dropzone
-      this.renderer.setStyle(this.annotationLayer.nativeElement, 'display', 'none');
-    } else {
-      this.renderer.removeClass(this.markerContainer.nativeElement, 'pdf-marker-dropzone');
-
-      // Put back the annotation layer
-      this.renderer.removeStyle(this.annotationLayer.nativeElement, 'display');
+      // this.renderer.setStyle(this.annotationLayer.nativeElement, 'display', 'none');
+      this.renderer.setStyle(this.markerContainer.nativeElement, 'display', 'block');
     }
+
+  }
+
+  private registerHighlighter() {
+    this.ngZone.runOutsideAngular(() => {
+      this.unlisteners.push(this.renderer.listen(this.markerContainer.nativeElement, 'mousemove', (e) => this.mouseMove(e)));
+      this.unlisteners.push(this.renderer.listen(this.markerContainer.nativeElement, 'mouseup', () => this.mouseUp()));
+    });
+  }
+
+  private clearHighlighter() {
+    this.renderer.setStyle(this.highlighter.nativeElement, 'left', '0');
+    this.renderer.setStyle(this.highlighter.nativeElement, 'top', '0');
+    this.renderer.setStyle(this.highlighter.nativeElement, 'width', '0');
+    this.renderer.removeAttribute(this.highlighter.nativeElement, 'data-left');
+    this.renderer.removeStyle(this.highlighter.nativeElement, 'display');
+  }
+
+  private unregisterHighlighter() {
+    this.unlisteners.forEach((ul) => ul());
+    this.clearHighlighter();
+  }
+
+  private createMarkHighlight(){
+    const zoom = this.assignmentMarkingSessionService.zoom;
+
+    const leftPx = this.highlighter.nativeElement.style.left;
+    const topPx = this.highlighter.nativeElement.style.top;
+    const widthPx = this.highlighter.nativeElement.style.width;
+    let left = +leftPx.substring(0, leftPx.length - 2);
+    let top = +topPx.substring(0, topPx.length - 2);
+    let width = +widthPx.substring(0, widthPx.length - 2);
+
+    left = left / zoom;
+    top = top / zoom;
+    width = width / zoom;
+
+
+    const mark: MarkInfo = {
+      coordinates: {
+        x: left,
+        y: top,
+        width
+      },
+      iconName: this.assignmentMarkingSessionService.icon.icon,
+      iconType: this.assignmentMarkingSessionService.icon.type,
+      colour: this.highlighter.nativeElement.style.background,
+      pageNumber: this.pageIndex + 1,
+    };
+
+    const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
+    updatedMarks.push(mark);
+    this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe();
   }
 
   private createMarkIcon(event: MouseEvent) {
-    const mark = this.createMark(event);
+    const mark = this.createIconMark(event);
     if (mark.iconType !== IconTypeEnum.NUMBER) {
       const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
       updatedMarks.push(mark);
@@ -278,6 +362,8 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   onDropClick($event: MouseEvent) {
     if (this.assignmentMarkingSessionService.icon) {
       switch (this.assignmentMarkingSessionService.icon.type) {
+        case IconTypeEnum.HIGHLIGHT :
+          break;
         case IconTypeEnum.FULL_MARK :
         case IconTypeEnum.HALF_MARK :
         case IconTypeEnum.ACK_MARK  :
@@ -298,5 +384,42 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       updatedMarks[index] = mark;
     }
     return this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks);
+  }
+
+  mouseDown(e: MouseEvent) {
+    this.ngZone.run(() => {
+
+      const zoom = this.assignmentMarkingSessionService.zoom;
+
+      const height = zoom * MarkTypeHighlightComponent.HIGHLIGHT_HEIGHT;
+
+      this.renderer.setStyle(this.highlighter.nativeElement, 'display', 'block');
+      this.renderer.setStyle(this.highlighter.nativeElement, 'left', e.offsetX + 'px');
+      this.renderer.setStyle(this.highlighter.nativeElement, 'top', (e.offsetY - (height / 2)) + 'px');
+      this.renderer.setStyle(this.highlighter.nativeElement, 'width', '0');
+      this.renderer.setStyle(this.highlighter.nativeElement, 'height', height + 'px');
+      this.renderer.setStyle(this.highlighter.nativeElement, 'background', this.assignmentMarkingSessionService.highlighterColour);
+
+      this.renderer.setAttribute(this.highlighter.nativeElement, 'data-left', e.offsetX + '');
+    });
+    this.drag = true;
+  }
+
+  mouseUp() {
+    this.drag = false;
+    this.ngZone.run(() => {
+      this.createMarkHighlight();
+      this.clearHighlighter();
+    });
+  }
+
+  mouseMove(e: MouseEvent) {
+    if (this.drag) {
+      this.ngZone.run(() => {
+        const left = +this.highlighter.nativeElement.getAttribute('data-left');
+        const width = ((e.offsetX) - left);
+        this.renderer.setStyle(this.highlighter.nativeElement, 'width', width + 'px');
+      });
+    }
   }
 }
