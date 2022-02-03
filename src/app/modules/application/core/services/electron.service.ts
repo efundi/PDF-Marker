@@ -3,7 +3,7 @@ import {Observable, Subject} from 'rxjs';
 import {AppVersionInfo} from '@coreModule/info-objects/app-version.info';
 import {IpcRenderer} from 'electron';
 import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
-import {first, last, skip, take} from 'rxjs/operators';
+import {first} from 'rxjs/operators';
 import {FileFilterInfo} from '@coreModule/info-objects/file-filter.info';
 
 @Injectable({
