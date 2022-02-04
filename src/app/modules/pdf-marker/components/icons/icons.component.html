@@ -1,11 +1,4 @@
 <mat-toolbar>
-  <button
-    matTooltip="Apply Rubric"
-    class="pdf-marker-icon-first"
-    mat-button
-    mat-icon-button>
-    <mat-icon>apps</mat-icon>
-  </button>
   <ng-container *ngFor="let iconData of markIcons">
     <button
       [disabled]="containsRubric"
@@ -36,11 +29,13 @@
       <button
         [disabled]="containsRubric"
         [matTooltip]="iconData.toolTip"
-        [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
         (click)="onIconClick(iconData, $event)"
+        [style.border-color]="highlightToolColor"
         mat-button
         mat-icon-button>
-        <mat-icon [class.pdf-icon-disabled]="containsRubric" >
+        <mat-icon
+          [style.color]="highlightToolColor"
+          [class.pdf-icon-disabled]="containsRubric" >
           {{ iconData.icon }}
         </mat-icon>
       </button>

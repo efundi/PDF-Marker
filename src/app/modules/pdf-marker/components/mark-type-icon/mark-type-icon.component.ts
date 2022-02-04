@@ -25,10 +25,7 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
 
   static readonly widthAndHeight: number = 36;
 
-
-
   iconForm: FormGroup;
-  showOptions: boolean;
 
   config: MatDialogConfig;
 
@@ -127,24 +124,6 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
    * @param event
    */
   onClicked(event: MouseEvent) {
-    event.stopPropagation();
-  }
-
-  /**
-   * Callback when the mouse is over the icon
-   * @param event
-   */
-  onMouseOver(event: MouseEvent) {
-    this.showOptions = true;
-    event.stopPropagation();
-  }
-
-  /**
-   * Callback when the mouse leaves the icon
-   * @param event
-   */
-  onMouseLeave(event: MouseEvent) {
-    this.showOptions = false;
     event.stopPropagation();
   }
 

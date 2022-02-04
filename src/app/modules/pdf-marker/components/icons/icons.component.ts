@@ -1,5 +1,15 @@
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output} from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
 import {IconInfo} from '@pdfMarkerModule/info-objects/icon.info';
 import {
@@ -43,7 +53,6 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
 
 
   selectedColour: string;
-  selectedHighlightColour: string;
 
   iconForm: FormGroup;
 
@@ -78,7 +87,22 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
 
   private zoomFormSubscription: Subscription;
   private highlightSubscription: Subscription;
+
+  /**
+   * Current active highlighter colour
+   */
+  selectedHighlightColour: string;
+
+  /**
+   * Available options for highlighter color
+   */
   highlightOptions = HIGHLIGHTER_OPTIONS;
+
+  /**
+   * Current colour for the highlighter tool.
+   * This colour differs depending on if rubric is enabled, highlighter active, and selecte highlighter colour
+   */
+  highlightToolColor: string;
 
   constructor(private fb: FormBuilder,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) {}
@@ -128,11 +152,15 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
     if (this.selecetedIcon === selectedIcon) {
       this.assignmentMarkingSessionService.icon = undefined;
       this.selecetedIcon = undefined;
-
+      this.highlightToolColor = null;
     } else {
       // emit selectedIcon to marking component
       this.assignmentMarkingSessionService.icon = selectedIcon;
       this.selecetedIcon = selectedIcon;
+
+      if(this.selecetedIcon.type === IconTypeEnum.HIGHLIGHT){
+        this.highlightToolColor = this.selectedHighlightColour;
+      }
     }
   }
 
@@ -175,13 +203,19 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
     this.paneDisplayOption.emit(option);
   }
 
-  ngOnChanges() {
+  ngOnChanges(changes: SimpleChanges) {
     if (this.iconForm) {
       this.iconForm.controls.pageNumber.setValue(this.currentPage.toString());
+    }
+    if (changes.hasOwnProperty('containsRubric')) {
+      if (changes.containsRubric.currentValue) {
+        this.highlightToolColor = 'rgba(0,0,0,.26)';
+      }
     }
   }
 
   selectHighlighter(highlightOption: HighlighterColor) {
+    this.highlightToolColor = highlightOption.colour;
     this.assignmentMarkingSessionService.highlighterColour = highlightOption;
     this.assignmentMarkingSessionService.icon = this.markIcons[5];
     this.selecetedIcon = this.markIcons[5];

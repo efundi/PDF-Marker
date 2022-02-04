@@ -16,10 +16,6 @@
 
 .pdf-marker-mark-type-highlight-container{
 
-  .highlight {
-    //border: 1px dotted transparent;
-  }
-
   &:hover, &.pallet-open{
 
     .highlight {
@@ -38,7 +34,7 @@
 
 
     .mat-icon {
-      font-size: 1rem;
+      font-size: 1.15rem;
       height: fit-content;
       color: #dedede;
       display: inline-block;
@@ -52,11 +48,11 @@
       }
     }
     .tool-container {
-      background: #000;
+      background: #3d3d3d;
       border-radius: 3px;
       padding: 3px;
 
-      mat-icon:not(first-child){
+      mat-icon:not(:first-child){
         margin-left: 5px;
       }
     }

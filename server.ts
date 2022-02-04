@@ -2690,7 +2690,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
             if (commentErrorFound) {
               const textOption: PDFPageDrawTextOptions = {
                 x: (coords.x * 72 / 96),
-                y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 15,
+                y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 20,
                 size: 10
               };
               pdfPage.drawText('*' + commentPointer, textOption);

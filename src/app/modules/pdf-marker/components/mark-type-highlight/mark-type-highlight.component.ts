@@ -7,14 +7,14 @@ import {
   AssignmentMarkingPageComponent
 } from '@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
-import {cloneDeep} from 'lodash-es';
+import {cloneDeep, find} from 'lodash-es';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {AppService} from '@coreModule/services/app.service';
 import {
   MarkingHighlightModalComponent
 } from '@sharedModule/components/marking-highlight-modal/marking-highlight-modal.component';
-import {HIGHLIGHTER_OPTIONS, HighlighterColor} from "@sharedModule/info-objects/highlighter-color";
-import {MatMenuTrigger} from "@angular/material/menu";
+import {HIGHLIGHTER_OPTIONS, HighlighterColor} from '@sharedModule/info-objects/highlighter-color';
+import {MatMenuTrigger} from '@angular/material/menu';
 
 
 @Component({
@@ -76,6 +76,7 @@ export class MarkTypeHighlightComponent implements OnInit, AfterViewInit, OnDest
 
   ngOnInit(): void {
     this.zoomSubscription = this.assignmentMarkingSessionService.zoomChanged.subscribe(() => this.render());
+    this.selectedHighlightColour = find(HIGHLIGHTER_OPTIONS, {colour: this.mark.colour});
   }
 
   private render() {
