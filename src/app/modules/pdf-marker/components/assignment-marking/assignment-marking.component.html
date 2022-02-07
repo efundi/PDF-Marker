@@ -14,6 +14,8 @@
   <div
     class="pages-wrapper"
     *ngIf="isPdfLoaded"
+    zoomScrollPosition
+    [currentPage]="currentPage"
     scrollSpy
     scrollTarget=".pages-wrapper"
     [spiedTags]="['PDF-MARKER-ASSIGNMENT-MARKING-PAGE']"

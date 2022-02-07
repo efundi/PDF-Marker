@@ -133,7 +133,9 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
     });
 
     this.zoomFormSubscription = this.iconForm.controls.zoom.valueChanges.subscribe((value) => {
+
       this.assignmentMarkingSessionService.zoom = value;
+
     });
 
     this.highlightSubscription = this.assignmentMarkingSessionService.highlighterColourChanged.subscribe((value) => {

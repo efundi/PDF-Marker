@@ -31,6 +31,7 @@ import { WorkingFolderComponent } from './components/working-folder/working-fold
 import { AssignmentMarkingPageComponent } from './components/assignment-marking-page/assignment-marking-page.component';
 import { ScrollSpyDirective } from './directives/scroll-spy.directive';
 import { MarkTypeHighlightComponent } from './components/mark-type-highlight/mark-type-highlight.component';
+import { ZoomScrollPositionDirective } from './directives/zoom-scroll-position.directive';
 
 
 @NgModule({
@@ -52,7 +53,8 @@ import { MarkTypeHighlightComponent } from './components/mark-type-highlight/mar
     WorkingFolderComponent,
     AssignmentMarkingPageComponent,
     ScrollSpyDirective,
-    MarkTypeHighlightComponent
+    MarkTypeHighlightComponent,
+    ZoomScrollPositionDirective
   ],
   imports: [
     CommonModule,
