@@ -26,9 +26,12 @@ import {
   YesAndNoConfirmationDialogComponent
 } from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {
-  AssignmentMarkingSessionService
+  AssignmentMarkingSessionService, ZoomChangeEvent
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
 import {IRubric} from '@coreModule/utils/rubric.class';
+import {
+  AssignmentMarkingPageComponent
+} from "@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component";
 
 
 GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
@@ -74,6 +77,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   totalMark = 0;
   private selectedPdfSubscription: Subscription;
   private colorChangeSubscription: Subscription;
+  private zoomChangeSubscription: Subscription;
   marks: MarkInfo[][] | any[];
   readonly defaultFullMark = 1;
   readonly defaultIncorrectMark = 0;
@@ -87,8 +91,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
    * Keep in mind that this changes dynamically, referencing it too soon in the Angular lifecycle
    * will cause errors
    */
-  @ViewChildren('pdfPage', {read: ElementRef})
-  pdfPages: QueryList<ElementRef>;
+  @ViewChildren('pdfPage', {read: AssignmentMarkingPageComponent})
+  pdfPages: QueryList<AssignmentMarkingPageComponent>;
 
   pageObjects = [];
 
@@ -120,6 +124,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     this.colorChangeSubscription = this.assignmentMarkingSessionService.colourChanged.subscribe((colour) => {
       this.onColourChanged(colour);
+    });
+
+    this.zoomChangeSubscription = this.assignmentMarkingSessionService.zoomChanged.subscribe((zoomChangeEvent) => {
+      this.zoomChanged(zoomChangeEvent);
     });
   }
 
@@ -215,8 +223,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   onPagedChanged(pageNumber: number) {
     this.currentPage = pageNumber;
-    const element = this.pdfPages.get(pageNumber - 1).nativeElement;
-    element.scrollIntoView({behavior: 'smooth', block: 'start', inline: 'start'});
+    this.pdfPages.get(pageNumber - 1).scrollIntoView();
   }
 
   onControl(control: string) {
@@ -386,4 +393,37 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.currentPage = pageIndex + 1;
   }
 
+  private zoomChanged(zoomChangeEvent: ZoomChangeEvent) {
+
+    const element = document.querySelector('.pages-wrapper');
+    const previousScrollY = element.scrollTop;
+    const viewWidth = element.clientWidth;
+
+    // Percentage on which the scrollbar must be adjusted
+    let scrollPer = 0.5; // By default center zoom
+    if (element.scrollWidth - viewWidth > 0) {
+      scrollPer = element.scrollLeft / (element.scrollWidth - viewWidth);
+    }
+
+    this.pdfPages.forEach((page) => {
+      page.resizePage();
+    });
+// When the zoom changes we have to adjust the scroll position
+    // Offset to add to each page (paddings/margins/borders)
+    const PAGE_Y_OFFSET = 19 * this.currentPage;
+
+    const previousZoom = zoomChangeEvent.previous;
+    const currentZoom = zoomChangeEvent.current;
+
+    const scrollTop = ((previousScrollY - PAGE_Y_OFFSET) / previousZoom) * currentZoom;
+    const scrollLeft = scrollPer * (element.scrollWidth - viewWidth);
+
+    // Scroll to correct place
+    element.scrollTo(scrollLeft, scrollTop + PAGE_Y_OFFSET);
+
+    // Now start rendering in the background
+    this.pdfPages.forEach((page) => {
+      page.renderPage();
+    });
+  }
 }
