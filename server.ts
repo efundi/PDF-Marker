@@ -40,7 +40,6 @@ import {
 } from 'fs';
 import {json2csv, json2csvAsync} from 'json-2-csv';
 import {PageSizes, PDFDocument, PDFPage, rgb, StandardFonts,
-  PDFPageDrawCircleOptions,
   PDFPageDrawRectangleOptions,
   PDFPageDrawSVGOptions,
   PDFPageDrawTextOptions,
@@ -52,8 +51,6 @@ import {IRubric, IRubricName} from './src/app/modules/application/core/utils/rub
 import {AssignmentSettingsInfo} from './src/app/modules/pdf-marker/info-objects/assignment-settings.info';
 import {IComment} from './src/app/modules/application/core/utils/comment.class';
 import {MarkInfo} from './src/app/modules/application/shared/info-objects/mark.info';
-import {isEmpty} from 'lodash-es';
-
 const zipDir = require('zip-dir');
 const JSZip = require('jszip');
 const unzipper = require('unzipper');
@@ -104,6 +101,9 @@ const INVALID_STUDENT_FOLDER = 'Invalid student folder';
 const COULD_NOT_READ_COMMENT_LIST = 'Could not read list of comments!';
 const COULD_NOT_READ_WORKSPACE_LIST = 'Could not read list of working folders!';
 const NOT_PROVIDED_COMMENT = 'Comment must be provided!';
+
+
+const HIGHTLIGHT_HEIGHT = 20;
 /**/
 
 /*
@@ -134,6 +134,10 @@ global.window.requestAnimationFrame = function(callback) {
   callback(0);
   return 0;
 };
+
+function isEmpty(str: string){
+  return str === null || str === undefined || str.length === 0;
+}
 
 const assignmentList = (callback) => {
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
@@ -672,7 +676,7 @@ const zipFileUploadCallback = (req, res, data) => {
               foundCount++;
             } else if ((oldPath.toLowerCase() + ' (' + (foundCount + 1) + ')' + '/') === folders[i].toLowerCase() + '/') {
               foundCount++;
- }
+            }
           }
 
           const settings: AssignmentSettingsInfo = {defaultColour: '#6f327a', rubric, isCreated: false};
@@ -1033,7 +1037,7 @@ const rubricFileUpload = (req, res, err) => {
                 foundCount++;
               } else if (clonedRubrics[i].name.toLowerCase() === (rubricName.toLowerCase() + ' (' + (foundCount + 1) + ')')) {
                 foundCount++;
- }
+              }
             }
 
             if (foundCount !== 0) {
@@ -1723,7 +1727,7 @@ const savingRubricMarks = (req, res) => {
         return sendResponse(req, res, 400, 'Assignment\'s settings does not contain a rubric!');
       } else if (assignmentSettingsInfo.rubric.name !== rubricName) {
         return sendResponse(req, res, 400, 'Assignment\'s settings rubric does not match provided!');
- }
+      }
 
       let totalMark = 0;
       marks.forEach((levelIndex: number, index: number) => {
@@ -2316,7 +2320,7 @@ const finalizeAssignmentRubric = async (req, res) => {
             return sendResponse(req, res, 400, 'Assignment\'s settings does not contain a rubric!');
           } else if (assignmentSettingsInfo.rubric.name !== rubricName) {
             return sendResponse(req, res, 400, 'Assignment\'s settings rubric does not match provided!');
- }
+          }
 
           const rubric = assignmentSettingsInfo.rubric;
 
@@ -2577,12 +2581,15 @@ const getRgbScale = (rgbValue: number): number => {
 };
 
 const annotatePdfFile = async (res, filePath: string, marks = []) => {
+  // Not sure what this is about, but without it the coords are on the wrong place compared to the editor
+  const COORD_CONSTANT = (72 / 96);
+  // Size of a mark circle
+  const CIRCLE_SIZE = 10;
   let totalMark = 0;
   let generalMarks = 0;
   const sectionMarks: string[] = [];
-  const commentPointers: string[] = [];
-  let commentPointer = 1;
-  let commentErrorFound = false;
+  let pointer = 1;
+  const pointers: string[] = [];
   const file = readFileSync(filePath);
   const pdfFactory = new AnnotationFactory(file);
   let pdfDoc = await PDFDocument.load(file);
@@ -2595,41 +2602,45 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
         if (markObj.iconType === IconTypeEnum.NUMBER) {
           totalMark += (markObj.totalMark) ? markObj.totalMark : 0;
           try {
-            pdfFactory.createTextAnnotation(
-              pageCount - 1,
-              [
-                (coords.x * 72 / 96),
-                pdfPage.getHeight() - (coords.y * 72 / 96) - 24,
-                pdfPage.getWidth() - (coords.y * 72 / 96),
-                pdfPage.getHeight() - (coords.y * 72 / 96)
+            const CIRCLE_DIAMETER = (CIRCLE_SIZE * 2);
+            pdfFactory.createTextAnnotation({
+              page: pageCount - 1,
+              rect: [
+                ((coords.x  ) * COORD_CONSTANT) + CIRCLE_DIAMETER, // x1
+                (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) - CIRCLE_DIAMETER, // y1
+                ((coords.x  ) * COORD_CONSTANT) + (CIRCLE_DIAMETER * 2), // x2
+                (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) // y2
               ],
-              markObj.comment,
-              markObj.sectionLabel + ' = ' + markObj.totalMark);
+              contents: markObj.comment,
+              author: markObj.sectionLabel + ' = ' + markObj.totalMark
+            });
           } catch (e) {
-            commentErrorFound = true;
-            commentPointers.push('*' + commentPointer + ': ' + markObj.comment);
-            commentPointer++;
+            pointers.push('*' + pointer + ': ' + markObj.comment);
+            pointer++;
           }
           sectionMarks.push(markObj.sectionLabel + ' = ' + markObj.totalMark);
-        }
-        if (markObj.iconType === IconTypeEnum.HIGHLIGHT && !isEmpty(markObj.comment)) {
+        } else if (markObj.iconType === IconTypeEnum.HIGHLIGHT) {
           try {
-            pdfFactory.createTextAnnotation(
-              pageCount - 1,
-              [
-                (coords.x * 72 / 96),
-                pdfPage.getHeight() - (coords.y * 72 / 96) - 24,
-                pdfPage.getWidth() - (coords.y * 72 / 96),
-                pdfPage.getHeight() - (coords.y * 72 / 96)
+            const colorComponents = markObj.colour.match(/(\d\.?)+/g);
+            pdfFactory.createHighlightAnnotation({
+              page: pageCount - 1,
+              rect: [
+                (coords.x * COORD_CONSTANT), // x1
+                pdfPage.getHeight() - (coords.y * COORD_CONSTANT) - HIGHTLIGHT_HEIGHT, // y1
+                (coords.x  + coords.width) * COORD_CONSTANT, // x2
+                pdfPage.getHeight() - (coords.y * COORD_CONSTANT) // y2
               ],
-              markObj.comment,
-              markObj.sectionLabel);
+              color: {r: +colorComponents[0], g: +colorComponents[1], b: +colorComponents[2]},
+              opacity: +colorComponents[3],
+              contents: markObj.comment || '',
+              author: markObj.sectionLabel || ''
+            });
           } catch (e) {
-            commentErrorFound = true;
-            commentPointers.push('*' + commentPointer + ': ' + markObj.comment);
-            commentPointer++;
+            if (markObj.comment) {
+              pointers.push('*' + pointer + ': ' + markObj.comment);
+              pointer++;
+            }
           }
-          sectionMarks.push(markObj.sectionLabel);
         }
       });
     }
@@ -2637,7 +2648,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   });
 
   pageCount = 1;
-  commentPointer = 1;
+  pointer = 1;
   pdfDoc = await PDFDocument.load(pdfFactory.write());
   pdfPages = await pdfDoc.getPages();
   pdfPages.forEach((pdfPage: PDFPage) => {
@@ -2651,8 +2662,8 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
         }
         const coords = mark.coordinates;
         const options: PDFPageDrawSVGOptions = {
-          x: (coords.x * 72 / 96) + 4,
-          y: pdfPage.getHeight() - (coords.y * 72 / 96),
+          x: (coords.x * COORD_CONSTANT) + 4,
+          y: pdfPage.getHeight() - (coords.y * COORD_CONSTANT),
           borderColor: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
           color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
         };
@@ -2665,8 +2676,8 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
           } else if (mark.iconType === IconTypeEnum.HALF_MARK) {
             pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
             pdfPage.drawSvgPath(IconSvgEnum.HALF_MARK_SVG, {
-              x: (coords.x * 72 / 96) + 4,
-              y: pdfPage.getHeight() - (coords.y * 72 / 96),
+              x: (coords.x * COORD_CONSTANT) + 4,
+              y: pdfPage.getHeight() - (coords.y * COORD_CONSTANT),
               borderWidth: 2,
               borderColor: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
               color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
@@ -2676,55 +2687,70 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
           } else if (mark.iconType === IconTypeEnum.ACK_MARK) {
             pdfPage.drawSvgPath(IconSvgEnum.ACK_MARK_SVG, options);
           } else if (mark.iconType === IconTypeEnum.HIGHLIGHT) {
-            const HIGHTLIGHT_HEIGHT = 20;
-            const colorComponents = mark.colour.match(/(\d\.?)+/g);
-            const highlightOptions: PDFPageDrawRectangleOptions = {
-              x: (coords.x * 72 / 96),
-              y: pdfPage.getHeight() - (coords.y * 72 / 96) - HIGHTLIGHT_HEIGHT,
-              width: coords.width * 72 / 96,
-              height: HIGHTLIGHT_HEIGHT,
-              color: {type: ColorTypes.RGB, red: +colorComponents[0], green: +colorComponents[1], blue: +colorComponents[2]},
-              opacity: +colorComponents[3]
-            };
-            pdfPage.drawRectangle(highlightOptions);
-            if (commentErrorFound) {
-              const textOption: PDFPageDrawTextOptions = {
-                x: (coords.x * 72 / 96),
-                y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 20,
-                size: 10
-              };
-              pdfPage.drawText('*' + commentPointer, textOption);
-              commentPointer++;
-            }
+            if (pointers.length > 0) {
+              // Only if there were errors previously do we need to draw a highlight manually
 
+              const colorComponents = mark.colour.match(/(\d\.?)+/g);
+              const highlightOptions: PDFPageDrawRectangleOptions = {
+                x: (coords.x * COORD_CONSTANT),
+                y: pdfPage.getHeight() - (coords.y * COORD_CONSTANT) - HIGHTLIGHT_HEIGHT,
+                width: coords.width * COORD_CONSTANT,
+                height: HIGHTLIGHT_HEIGHT,
+                color: {
+                  type: ColorTypes.RGB,
+                  red: +colorComponents[0],
+                  green: +colorComponents[1],
+                  blue: +colorComponents[2]
+                },
+                opacity: +colorComponents[3]
+              };
+              pdfPage.drawRectangle(highlightOptions);
+
+              if (!isEmpty(mark.comment)) {
+                const textOption: PDFPageDrawTextOptions = {
+                  x: (coords.x * COORD_CONSTANT),
+                  y: (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) - 20,
+                  size: 10
+                };
+                pdfPage.drawText('*' + pointer, textOption);
+                pointer++;
+              }
+            }
 
           }
         } else {
-          if (commentErrorFound) {
-            const markOption: PDFPageDrawTextOptions = {
-              x: (coords.x * 72 / 96) + 8,
-              y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 20,
-              size: 10,
-              color: rgb(1, 1, 1)
-            };
+          if (mark.colour.startsWith('#')) {
+            colours = hexRgb(mark.colour);
+          } else if (mark.colour.startsWith('rgb')) {
+            mark = hexRgb('#' + rgbHex(mark.colour));
+          }
+          const markOption = {
+            x: (coords.x * COORD_CONSTANT) + (CIRCLE_SIZE / 2),
+            y: (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) - (CIRCLE_SIZE * 2),
+            size: CIRCLE_SIZE,
+            color: rgb(1, 1, 1)
+          };
 
+          const circleOptions = {
+            x: (coords.x * COORD_CONSTANT) + CIRCLE_SIZE,
+            y: (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) - 16,
+            size: CIRCLE_SIZE,
+            color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue))
+          };
+
+          pdfPage.drawCircle(circleOptions);
+          pdfPage.drawText(mark.totalMark + '', markOption);
+
+          if (pointers.length > 0) {
+            // Only if there were errors previously do we need to draw a comment pointer
             const textOption: PDFPageDrawTextOptions = {
-              x: (coords.x * 72 / 96) + 12,
-              y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 5,
+              x: (coords.x * COORD_CONSTANT) + 12,
+              y: (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) - 5,
               size: 10
             };
 
-            const circleOptions: PDFPageDrawCircleOptions = {
-              x: (coords.x * 72 / 96) + 16,
-              y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 16,
-              size: 10,
-              color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue))
-            };
-
-            pdfPage.drawCircle(circleOptions);
-            pdfPage.drawText(mark.totalMark + '', markOption);
-            pdfPage.drawText('*' + commentPointer, textOption);
-            commentPointer++;
+            pdfPage.drawText('*' + pointer, textOption);
+            pointer++;
           }
         }
       });
@@ -2776,7 +2802,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   y = adjustPointsForResults(y, 15);
   resultsPage.drawText('Total = ' + totalMark, {x: xPosition, y, size: textSize});
 
-  if (commentErrorFound) {
+  if (pointers.length > 0) {
     let feedbackPage = pdfDoc.addPage(PageSizes.A4);
     y = 800;
 
@@ -2791,8 +2817,8 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     });
     y = adjustPointsForResults(y, 15);
 
-    for (let i = 0; i < commentPointers.length; i++) {
-      const splitFeedback = fillParagraph(commentPointers[i], await pdfDoc.embedFont(StandardFonts.Helvetica), textSize, 400 ).split('\n');
+    for (let i = 0; i < pointers.length; i++) {
+      const splitFeedback = fillParagraph(pointers[i], await pdfDoc.embedFont(StandardFonts.Helvetica), textSize, 400 ).split('\n');
       if (splitFeedback.length > 0) {
         for (let j = 0; j < splitFeedback.length; j++) {
 
@@ -2806,7 +2832,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
         }
       } else {
         y = adjustPointsForResults(y, 15);
-        feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y, size: textSize});
+        feedbackPage.drawText(pointers[i] + '', {x: xPosition, y, size: textSize});
 
         if (y <= 5) {
           feedbackPage = pdfDoc.addPage(PageSizes.A4);
@@ -2891,7 +2917,7 @@ const createAssignment = (req, res) => {
               foundCount++;
             } else if ((assignmentName.toLowerCase() + ' (' + (foundCount + 1) + ')') === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME')) {
               foundCount++;
- }
+            }
           }
         }
 
