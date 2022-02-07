@@ -41,6 +41,7 @@
       </button>
       <span
         [matMenuTriggerFor]="highlightMenu"
+        [style.pointer-events]="containsRubric ? 'none': ''"
         [style.background]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedHighlightColour"
         class="pdf-marker-assignment-marking-settings-highlighter-choice">
     </span>
@@ -152,7 +153,7 @@
   </button>
   <span class="pdf-marker-fill-space"></span>
 </mat-toolbar>
-<mat-menu #highlightMenu="matMenu" class="highlight-menu vertical" >
+<mat-menu #highlightMenu="matMenu" class="highlight-menu vertical">
   <div class="highlight-options">
     <div class="highlight-option"
          [class.selected]="highlightOption === selectedHighlightColour"
