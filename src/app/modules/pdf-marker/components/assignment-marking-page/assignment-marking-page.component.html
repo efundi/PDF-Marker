@@ -1,4 +1,9 @@
-<div class="page-wrapper boundary pdf-marker-assignment-marking-container" #pageWrapper>
+<div
+  scrollVisibility
+  (visibilityChanged)="onVisibilityChanged($event)"
+  scrollTarget=".pages-wrapper"
+  class="page-wrapper boundary pdf-marker-assignment-marking-container"
+  #pageWrapper>
 
 
   <canvas #pdfCanvas> </canvas>
@@ -33,7 +38,7 @@
     (click)="onDropClick($event)">
   </div>
 
-  <div class="waiting" *ngIf="waitingToRender">
+  <div class="waiting" *ngIf="renderState !== 'RENDERED'">
     <mat-spinner></mat-spinner>
   </div>
 </div>

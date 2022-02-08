@@ -61,7 +61,10 @@ export class ScrollSpyDirective implements OnInit, OnDestroy, OnChanges {
     for (let i = 0; i < children.length; i++) {
       const element = children[i];
       if (this.spiedTags.some(spiedTag => spiedTag === element.tagName)) {
+        // If any of the spied tags is the next child
+
         if ((element.offsetTop - parentOffset) <= scrollTop) {
+          // If the element is at the top of the scroll container
           currentSection = element.id;
         }
       }

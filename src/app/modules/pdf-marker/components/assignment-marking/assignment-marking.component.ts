@@ -420,10 +420,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     // Scroll to correct place
     element.scrollTo(scrollLeft, scrollTop + PAGE_Y_OFFSET);
-
-    // Now start rendering in the background
-    this.pdfPages.forEach((page) => {
-      page.renderPage();
-    });
+    //
+    // // Now start rendering in the background
+    // this.pdfPages.forEach((page) => {
+    //   page.renderPage();
+    // });
   }
 }

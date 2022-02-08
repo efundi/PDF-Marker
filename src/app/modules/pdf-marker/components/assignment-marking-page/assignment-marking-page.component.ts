@@ -29,6 +29,7 @@ import {
   MarkTypeHighlightComponent
 } from '@pdfMarkerModule/components/mark-type-highlight/mark-type-highlight.component';
 import { PageViewport } from 'pdfjs-dist/types/web/interfaces';
+import {ScrollVisibilityDirective} from "@pdfMarkerModule/directives/scroll-visibility.directive";
 
 const eventBus = new EventBus();
 
@@ -85,6 +86,13 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   private pageWrapper: ElementRef<HTMLDivElement>;
 
   /**
+   * Reference to the page wrapper
+   * @private
+   */
+  @ViewChild('pageWrapper', {static: true, read: ScrollVisibilityDirective})
+  private pageWrapperScrollVisibility: ScrollVisibilityDirective;
+
+  /**
    * Reference to the marker container
    * @private
    */
@@ -113,7 +121,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   private pdfCanvas: ElementRef<HTMLCanvasElement>;
 
   private iconSubscription: Subscription;
-  private zoomSubscription: Subscription;
   private page: PDFPageProxy;
 
   IconTypeEnum = IconTypeEnum;
@@ -125,7 +132,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   /**
    * Indicator if we are still waiting for rendering to complete
    */
-  waitingToRender = true;
+  renderState: 'WAITING' | 'RENDERING' | 'RENDERED' = 'WAITING';
 
   private viewport: PageViewport;
 
@@ -139,7 +146,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
 
   ngOnDestroy() {
     this.iconSubscription.unsubscribe();
-    this.zoomSubscription.unsubscribe();
 
     this.page.cleanup();
   }
@@ -148,10 +154,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     this.iconSubscription = this.assignmentMarkingSessionService.iconChanged.subscribe((icon) => {
       this.onSelectedIcon(icon);
     });
-
-    // this.zoomSubscription = this.assignmentMarkingSessionService.zoomChanged.subscribe((zoom) => {
-    //   this.renderPage();
-    // });
   }
 
   /**
@@ -198,16 +200,12 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     } else if (mark.iconType === IconTypeEnum.NUMBER) {
       const config = this.assignmentMarkingComponent.openNewMarkingCommentModal('Marking Comment', '');
       const handelCommentFN = (formData: any) => {
-        if (formData.removeIcon) {
-          // TODO remove item from the list
-        } else {
-          mark.totalMark = formData.totalMark;
-          mark.sectionLabel = formData.sectionLabel;
-          mark.comment = formData.markingComment;
-          const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
-          updatedMarks.push(mark);
-          this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe();
-        }
+        mark.totalMark = formData.totalMark;
+        mark.sectionLabel = formData.sectionLabel;
+        mark.comment = formData.markingComment;
+        const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
+        updatedMarks.push(mark);
+        this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe();
       };
       this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
     }
@@ -216,6 +214,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   }
 
   resizePage() {
+    this.renderState = 'WAITING';
     const zoom = this.assignmentMarkingSessionService.zoom;
 
     // Get the viewport at the current zoom * PDF scale constant
@@ -232,13 +231,21 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     // Size the page wrapper so that it centers properly
     this.renderer.setStyle(this.pageWrapper.nativeElement, 'height',  Math.floor(this.viewport.height) + 'px');
     this.renderer.setStyle(this.pageWrapper.nativeElement, 'width',  Math.floor(this.viewport.width) + 'px');
-
+    this.pageWrapperScrollVisibility.resetVisibility();
   }
 
-  renderPage() {
-    this.waitingToRender = true;
-    const ctx = this.pdfCanvas.nativeElement.getContext('2d');
+  onVisibilityChanged(visible: boolean) {
+    if (visible) {
+      this.renderPage();
+    }
+  }
 
+  renderPage(): Promise<any> {
+    if (this.renderState !== 'WAITING') {
+      return;
+    }
+    this.renderState = 'RENDERING';
+    const ctx = this.pdfCanvas.nativeElement.getContext('2d');
     this.page.getAnnotations().then(annotationData => {
 
       // First remove all existing annotations
@@ -267,7 +274,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       transform
     });
     return renderTask.promise.then(() => {
-      this.waitingToRender = false;
+      this.renderState = 'RENDERED';
     });
   }
 
@@ -279,8 +286,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     this.pdf.getPage(this.pageIndex + 1).then((page) => {
       this.page = page;
       this.resizePage();
-      return this.renderPage();
-
     }).then(() => {
       this.appService.isLoading$.next(false);
     });
