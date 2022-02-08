@@ -3,6 +3,12 @@ import {IconInfo} from '@pdfMarkerModule/info-objects/icon.info';
 import {isEqual} from 'lodash';
 import {DEFAULT_HIGHLIGHTER, HighlighterColor} from '@sharedModule/info-objects/highlighter-color';
 
+
+export interface ZoomChangeEvent{
+  previous?: number;
+  current: number;
+}
+
 @Injectable()
 export class AssignmentMarkingSessionService implements OnDestroy {
 
@@ -12,7 +18,7 @@ export class AssignmentMarkingSessionService implements OnDestroy {
   highlighterColourChanged: EventEmitter<HighlighterColor> = new EventEmitter<HighlighterColor>();
   colourChanged: EventEmitter<string> = new EventEmitter<string>();
   iconChanged: EventEmitter<IconInfo> = new EventEmitter<IconInfo>();
-  zoomChanged: EventEmitter<number> = new EventEmitter<number>();
+  zoomChanged: EventEmitter<ZoomChangeEvent> = new EventEmitter<ZoomChangeEvent>();
 
   private _colour = AssignmentMarkingSessionService.DEFAULT_COLOR;
   private _icon: IconInfo;
@@ -33,8 +39,12 @@ export class AssignmentMarkingSessionService implements OnDestroy {
 
   set zoom(zoom: number) {
     if (zoom !== this._zoom) {
+      const previous = this._zoom;
       this._zoom = zoom;
-      this.zoomChanged.emit(zoom);
+      this.zoomChanged.emit({
+        previous,
+        current: this._zoom
+      });
     }
   }
 

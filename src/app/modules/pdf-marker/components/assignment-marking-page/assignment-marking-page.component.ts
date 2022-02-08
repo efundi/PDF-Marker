@@ -9,7 +9,7 @@ import {
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import {AnnotationLayer, PDFDocumentProxy, PDFPageProxy} from 'pdfjs-dist';
+import {AnnotationLayer, PDFDocumentProxy, PDFPageProxy, } from 'pdfjs-dist';
 import {EventBus, PDFLinkService} from 'pdfjs-dist/web/pdf_viewer';
 import {MarkTypeIconComponent} from '@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component';
 import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
@@ -27,10 +27,9 @@ import {
 import {IconInfo} from '@pdfMarkerModule/info-objects/icon.info';
 import {
   MarkTypeHighlightComponent
-} from "@pdfMarkerModule/components/mark-type-highlight/mark-type-highlight.component";
-import {
-  MarkingHighlightModalComponent
-} from "@sharedModule/components/marking-highlight-modal/marking-highlight-modal.component";
+} from '@pdfMarkerModule/components/mark-type-highlight/mark-type-highlight.component';
+import { PageViewport } from 'pdfjs-dist/types/web/interfaces';
+import {ScrollVisibilityDirective} from '@pdfMarkerModule/directives/scroll-visibility.directive';
 
 const eventBus = new EventBus();
 
@@ -87,6 +86,13 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   private pageWrapper: ElementRef<HTMLDivElement>;
 
   /**
+   * Reference to the page wrapper
+   * @private
+   */
+  @ViewChild('pageWrapper', {static: true, read: ScrollVisibilityDirective})
+  private pageWrapperScrollVisibility: ScrollVisibilityDirective;
+
+  /**
    * Reference to the marker container
    * @private
    */
@@ -115,7 +121,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   private pdfCanvas: ElementRef<HTMLCanvasElement>;
 
   private iconSubscription: Subscription;
-  private zoomSubscription: Subscription;
   private page: PDFPageProxy;
 
   IconTypeEnum = IconTypeEnum;
@@ -124,7 +129,15 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
 
   drag = false;
 
+  /**
+   * Indicator if we are still waiting for rendering to complete
+   */
+  renderState: 'WAITING' | 'RENDERING' | 'RENDERED' = 'WAITING';
+
+  private viewport: PageViewport;
+
   constructor(private renderer: Renderer2,
+              private elementRef: ElementRef,
               private appService: AppService,
               private assignmentMarkingComponent: AssignmentMarkingComponent,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService,
@@ -133,7 +146,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
 
   ngOnDestroy() {
     this.iconSubscription.unsubscribe();
-    this.zoomSubscription.unsubscribe();
 
     this.page.cleanup();
   }
@@ -141,10 +153,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   ngOnInit(): void {
     this.iconSubscription = this.assignmentMarkingSessionService.iconChanged.subscribe((icon) => {
       this.onSelectedIcon(icon);
-    });
-
-    this.zoomSubscription = this.assignmentMarkingSessionService.zoomChanged.subscribe((zoom) => {
-      this.renderPage();
     });
   }
 
@@ -192,16 +200,12 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     } else if (mark.iconType === IconTypeEnum.NUMBER) {
       const config = this.assignmentMarkingComponent.openNewMarkingCommentModal('Marking Comment', '');
       const handelCommentFN = (formData: any) => {
-        if (formData.removeIcon) {
-          // TODO remove item from the list
-        } else {
-          mark.totalMark = formData.totalMark;
-          mark.sectionLabel = formData.sectionLabel;
-          mark.comment = formData.markingComment;
-          const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
-          updatedMarks.push(mark);
-          this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe();
-        }
+        mark.totalMark = formData.totalMark;
+        mark.sectionLabel = formData.sectionLabel;
+        mark.comment = formData.markingComment;
+        const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
+        updatedMarks.push(mark);
+        this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe();
       };
       this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
     }
@@ -209,25 +213,39 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     return mark;
   }
 
-  private renderPage() {
+  resizePage() {
+    this.renderState = 'WAITING';
     const zoom = this.assignmentMarkingSessionService.zoom;
 
     // Get the viewport at the current zoom * PDF scale constant
-    const viewport = this.page.getViewport({ scale: (zoom * PDF_SCALE_CONSTANT) });
+    this.viewport = this.page.getViewport({ scale: (zoom * PDF_SCALE_CONSTANT) });
 
     // Support HiDPI-screens by setting the width applying DPI Scaling
-    this.renderer.setAttribute(this.pdfCanvas.nativeElement, 'width', Math.floor(viewport.width * DPI_SCALE) + '');
-    this.renderer.setAttribute(this.pdfCanvas.nativeElement, 'height',  Math.floor(viewport.height * DPI_SCALE) + '');
+    this.renderer.setAttribute(this.pdfCanvas.nativeElement, 'width', Math.floor(this.viewport.width * DPI_SCALE) + '');
+    this.renderer.setAttribute(this.pdfCanvas.nativeElement, 'height',  Math.floor(this.viewport.height * DPI_SCALE) + '');
 
     // Set the render size in pixels
-    this.renderer.setStyle(this.pdfCanvas.nativeElement, 'height',  Math.floor(viewport.height) + 'px');
-    this.renderer.setStyle(this.pdfCanvas.nativeElement, 'width',  Math.floor(viewport.width) + 'px');
+    this.renderer.setStyle(this.pdfCanvas.nativeElement, 'height',  Math.floor(this.viewport.height) + 'px');
+    this.renderer.setStyle(this.pdfCanvas.nativeElement, 'width',  Math.floor(this.viewport.width) + 'px');
 
     // Size the page wrapper so that it centers properly
-    this.renderer.setStyle(this.pageWrapper.nativeElement, 'height',  Math.floor(viewport.height) + 'px');
-    this.renderer.setStyle(this.pageWrapper.nativeElement, 'width',  Math.floor(viewport.width) + 'px');
-    const ctx = this.pdfCanvas.nativeElement.getContext('2d');
+    this.renderer.setStyle(this.pageWrapper.nativeElement, 'height',  Math.floor(this.viewport.height) + 'px');
+    this.renderer.setStyle(this.pageWrapper.nativeElement, 'width',  Math.floor(this.viewport.width) + 'px');
+    this.pageWrapperScrollVisibility.resetVisibility();
+  }
 
+  onVisibilityChanged(visible: boolean) {
+    if (visible) {
+      this.renderPage();
+    }
+  }
+
+  renderPage(): Promise<any> {
+    if (this.renderState !== 'WAITING') {
+      return;
+    }
+    this.renderState = 'RENDERING';
+    const ctx = this.pdfCanvas.nativeElement.getContext('2d');
     this.page.getAnnotations().then(annotationData => {
 
       // First remove all existing annotations
@@ -236,7 +254,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       }
 
       AnnotationLayer.render({
-        viewport: viewport.clone({ dontFlip: true }),
+        viewport: this.viewport.clone({ dontFlip: true }),
         div: this.annotationLayer.nativeElement,
         annotations: annotationData,
         page: this.page,
@@ -252,10 +270,12 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
 
     const renderTask = this.page.render({
       canvasContext: ctx,
-      viewport,
+      viewport: this.viewport,
       transform
     });
-    return renderTask.promise;
+    return renderTask.promise.then(() => {
+      this.renderState = 'RENDERED';
+    });
   }
 
   ngAfterViewInit() {
@@ -265,8 +285,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     // TODO an improvement here could be to wait until the page is in view before attempting to render it
     this.pdf.getPage(this.pageIndex + 1).then((page) => {
       this.page = page;
-      return this.renderPage();
-
+      this.resizePage();
     }).then(() => {
       this.appService.isLoading$.next(false);
     });
@@ -437,5 +456,9 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
         this.renderer.setStyle(this.highlighter.nativeElement, 'width', width + 'px');
       });
     }
+  }
+
+  scrollIntoView() {
+    this.elementRef.nativeElement.scrollIntoView({behavior: 'smooth', block: 'start', inline: 'start'});
   }
 }

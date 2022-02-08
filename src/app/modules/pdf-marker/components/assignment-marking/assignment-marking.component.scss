@@ -61,7 +61,7 @@
 
   .pages-wrapper::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: #6f327a;
+    background: var(--pdf-marker-primary);
   }
 }
 
