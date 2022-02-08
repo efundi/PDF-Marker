@@ -16,7 +16,7 @@ import {
   AssignmentMarkingSessionService
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
 import {Subscription} from 'rxjs';
-import {HIGHLIGHTER_OPTIONS, HighlighterColor} from "@sharedModule/info-objects/highlighter-color";
+import {HIGHLIGHTER_OPTIONS, HighlighterColor} from '@sharedModule/info-objects/highlighter-color';
 
 export enum KEY_CODE {
   RIGHT_ARROW = 39,
@@ -160,7 +160,7 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
       this.assignmentMarkingSessionService.icon = selectedIcon;
       this.selecetedIcon = selectedIcon;
 
-      if(this.selecetedIcon.type === IconTypeEnum.HIGHLIGHT){
+      if (this.selecetedIcon.type === IconTypeEnum.HIGHLIGHT) {
         this.highlightToolColor = this.selectedHighlightColour;
       }
     }
@@ -171,7 +171,7 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
     this.control.emit(controlName);
   }
 
-  onPageNumberChange(event) {
+  onPageNumberChange() {
     const number = parseInt(this.iconForm.controls.pageNumber.value, 10);
     if (!isNaN(number) && (number >= 1 && number <= this.pages)) {
       this.currentPage = number;

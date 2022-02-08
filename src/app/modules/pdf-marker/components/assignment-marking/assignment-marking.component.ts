@@ -31,7 +31,7 @@ import {
 import {IRubric} from '@coreModule/utils/rubric.class';
 import {
   AssignmentMarkingPageComponent
-} from "@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component";
+} from '@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component';
 
 
 GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
@@ -408,7 +408,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.pdfPages.forEach((page) => {
       page.resizePage();
     });
-// When the zoom changes we have to adjust the scroll position
+
+    // When the zoom changes we have to adjust the scroll position
     // Offset to add to each page (paddings/margins/borders)
     const PAGE_Y_OFFSET = 19 * this.currentPage;
 
@@ -420,10 +421,5 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     // Scroll to correct place
     element.scrollTo(scrollLeft, scrollTop + PAGE_Y_OFFSET);
-    //
-    // // Now start rendering in the background
-    // this.pdfPages.forEach((page) => {
-    //   page.renderPage();
-    // });
   }
 }

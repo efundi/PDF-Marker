@@ -29,7 +29,7 @@ import {
   MarkTypeHighlightComponent
 } from '@pdfMarkerModule/components/mark-type-highlight/mark-type-highlight.component';
 import { PageViewport } from 'pdfjs-dist/types/web/interfaces';
-import {ScrollVisibilityDirective} from "@pdfMarkerModule/directives/scroll-visibility.directive";
+import {ScrollVisibilityDirective} from '@pdfMarkerModule/directives/scroll-visibility.directive';
 
 const eventBus = new EventBus();
 
