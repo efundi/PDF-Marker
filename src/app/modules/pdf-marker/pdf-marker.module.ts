@@ -17,7 +17,6 @@ import {AssignmentMarkingComponent} from '@pdfMarkerModule/components/assignment
 import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-marking.component';
 import {CreateAssignmentComponent} from './components/create-assignment/create-assignment.component';
 
-import {PdfJsViewerModule} from 'ng2-pdfjs-viewer';
 import {ColorPickerModule} from 'ngx-color-picker';
 import {RxReactiveFormsModule} from '@rxweb/reactive-form-validators';
 
@@ -61,7 +60,6 @@ import { ScrollVisibilityDirective } from './directives/scroll-visibility.direct
     SharedModule,
     LayoutModule,
     PdfMarkerRoutingModule,
-    PdfJsViewerModule,
     ColorPickerModule,
     FileSaverModule,
     RxReactiveFormsModule
