@@ -37,6 +37,28 @@ mat-toolbar {
     }
   }
 
+  .pdf-marker-assignment-marking-settings-highlighter {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .pdf-marker-assignment-marking-settings-highlighter-choice {
+      display: block;
+      width: 32px;
+      margin-left: 3px;
+      text-align: center;
+      height: 6px;
+      border: 1px solid #cecece;
+      position: absolute;
+      top: 85%;
+      cursor: pointer;
+    }
+
+    .pdf-marker-assignment-marking-settings-color-pallette {
+      border: 1px solid;
+    }
+  }
+
   .pdf-marker-assignment-marking-settings-color {
     display: flex;
     flex-direction: row;
@@ -84,4 +106,9 @@ mat-toolbar {
   margin-left: 1rem;
   width: 4rem;
 
+}
+
+
+.zoom-select-popup{
+  max-height: unset !important;
 }

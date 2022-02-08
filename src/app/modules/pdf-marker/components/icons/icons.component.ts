@@ -1,11 +1,22 @@
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output} from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
 import {IconInfo} from '@pdfMarkerModule/info-objects/icon.info';
 import {
   AssignmentMarkingSessionService
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
-import {Subscription} from "rxjs";
+import {Subscription} from 'rxjs';
+import {HIGHLIGHTER_OPTIONS, HighlighterColor} from "@sharedModule/info-objects/highlighter-color";
 
 export enum KEY_CODE {
   RIGHT_ARROW = 39,
@@ -17,7 +28,7 @@ export enum KEY_CODE {
   templateUrl: './icons.component.html',
   styleUrls: ['./icons.component.scss']
 })
-export class IconsComponent implements OnInit, OnChanges {
+export class IconsComponent implements OnInit, OnChanges, OnDestroy {
 
 
   @Output()
@@ -71,24 +82,48 @@ export class IconsComponent implements OnInit, OnChanges {
     { icon: 'spellcheck', type: IconTypeEnum.ACK_MARK, toolTip: 'Acknowledge Tick' },
     { icon: 'close', type: IconTypeEnum.CROSS, toolTip: 'Cross Mark'},
     { icon: 'comment', type: IconTypeEnum.NUMBER, toolTip: 'Comment and Mark'},
-
+    { icon: 'brush', type: IconTypeEnum.HIGHLIGHT, toolTip: 'Highlight'},
   ];
 
   private zoomFormSubscription: Subscription;
+  private highlightSubscription: Subscription;
+
+  /**
+   * Current active highlighter colour
+   */
+  selectedHighlightColour: string;
+
+  /**
+   * Available options for highlighter color
+   */
+  highlightOptions = HIGHLIGHTER_OPTIONS;
+
+  /**
+   * Current colour for the highlighter tool.
+   * This colour differs depending on if rubric is enabled, highlighter active, and selecte highlighter colour
+   */
+  highlightToolColor: string;
 
   constructor(private fb: FormBuilder,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) {}
- /** constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
+  /** constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
     this.matIconRegistry
       .addSvgIcon("halfTick", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/halftick.svg"))
       .addSvgIcon("layout-expand-left", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-left.svg"))
       .addSvgIcon("layout-expand-right", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-right.svg"))
       .addSvgIcon("layout-default", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-default.svg"));
   }
-*/
+   */
+
+  ngOnDestroy() {
+    this.highlightSubscription.unsubscribe();
+    this.zoomFormSubscription.unsubscribe();
+  }
+
   ngOnInit() {
     this.initForm();
     this.selectedColour = this.assignmentMarkingSessionService.colour;
+    this.selectedHighlightColour = this.assignmentMarkingSessionService.highlighterColour.preview;
   }
 
   private initForm() {
@@ -100,22 +135,32 @@ export class IconsComponent implements OnInit, OnChanges {
     this.zoomFormSubscription = this.iconForm.controls.zoom.valueChanges.subscribe((value) => {
       this.assignmentMarkingSessionService.zoom = value;
     });
+
+    this.highlightSubscription = this.assignmentMarkingSessionService.highlighterColourChanged.subscribe((value) => {
+      this.selectedHighlightColour = value.preview;
+    });
   }
 
   onZoomSelected($event: MouseEvent) {
     $event.stopImmediatePropagation();
   }
 
-  onIconClick(event, selectedIcon: IconInfo) {
-    event.stopPropagation();
+  onIconClick(selectedIcon: IconInfo, event?: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     if (this.selecetedIcon === selectedIcon) {
       this.assignmentMarkingSessionService.icon = undefined;
       this.selecetedIcon = undefined;
-
+      this.highlightToolColor = null;
     } else {
       // emit selectedIcon to marking component
       this.assignmentMarkingSessionService.icon = selectedIcon;
       this.selecetedIcon = selectedIcon;
+
+      if(this.selecetedIcon.type === IconTypeEnum.HIGHLIGHT){
+        this.highlightToolColor = this.selectedHighlightColour;
+      }
     }
   }
 
@@ -158,9 +203,21 @@ export class IconsComponent implements OnInit, OnChanges {
     this.paneDisplayOption.emit(option);
   }
 
-  ngOnChanges() {
+  ngOnChanges(changes: SimpleChanges) {
     if (this.iconForm) {
       this.iconForm.controls.pageNumber.setValue(this.currentPage.toString());
     }
+    if (changes.hasOwnProperty('containsRubric')) {
+      if (changes.containsRubric.currentValue) {
+        this.highlightToolColor = 'rgba(0,0,0,.26)';
+      }
+    }
+  }
+
+  selectHighlighter(highlightOption: HighlighterColor) {
+    this.highlightToolColor = highlightOption.colour;
+    this.assignmentMarkingSessionService.highlighterColour = highlightOption;
+    this.assignmentMarkingSessionService.icon = this.markIcons[5];
+    this.selecetedIcon = this.markIcons[5];
   }
 }

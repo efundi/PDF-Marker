@@ -30,6 +30,7 @@ import {AssignmentWorkspaceManageModalComponent} from './components/assignment-w
 import { WorkingFolderComponent } from './components/working-folder/working-folder.component';
 import { AssignmentMarkingPageComponent } from './components/assignment-marking-page/assignment-marking-page.component';
 import { ScrollSpyDirective } from './directives/scroll-spy.directive';
+import { MarkTypeHighlightComponent } from './components/mark-type-highlight/mark-type-highlight.component';
 
 
 @NgModule({
@@ -50,7 +51,8 @@ import { ScrollSpyDirective } from './directives/scroll-spy.directive';
     WelcomeComponent,
     WorkingFolderComponent,
     AssignmentMarkingPageComponent,
-    ScrollSpyDirective
+    ScrollSpyDirective,
+    MarkTypeHighlightComponent
   ],
   imports: [
     CommonModule,

@@ -1,0 +1,41 @@
+<div class="pdf-marker-mark-type-highlight-container" [class.pallet-open]="menuTrigger.menuOpen">
+
+  <div class="highlight" #highlight></div>
+  <div class="tools">
+    <div style="flex-grow: 1">&nbsp;</div>
+    <div class="tool-container">
+      <mat-icon
+        class="icon-edit"
+        matTooltip="Add/Edit Comment"
+        (click)="onEdit($event)">
+        chat
+      </mat-icon>
+      <mat-icon
+        [style.color]="selectedHighlightColour.preview"
+        class="icon-color"
+        #menuTrigger="matMenuTrigger"
+        [matMenuTriggerFor]="highlightMenu"
+        matTooltip="Change colour">
+        lens
+      </mat-icon>
+      <mat-menu #highlightMenu="matMenu" class="highlight-menu" >
+        <div class="highlight-options">
+          <div class="highlight-option"
+               [class.selected]="highlightOption === selectedHighlightColour"
+               (click)="selectHighlighter(highlightOption)"
+               *ngFor="let highlightOption of highlightOptions">
+            <div class="highlight-option-brush" [style.background-color]="highlightOption.preview"></div>
+          </div>
+        </div>
+      </mat-menu>
+      <mat-icon
+        class="icon-delete"
+        matTooltip="Remove"
+        (click)="onRemove($event)">
+        delete_forever
+      </mat-icon>
+    </div>
+  </div>
+
+
+</div>

@@ -2,6 +2,7 @@
 export interface MarkCoordinate {
   x?: number;
   y?: number;
+  width?: number;
 }
 
 export interface MarkInfo {

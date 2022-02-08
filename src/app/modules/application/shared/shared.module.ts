@@ -41,6 +41,7 @@ import {RubricCriteriaComponent} from './components/rubric-criteria/rubric-crite
 import { RubricComponent } from './components/rubric/rubric.component';
 import {MatOption, MatOptionModule} from "@angular/material/core";
 import {MatRadioModule} from "@angular/material/radio";
+import { MarkingHighlightModalComponent } from './components/marking-highlight-modal/marking-highlight-modal.component';
 
 
 const SHARED_MODULES = [
@@ -86,7 +87,8 @@ const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, Al
     RubricCriteriaLevelBlockComponent,
     RubricViewMarkingComponent,
     RubricCriteriaComponent,
-    RubricComponent
+    RubricComponent,
+    MarkingHighlightModalComponent
   ],
   imports: [
     CommonModule,

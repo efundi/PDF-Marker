@@ -39,14 +39,18 @@ import {
   writeFileSync,
 } from 'fs';
 import {json2csv, json2csvAsync} from 'json-2-csv';
-import {PageSizes, PDFDocument, PDFPage, rgb, StandardFonts} from 'pdf-lib';
+import {PageSizes, PDFDocument, PDFPage, rgb, StandardFonts,
+  PDFPageDrawRectangleOptions,
+  PDFPageDrawSVGOptions,
+  PDFPageDrawTextOptions,
+  ColorTypes} from 'pdf-lib';
 import {AnnotationFactory} from 'annotpdf';
 import {IconTypeEnum} from './src/app/modules/pdf-marker/info-objects/icon-type.enum';
 import {IconSvgEnum} from './src/app/modules/pdf-marker/info-objects/icon-svg.enum';
 import {IRubric, IRubricName} from './src/app/modules/application/core/utils/rubric.class';
 import {AssignmentSettingsInfo} from './src/app/modules/pdf-marker/info-objects/assignment-settings.info';
 import {IComment} from './src/app/modules/application/core/utils/comment.class';
-
+import {MarkInfo} from './src/app/modules/application/shared/info-objects/mark.info';
 const zipDir = require('zip-dir');
 const JSZip = require('jszip');
 const unzipper = require('unzipper');
@@ -72,7 +76,7 @@ const GRADES_FILE = 'grades.csv';
 const RUBRICS_FILE = 'rubrics.json';
 const SUBMISSION_FOLDER = 'Submission attachment(s)';
 const FEEDBACK_FOLDER = 'Feedback Attachment(s)';
-const APP_DATA_DIR = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share")
+const APP_DATA_DIR = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share');
 const CONFIG_DIR = APP_DATA_DIR + sep + 'pdf-config' + sep;
 const UPLOADS_DIR = '.' + sep + 'uploads';
 const COMMENTS_FILE = 'comments.json';
@@ -97,6 +101,9 @@ const INVALID_STUDENT_FOLDER = 'Invalid student folder';
 const COULD_NOT_READ_COMMENT_LIST = 'Could not read list of comments!';
 const COULD_NOT_READ_WORKSPACE_LIST = 'Could not read list of working folders!';
 const NOT_PROVIDED_COMMENT = 'Comment must be provided!';
+
+
+const HIGHTLIGHT_HEIGHT = 20;
 /**/
 
 /*
@@ -107,7 +114,7 @@ const NOT_PROVIDED_COMMENT = 'Comment must be provided!';
 // ssr DOM
 const domino = require('domino');
 // for mock global window by domino
-const win = domino.createWindow("<html>");
+const win = domino.createWindow('<html>');
 // mock
 global['window'] = win;
 // not implemented property and functions
@@ -123,18 +130,24 @@ Object.defineProperty(win.document.body.style, 'transform', {
 global['document'] = win.document;
 global['HTMLAnchorElement'] = win.HTMLAnchorElement;
 
-global.window.requestAnimationFrame = function(callback){
-  callback(0)
+global.window.requestAnimationFrame = function(callback) {
+  callback(0);
   return 0;
 };
 
+function isEmpty(str: string){
+  return str === null || str === undefined || str.length === 0;
+}
+
 const assignmentList = (callback) => {
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
+    if (err) {
       return [];
+    }
 
-    if (!isJson(data))
+    if (!isJson(data)) {
       return [];
+    }
 
     const config = JSON.parse(data.toString());
     const folderModels = [];
@@ -146,8 +159,9 @@ const assignmentList = (callback) => {
           const files = glob.sync(config.defaultPath + '/' + folder + '/**');
           files.sort((a, b) => (a > b) ? 1 : -1);
           folderModels.push(hierarchyModel(files, config.defaultPath));
-          if (folderModels.length === folderCount)
+          if (folderModels.length === folderCount) {
             callback(null, folderModels);
+          }
         });
       } else {
         callback(null, folderModels);
@@ -206,11 +220,13 @@ const uploadFile = multer({storage: store}).single('file');
 /*HELPER FUNCTIONS*/
 const readFromFile = (req, res, filePath: string, callback = null, errorMessage: string = null) => {
   return readFile(filePath, (err, data) => {
-    if (err)
+    if (err) {
       return sendResponse(req, res, 500, (errorMessage) ? errorMessage : err.message);
+    }
 
-    if (callback && isFunction(callback))
+    if (callback && isFunction(callback)) {
       callback(data);
+    }
   });
 };
 
@@ -220,23 +236,27 @@ const writeToFile = (req, res, filePath: string,
                      customFailureMsg: string = null,
                      callback = null) => {
   writeFile(filePath, data, (err) => {
-    if (err)
+    if (err) {
       return sendResponse(req, res, 500, (customFailureMsg) ? customFailureMsg : err.message);
+    }
 
-    if (callback && isFunction(callback))
+    if (callback && isFunction(callback)) {
       callback();
-    else
+    } else {
       return sendResponse(req, res, 200, (customSuccessMsg) ? customSuccessMsg : 'Successfully saved to file!');
+    }
   });
 };
 
 const checkAccess = (req, res, filePath: string, callback = null) => {
   return access(filePath, constants.F_OK, (err) => {
-    if (err)
+    if (err) {
       return sendResponse(req, res, 404, err.message);
+    }
 
-    if (callback && isFunction(callback))
+    if (callback && isFunction(callback)) {
       callback();
+    }
   });
 };
 
@@ -258,12 +278,14 @@ const isNullOrUndefinedOrEmpty = (object: string): boolean => {
 /*END HELPER FUNCTIONS*/
 
 const settingsPost = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
 
   return checkAccess(req, res, req.body.defaultPath, () => {
     const data = new Uint8Array(Buffer.from(JSON.stringify(req.body)));
@@ -277,26 +299,30 @@ app.post('/api/settings', [
 ], settingsPost);
 
 const settingsGet = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   if (!existsSync(CONFIG_DIR)) {
     mkdir(CONFIG_DIR, err => {
-      if (err)
+      if (err) {
         return sendResponse(req, res, 500, COULD_NOT_CREATE_CONFIG_DIRECTORY);
+      }
       return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-        if (!isJson(data))
+        if (!isJson(data)) {
           return sendResponseData(req, res, 200, {});
-        else
+        } else {
           return sendResponseData(req, res, 200, data.toString());
+        }
       });
     });
   } else {
     return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-      if (!isJson(data))
+      if (!isJson(data)) {
         return sendResponseData(req, res, 200, {});
-      else
+      } else {
         return sendResponseData(req, res, 200, data.toString());
+      }
     });
   }
 };
@@ -307,19 +333,21 @@ app.get('/api/settings', settingsGet);
 /* Working Folder API */
 
 const createWorkingFolder = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
 
   const configData = readFileSync(CONFIG_DIR + CONFIG_FILE);
   const config = JSON.parse(configData.toString());
   if (!existsSync(config.defaultPath + sep + req.body.workingFolders)) {
     mkdirSync(config.defaultPath + sep + req.body.workingFolders);
   } else {
-    return res.status(404).send({message: "Folder with name '" + req.body.workingFolders + "' already exists."});
+    return res.status(404).send({message: 'Folder with name \'' + req.body.workingFolders + '\' already exists.'});
   }
   console.log(config);
   if (isNullOrUndefined(config.folders)) {
@@ -335,15 +363,19 @@ app.post('/api/workspace/create', [
 ], createWorkingFolder);
 
 const updateWorkspaceName = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return res.status(401).send({message: FORBIDDEN_RESOURCE});
-  if (!req.body.workspaceName)
+  }
+  if (!req.body.workspaceName) {
     return res.status(400).send({message: NOT_PROVIDED_WORKSPACE_NAME});
-  if (!req.body.newWorkspaceName)
+  }
+  if (!req.body.newWorkspaceName) {
     return res.status(400).send({message: NOT_PROVIDED_NEW_WORKSPACE_NAME});
+  }
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return res.status(400).json({errors: errors.array()});
+  }
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
     if (err) {
       return res.status(500).send({message: 'Failed to read configurations!'});
@@ -432,23 +464,26 @@ const moveWorkspaceAssignments = (req, res) => {
 app.post('/api/workspace/move', moveWorkspaceAssignments);
 
 const deleteWorkspaceConfirmation = async (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
-  if (!req.body.folder)
+  if (!req.body.folder) {
     return sendResponse(req, res, 400, NOT_PROVIDED_WORKSPACE_NAME);
+  }
 
   const deleteFolder: string = req.body.folder;
 
   if (existsSync(CONFIG_DIR + CONFIG_FILE)) {
     return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, async (data) => {
-      if (!isJson(data))
+      if (!isJson(data)) {
         return sendResponse(req, res, 400, COULD_NOT_READ_WORKSPACE_LIST);
+      }
       console.log(data);
       const config = JSON.parse(data.toString());
       const folders = config.folders;
       const workspaceNames = folders.map(item => {
-        item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+        item = item.substr(item.lastIndexOf('\\') + 1, item.length);
         return item;
       });
       console.log(workspaceNames);
@@ -467,7 +502,7 @@ const deleteWorkspaceConfirmation = async (req, res) => {
 
         if (existsSync(folders[indexFound])) {
           try {
-           await moveToRecycleBin(folders[indexFound]);
+            await moveToRecycleBin(folders[indexFound]);
           } catch (e) {
             return sendResponse(req, res, 500, e);
           }
@@ -491,11 +526,13 @@ app.post('/api/workspace/delete',
   check('folder').not().isEmpty().withMessage(NOT_PROVIDED_WORKSPACE_NAME), deleteWorkspaceConfirmation);
 
 const deleteWorkspaceCheck = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
-  if (!req.body.folder)
+  if (!req.body.folder) {
     return sendResponse(req, res, 400, NOT_PROVIDED_WORKSPACE_NAME);
+  }
 
   const deleteFolder: string = req.body.folder;
   let found = false;
@@ -508,7 +545,7 @@ const deleteWorkspaceCheck = (req, res) => {
     const config = JSON.parse(data.toString());
     const workspaces: string[] = config.folders;
     const workspaceNames = workspaces.map(item => {
-      item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+      item = item.substr(item.lastIndexOf('\\') + 1, item.length);
       return item;
     });
     const currPath = config.defaultPath + sep + deleteFolder;
@@ -553,11 +590,13 @@ const zipFileUploadCallback = (req, res, data) => {
     }
   }
 
-  if (isInvalidKey)
+  if (isInvalidKey) {
     return sendResponse(req, res, 400, `Invalid parameter ${invalidParam} found in request`);
+  }
 
-  if (isNullOrUndefined(req.body.file))
+  if (isNullOrUndefined(req.body.file)) {
     return sendResponse(req, res, 400, 'No file selected!');
+  }
 
   return readFromFile(req, res, req.body.file, (zipFile) => {
     const config = JSON.parse(data.toString());
@@ -569,16 +608,18 @@ const zipFileUploadCallback = (req, res, data) => {
     let rubrics: IRubric[];
 
     if (!isRubric) {
-      if (isNullOrUndefined(req.body.rubric))
+      if (isNullOrUndefined(req.body.rubric)) {
         return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
+      }
 
       rubricName = req.body.rubric.trim();
       if (!isNullOrUndefined(rubricName)) {
         try {
           const rubricData = readFileSync(CONFIG_DIR + RUBRICS_FILE);
 
-          if (!isJson(rubricData))
+          if (!isJson(rubricData)) {
             return sendResponse(req, res, 400, INVALID_RUBRIC_JSON_FILE);
+          }
 
           rubrics = JSON.parse(rubricData.toString());
 
@@ -631,17 +672,18 @@ const zipFileUploadCallback = (req, res, data) => {
           const oldPath = entryPath[0];
           let foundCount = 0;
           for (let i = 0; i < folders.length; i++) {
-            if (oldPath.toLowerCase() + '/' === folders[i].toLowerCase() + '/')
+            if (oldPath.toLowerCase() + '/' === folders[i].toLowerCase() + '/') {
               foundCount++;
-            else if ((oldPath.toLowerCase() + ' (' + (foundCount + 1) + ')' + '/') === folders[i].toLowerCase() + '/')
+            } else if ((oldPath.toLowerCase() + ' (' + (foundCount + 1) + ')' + '/') === folders[i].toLowerCase() + '/') {
               foundCount++;
+            }
           }
 
           const settings: AssignmentSettingsInfo = {defaultColour: '#6f327a', rubric, isCreated: false};
           if (foundCount !== 0) {
             newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
 
-            if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+            if (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') {
               extractZipFile(req.body.file, config.defaultPath + sep, newFolder + sep, oldPath + '/', req.body.assignmentName, req.body.assignmentType).then(() => {
                 return writeToFile(req, res, config.defaultPath + sep + newFolder + sep + SETTING_FILE, JSON.stringify(settings),
                   EXTRACTED_ZIP,
@@ -655,8 +697,9 @@ const zipFileUploadCallback = (req, res, data) => {
                     return sendResponse(req, res, 200, EXTRACTED_ZIP);
                   });
               }).catch((error) => {
-                if (existsSync(config.defaultPath + sep + newFolder))
+                if (existsSync(config.defaultPath + sep + newFolder)) {
                   deleteFolderRecursive(config.defaultPath + sep + newFolder);
+                }
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
@@ -673,13 +716,14 @@ const zipFileUploadCallback = (req, res, data) => {
                     return sendResponse(req, res, 200, EXTRACTED_ZIP);
                   });
               }).catch((error) => {
-                if (existsSync(config.defaultPath + sep + newFolder))
+                if (existsSync(config.defaultPath + sep + newFolder)) {
                   deleteFolderRecursive(config.defaultPath + sep + newFolder);
+                }
                 return sendResponse(req, res, 501, error.message);
               });
             }
           } else {
-            if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
+            if (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') {
               extractZipFile(req.body.file, config.defaultPath + sep, '', '', req.body.assignmentName, req.body.assignmentType)
                 .then(async () => {
                   return writeToFile(req, res, config.defaultPath + sep + oldPath + sep + SETTING_FILE, JSON.stringify(settings),
@@ -694,8 +738,9 @@ const zipFileUploadCallback = (req, res, data) => {
                       return sendResponse(req, res, 200, EXTRACTED_ZIP);
                     });
                 }).catch((error) => {
-                if (existsSync(config.defaultPath + sep + oldPath))
+                if (existsSync(config.defaultPath + sep + oldPath)) {
                   deleteFolderRecursive(config.defaultPath + sep + oldPath);
+                }
                 return sendResponse(req, res, 501, error.message);
               });
             } else {
@@ -712,8 +757,9 @@ const zipFileUploadCallback = (req, res, data) => {
                     return sendResponse(req, res, 200, EXTRACTED_ZIP);
                   });
               }).catch((error) => {
-                if (existsSync(config.defaultPath + sep + newFolder))
+                if (existsSync(config.defaultPath + sep + newFolder)) {
                   deleteFolderRecursive(config.defaultPath + sep + newFolder);
+                }
                 return sendResponse(req, res, 501, error.message);
               });
             }
@@ -729,12 +775,14 @@ const zipFileUploadCallback = (req, res, data) => {
 };
 
 const importFn = (req, res, next) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     return zipFileUploadCallback(req, res, data);
     /*return uploadFile(req, res, (err) => {
@@ -750,12 +798,14 @@ app.post('/api/import', importFn);
 /* New Folder API */
 
 const saveNewComment = async (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
 
   if (!existsSync(CONFIG_DIR + COMMENTS_FILE)) {
     await writeFileSync(CONFIG_DIR + COMMENTS_FILE, '[]');
@@ -785,21 +835,25 @@ app.post('/api/comment/save', [
 /*READ COMMENTS DETAIL*/
 const getComments = async (req, res) => {
 
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
   if (!existsSync(CONFIG_DIR)) {
     return mkdir(CONFIG_DIR, err => {
-      if (err)
+      if (err) {
         return sendResponse(req, res, 500, COULD_NOT_READ_COMMENT_LIST);
+      }
     });
   } else {
     if (existsSync(CONFIG_DIR + COMMENTS_FILE)) {
       return readFromFile(req, res, CONFIG_DIR + COMMENTS_FILE, (data) => {
-        if (!isJson(data))
+        if (!isJson(data)) {
           return sendResponse(req, res, 400, COULD_NOT_READ_COMMENT_LIST);
+        }
         const comments: IComment[] = getCommentsDetails(JSON.parse(data.toString()));
-        if (Array.isArray(comments))
+        if (Array.isArray(comments)) {
           return sendResponseData(req, res, 200, comments);
+        }
 
       });
     } else {
@@ -815,18 +869,21 @@ app.get('/api/comment/list', getComments);
 /* DELETE RUBRICS */
 
 const deleteCommentFn = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
-  if (!req.body.id)
+  if (!req.body.id) {
     return sendResponse(req, res, 400, NOT_PROVIDED_COMMENT);
+  }
 
   const id: number = req.body.id;
   let found = false;
 
   return readFromFile(req, res, CONFIG_DIR + COMMENTS_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
     const comments: IComment[] = getCommentsDetails(JSON.parse(data.toString()));
 
     try {
@@ -846,21 +903,25 @@ app.post('/api/comment/delete/check',
   check('id').not().isEmpty().withMessage(NOT_PROVIDED_COMMENT), deleteCommentFn);
 
 const deleteCommentConfirmation = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
-  if (!req.body.id)
+  if (!req.body.id) {
     return sendResponse(req, res, 400, NOT_PROVIDED_COMMENT);
+  }
 
-  if (!req.body.id)
+  if (!req.body.id) {
     return sendResponse(req, res, 400, FORBIDDEN_RESOURCE);
+  }
 
   const id: number = req.body.id;
 
   if (existsSync(CONFIG_DIR + COMMENTS_FILE)) {
     return readFromFile(req, res, CONFIG_DIR + COMMENTS_FILE, async (data) => {
-      if (!isJson(data))
+      if (!isJson(data)) {
         return sendResponse(req, res, 400, COULD_NOT_READ_COMMENT_LIST);
+      }
       console.log(data);
       const comments: IComment[] = JSON.parse(data.toString());
       console.log(comments);
@@ -873,8 +934,9 @@ const deleteCommentConfirmation = (req, res) => {
           }
         }
 
-        if (indexFound === -1)
+        if (indexFound === -1) {
           return sendResponse(req, res, 404, 'Could not find comment');
+        }
 
         comments.splice(indexFound, 1);
         const newComments = getCommentsDetails(comments);
@@ -915,33 +977,39 @@ const getCommentsDetails = (comments: IComment[]) => {
 
 const rubricFileUpload = (req, res, err) => {
 
-  if (err)
+  if (err) {
     return sendResponseData(req, res, 501, {error: err});
+  }
 
-  if (!req.file)
+  if (!req.file) {
     return sendResponse(req, res, 404, 'No file uploaded!');
+  }
 
   const mimeTypes = ['application/json'];
 
   const rubricName = req.body.rubricName.trim();
 
-  if (mimeTypes.indexOf(req.file.mimetype) === -1)
+  if (mimeTypes.indexOf(req.file.mimetype) === -1) {
     return sendResponse(req, res, 400, 'Not a valid JSON file. Please select a file with a .json extension!');
+  }
 
   return readFile(UPLOADS_DIR + sep + req.file.originalname, (err, data) => {
-    if (err)
+    if (err) {
       return sendResponse(req, res, 500, COULD_NOT_CREATE_RUBRIC_FILE);
+    }
 
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, INVALID_RUBRIC_JSON_FILE);
+    }
 
     const uploadedRubric: IRubric = JSON.parse(data.toString());
     // Read file contents of rubricFiles, if file does not exist, create one.
     // If file exists, get file contents, then append to it.
     if (!existsSync(CONFIG_DIR)) {
       mkdir(CONFIG_DIR, err => {
-        if (err)
+        if (err) {
           return sendResponse(req, res, 500, COULD_NOT_CREATE_CONFIG_DIRECTORY);
+        }
 
         uploadedRubric.name = rubricName;
         return writeRubricFile(req, res, [uploadedRubric]);
@@ -949,11 +1017,13 @@ const rubricFileUpload = (req, res, err) => {
     } else {
       if (existsSync(CONFIG_DIR + RUBRICS_FILE)) {
         return readFile(CONFIG_DIR + RUBRICS_FILE, (err, data) => {
-          if (err)
+          if (err) {
             return sendResponse(req, res, 500, 'Failed to read file containing list of rubrics!');
+          }
 
-          if (!isJson(data))
+          if (!isJson(data)) {
             return sendResponse(req, res, 400, INVALID_RUBRIC_JSON_FILE);
+          }
 
           const rubrics: IRubric[] = JSON.parse(data.toString());
           if (Array.isArray(rubrics)) {
@@ -963,10 +1033,11 @@ const rubricFileUpload = (req, res, err) => {
             clonedRubrics.sort((a, b) => (a.name > b.name) ? 1 : -1);
 
             for (let i = 0; i < clonedRubrics.length; i++) {
-              if (clonedRubrics[i].name.toLowerCase() === rubricName.toLowerCase())
+              if (clonedRubrics[i].name.toLowerCase() === rubricName.toLowerCase()) {
                 foundCount++;
-              else if (clonedRubrics[i].name.toLowerCase() === (rubricName.toLowerCase() + ' (' + (foundCount + 1) + ')'))
+              } else if (clonedRubrics[i].name.toLowerCase() === (rubricName.toLowerCase() + ' (' + (foundCount + 1) + ')')) {
                 foundCount++;
+              }
             }
 
             if (foundCount !== 0) {
@@ -990,23 +1061,26 @@ const rubricFileUpload = (req, res, err) => {
 };
 
 const deleteUploadedFile = (req) => {
-  if (req.file && existsSync(UPLOADS_DIR + sep + req.file.originalname))
+  if (req.file && existsSync(UPLOADS_DIR + sep + req.file.originalname)) {
     unlinkSync(UPLOADS_DIR + sep + req.file.originalname);
+  }
 };
 
 const deleteMultipleFiles = (req) => {
   if (req.files && req.files.length > 0) {
     for (let i = 0; i < req.files.length; i++) {
-      if (req.files[i] && existsSync(UPLOADS_DIR + sep + req.files[i].originalname))
+      if (req.files[i] && existsSync(UPLOADS_DIR + sep + req.files[i].originalname)) {
         unlinkSync(UPLOADS_DIR + sep + req.files[i].originalname);
+      }
     }
   }
 };
 
 const writeRubricFile = (req, res, rubricData: IRubric[]) => {
   return writeFile(CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubricData), (err) => {
-    if (err)
+    if (err) {
       return sendResponse(req, res, 500, COULD_NOT_CREATE_RUBRIC_FILE);
+    }
 
     return getRubricNames(req, res, rubricData);
   });
@@ -1026,12 +1100,14 @@ const getRubricNames = (req, res, rubrics: IRubric[]) => {
 };
 
 const rubricUploadFn = async (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   return uploadFile(req, res, (err) => {
-    if (err)
+    if (err) {
       return sendResponse(req, res, 500, 'Error uploading rubric file');
+    }
 
     rubricFileUpload(req, res, err);
   });
@@ -1046,25 +1122,29 @@ app.post('/api/rubric/import', [
 /* READ RUBRICS */
 
 const getRubricsFn = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   if (!existsSync(CONFIG_DIR)) {
     return mkdir(CONFIG_DIR, err => {
-      if (err)
+      if (err) {
         return sendResponse(req, res, 500, COULD_NOT_CREATE_CONFIG_DIRECTORY);
+      }
 
       return writeRubricFile(req, res, []);
     });
   } else {
     if (existsSync(CONFIG_DIR + RUBRICS_FILE)) {
       return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
-        if (!isJson(data))
+        if (!isJson(data)) {
           return sendResponse(req, res, 400, INVALID_RUBRIC_JSON_FILE);
+        }
 
         const rubrics: IRubric[] = JSON.parse(data.toString());
-        if (Array.isArray(rubrics))
+        if (Array.isArray(rubrics)) {
           return sendResponseData(req, res, 200, rubrics);
+        }
         return writeRubricFile(req, res, []);
       });
     } else {
@@ -1078,21 +1158,24 @@ app.get('/api/rubric/import', getRubricsFn);
 
 /*READ RUBRIC NAMES*/
 const getRubricNamesFn = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   if (!existsSync(CONFIG_DIR)) {
     return mkdir(CONFIG_DIR, err => {
-      if (err)
+      if (err) {
         return sendResponse(req, res, 500, COULD_NOT_CREATE_CONFIG_DIRECTORY);
+      }
 
       return writeRubricFile(req, res, []);
     });
   } else {
     if (existsSync(CONFIG_DIR + RUBRICS_FILE)) {
       return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
-        if (!isJson(data))
+        if (!isJson(data)) {
           return sendResponse(req, res, 400, INVALID_RUBRIC_JSON_FILE);
+        }
 
         const rubrics: IRubric[] = JSON.parse(data.toString());
         return getRubricNames(req, res, rubrics);
@@ -1108,17 +1191,20 @@ app.get('/api/rubric/details', getRubricNamesFn);
 /* DELETE RUBRICS */
 
 const deleteRubricsFn = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
-  if (!req.body.rubricName)
+  if (!req.body.rubricName) {
     return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
+  }
 
   const rubricName: string = req.body.rubricName.trim();
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     const config = JSON.parse(data.toString());
 
@@ -1133,8 +1219,9 @@ const deleteRubricsFn = (req, res) => {
           }
           const settings: AssignmentSettingsInfo = JSON.parse(settingFileContents.toString());
 
-          if (settings.rubric && settings.rubric.name.toLowerCase() === rubricName.toLowerCase())
+          if (settings.rubric && settings.rubric.name.toLowerCase() === rubricName.toLowerCase()) {
             found = true;
+          }
         }
       });
 
@@ -1148,21 +1235,25 @@ app.post('/api/rubric/delete/check',
   check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), deleteRubricsFn);
 
 const deleteRubricConfirmation = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
-  if (!req.body.rubricName)
+  if (!req.body.rubricName) {
     return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
+  }
 
-  if (!req.body.confirmation)
+  if (!req.body.confirmation) {
     return sendResponse(req, res, 400, FORBIDDEN_RESOURCE);
+  }
 
   const rubricName: string = req.body.rubricName.trim();
 
   if (existsSync(CONFIG_DIR + RUBRICS_FILE)) {
     return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
-      if (!isJson(data))
+      if (!isJson(data)) {
         return sendResponse(req, res, 400, INVALID_RUBRIC_JSON_FILE);
+      }
 
       const rubrics: IRubric[] = JSON.parse(data.toString());
       if (Array.isArray(rubrics)) {
@@ -1175,10 +1266,11 @@ const deleteRubricConfirmation = (req, res) => {
           }
         }
 
-        if (indexFound === -1)
+        if (indexFound === -1) {
           return sendResponse(req, res, 404, 'Could not find rubric');
-        else
+        } else {
           rubrics.splice(indexFound, 1);
+        }
 
         return writeRubricFile(req, res, rubrics);
       }
@@ -1195,15 +1287,18 @@ app.post('/api/rubric/delete',
 
 /*READ RUBRIC CONTENTS*/
 const getRubricContentsFn = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return res.status(401).send({message: FORBIDDEN_RESOURCE});
-  if (!req.body.rubricName)
+  }
+  if (!req.body.rubricName) {
     return res.status(400).send({message: NOT_PROVIDED_RUBRIC});
+  }
   const rubricName: string = req.body.rubricName;
   if (existsSync(CONFIG_DIR + RUBRICS_FILE)) {
     return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
-      if (!isJson(data))
+      if (!isJson(data)) {
         return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
+      }
       const rubrics: IRubric[] = JSON.parse(data.toString());
       if (Array.isArray(rubrics)) {
         let indexFound = -1;
@@ -1215,9 +1310,9 @@ const getRubricContentsFn = (req, res) => {
           }
         }
 
-        if (indexFound === -1)
+        if (indexFound === -1) {
           return res.status(404).send({message: 'Could not find rubric'});
-        else {
+        } else {
           return res.status(200).send(rubrics[indexFound]);
         }
       }
@@ -1235,19 +1330,22 @@ app.post('/api/rubric/contents',
 /* CHANGE ASSIGNEMNT RUBRIC */
 
 const assignmentRubricUpdateFn = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return res.status(401).send({message: FORBIDDEN_RESOURCE});
+  }
 
-  if (!req.body.assignmentName)
+  if (!req.body.assignmentName) {
     return res.status(400).send({message: NOT_PROVIDED_ASSIGNMENT_LOCATION});
+  }
 
   const rubricName: string = (req.body.rubricName) ? req.body.rubricName : null;
   const assignmentName: string = req.body.assignmentName;
 
   if (existsSync(CONFIG_DIR + RUBRICS_FILE)) {
     return readFromFile(req, res, CONFIG_DIR + RUBRICS_FILE, (data) => {
-      if (!isJson(data))
+      if (!isJson(data)) {
         return res.status(400).send({message: INVALID_RUBRIC_JSON_FILE});
+      }
       const rubrics: IRubric[] = JSON.parse(data.toString());
       let rubric: IRubric;
       if (Array.isArray(rubrics)) {
@@ -1261,8 +1359,9 @@ const assignmentRubricUpdateFn = (req, res) => {
             }
           }
 
-          if (indexFound === -1)
+          if (indexFound === -1) {
             return res.status(404).send({message: 'Could not find rubric'});
+          }
 
           rubric = rubrics[indexFound];
         } else {
@@ -1270,8 +1369,9 @@ const assignmentRubricUpdateFn = (req, res) => {
         }
 
         return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-          if (!isJson(data))
+          if (!isJson(data)) {
             return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+          }
 
           const config = JSON.parse(data.toString());
           try {
@@ -1280,8 +1380,9 @@ const assignmentRubricUpdateFn = (req, res) => {
               unlinkSync(markFile);
             });
             return readFromFile(req, res, config.defaultPath + sep + assignmentName + sep + SETTING_FILE, (data) => {
-              if (!isJson(data))
+              if (!isJson(data)) {
                 return sendResponse(req, res, 400, 'invalid assignment settings');
+              }
 
               const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(data);
               assignmentSettingsInfo.rubric = rubric;
@@ -1297,8 +1398,9 @@ const assignmentRubricUpdateFn = (req, res) => {
                         for (let i = 0; i < gradesJSON.length; i++) {
                           if (i === 0) {
                             const keys = Object.keys(gradesJSON[i]);
-                            if (keys.length > 0)
+                            if (keys.length > 0) {
                               assignmentHeader = keys[0];
+                            }
                           } else if (i > 1) {
                             gradesJSON[i].field5 = 0;
                             changed = true;
@@ -1307,15 +1409,17 @@ const assignmentRubricUpdateFn = (req, res) => {
 
                         if (changed) {
                           return json2csv(gradesJSON, (err, csv) => {
-                            if (err)
+                            if (err) {
                               return sendResponse(req, res, 400, 'Failed to convert json to csv!');
+                            }
 
                             return writeToFile(req, res, config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', () => {
                               return sendResponseData(req, res, 200, assignmentSettingsInfo.rubric);
                             });
                           }, {emptyFieldValue: '', prependHeader: false});
-                        } else
+                        } else {
                           return sendResponse(req, res, 400, 'Failed to save mark');
+                        }
                       })
                       .catch(reason => {
                         return sendResponse(req, res, 400, reason);
@@ -1339,12 +1443,14 @@ app.post('/api/assignment/rubric/update', [
 /* END CHANGE ASSIGNMENT RUBRIC*/
 
 const getAssignments = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     const config = JSON.parse(data.toString());
 
@@ -1357,8 +1463,9 @@ const getAssignments = (req, res) => {
           const files = glob.sync(config.defaultPath + '/' + folder + '/**');
           files.sort((a, b) => (a > b) ? 1 : -1);
           folderModels.push(hierarchyModel(files, config.defaultPath));
-          if (folderModels.length === folderCount)
+          if (folderModels.length === folderCount) {
             return sendResponseData(req, res, 200, folderModels);
+          }
         });
       } else {
         return sendResponseData(req, res, 200, []);
@@ -1372,15 +1479,18 @@ const getAssignments = (req, res) => {
 app.get('/api/assignments', getAssignments);
 
 const getPdfFile = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
@@ -1398,8 +1508,9 @@ app.post('/api/pdf/file', [
 ], getPdfFile);
 
 const saveMarks = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   if (req.body.location === null || req.body.location === undefined) {
     return sendResponse(req, res, 400, 'File location not provided');
@@ -1437,10 +1548,11 @@ const saveMarks = (req, res) => {
   }
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
     const config = JSON.parse(data.toString());
-   // console.log("Path Recieved: " + req.body.location);
+    // console.log("Path Recieved: " + req.body.location);
     const loc = req.body.location.replace(/\//g, sep);
     console.log('loc after path: ' + loc);
     const pathSplit = loc.split(sep);
@@ -1451,11 +1563,13 @@ const saveMarks = (req, res) => {
 
     const regEx = /(.*)\((.+)\)/;
     if (pathSplitCount === 4) {
-      if (!regEx.test(pathSplit[1]))
+      if (!regEx.test(pathSplit[1])) {
         return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
+      }
     } else if (pathSplitCount === 5) {
-      if (!regEx.test(pathSplit[2]))
+      if (!regEx.test(pathSplit[2])) {
         return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
+      }
     }
     console.log('loc before studFolder: ' + loc);
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
@@ -1479,14 +1593,16 @@ const saveMarks = (req, res) => {
                 for (let i = 0; i < gradesJSON.length; i++) {
                   if (i === 0) {
                     const keys = Object.keys(gradesJSON[i]);
-                    if (keys.length > 0)
+                    if (keys.length > 0) {
                       assignmentHeader = keys[0];
+                    }
                   } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === studentNumber.toUpperCase()) {
                     gradesJSON[i].field5 = totalMark;
                     changed = true;
                     json2csv(gradesJSON, (err, csv) => {
-                      if (err)
+                      if (err) {
                         return sendResponse(req, res, 400, 'Failed to convert json to csv!');
+                      }
 
                       return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', null);
                     }, {emptyFieldValue: '', prependHeader: false});
@@ -1496,8 +1612,9 @@ const saveMarks = (req, res) => {
 
                 if (changed) {
                   // more logic to save new JSON to CSV
-                } else
+                } else {
                   return sendResponse(req, res, 400, 'Failed to save mark');
+                }
               })
               .catch(reason => {
                 return sendResponse(req, res, 400, reason);
@@ -1523,14 +1640,16 @@ const saveMarks = (req, res) => {
                 for (let i = 0; i < gradesJSON.length; i++) {
                   if (i === 0) {
                     const keys = Object.keys(gradesJSON[i]);
-                    if (keys.length > 0)
+                    if (keys.length > 0) {
                       assignmentHeader = keys[0];
+                    }
                   } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === studentNumber.toUpperCase()) {
                     gradesJSON[i].field5 = totalMark;
                     changed = true;
                     json2csv(gradesJSON, (err, csv) => {
-                      if (err)
+                      if (err) {
                         return sendResponse(req, res, 400, 'Failed to convert json to csv!');
+                      }
 
                       return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', null);
                     }, {emptyFieldValue: '', prependHeader: false});
@@ -1540,8 +1659,9 @@ const saveMarks = (req, res) => {
 
                 if (changed) {
                   // more logic to save new JSON to CSV
-                } else
+                } else {
                   return sendResponse(req, res, 400, 'Failed to save mark');
+                }
               })
               .catch(reason => {
                 return sendResponse(req, res, 400, reason);
@@ -1557,21 +1677,25 @@ const saveMarks = (req, res) => {
 app.post('/api/assignment/marks/save', saveMarks);
 
 const savingRubricMarks = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
-  if (isNullOrUndefined(req.body.location))
+  if (isNullOrUndefined(req.body.location)) {
     return sendResponse(req, res, 400, 'File location not provided');
+  }
 
-  if (isNullOrUndefined(req.body.rubricName))
+  if (isNullOrUndefined(req.body.rubricName)) {
     return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
+  }
 
   const marks = Array.isArray(req.body.marks) ? req.body.marks : [];
   const rubricName = req.body.rubricName.trim();
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
@@ -1580,31 +1704,36 @@ const savingRubricMarks = (req, res) => {
     const pathSplitCount = pathSplit.length;
     const regEx = /(.*)\((.+)\)/;
     if (pathSplitCount === 4) {
-      if (!regEx.test(pathSplit[1]))
+      if (!regEx.test(pathSplit[1])) {
         return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
+      }
     } else if (pathSplitCount === 5) {
-      if (!regEx.test(pathSplit[2]))
+      if (!regEx.test(pathSplit[2])) {
         return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
+      }
     }
 
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
     const assignmentFolder = dirname(studentFolder);
 
     return readFromFile(req, res, assignmentFolder + sep + SETTING_FILE, (data) => {
-      if (!isJson(data))
+      if (!isJson(data)) {
         return sendResponse(req, res, 400, 'Could not read assignment settings');
+      }
 
       const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(data.toString());
 
-      if (isNullOrUndefined(assignmentSettingsInfo.rubric))
+      if (isNullOrUndefined(assignmentSettingsInfo.rubric)) {
         return sendResponse(req, res, 400, 'Assignment\'s settings does not contain a rubric!');
-      else if (assignmentSettingsInfo.rubric.name !== rubricName)
+      } else if (assignmentSettingsInfo.rubric.name !== rubricName) {
         return sendResponse(req, res, 400, 'Assignment\'s settings rubric does not match provided!');
+      }
 
       let totalMark = 0;
       marks.forEach((levelIndex: number, index: number) => {
-        if (levelIndex !== null)
+        if (levelIndex !== null) {
           totalMark += parseFloat('' + assignmentSettingsInfo.rubric.criterias[index].levels[levelIndex].score);
+        }
       });
 
       return checkAccess(req, res, studentFolder, () => {
@@ -1622,14 +1751,16 @@ const savingRubricMarks = (req, res) => {
                   for (let i = 0; i < gradesJSON.length; i++) {
                     if (i === 0) {
                       const keys = Object.keys(gradesJSON[i]);
-                      if (keys.length > 0)
+                      if (keys.length > 0) {
                         assignmentHeader = keys[0];
+                      }
                     } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === studentNumber.toUpperCase()) {
                       gradesJSON[i].field5 = totalMark;
                       changed = true;
                       json2csv(gradesJSON, (err, csv) => {
-                        if (err)
+                        if (err) {
                           return sendResponse(req, res, 400, 'Failed to convert json to csv!');
+                        }
 
                         return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', null);
                       }, {emptyFieldValue: '', prependHeader: false});
@@ -1639,8 +1770,9 @@ const savingRubricMarks = (req, res) => {
 
                   if (changed) {
                     // more logic to save new JSON to CSV
-                  } else
+                  } else {
                     return sendResponse(req, res, 400, 'Failed to save mark');
+                  }
                 })
                 .catch(reason => {
                   return sendResponse(req, res, 400, reason);
@@ -1660,14 +1792,16 @@ const savingRubricMarks = (req, res) => {
                   for (let i = 0; i < gradesJSON.length; i++) {
                     if (i === 0) {
                       const keys = Object.keys(gradesJSON[i]);
-                      if (keys.length > 0)
+                      if (keys.length > 0) {
                         assignmentHeader = keys[0];
+                      }
                     } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === studentNumber.toUpperCase()) {
                       gradesJSON[i].field5 = totalMark;
                       changed = true;
                       json2csv(gradesJSON, (err, csv) => {
-                        if (err)
+                        if (err) {
                           return sendResponse(req, res, 400, 'Failed to convert json to csv!');
+                        }
 
                         return writeToFile(req, res, assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!', null);
                       }, {emptyFieldValue: '', prependHeader: false});
@@ -1677,8 +1811,9 @@ const savingRubricMarks = (req, res) => {
 
                   if (changed) {
                     // more logic to save new JSON to CSV
-                  } else
+                  } else {
                     return sendResponse(req, res, 400, 'Failed to save mark');
+                  }
                 })
                 .catch(reason => {
                   return sendResponse(req, res, 400, reason);
@@ -1686,7 +1821,7 @@ const savingRubricMarks = (req, res) => {
             });
           }
 
-          });
+        });
       });
     });
   });
@@ -1695,16 +1830,19 @@ const savingRubricMarks = (req, res) => {
 app.post('/api/assignment/rubric/marks/save', savingRubricMarks);
 
 const getMarks = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     const config = JSON.parse(data.toString());
     let loc = '';
@@ -1730,13 +1868,15 @@ const getMarks = (req, res) => {
     const studentFolder = dirname(dirname(config.defaultPath + sep + loc));
 
     return readFile(studentFolder + sep + MARK_FILE, (err, data) => {
-      if (err)
+      if (err) {
         return sendResponseData(req, res, 200, []);
+      }
 
-      if (!isJson(data))
+      if (!isJson(data)) {
         return sendResponseData(req, res, 200, []);
-      else
+      } else {
         return sendResponseData(req, res, 200, JSON.parse(data.toString()));
+      }
     });
   });
 };
@@ -1747,16 +1887,19 @@ app.post('/api/assignment/marks/fetch', [
 
 // Only For updating colour for now
 const assignmentSettings = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
 
   const assignmentSettings = (req.body.settings !== null && req.body.settings !== undefined) ? req.body.settings : {};
-  if (JSON.stringify(assignmentSettings) === JSON.stringify({}))
+  if (JSON.stringify(assignmentSettings) === JSON.stringify({})) {
     return res.status(200).send();
+  }
 
   // Check object compliance
   const keys = ['defaultColour', 'isCreated', 'rubric', ' rubricId'];
@@ -1766,29 +1909,34 @@ const assignmentSettings = (req, res) => {
     invalidKeyFound = (keys.indexOf(key) === -1);
   });
 
-  if (invalidKeyFound)
+  if (invalidKeyFound) {
     return sendResponse(req, res, 400, 'Invalid key found in settings');
+  }
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
     const pathSplit = loc.split(sep);
-    if (pathSplit.length !== 4)
+    if (pathSplit.length !== 4) {
       return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
+    }
 
     const regEx = /(.*)\((.+)\)/;
-    if (!regEx.test(pathSplit[1]))
+    if (!regEx.test(pathSplit[1])) {
       return sendResponse(req, res, 404, INVALID_STUDENT_FOLDER);
+    }
 
     const assignmentFolder = dirname(dirname(dirname(config.defaultPath + sep + loc)));
 
     return checkAccess(req, res, assignmentFolder, () => {
       return readFromFile(req, res, assignmentFolder + sep + SETTING_FILE, (data) => {
-        if (!isJson(data))
+        if (!isJson(data)) {
           return sendResponse(req, res, 400, 'Assignment settings file corrupt!');
+        }
 
         const settings: AssignmentSettingsInfo = JSON.parse(data);
         settings.defaultColour = (assignmentSettings.defaultColour) ? assignmentSettings.defaultColour : settings.defaultColour;
@@ -1807,32 +1955,38 @@ app.post('/api/assignment/settings', [
 ], assignmentSettings);
 
 const getAssignmentSettings = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location;
-    if (isNullOrUndefined(loc) || loc === '')
+    if (isNullOrUndefined(loc) || loc === '') {
       return sendResponse(req, res, 404, INVALID_PATH_PROVIDED);
+    }
 
     const assignmentFolder = config.defaultPath + sep + loc;
     if (existsSync(assignmentFolder)) {
       return readFile(assignmentFolder + sep + SETTING_FILE, (err, data) => {
-        if (err)
+        if (err) {
           return sendResponseData(req, res, 400, err.message);
+        }
 
-        if (!isJson(data))
+        if (!isJson(data)) {
           return sendResponseData(req, res, 400, err.message);
-        else
+        } else {
           return sendResponseData(req, res, 200, JSON.parse(data.toString()));
+        }
       });
     }
   });
@@ -1843,22 +1997,26 @@ app.post('/api/assignment/settings/fetch', [
 ], getAssignmentSettings);
 
 const getGrades = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
 
   const keys = ['location'];
   const bodyKeys = Object.keys(req.body);
 
-  if (validateRequest(keys, bodyKeys))
+  if (validateRequest(keys, bodyKeys)) {
     return sendResponse(req, res, 400, 'Invalid parameter found in request');
+  }
 
   return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
@@ -1881,24 +2039,29 @@ app.post('/api/assignment/grade', [
 ], getGrades);
 
 const getAssignmentGlobalSettings = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return res.status(401).send({message: 'Forbidden access to resource!'});
+  }
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return res.status(400).json({errors: errors.array()});
+  }
 
   const keys = ['location'];
   const bodyKeys = Object.keys(req.body);
 
-  if (validateRequest(keys, bodyKeys))
+  if (validateRequest(keys, bodyKeys)) {
     return res.status(400).send({message: 'Invalid parameter found in request'});
+  }
 
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
+    if (err) {
       return res.status(500).send({message: 'Failed to read configurations!'});
+    }
 
-    if (!isJson(data))
+    if (!isJson(data)) {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+    }
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
@@ -1906,8 +2069,9 @@ const getAssignmentGlobalSettings = (req, res) => {
     const assignmentFolder = config.defaultPath + sep + loc;
 
     return access(assignmentFolder + sep + '.settings.json', constants.F_OK, (err) => {
-      if (err)
+      if (err) {
         return res.status(200).send({message: 'Could not read settings file'});
+      }
       return (assignmentFolder + sep + '.settings.json');
     });
   });
@@ -1918,17 +2082,21 @@ app.post('/api/assignment/globalSettings/fetch', [
 ], getAssignmentGlobalSettings);
 
 const getWorkspaces = (req, res) => {
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return res.status(401).send({message: 'Forbidden access to resource!'});
+  }
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return res.status(400).json({errors: errors.array()});
+  }
   readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err)
+    if (err) {
       return res.status(500).send({message: 'Failed to read configurations!'});
+    }
 
-    if (!isJson(data))
+    if (!isJson(data)) {
       return res.status(404).send({message: 'Configure default location to extract files to on the settings page!'});
+    }
 
     const folders = JSON.parse(data.toString()).folders;
     return sendResponseData(req, res, 200, folders);
@@ -1958,23 +2126,27 @@ const asyncForEach = async (array, callback) => {
 
 const finalizeAssignment = async (req, res) => {
   let failed = false;
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
 
   const keys = ['workspaceFolder', 'location'];
   const bodyKeys = Object.keys(req.body);
 
-  if (validateRequest(keys, bodyKeys))
+  if (validateRequest(keys, bodyKeys)) {
     return sendResponse(req, res, 400, 'Invalid parameter found in request');
+  }
 
   try {
     const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
@@ -2012,10 +2184,11 @@ const finalizeAssignment = async (req, res) => {
                 marks = [];
               }
 
-              if (!isJson(data))
+              if (!isJson(data)) {
                 marks = [];
-              else
+              } else {
                 marks = JSON.parse(data.toString());
+              }
 
               if (marks.length > 0) {
                 const annotateFN = async (): Promise<{ pdfBytes: Uint8Array, totalMark: number }> => {
@@ -2072,8 +2245,9 @@ const finalizeAssignment = async (req, res) => {
     if (!failed) {
       return zipDir((workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder : config.defaultPath,
         {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(assignmentFolder)) ? true : (path.startsWith((assignmentFolder) + sep))))}, (err, buffer) => {
-          if (err)
+          if (err) {
             return sendResponse(req, res, 400, 'Could not export assignment');
+          }
           return sendResponseData(req, res, 200, buffer);
         });
     }
@@ -2089,23 +2263,27 @@ app.post('/api/assignment/finalize', [
 // rubircFinalize
 const finalizeAssignmentRubric = async (req, res) => {
   let failed = false;
-  if (!checkClient(req, res))
+  if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
 
   const errors = validationResult(req);
-  if (!errors.isEmpty())
+  if (!errors.isEmpty()) {
     return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
 
   const keys = ['workspaceFolder', 'location', 'rubricName'];
   const bodyKeys = Object.keys(req.body);
 
-  if (validateRequest(keys, bodyKeys))
+  if (validateRequest(keys, bodyKeys)) {
     return sendResponse(req, res, 400, 'Invalid parameter found in request');
+  }
 
   try {
     const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
-    if (!isJson(data))
+    if (!isJson(data)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
 
     const config = JSON.parse(data.toString());
     const loc = req.body.location.replace(/\//g, sep);
@@ -2118,8 +2296,9 @@ const finalizeAssignmentRubric = async (req, res) => {
     const gradesJSON = await csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE);
     const files = glob.sync(assignmentFolder + sep + '/*');
     const assignmentSettingsBuffer = readFileSync(assignmentFolder + sep + SETTING_FILE);
-    if (!isJson(assignmentSettingsBuffer))
+    if (!isJson(assignmentSettingsBuffer)) {
       return sendResponse(req, res, 400, 'Invalid assignment settings file!');
+    }
 
     const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
 
@@ -2137,10 +2316,11 @@ const finalizeAssignmentRubric = async (req, res) => {
           const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
           const rubricName = req.body.rubricName.trim();
 
-          if (isNullOrUndefined(assignmentSettingsInfo.rubric))
+          if (isNullOrUndefined(assignmentSettingsInfo.rubric)) {
             return sendResponse(req, res, 400, 'Assignment\'s settings does not contain a rubric!');
-          else if (assignmentSettingsInfo.rubric.name !== rubricName)
+          } else if (assignmentSettingsInfo.rubric.name !== rubricName) {
             return sendResponse(req, res, 400, 'Assignment\'s settings rubric does not match provided!');
+          }
 
           const rubric = assignmentSettingsInfo.rubric;
 
@@ -2157,10 +2337,11 @@ const finalizeAssignmentRubric = async (req, res) => {
                 marks = [];
               }
 
-              if (!isJson(data))
+              if (!isJson(data)) {
                 marks = [];
-              else
+              } else {
                 marks = JSON.parse(data.toString());
+              }
 
               if (marks.length > 0) {
                 const annotateRubricFN = async (): Promise<{ pdfBytes: Uint8Array, totalMark: number }> => {
@@ -2215,10 +2396,11 @@ const finalizeAssignmentRubric = async (req, res) => {
     if (!failed) {
       return zipDir((workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder : config.defaultPath,
         {filter: (path: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(path)) && ((path.endsWith(assignmentFolder)) ? true : (path.startsWith(assignmentFolder + sep))))}, (err, buffer) => {
-        if (err)
-          return sendResponse(req, res, 400, 'Could not export assignment');
-        return sendResponseData(req, res, 200, buffer);
-      });
+          if (err) {
+            return sendResponse(req, res, 400, 'Could not export assignment');
+          }
+          return sendResponseData(req, res, 200, buffer);
+        });
     }
   } catch (e) {
     return sendResponse(req, res, 500, e.message);
@@ -2249,10 +2431,12 @@ const annotatePdfRubric = async (res, filePath: string, marks = [], rubric: IRub
     let curHighest = -1;
     const critSelected = marks[index];
     value.levels.forEach((value1, index1, array) => {
-      if (critSelected === index1)
+      if (critSelected === index1) {
         totalMark = totalMark + parseFloat(value1.score.toString());
-      if (value1.score > curHighest)
+      }
+      if (value1.score > curHighest) {
         curHighest = value1.score;
+      }
     });
     maxScore = maxScore + parseFloat(curHighest.toString());
   });
@@ -2397,12 +2581,15 @@ const getRgbScale = (rgbValue: number): number => {
 };
 
 const annotatePdfFile = async (res, filePath: string, marks = []) => {
+  // Not sure what this is about, but without it the coords are on the wrong place compared to the editor
+  const COORD_CONSTANT = (72 / 96);
+  // Size of a mark circle
+  const CIRCLE_SIZE = 10;
   let totalMark = 0;
   let generalMarks = 0;
   const sectionMarks: string[] = [];
-  const commentPointers: string[] = [];
-  let commentPointer = 1;
-  let commentErrorFound = false;
+  let pointer = 1;
+  const pointers: string[] = [];
   const file = readFileSync(filePath);
   const pdfFactory = new AnnotationFactory(file);
   let pdfDoc = await PDFDocument.load(file);
@@ -2415,13 +2602,45 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
         if (markObj.iconType === IconTypeEnum.NUMBER) {
           totalMark += (markObj.totalMark) ? markObj.totalMark : 0;
           try {
-            pdfFactory.createTextAnnotation(pageCount - 1, [(coords.x * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96) - 24, pdfPage.getWidth() - (coords.y * 72 / 96), pdfPage.getHeight() - (coords.y * 72 / 96)], markObj.comment, markObj.sectionLabel + ' = ' + markObj.totalMark);
+            const CIRCLE_DIAMETER = (CIRCLE_SIZE * 2);
+            pdfFactory.createTextAnnotation({
+              page: pageCount - 1,
+              rect: [
+                ((coords.x  ) * COORD_CONSTANT) + CIRCLE_DIAMETER, // x1
+                (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) - CIRCLE_DIAMETER, // y1
+                ((coords.x  ) * COORD_CONSTANT) + (CIRCLE_DIAMETER * 2), // x2
+                (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) // y2
+              ],
+              contents: markObj.comment,
+              author: markObj.sectionLabel + ' = ' + markObj.totalMark
+            });
           } catch (e) {
-            commentErrorFound = true;
-            commentPointers.push('*' + commentPointer + ': ' + markObj.comment);
-            commentPointer++;
+            pointers.push('*' + pointer + ': ' + markObj.comment);
+            pointer++;
           }
           sectionMarks.push(markObj.sectionLabel + ' = ' + markObj.totalMark);
+        } else if (markObj.iconType === IconTypeEnum.HIGHLIGHT) {
+          try {
+            const colorComponents = markObj.colour.match(/(\d\.?)+/g);
+            pdfFactory.createHighlightAnnotation({
+              page: pageCount - 1,
+              rect: [
+                (coords.x * COORD_CONSTANT), // x1
+                pdfPage.getHeight() - (coords.y * COORD_CONSTANT) - HIGHTLIGHT_HEIGHT, // y1
+                (coords.x  + coords.width) * COORD_CONSTANT, // x2
+                pdfPage.getHeight() - (coords.y * COORD_CONSTANT) // y2
+              ],
+              color: {r: +colorComponents[0], g: +colorComponents[1], b: +colorComponents[2]},
+              opacity: +colorComponents[3],
+              contents: markObj.comment || '',
+              author: markObj.sectionLabel || ''
+            });
+          } catch (e) {
+            if (markObj.comment) {
+              pointers.push('*' + pointer + ': ' + markObj.comment);
+              pointer++;
+            }
+          }
         }
       });
     }
@@ -2429,12 +2648,12 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   });
 
   pageCount = 1;
-  commentPointer = 1;
+  pointer = 1;
   pdfDoc = await PDFDocument.load(pdfFactory.write());
   pdfPages = await pdfDoc.getPages();
   pdfPages.forEach((pdfPage: PDFPage) => {
     if (Array.isArray(marks[pageCount - 1])) {
-      marks[pageCount - 1].forEach(mark => {
+      marks[pageCount - 1].forEach((mark: MarkInfo) => {
         let colours = hexRgb('#6F327A');
         if (mark.colour.startsWith('#')) {
           colours = hexRgb(mark.colour);
@@ -2442,9 +2661,9 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
           colours = hexRgb('#' + rgbHex(mark.colour));
         }
         const coords = mark.coordinates;
-        const options = {
-          x: (coords.x * 72 / 96) + 4,
-          y: pdfPage.getHeight() - (coords.y * 72 / 96),
+        const options: PDFPageDrawSVGOptions = {
+          x: (coords.x * COORD_CONSTANT) + 4,
+          y: pdfPage.getHeight() - (coords.y * COORD_CONSTANT),
           borderColor: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
           color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
         };
@@ -2457,8 +2676,8 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
           } else if (mark.iconType === IconTypeEnum.HALF_MARK) {
             pdfPage.drawSvgPath(IconSvgEnum.FULL_MARK_SVG, options);
             pdfPage.drawSvgPath(IconSvgEnum.HALF_MARK_SVG, {
-              x: (coords.x * 72 / 96) + 4,
-              y: pdfPage.getHeight() - (coords.y * 72 / 96),
+              x: (coords.x * COORD_CONSTANT) + 4,
+              y: pdfPage.getHeight() - (coords.y * COORD_CONSTANT),
               borderWidth: 2,
               borderColor: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
               color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue)),
@@ -2467,33 +2686,71 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
             pdfPage.drawSvgPath(IconSvgEnum.CROSS_SVG, options);
           } else if (mark.iconType === IconTypeEnum.ACK_MARK) {
             pdfPage.drawSvgPath(IconSvgEnum.ACK_MARK_SVG, options);
+          } else if (mark.iconType === IconTypeEnum.HIGHLIGHT) {
+            if (pointers.length > 0) {
+              // Only if there were errors previously do we need to draw a highlight manually
+
+              const colorComponents = mark.colour.match(/(\d\.?)+/g);
+              const highlightOptions: PDFPageDrawRectangleOptions = {
+                x: (coords.x * COORD_CONSTANT),
+                y: pdfPage.getHeight() - (coords.y * COORD_CONSTANT) - HIGHTLIGHT_HEIGHT,
+                width: coords.width * COORD_CONSTANT,
+                height: HIGHTLIGHT_HEIGHT,
+                color: {
+                  type: ColorTypes.RGB,
+                  red: +colorComponents[0],
+                  green: +colorComponents[1],
+                  blue: +colorComponents[2]
+                },
+                opacity: +colorComponents[3]
+              };
+              pdfPage.drawRectangle(highlightOptions);
+
+              if (!isEmpty(mark.comment)) {
+                const textOption: PDFPageDrawTextOptions = {
+                  x: (coords.x * COORD_CONSTANT),
+                  y: (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) - 20,
+                  size: 10
+                };
+                pdfPage.drawText('*' + pointer, textOption);
+                pointer++;
+              }
+            }
+
           }
         } else {
-          if (commentErrorFound) {
-            const markOption = {
-              x: (coords.x * 72 / 96) + 8,
-              y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 20,
-              size: 10,
-              color: rgb(1, 1, 1)
-            };
+          if (mark.colour.startsWith('#')) {
+            colours = hexRgb(mark.colour);
+          } else if (mark.colour.startsWith('rgb')) {
+            mark = hexRgb('#' + rgbHex(mark.colour));
+          }
+          const markOption = {
+            x: (coords.x * COORD_CONSTANT) + (CIRCLE_SIZE / 2),
+            y: (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) - (CIRCLE_SIZE * 2),
+            size: CIRCLE_SIZE,
+            color: rgb(1, 1, 1)
+          };
 
-            const textOption = {
-              x: (coords.x * 72 / 96) + 12,
-              y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 5,
+          const circleOptions = {
+            x: (coords.x * COORD_CONSTANT) + CIRCLE_SIZE,
+            y: (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) - 16,
+            size: CIRCLE_SIZE,
+            color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue))
+          };
+
+          pdfPage.drawCircle(circleOptions);
+          pdfPage.drawText(mark.totalMark + '', markOption);
+
+          if (pointers.length > 0) {
+            // Only if there were errors previously do we need to draw a comment pointer
+            const textOption: PDFPageDrawTextOptions = {
+              x: (coords.x * COORD_CONSTANT) + 12,
+              y: (pdfPage.getHeight() - (coords.y * COORD_CONSTANT)) - 5,
               size: 10
             };
 
-            const circleOptions = {
-              x: (coords.x * 72 / 96) + 16,
-              y: (pdfPage.getHeight() - (coords.y * 72 / 96)) - 16,
-              size: 10,
-              color: rgb(getRgbScale(colours.red), getRgbScale(colours.green), getRgbScale(colours.blue))
-            };
-
-            pdfPage.drawCircle(circleOptions);
-            pdfPage.drawText(mark.totalMark + '', markOption);
-            pdfPage.drawText('*' + commentPointer, textOption);
-            commentPointer++;
+            pdfPage.drawText('*' + pointer, textOption);
+            pointer++;
           }
         }
       });
@@ -2545,7 +2802,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
   y = adjustPointsForResults(y, 15);
   resultsPage.drawText('Total = ' + totalMark, {x: xPosition, y, size: textSize});
 
-  if (commentErrorFound) {
+  if (pointers.length > 0) {
     let feedbackPage = pdfDoc.addPage(PageSizes.A4);
     y = 800;
 
@@ -2560,8 +2817,8 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
     });
     y = adjustPointsForResults(y, 15);
 
-    for (let i = 0; i < commentPointers.length; i++) {
-      const splitFeedback = fillParagraph(commentPointers[i], await pdfDoc.embedFont(StandardFonts.Helvetica), textSize, 400 ).split('\n');
+    for (let i = 0; i < pointers.length; i++) {
+      const splitFeedback = fillParagraph(pointers[i], await pdfDoc.embedFont(StandardFonts.Helvetica), textSize, 400 ).split('\n');
       if (splitFeedback.length > 0) {
         for (let j = 0; j < splitFeedback.length; j++) {
 
@@ -2575,7 +2832,7 @@ const annotatePdfFile = async (res, filePath: string, marks = []) => {
         }
       } else {
         y = adjustPointsForResults(y, 15);
-        feedbackPage.drawText(commentPointers[i] + '', {x: xPosition, y, size: textSize});
+        feedbackPage.drawText(pointers[i] + '', {x: xPosition, y, size: textSize});
 
         if (y <= 5) {
           feedbackPage = pdfDoc.addPage(PageSizes.A4);
@@ -2634,18 +2891,21 @@ const createAssignment = (req, res) => {
         }
       }
 // if (req.body.workspace === "Default Workspace" || req.body.workspace === null || req.body.workspace === "null") {
-      if (isInvalidKey)
+      if (isInvalidKey) {
         return sendResponse(req, res, 400, `Invalid parameter ${invalidParam} found in request`);
+      }
 
-      if (req.body.assignmentName.legnth < 5)
+      if (req.body.assignmentName.legnth < 5) {
         return sendResponse(req, res, 400, `Assignment must be > 5 characters`);
+      }
 
       let assignmentName: string = req.body.assignmentName.trim();
 
       try {
         const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
-        if (!isJson(data))
+        if (!isJson(data)) {
           return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+        }
 
         const config = JSON.parse(data.toString());
         const folders = glob.sync(config.defaultPath + '/*');
@@ -2653,15 +2913,17 @@ const createAssignment = (req, res) => {
         let foundCount = 0;
         for (let i = 0; i < folders.length; i++) {
           if (isFolder(folders[i].toLowerCase())) {
-            if (assignmentName.toLowerCase() === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
+            if (assignmentName.toLowerCase() === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME')) {
               foundCount++;
-            else if ((assignmentName.toLowerCase() + ' (' + (foundCount + 1) + ')') === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME'))
+            } else if ((assignmentName.toLowerCase() + ' (' + (foundCount + 1) + ')') === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME')) {
               foundCount++;
+            }
           }
         }
 
-        if (foundCount > 0)
+        if (foundCount > 0) {
           assignmentName = assignmentName + ' (' + (foundCount + 1) + ')';
+        }
 
         const isRubric: boolean = (req.body.noRubric === 'true');
         let rubricName: string;
@@ -2670,15 +2932,17 @@ const createAssignment = (req, res) => {
         let rubrics: IRubric[];
 
         if (!isRubric) {
-          if (isNullOrUndefined(req.body.rubric))
+          if (isNullOrUndefined(req.body.rubric)) {
             return sendResponse(req, res, 400, NOT_PROVIDED_RUBRIC);
+          }
 
           rubricName = req.body.rubric.trim();
           if (!isNullOrUndefined(rubricName)) {
             const rubricData = readFileSync(CONFIG_DIR + RUBRICS_FILE);
             try {
-              if (!isJson(rubricData))
+              if (!isJson(rubricData)) {
                 return sendResponse(req, res, 400, INVALID_RUBRIC_JSON_FILE);
+              }
 
               rubrics = JSON.parse(rubricData.toString());
 
@@ -2704,16 +2968,19 @@ const createAssignment = (req, res) => {
             }
           }
         }
-        if (!isJson(req.body.studentDetails))
+        if (!isJson(req.body.studentDetails)) {
           return sendResponse(req, res, 400, `Student details not valid`);
+        }
 
         const studentDetails: any[] = JSON.parse(req.body.studentDetails);
 
-        if (!Array.isArray(studentDetails))
+        if (!Array.isArray(studentDetails)) {
           return sendResponse(req, res, 400, `Student details must be a list`);
+        }
 
-        if (studentDetails.length !== req.files.length)
+        if (studentDetails.length !== req.files.length) {
           return sendResponse(req, res, 400, `Student details is not equal to number of files sent!`);
+        }
 
         const settings: AssignmentSettingsInfo = {defaultColour: '#6F327A', rubric, isCreated: true};
 
@@ -2793,46 +3060,55 @@ const updateAssignment = (req, res) => {
         }
       }
 
-      if (isInvalidKey)
+      if (isInvalidKey) {
         return sendResponse(req, res, 400, `Invalid parameter ${invalidParam} found in request`);
+      }
 
-      if (req.body.assignmentName.legnth < 5)
+      if (req.body.assignmentName.legnth < 5) {
         return sendResponse(req, res, 400, `Assignment must be > 5 characters`);
+      }
 
       const assignmentName: string = req.body.assignmentName.trim();
       const isEdit: boolean = (req.body.isEdit && req.body.isEdit === 'true');
 
       try {
         const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
-        if (!isJson(data))
+        if (!isJson(data)) {
           return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+        }
 
         const config = JSON.parse(data.toString());
         let assignmentSettingsBuffer;
         if (req.body.workspace === 'Default Workspace' || req.body.workspace === null || req.body.workspace === 'null') {
           assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
-          if (!isJson(assignmentSettingsBuffer))
+          if (!isJson(assignmentSettingsBuffer)) {
             return sendResponse(req, res, 400, 'Invalid assignment settings file!');
+          }
 
         } else {
           assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + SETTING_FILE);
-          if (!isJson(assignmentSettingsBuffer))
+          if (!isJson(assignmentSettingsBuffer)) {
             return sendResponse(req, res, 400, 'Invalid assignment settings file!');
+          }
         }
         const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
-        if (!assignmentSettingsInfo.isCreated)
+        if (!assignmentSettingsInfo.isCreated) {
           return sendResponse(req, res, 400, 'Operation not permitted on this type of assignment!');
+        }
 
-        if (!isJson(req.body.studentDetails))
+        if (!isJson(req.body.studentDetails)) {
           return sendResponse(req, res, 400, `Student details not valid`);
+        }
 
         const studentDetails: any[] = JSON.parse(req.body.studentDetails);
 
-        if (!Array.isArray(studentDetails))
+        if (!Array.isArray(studentDetails)) {
           return sendResponse(req, res, 400, `Student details must be a list`);
+        }
 
-        if (studentDetails.length !== req.files.length)
+        if (studentDetails.length !== req.files.length) {
           return sendResponse(req, res, 400, `Student details is not equal to number of files sent!`);
+        }
 
         const grades = await csvtojson({
           noheader: true,
@@ -2959,10 +3235,10 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
       .pipe(unzipper.Parse())
       .pipe(etl.map(async entry => {
         const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
-        let csvString = "";
-        let asnTitle = assignmentName;
-        let dir = "";
-        let isSet = true;
+        let csvString = '';
+        const asnTitle = assignmentName;
+        let dir = '';
+        const isSet = true;
         if (entry.type === 'File') {
           const content = await entry.buffer();
           // console.log("### - File Name First : " + entry.path);
@@ -2970,8 +3246,9 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
 
           const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
           const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
-          if (!existsSync(directory))
+          if (!existsSync(directory)) {
             mkdirSync(directory, {recursive: true});
+          }
           try {
             const pdfDoc = await PDFDocument.load(content);
             const fileName = entry.path;
@@ -3011,7 +3288,7 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
             //   skippedFirst++;
             // }
             const pdfBytes = await pdfDoc.save();
-            writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + "/" + tempDetails, pdfBytes);
+            writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + '/' + tempDetails, pdfBytes);
           } catch (exception) {
             console.log(exception);
           }
@@ -3019,15 +3296,16 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           entry.path = entry.path.replace(oldFolder, newFolder);
           const directory = destination + entry.path.replace('/', sep);
           // const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
-          if (!existsSync(directory))
+          if (!existsSync(directory)) {
             mkdirSync(directory, {recursive: true});
+          }
           console.log('####');
           console.log(directory);
           if (!(existsSync(directory + GRADES_FILE))) {
             const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
-            let csvFullString = headers + `''\n` + subheaders;
+            const csvFullString = headers + `''\n` + subheaders;
             //  csvFullString = csvFullString + csvString;
-            //console.log(csvFullString);
+            // console.log(csvFullString);
             console.log(directory + GRADES_FILE);
             skippedFirst++;
             await writeFileSync(directory + GRADES_FILE, csvFullString, {flag: 'a'});
@@ -3050,8 +3328,9 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
           entry.path = entry.path.replace(oldFolder, newFolder);
           const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
           const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
-          if (!existsSync(directory))
+          if (!existsSync(directory)) {
             mkdirSync(directory, {recursive: true});
+          }
           try {
             if (entry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf') {
               // await writeFileSync(destination + entry.path.replace('/', sep),  content);
@@ -3067,8 +3346,9 @@ const extractZipFile = async (file, destination, newFolder, oldFolder, assignmen
         } else {
           entry.path = entry.path.replace(oldFolder, newFolder);
           const directory = destination + entry.path.replace('/', sep);
-          if (!existsSync(directory))
+          if (!existsSync(directory)) {
             mkdirSync(directory, {recursive: true});
+          }
           entry.autodrain();
         }
       })).promise();
@@ -3093,8 +3373,9 @@ const hierarchyModel = (pathInfos, configFolder) => {
     if (stat.isFile()) {
       pathObject.path = path;
       pathObject.basename = path.split('/').pop();
-      if (pathSplit.indexOf(SUBMISSION_FOLDER) > -1)
+      if (pathSplit.indexOf(SUBMISSION_FOLDER) > -1) {
         pathObject.isPdf = true;
+      }
     }
     return hier;
   }, {});
