@@ -33,12 +33,6 @@ export class ScrollVisibilityDirective implements OnInit, OnDestroy, OnChanges {
   @Output()
   visibilityChanged = new EventEmitter<boolean>();
 
-  /**
-   * When should the visibility change event be fired?
-   */
-  @Input()
-  fireWhen: 'CAHNGE' | 'VISIBLE' | 'HIDDEN' = 'VISIBLE';
-
   private visible = null;
 
   private unlisten;
@@ -119,19 +113,20 @@ export class ScrollVisibilityDirective implements OnInit, OnDestroy, OnChanges {
 
   }
 
-  private onVisibility(visibility: boolean){
-    if (visible >= this.targetVisibility) {
+  private onVisibility(visible: boolean) {
+    if (visible) {
       if (this.visible !== true) { // Using not true, because it might be null
         // If the visible pixels is enough for the target
         this.visible = true;
         this.visibilityChanged.emit(this.visible);
-        console.log("Calling!")
       }
-    } else if (this.visible !== false) { // Using not false, because it might be null
+    }
+    // If we want to implement keeping track when it becomes invisible, keep in mind the effect of all the events
+    /* else if (this.visible !== false) { // Using not false, because it might be null
       this.visible = false;
       this.visibilityChanged.emit(this.visible);
 
-    }
+    }*/
   }
 
   ngOnDestroy() {

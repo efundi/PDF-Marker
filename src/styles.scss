@@ -66,9 +66,12 @@
 $pdf-marker-primary: #6f327a;
 $pdf-marker-secondary: #555;
 
+
 html, body {
   height: 100%;
   font-family: Roboto, "Helvetica Neue", sans-serif !important;
+  --pdf-marker-primary: #{$pdf-marker-primary};
+  --pdf-marker-secondary: #{$pdf-marker-secondary};
 }
 
 body { margin: 0; }
@@ -111,7 +114,7 @@ pdf-marker-finalise-marking {
   }
 
   .pdf-marker-finalise-marking-modal-content::-webkit-scrollbar-thumb {
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
     border-radius: 10px;
   }
   .pdf-marker-finalise-marking-modal-content::-webkit-scrollbar {
@@ -133,7 +136,7 @@ body {
 
   .mat-dialog-container::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
   }
 
   .mat-dialog-container::-webkit-scrollbar {
@@ -143,7 +146,7 @@ body {
 
   .mat-drawer-content::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
   }
 }
 
@@ -152,7 +155,7 @@ body {
 }
 
 .mat-icon {
-  color: $pdf-marker-primary;
+  color: var(--pdf-marker-primary);
 }
 
 .pdf-marker-container {
@@ -182,7 +185,7 @@ button {
 
   .mat-drawer-inner-container::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
   }
 
   .pdf-marker-content-container {
@@ -210,7 +213,7 @@ button {
 
 .table-responsive::-webkit-scrollbar-thumb {
   border-radius: 10px;
-  background: $pdf-marker-secondary;
+  background: var(--pdf-marker-secondary);
 }
 
 .mat-expansion-panel {
@@ -258,12 +261,12 @@ pdf-marker-file-explorer-modal {
 
 .mat-checkbox-checked, .mat-checkbox-indeterminate {
   .mat-checkbox-background, .mat-checkbox-background {
-    background: $pdf-marker-primary !important;
+    background: var(--pdf-marker-primary) !important;
   }
 }
 
 .mat-accent .mat-pseudo-checkbox-checked, .mat-accent .mat-pseudo-checkbox-indeterminate, .mat-pseudo-checkbox-checked, .mat-pseudo-checkbox-indeterminate {
-  background: $pdf-marker-primary;
+  background: var(--pdf-marker-primary);
 }
 
 .errorMessages{
@@ -443,4 +446,9 @@ pdf-marker-rubric-criteria-level-block {
 /** Hide the scrollbars on the zoom select popup */
 .zoom-select-popup{
   max-height: unset !important;
+}
+
+/** Loading indicator while pages are rendering */
+.waiting .mat-progress-spinner circle, .mat-spinner circle{
+  stroke: var(--pdf-marker-secondary);
 }

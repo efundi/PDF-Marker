@@ -1,4 +1,3 @@
-$pdf-marker-primary: #6f327a;
 mat-toolbar {
   background: transparent;
   height: 99%;
@@ -28,5 +27,5 @@ mat-toolbar {
 }
 
 mat-divider {
-  background: $pdf-marker-primary;
+  background: var(--pdf-marker-primary);
 }
