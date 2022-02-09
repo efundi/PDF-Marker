@@ -35,7 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 var electron_1 = require("electron");
 var electron_updater_1 = require("electron-updater");
 var path = require("path");
@@ -68,7 +68,7 @@ function createWindow() {
             // https://github.com/electron/electron/issues/9920#issuecomment-575839738
             nodeIntegration: true,
             contextIsolation: false
-        },
+        }
     });
     if (serve) {
         require('electron-reload')(__dirname, {
@@ -105,6 +105,13 @@ try {
         createWindow();
         mainWindow.webContents.on('did-finish-load', function () {
             electron_updater_1.autoUpdater.checkForUpdatesAndNotify();
+        });
+        mainWindow.webContents.setWindowOpenHandler(function (details) {
+            // For now we assume all links are external
+            electron_1.shell.openExternal(details.url);
+            return {
+                action: 'deny'
+            };
         });
     });
     // Quit when all windows are closed.
@@ -147,7 +154,7 @@ try {
     electron_1.ipcMain.on('open_external_link', function (event, args) {
         electron_1.shell.openExternal(args.resource).then(function () {
             event.sender.send('on_open_external_link', { results: true });
-        }).catch(function (reason) {
+        })["catch"](function (reason) {
             event.sender.send('on_open_external_link', { selectedPath: null, error: reason });
         });
     });
@@ -162,7 +169,7 @@ try {
             else {
                 event.sender.send('on_get_folder', { selectedPath: data.filePaths[0] });
             }
-        }).catch((function (reason) {
+        })["catch"]((function (reason) {
             event.sender.send('on_get_folder', { selectedPath: null, error: reason });
         }));
     });
@@ -180,7 +187,7 @@ try {
             else {
                 event.sender.send('on_get_file', { selectedPath: data.filePaths[0] });
             }
-        }).catch((function (reason) {
+        })["catch"]((function (reason) {
             event.sender.send('on_get_file', { selectedPath: null, error: reason });
         }));
     });
@@ -301,7 +308,7 @@ try {
                 }
                 return [2 /*return*/];
             });
-        }); }).catch((function (reason) {
+        }); })["catch"]((function (reason) {
             event.sender.send('on_excel_to_json', { selectedPath: null, error: reason });
         }));
     });
@@ -345,4 +352,3 @@ function joinError(currentMessage, newMessage) {
     currentMessage += (!isBlank(currentMessage)) ? ", ".concat(newMessage) : newMessage;
     return currentMessage;
 }
-//# sourceMappingURL=main.js.map
