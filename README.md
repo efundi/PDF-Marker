@@ -1,27 +1,61 @@
 # PdfMarker
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.3.3.
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.1.3.
 
-## Development server
+## Development Setup
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+### Pre-requisites
+- NodeJS 16
+- Angular CLI 13
 
-## Code scaffolding
+### Install dependencies
+```bash
+npm install
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
 
-## Build
+### Run with hot reloading
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+After compiling the backend, you can run the front-end with hot reloading, by which any code changes in Angular will be automatically reloaded in the electron window.
 
-## Running unit tests
+This works be having electron run its services on port 4300 and the angular server running on 4200 while proxying api calls to the backend (running on 4300)
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Files involved to make this work included
 
-## Running end-to-end tests
+- `proxy.conf.json` Angular’s proxy file
+- `environment.electron.ts` (an environment file configured for the electron build)
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+The run electron with hot reloading
+Make sure the server side is built
+```bash
+npm run build:ssr
+```
+Run electron
+```bash
+npm run electron
+```
 
-## Further help
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+
+## Test the application
+The application will start with web debugger open
+```bash
+npm run start
+```
+
+## Deploy new version
+Make sure to set the appropriate version in `package.json`. Make use of "preRelease" versions if it is not
+the final stable build e.g. `x.x.x-alpha.1`, `x.x.x-beta.1`.
+
+Make sure all is committed and pushed to github
+
+Set an environment variable with your github token
+```bash
+GH_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+Run the build
+```bash
+npm run deploy
+```
+It will deploy a draft release on github. Make sure the details are correct on this draft.
+Mark it as a "pre release" if it is intended to be released as such.
