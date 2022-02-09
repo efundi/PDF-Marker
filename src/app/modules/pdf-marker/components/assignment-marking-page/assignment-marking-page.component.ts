@@ -9,7 +9,7 @@ import {
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import {AnnotationLayer, PDFDocumentProxy, PDFPageProxy, } from 'pdfjs-dist';
+import {AnnotationLayer, LinkTarget, PDFDocumentProxy, PDFPageProxy, } from 'pdfjs-dist';
 import {EventBus, PDFLinkService} from 'pdfjs-dist/web/pdf_viewer';
 import {MarkTypeIconComponent} from '@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component';
 import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
@@ -34,6 +34,7 @@ import {ScrollVisibilityDirective} from '@pdfMarkerModule/directives/scroll-visi
 const eventBus = new EventBus();
 
 const pdfLinkService = new PDFLinkService({
+  externalLinkTarget: LinkTarget.BLANK,
   eventBus,
 });
 

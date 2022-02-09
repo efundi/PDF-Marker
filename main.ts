@@ -1,4 +1,4 @@
-import {app, BrowserWindow, dialog, ipcMain, screen, shell} from 'electron';
+import {app, BrowserWindow, dialog, ipcMain, screen, shell, HandlerDetails} from 'electron';
 import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
@@ -77,7 +77,17 @@ try {
 
     mainWindow.webContents.on('did-finish-load', () => {
       autoUpdater.checkForUpdatesAndNotify();
-    })
+    });
+
+
+    mainWindow.webContents.setWindowOpenHandler(( details: HandlerDetails) => {
+      // For now we assume all links are external
+      shell.openExternal(details.url);
+      return {
+        action: 'deny'
+      };
+    });
+
   });
 
   // Quit when all windows are closed.
