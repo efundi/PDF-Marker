@@ -1,10 +1,10 @@
 import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {SettingsService} from "@pdfMarkerModule/services/settings.service";
-import {AppService} from "@coreModule/services/app.service";
-import {AlertService} from "@coreModule/services/alert.service";
-import {ElectronService} from "@coreModule/services/electron.service";
-import {AssignmentService} from "@sharedModule/services/assignment.service";
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {SettingsService} from '@pdfMarkerModule/services/settings.service';
+import {AppService} from '@coreModule/services/app.service';
+import {AlertService} from '@coreModule/services/alert.service';
+import {ElectronService} from '@coreModule/services/electron.service';
+import {AssignmentService} from '@sharedModule/services/assignment.service';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
@@ -44,26 +44,28 @@ export class WorkingFolderComponent implements OnInit {
     }, error => {
       this.isLoading$.next(false);
     });
-    this.workspaceService.getWorkspaces().subscribe((workspaces: any[]) => {
-      this.populateWorkspaces(workspaces);
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
-      this.appService.isLoading$.next(false);
+    this.workspaceService.getWorkspaces().subscribe({
+      next: (workspaces) => {
+        this.populateWorkspaces(workspaces);
+        this.appService.isLoading$.next(false);
+      },
+      error: (error) => {
+        this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
+        this.appService.isLoading$.next(false);
+      }
     });
-
   }
 
   private populateWorkspaces(folders: string[]) {
-    let values: any[] = [];
+    const values: any[] = [];
     if (folders) {
       this.folders = folders;
       this.folderNameList = folders.map(item => {
-        item = item.substr(item.lastIndexOf("\\") + 1, item.length);
+        item = item.substr(item.lastIndexOf('\\') + 1, item.length);
         return item;
       });
       this.folderNameList.forEach(folder => {
-        let value: any = {
+        const value: any = {
           folder: ''
         };
         value.folder = folder;
@@ -75,9 +77,11 @@ export class WorkingFolderComponent implements OnInit {
 
   private initForm() {
     this.createFolderForm = this.fb.group({
-      workingFolders: [null, [Validators.required, Validators.pattern("^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$")]]
+      workingFolders: [null, [Validators.required, Validators.pattern('^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$')]]
     });
   }
+
+
 
   onSubmitCreateFolder(event) {
     this.alertService.clear();
@@ -130,10 +134,10 @@ export class WorkingFolderComponent implements OnInit {
     this.assignmentService.getAssignments().subscribe((assignments) => {
       this.assignmentService.update(assignments);
       this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(true, "Refreshed list");
+      this.appService.openSnackBar(true, 'Refreshed list');
     }, error => {
       this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(false, "Could not refresh list");
+      this.appService.openSnackBar(false, 'Could not refresh list');
     });
   }
 

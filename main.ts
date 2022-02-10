@@ -2,13 +2,13 @@ import {app, BrowserWindow, dialog, ipcMain, screen, shell, HandlerDetails} from
 import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
-import {writeFile, writeFileSync} from 'fs';
-import {buffer} from 'rxjs/operators';
-
+import {writeFileSync} from 'fs';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
 serve = args.some(val => val === '--serve');
+
+// Import the express server which will start up automatically
 const server = require('./dist/server');
 const logger = require('electron-log');
 const excelParser = new (require('simple-excel-to-json').XlsParser)();
@@ -17,7 +17,6 @@ function createWindow() {
 
   const electronScreen = screen;
   const size = electronScreen.getPrimaryDisplay().workAreaSize;
-  const { autoUpdater } = require('electron-updater');
 
   // Create the browser window.
   mainWindow = new BrowserWindow({

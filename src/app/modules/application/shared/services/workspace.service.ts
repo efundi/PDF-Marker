@@ -35,12 +35,8 @@ export class WorkspaceService {
     return this.http.post<boolean>(`${API_PATH}/delete/check`, data);
   }
 
-  getWorkspaces(): Observable<any> {
+  getWorkspaces(): Observable<string[]> {
     const body = {};
-    const headers = new HttpHeaders({
-      'Content-Type': MimeTypesEnum.JSON,
-      'Accept': MimeTypesEnum.JSON
-    });
     return this.http.post<string[]>(API_PATH, body);
   }
 

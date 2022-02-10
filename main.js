@@ -35,7 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 var electron_1 = require("electron");
 var electron_updater_1 = require("electron-updater");
 var path = require("path");
@@ -45,13 +45,13 @@ var fs_1 = require("fs");
 var mainWindow, serve;
 var args = process.argv.slice(1);
 serve = args.some(function (val) { return val === '--serve'; });
+// Import the express server which will start up automatically
 var server = require('./dist/server');
 var logger = require('electron-log');
 var excelParser = new (require('simple-excel-to-json').XlsParser)();
 function createWindow() {
     var electronScreen = electron_1.screen;
     var size = electronScreen.getPrimaryDisplay().workAreaSize;
-    var autoUpdater = require('electron-updater').autoUpdater;
     // Create the browser window.
     mainWindow = new electron_1.BrowserWindow({
         x: 0,
@@ -68,7 +68,7 @@ function createWindow() {
             // https://github.com/electron/electron/issues/9920#issuecomment-575839738
             nodeIntegration: true,
             contextIsolation: false
-        }
+        },
     });
     if (serve) {
         require('electron-reload')(__dirname, {
@@ -154,7 +154,7 @@ try {
     electron_1.ipcMain.on('open_external_link', function (event, args) {
         electron_1.shell.openExternal(args.resource).then(function () {
             event.sender.send('on_open_external_link', { results: true });
-        })["catch"](function (reason) {
+        }).catch(function (reason) {
             event.sender.send('on_open_external_link', { selectedPath: null, error: reason });
         });
     });
@@ -169,7 +169,7 @@ try {
             else {
                 event.sender.send('on_get_folder', { selectedPath: data.filePaths[0] });
             }
-        })["catch"]((function (reason) {
+        }).catch((function (reason) {
             event.sender.send('on_get_folder', { selectedPath: null, error: reason });
         }));
     });
@@ -187,7 +187,7 @@ try {
             else {
                 event.sender.send('on_get_file', { selectedPath: data.filePaths[0] });
             }
-        })["catch"]((function (reason) {
+        }).catch((function (reason) {
             event.sender.send('on_get_file', { selectedPath: null, error: reason });
         }));
     });
@@ -308,7 +308,7 @@ try {
                 }
                 return [2 /*return*/];
             });
-        }); })["catch"]((function (reason) {
+        }); }).catch((function (reason) {
             event.sender.send('on_excel_to_json', { selectedPath: null, error: reason });
         }));
     });
@@ -352,3 +352,4 @@ function joinError(currentMessage, newMessage) {
     currentMessage += (!isBlank(currentMessage)) ? ", ".concat(newMessage) : newMessage;
     return currentMessage;
 }
+//# sourceMappingURL=main.js.map
