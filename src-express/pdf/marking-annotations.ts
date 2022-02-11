@@ -13,16 +13,15 @@ import {IconTypeEnum} from '../../src/app/modules/pdf-marker/info-objects/icon-t
 import {HIGHTLIGHT_HEIGHT} from '../constants';
 import {MarkInfo} from '../../src/app/modules/application/shared/info-objects/mark.info';
 import * as hexRgb from 'hex-rgb';
-import rgbHex from 'rgb-hex';
 import {IconSvgEnum} from '../../src/app/modules/pdf-marker/info-objects/icon-svg.enum';
-import {adjustPointsForResults} from './pdf-utils';
+import {adjustPointsForResults, rgbHex} from './pdf-utils';
 import {isEmpty} from '../utils';
 
 const getRgbScale = (rgbValue: number): number => {
   return +parseFloat(((rgbValue / 255) + '')).toFixed(2);
 };
 
-export const annotatePdfFile = async (res, filePath: string, marks = []) => {
+export const annotatePdfFile = async (res, filePath: string, marks: MarkInfo[][] = []) => {
   // Not sure what this is about, but without it the coords are on the wrong place compared to the editor
   const COORD_CONSTANT = (72 / 96);
   // Size of a mark circle

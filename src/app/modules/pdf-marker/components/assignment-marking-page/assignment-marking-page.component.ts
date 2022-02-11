@@ -42,10 +42,9 @@ const DPI_SCALE = window.devicePixelRatio || 1;
 
 
 /**
- * This constant is the match the scale of PDF < v3 where a different rendering component was used
- * The constant is required to keep the coordinates and page size simmiliar to < v3
+ * This constant to offset the standard DPI (96) with a standard font points (72)
  * */
-const PDF_SCALE_CONSTANT = 1.33;
+const PDF_SCALE_CONSTANT = (96 / 72);
 
 @Component({
   selector: 'pdf-marker-assignment-marking-page',

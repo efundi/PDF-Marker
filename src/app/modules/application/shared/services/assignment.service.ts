@@ -1,5 +1,5 @@
 import {Inject, Injectable, Optional, PLATFORM_ID} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient, HttpEvent, HttpHeaders} from '@angular/common/http';
 import {BehaviorSubject, Observable, ReplaySubject, Subject} from 'rxjs';
 import {makeStateKey, StateKey, TransferState} from '@angular/platform-browser';
 import {isPlatformServer} from '@angular/common';
@@ -12,6 +12,7 @@ import {IRubric} from '@coreModule/utils/rubric.class';
 import {ZipService} from '@coreModule/services/zip.service';
 import {sep} from 'path';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
+import {ShareAssignments} from "@sharedModule/info-objects/share-assignments";
 
 @Injectable({
   providedIn: 'root'
@@ -275,7 +276,20 @@ export class AssignmentService {
     return this.http.post('/api/assignment/student/grade', body);
   }
 
-  finalizeAndExport(workspaceName: string = null, assignmentName: string) {
+  shareExport(shareRequest: ShareAssignments): Observable<HttpEvent<Blob>> {
+    const headers = new HttpHeaders({
+      'Content-Type': MimeTypesEnum.JSON,
+      'Accept': MimeTypesEnum.JSON
+    });
+    return this.http.post<Blob>('/api/assignment/share', shareRequest, {
+      reportProgress: true,
+      observe: 'events',
+      headers,
+      responseType: 'blob' as 'json',
+    });
+  }
+
+  finalizeAndExport(workspaceName: string = null, assignmentName: string): Observable<HttpEvent<Blob>> {
     const body = {
       workspaceFolder: workspaceName,
       location: assignmentName
