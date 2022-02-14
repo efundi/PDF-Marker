@@ -29,6 +29,8 @@ import {
   writeFileSync
 } from 'fs';
 import * as glob from 'glob';
+import * as os from 'os';
+import {copySync} from 'fs-extra';
 import {IComment} from '../../src/app/modules/application/core/utils/comment.class';
 import {basename, dirname, sep} from 'path';
 import * as csvtojson from 'csvtojson';
@@ -41,6 +43,11 @@ import {annotatePdfRubric} from '../pdf/rubric-annotations';
 import {annotatePdfFile} from '../pdf/marking-annotations';
 import {IRubric} from '../../src/app/modules/application/core/utils/rubric.class';
 import {PDFDocument} from 'pdf-lib';
+import {MarkInfo} from '../../src/app/modules/application/shared/info-objects/mark.info';
+import * as fs from 'fs';
+import * as path from 'path';
+import {ShareAssignments} from '../../src/app/modules/application/shared/info-objects/share-assignments';
+import {isNil, find} from 'lodash';
 
 export const getAssignments = (req, res) => {
   if (!checkClient(req, res)) {
@@ -657,9 +664,9 @@ export const finalizeAssignmentRubric = async (req, res) => {
                   let assignmentHeader;
                   for (let i = 0; i < gradesJSON.length; i++) {
                     if (i === 0) {
-                      const keys = Object.keys(gradesJSON[i]);
-                      if (keys.length > 0) {
-                        assignmentHeader = keys[0];
+                      const gradesKeys = Object.keys(gradesJSON[i]);
+                      if (gradesKeys.length > 0) {
+                        assignmentHeader = gradesKeys[0];
                       }
                     } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
                       gradesJSON[i].field5 = data.totalMark;
@@ -696,7 +703,7 @@ export const finalizeAssignmentRubric = async (req, res) => {
     await start();
     if (!failed) {
       return zipDir((workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder : config.defaultPath,
-        {filter: (path: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(path)) && ((path.endsWith(assignmentFolder)) ? true : (path.startsWith(assignmentFolder + sep))))}, (err, buffer) => {
+        {filter: (filterPath: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(filterPath)) && ((filterPath.endsWith(assignmentFolder)) ? true : (filterPath.startsWith(assignmentFolder + sep))))}, (err, buffer) => {
           if (err) {
             return sendResponse(req, res, 400, 'Could not export assignment');
           }
@@ -709,6 +716,93 @@ export const finalizeAssignmentRubric = async (req, res) => {
 };
 
 
+function cleanupTemp(tmpDir: string){
+  try {
+    if (tmpDir) {
+      fs.rmSync(tmpDir, { recursive: true });
+    }
+  } catch (e) {
+    console.error(`An error has occurred while removing the temp folder at ${tmpDir}. Please remove it manually. Error: ${e}`);
+  }
+}
+
+export const shareExport = async (req, res) => {
+  if (!checkClient(req, res)) {
+    return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
+  }
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return sendResponseData(req, res, 400, {errors: errors.array()});
+  }
+
+  const keys = ['assignmentName', 'submissions', 'workspaceFolder'];
+  const bodyKeys = Object.keys(req.body);
+
+  if (validateRequest(keys, bodyKeys)) {
+    return sendResponse(req, res, 400, 'Invalid parameter found in request');
+  }
+
+  try {
+    const configData = readFileSync(CONFIG_DIR + CONFIG_FILE);
+    if (!isJson(configData)) {
+      return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
+    }
+    const shareRequest: ShareAssignments = req.body;
+    const config = JSON.parse(configData.toString());
+    const assignmentName = shareRequest.assignmentName.replace(/\//g, sep);
+    let workspaceFolder = '';
+    if (req.body.workspaceFolder) {
+      workspaceFolder = shareRequest.workspaceFolder.replace(/\//g, sep);
+    }
+    const originalAssignmentDirectory = (workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder + sep + assignmentName : config.defaultPath + sep + assignmentName;
+    const gradesJSON = await csvtojson({noheader: true, trim: false}).fromFile(originalAssignmentDirectory + sep + GRADES_FILE);
+    let tmpDir;
+    // Create a temp directory to construct files to zip
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
+
+    const tempAssignmentDirectory = tmpDir + sep + assignmentName;
+    fs.mkdirSync(tempAssignmentDirectory);
+
+    // Now copy each submission
+    shareRequest.submissions.forEach((submission) => {
+      const submissionDirectoryName = submission.studentName + '(' + submission.studentNumber + ')';
+      copySync(originalAssignmentDirectory + sep + submissionDirectoryName, tempAssignmentDirectory + sep + submissionDirectoryName);
+    });
+
+    const shareGradesJson = [
+      gradesJSON[0],
+      gradesJSON[1],
+      gradesJSON[2],
+    ];
+    for (let i = 3; i < gradesJSON.length; i++) {
+      const gradesStudentId = gradesJSON[i].field2;
+      const shouldExport = !isNil(find(shareRequest.submissions, {studentNumber: gradesStudentId}));
+      if (shouldExport) {
+        shareGradesJson.push(gradesJSON[i]);
+      }
+    }
+
+    json2csvAsync(shareGradesJson, {emptyFieldValue: '', prependHeader: false})
+      .then(csv => {
+        writeFileSync(tempAssignmentDirectory + sep + GRADES_FILE, csv);
+      })
+      .then(() => {
+        return zipDir(tmpDir);
+      })
+      .then((buffer) => {
+        sendResponseData(req, res, 200, buffer);
+        cleanupTemp(tmpDir);
+      }, (error) => {
+        cleanupTemp(tmpDir);
+        return sendResponse(req, res, 500, error.message);
+      });
+
+  } catch (e) {
+    console.error(e);
+    return sendResponse(req, res, 500, 'Error trying to export share');
+  }
+};
 
 
 export const finalizeAssignment = async (req, res) => {
@@ -730,12 +824,12 @@ export const finalizeAssignment = async (req, res) => {
   }
 
   try {
-    const data = readFileSync(CONFIG_DIR + CONFIG_FILE);
-    if (!isJson(data)) {
+    const configData = readFileSync(CONFIG_DIR + CONFIG_FILE);
+    if (!isJson(configData)) {
       return sendResponse(req, res, 400, NOT_CONFIGURED_CONFIG_DIRECTORY);
     }
 
-    const config = JSON.parse(data.toString());
+    const config = JSON.parse(configData.toString());
     const loc = req.body.location.replace(/\//g, sep);
     let workspaceFolder = '';
     if (req.body.workspaceFolder) {
@@ -763,18 +857,16 @@ export const finalizeAssignment = async (req, res) => {
               accessSync(submission, constants.F_OK);
               const studentFolder = dirname(dirname(submission));
 
-              let marks;
-              let data;
+              let marks: MarkInfo[][] = [];
+              let marksData;
               try {
-                data = readFileSync(studentFolder + sep + MARK_FILE);
+                marksData = readFileSync(studentFolder + sep + MARK_FILE);
               } catch (e) {
                 marks = [];
               }
 
-              if (!isJson(data)) {
-                marks = [];
-              } else {
-                marks = JSON.parse(data.toString());
+              if (isJson(marksData)) {
+                marks = JSON.parse(marksData.toString());
               }
 
               if (marks.length > 0) {
@@ -792,9 +884,9 @@ export const finalizeAssignment = async (req, res) => {
                   let assignmentHeader;
                   for (let i = 0; i < gradesJSON.length; i++) {
                     if (i === 0) {
-                      const keys = Object.keys(gradesJSON[i]);
-                      if (keys.length > 0) {
-                        assignmentHeader = keys[0];
+                      const gradeKeys = Object.keys(gradesJSON[i]);
+                      if (gradeKeys.length > 0) {
+                        assignmentHeader = gradeKeys[0];
                       }
                     } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
                       gradesJSON[i].field5 = data.totalMark;

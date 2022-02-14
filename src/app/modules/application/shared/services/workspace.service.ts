@@ -1,7 +1,6 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient} from '@angular/common/http';
 import {Observable, Subject} from 'rxjs';
-import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {WorkspaceDialogResult} from '@pdfMarkerModule/components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
 import {SettingInfo} from '@pdfMarkerModule/info-objects/setting.info';
 

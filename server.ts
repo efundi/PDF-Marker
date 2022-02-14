@@ -30,7 +30,7 @@ import {
   NOT_PROVIDED_NEW_WORKSPACE_NAME,
   NOT_PROVIDED_RUBRIC,
   NOT_PROVIDED_WORKSPACE_NAME
-} from './constants';
+} from './src-express/constants';
 
 import {
   checkAccess,
@@ -40,7 +40,7 @@ import {
   readFromFile,
   sendResponse,
   sendResponseData
-} from './utils';
+} from './src-express/utils';
 import {
   createWorkingFolder,
   deleteWorkspaceCheck,
@@ -48,10 +48,10 @@ import {
   getWorkspaces,
   moveWorkspaceAssignments,
   updateWorkspaceName
-} from './rest/working-folder';
-import {settingsGet, settingsPost} from './rest/settings';
-import {importFn} from './rest/import';
-import {deleteCommentConfirmation, deleteCommentFn, getComments, saveNewComment} from './rest/comment';
+} from './src-express/rest/working-folder';
+import {settingsGet, settingsPost} from './src-express/rest/settings';
+import {importFn} from './src-express/rest/import';
+import {deleteCommentConfirmation, deleteCommentFn, getComments, saveNewComment} from './src-express/rest/comment';
 import {
   assignmentRubricUpdateFn,
   deleteRubricConfirmation,
@@ -60,7 +60,7 @@ import {
   getRubricNamesFn,
   getRubricsFn,
   rubricUploadFn
-} from './rest/rubric';
+} from './src-express/rest/rubric';
 
 import {
   assignmentSettings,
@@ -73,9 +73,9 @@ import {
   getGrades,
   getMarks,
   saveMarks,
-  savingRubricMarks,
+  savingRubricMarks, shareExport,
   updateAssignment
-} from './rest/assignment';
+} from './src-express/rest/assignment';
 
 import {check, validationResult} from 'express-validator';
 import * as glob from 'glob';
@@ -332,6 +332,11 @@ app.post('/api/workspace', [], getWorkspaces);
 app.post('/api/assignment/finalize', [
   check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], finalizeAssignment);
+
+
+app.post('/api/assignment/share', [
+  // check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
+], shareExport);
 
 
 app.post('/api/assignment/finalize/rubric', [

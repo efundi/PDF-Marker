@@ -10,7 +10,7 @@ import {
   Renderer2, SimpleChanges
 } from '@angular/core';
 
-import {isNil} from 'lodash-es';
+import {isNil} from 'lodash';
 import {fromEvent, Observable, Subscription} from 'rxjs';
 
 @Directive({

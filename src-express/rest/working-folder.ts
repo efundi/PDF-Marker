@@ -19,6 +19,7 @@ import {
 } from '../utils';
 import * as fse from 'fs-extra';
 import * as trash from 'trash';
+import {SettingInfo} from "../../src/app/modules/pdf-marker/info-objects/setting.info";
 
 export const createWorkingFolder = (req, res) => {
   if (!checkClient(req, res)) {
@@ -31,7 +32,7 @@ export const createWorkingFolder = (req, res) => {
   }
 
   const configData = readFileSync(CONFIG_DIR + CONFIG_FILE);
-  const config = JSON.parse(configData.toString());
+  const config: SettingInfo = JSON.parse(configData.toString());
   if (!existsSync(config.defaultPath + sep + req.body.workingFolders)) {
     mkdirSync(config.defaultPath + sep + req.body.workingFolders);
   } else {

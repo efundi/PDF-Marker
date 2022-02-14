@@ -22,6 +22,12 @@ table {
     width: calc(100% / 4);
   }
 
+
+  .mat-column-select{
+    width: 2rem;
+    min-width: 2rem;
+  }
+
   tr {
     th:last-child {
       text-align: center;
