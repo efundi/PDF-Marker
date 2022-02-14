@@ -7,7 +7,7 @@ import {
   MarkingCommentModalComponent
 } from '@sharedModule/components/marking-comment-modal/marking-comment-modal.component';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
-import {cloneDeep, isEqual} from 'lodash-es';
+import {cloneDeep, isEqual} from 'lodash';
 import {CdkDragEnd} from '@angular/cdk/drag-drop/drag-events';
 import {
   AssignmentMarkingPageComponent

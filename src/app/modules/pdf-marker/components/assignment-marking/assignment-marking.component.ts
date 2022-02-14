@@ -19,7 +19,7 @@ import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
 import {FinaliseMarkingComponent} from '@pdfMarkerModule/components/finalise-marking/finalise-marking.component';
 import {getDocument, PDFDocumentProxy, GlobalWorkerOptions} from 'pdfjs-dist';
-import {cloneDeep, isNil, times} from 'lodash-es';
+import {cloneDeep, isNil, times} from 'lodash';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
 import {catchError, map} from 'rxjs/operators';
 import {

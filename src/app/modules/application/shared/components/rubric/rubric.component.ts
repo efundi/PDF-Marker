@@ -3,7 +3,7 @@ import {IRubric} from '@coreModule/utils/rubric.class';
 import {Router} from '@angular/router';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
 import {AppService} from '@coreModule/services/app.service';
-import {isArray} from 'lodash-es';
+import {isArray} from 'lodash';
 
 @Component({
   selector: 'pdf-marker-rubric',

@@ -7,7 +7,7 @@ import {
   AssignmentMarkingPageComponent
 } from '@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
-import {cloneDeep, find} from 'lodash-es';
+import {cloneDeep, find} from 'lodash';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {AppService} from '@coreModule/services/app.service';
 import {

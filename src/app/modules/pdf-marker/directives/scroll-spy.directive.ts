@@ -9,7 +9,7 @@ import {
   OnInit, OnChanges, SimpleChanges
 } from '@angular/core';
 
-import {isNil} from 'lodash-es';
+import {isNil} from 'lodash';
 
 @Directive({
   selector: '[scrollSpy]'

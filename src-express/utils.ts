@@ -2,7 +2,7 @@ import * as unzipper from 'unzipper';
 import * as etl from 'etl';
 import * as pathinfo from 'locutus/php/filesystem/pathinfo';
 import * as multer from 'multer';
-
+import {Request, Response} from 'express';
 import {
   access,
   constants,
@@ -19,13 +19,13 @@ import {FEEDBACK_FOLDER, GRADES_FILE, SUBMISSION_FOLDER, UPLOADS_DIR} from './co
 import {sep} from 'path';
 import {PDFDocument} from 'pdf-lib';
 
-export const sendResponse = (req, res, statusCode: number, message: string) => {
+export const sendResponse = (req: Request, res: Response, statusCode: number, message: string) => {
   deleteUploadedFile(req);
   deleteMultipleFiles(req);
   return res.status(statusCode).send({message});
 };
 
-export const sendResponseData = (req, res, statusCode: number, data: any) => {
+export const sendResponseData = (req: Request, res: Response, statusCode: number, data: any) => {
   deleteUploadedFile(req);
   deleteMultipleFiles(req);
   return res.status(statusCode).send(data);
@@ -33,7 +33,7 @@ export const sendResponseData = (req, res, statusCode: number, data: any) => {
 
 
 
-export const checkClient = (req, res) => {
+export const checkClient = (req: Request, res: Response) => {
   return (req.headers.client_id && req.headers.client_id === 'PDF_MARKER');
 };
 

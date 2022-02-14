@@ -20,7 +20,7 @@ import {AppService} from '@coreModule/services/app.service';
 import {AssignmentMarkingComponent} from '@pdfMarkerModule/components/assignment-marking/assignment-marking.component';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
 import {Observable, Subscription} from 'rxjs';
-import {cloneDeep, isNil} from 'lodash-es';
+import {cloneDeep, isNil} from 'lodash';
 import {
   AssignmentMarkingSessionService
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';

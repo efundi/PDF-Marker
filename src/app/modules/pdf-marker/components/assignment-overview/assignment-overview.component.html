@@ -4,14 +4,13 @@
   <div class="pdf-marker-assignment-overview-assignment-header">
     <h1 class="pdf-marker-assignment-overview-assignment-name">{{ assignmentName }}</h1>
     <span class="pdf-marker-fill-space"></span>
-
     <button
-      [disabled]="!isCreated || selection.isEmpty()"
+      [disabled]="selection.isEmpty()"
       mat-button
       mat-icon-button
       matTooltip="Share"
       (click)="share()">
-      <mat-icon [class.pdf-icon-disabled]="!isCreated || selection.isEmpty()">share</mat-icon>
+      <mat-icon [class.pdf-icon-disabled]="selection.isEmpty()">share</mat-icon>
     </button>
     <button
       [disabled]="!isCreated"
