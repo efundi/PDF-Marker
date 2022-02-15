@@ -1,6 +1,6 @@
 import {validationResult} from 'express-validator';
 import {existsSync, mkdirSync, readdirSync, readFile, readFileSync, renameSync, rmdirSync, writeFileSync} from 'fs';
-import {sep} from 'path';
+import {sep, basename} from 'path';
 import {
   CONFIG_DIR,
   CONFIG_FILE, COULD_NOT_READ_COMMENT_LIST, COULD_NOT_READ_WORKSPACE_LIST,
@@ -20,6 +20,7 @@ import {
 import * as fse from 'fs-extra';
 import * as trash from 'trash';
 import {SettingInfo} from "../../src/app/modules/pdf-marker/info-objects/setting.info";
+import {forEach} from 'lodash';
 
 export const createWorkingFolder = (req, res) => {
   if (!checkClient(req, res)) {
@@ -120,7 +121,8 @@ export const moveWorkspaceAssignments = (req, res) => {
 
       const workspacePath = config.defaultPath + sep + loc;
       const newWorkspacePath = isDefault ? config.defaultPath : config.defaultPath + sep + loc2;
-      assignments.forEach((assignment) => {
+      let failed = false;
+      forEach(assignments, (assignment) => {
         const assignmentPath = workspacePath + sep + assignment.assignmentTitle;
         const newAssignmentPath = newWorkspacePath + sep + assignment.assignmentTitle;
         if (!existsSync(newAssignmentPath)) {
@@ -130,14 +132,19 @@ export const moveWorkspaceAssignments = (req, res) => {
             fse.move(src, dest);
           } catch (e) {
             console.log(e);
-            return res.status(500).send({message:  e.message});
+            res.status(500).send({message:  e.message});
+            return false; // Stop looping
           }
         } else {
-          return res.status(500).send({message: 'Assignment with name already exists.'});
+          failed = true;
+          res.status(500).send({message: 'Assignment with name already exists.'});
+          return false; // Stop looping
           // return sendResponse(req, res, 400, 'Assignment with name already exists.');
         }
       });
-      return res.status(200).send({message: 'Successfully renamed the directory.'});
+      if (!failed) {
+        return res.status(200).send({message: 'Successfully renamed the directory.'});
+      }
     });
   }
 
@@ -162,14 +169,11 @@ export const deleteWorkspaceConfirmation = async (req, res) => {
       if (!isJson(data)) {
         return sendResponse(req, res, 400, COULD_NOT_READ_WORKSPACE_LIST);
       }
-      console.log(data);
       const config = JSON.parse(data.toString());
       const folders = config.folders;
       const workspaceNames = folders.map(item => {
-        item = item.substr(item.lastIndexOf('\\') + 1, item.length);
-        return item;
+        return basename(item);
       });
-      console.log(workspaceNames);
       if (Array.isArray(workspaceNames)) {
         let indexFound = -1;
         for (let i = 0; i < workspaceNames.length; i++) {
@@ -227,8 +231,7 @@ export const deleteWorkspaceCheck = (req, res) => {
     const config = JSON.parse(data.toString());
     const workspaces: string[] = config.folders;
     const workspaceNames = workspaces.map(item => {
-      item = item.substr(item.lastIndexOf('\\') + 1, item.length);
-      return item;
+      return basename(item);
     });
     const currPath = config.defaultPath + sep + deleteFolder;
     try {

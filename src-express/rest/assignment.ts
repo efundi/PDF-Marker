@@ -38,7 +38,6 @@ import {json2csv, json2csvAsync} from 'json-2-csv';
 import {AssignmentSettingsInfo} from '../../src/app/modules/pdf-marker/info-objects/assignment-settings.info';
 import {validationResult} from 'express-validator';
 import * as zipDir from 'zip-dir';
-import * as pathinfo from 'locutus/php/filesystem/pathinfo';
 import {annotatePdfRubric} from '../pdf/rubric-annotations';
 import {annotatePdfFile} from '../pdf/marking-annotations';
 import {IRubric} from '../../src/app/modules/application/core/utils/rubric.class';
@@ -472,14 +471,14 @@ export const assignmentSettings = (req, res) => {
     return sendResponseData(req, res, 400, {errors: errors.array()});
   }
 
-  const assignmentSettings = (req.body.settings !== null && req.body.settings !== undefined) ? req.body.settings : {};
-  if (JSON.stringify(assignmentSettings) === JSON.stringify({})) {
+  const updatedSettings = (req.body.settings !== null && req.body.settings !== undefined) ? req.body.settings : {};
+  if (JSON.stringify(updatedSettings) === JSON.stringify({})) {
     return res.status(200).send();
   }
 
   // Check object compliance
   const keys = ['defaultColour', 'isCreated', 'rubric', ' rubricId'];
-  const assignmentSettingsKeys = Object.keys(assignmentSettings);
+  const assignmentSettingsKeys = Object.keys(updatedSettings);
   let invalidKeyFound = false;
   assignmentSettingsKeys.forEach(key => {
     invalidKeyFound = (keys.indexOf(key) === -1);
@@ -515,11 +514,11 @@ export const assignmentSettings = (req, res) => {
         }
 
         const settings: AssignmentSettingsInfo = JSON.parse(data);
-        settings.defaultColour = (assignmentSettings.defaultColour) ? assignmentSettings.defaultColour : settings.defaultColour;
+        settings.defaultColour = (updatedSettings.defaultColour) ? updatedSettings.defaultColour : settings.defaultColour;
         const buffer = new Uint8Array(Buffer.from(JSON.stringify(settings)));
 
         return writeToFile(req, res, assignmentFolder + sep + SETTING_FILE, buffer, null, 'Failed to save assignment settings!', () => {
-          return sendResponseData(req, res, 200, assignmentSettings);
+          return sendResponseData(req, res, 200, updatedSettings);
         });
       });
     });
@@ -657,7 +656,8 @@ export const finalizeAssignmentRubric = async (req, res) => {
                 };
 
                 await annotateRubricFN().then(async (data) => {
-                  const fileName = pathinfo(submission, 'PATHINFO_FILENAME') + '_MARK';
+                  const ext = path.extname(submission);
+                  const fileName = path.basename(submission, ext) + '_MARK';
                   writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
                   accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
                   let changed = false;
@@ -874,7 +874,8 @@ export const finalizeAssignment = async (req, res) => {
                   return await annotatePdfFile(res, submission, marks);
                 };
 
-                let fileName = pathinfo(submission, 'PATHINFO_FILENAME');
+                const ext = path.extname(submission);
+                let fileName = path.basename(submission, ext);
                 await annotateFN().then(async (data) => {
                   fileName += '_MARK';
                   writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
@@ -1057,10 +1058,14 @@ export const createAssignment = (req, res) => {
 
         let foundCount = 0;
         for (let i = 0; i < folders.length; i++) {
-          if (isFolder(folders[i].toLowerCase())) {
-            if (assignmentName.toLowerCase() === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME')) {
+          if (isFolder(folders[i])) {
+            const assignmentDirectoryName = path.basename(folders[i]);
+            // Doing a casesensitive check on the directory names - for Window's sake
+            if (assignmentName.toLowerCase() === assignmentDirectoryName.toLowerCase()) {
               foundCount++;
-            } else if ((assignmentName.toLowerCase() + ' (' + (foundCount + 1) + ')') === pathinfo(folders[i].toLowerCase(), 'PATHINFO_FILENAME')) {
+
+              // Doing a casesensitive check on the directory names - for Window's sake
+            } else if ((assignmentName.toLowerCase() + ' (' + (foundCount + 1) + ')') === assignmentDirectoryName.toLowerCase()) {
               foundCount++;
             }
           }

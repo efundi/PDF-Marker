@@ -9,6 +9,7 @@ import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
+import {PdfmUtilsService} from "@pdfMarkerModule/services/pdfm-utils.service";
 
 @Component({
   selector: 'pdf-marker-working-folder',
@@ -56,13 +57,14 @@ export class WorkingFolderComponent implements OnInit {
     });
   }
 
+
+
   private populateWorkspaces(folders: string[]) {
     const values: any[] = [];
     if (folders) {
       this.folders = folders;
       this.folderNameList = folders.map(item => {
-        item = item.substr(item.lastIndexOf('\\') + 1, item.length);
-        return item;
+        return PdfmUtilsService.basename(item);
       });
       this.folderNameList.forEach(folder => {
         const value: any = {

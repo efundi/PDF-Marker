@@ -1,22 +1,22 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {AssignmentService} from "@sharedModule/services/assignment.service";
-import {SakaiService} from "@coreModule/services/sakai.service";
-import {Router} from "@angular/router";
-import {AppService} from "@coreModule/services/app.service";
-import {MatPaginator} from "@angular/material/paginator";
-import {MatTableDataSource} from "@angular/material/table";
-import {MatDialogConfig} from "@angular/material/dialog";
-import {AlertService} from "@coreModule/services/alert.service";
-import {FileSaverService} from "ngx-filesaver";
-import {SettingsService} from "@pdfMarkerModule/services/settings.service";
-import {SettingInfo} from "@pdfMarkerModule/info-objects/setting.info";
-import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
-import {FormBuilder} from "@angular/forms";
-import * as fs from 'fs';
-import * as path from 'path';
-import {sep} from 'path';
+import {AssignmentService} from '@sharedModule/services/assignment.service';
+import {SakaiService} from '@coreModule/services/sakai.service';
+import {Router} from '@angular/router';
+import {AppService} from '@coreModule/services/app.service';
+import {MatPaginator} from '@angular/material/paginator';
+import {MatTableDataSource} from '@angular/material/table';
+import {MatDialogConfig} from '@angular/material/dialog';
+import {AlertService} from '@coreModule/services/alert.service';
+import {FileSaverService} from 'ngx-filesaver';
+import {SettingsService} from '@pdfMarkerModule/services/settings.service';
+import {SettingInfo} from '@pdfMarkerModule/info-objects/setting.info';
+import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
+import {FormBuilder} from '@angular/forms';
+// import * as fs from 'fs';
+// import * as path from 'path';
+// import {sep} from 'path';
 import {AssignmentWorkspaceManageModalComponent} from '@pdfMarkerModule/components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
-import {Subscription} from 'rxjs';
+import {firstValueFrom, Subscription} from 'rxjs';
 
 export interface WorkspaceDetails {
   assignmentTitle: string;
@@ -31,7 +31,7 @@ export interface WorkspaceDetails {
 
   currentWorkspace: string;
 
-};
+}
 
 @Component({
   selector: 'pdf-marker-workspace-assignment-overview',
@@ -43,7 +43,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'progress', 'type'];
   dataSource: MatTableDataSource<WorkspaceDetails>;
   workspaceRows: WorkspaceDetails[] = [];
-  workspaceName: string = 'Workspace Name';
+  workspaceName = 'Workspace Name';
   private assignmentGrades: any[] = [];
   assignmentsLength;
   assignmentPageSizeOptions: number[];
@@ -92,8 +92,8 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   manageFolders(event) {
     const config = new MatDialogConfig();
     config.disableClose = true;
-    config.width = "400px";
-    config.height = "500px";
+    config.width = '400px';
+    config.height = '500px';
     config.data = {
       workspaceName: this.workspaceName,
       assignments: this.dataSource.data,
@@ -115,28 +115,28 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
         this.dataSource = new MatTableDataSource<WorkspaceDetails>(this.workspaceRows);
         edited = true;
       }
-      if(edited){
+      if (edited) {
         this.appService.isLoading$.next(true);
         this.assignmentService.getAssignments().subscribe((assignments) => {
           this.assignmentService.update(assignments);
           this.appService.isLoading$.next(false);
-          this.appService.openSnackBar(true, "Refreshed list");
+          this.appService.openSnackBar(true, 'Refreshed list');
         }, error => {
           this.appService.isLoading$.next(false);
-          this.appService.openSnackBar(false, "Could not refresh list");
+          this.appService.openSnackBar(false, 'Could not refresh list');
         });
 
       }
     });
   }
 
-  async getAssignmentSettings(assignmentName: string): Promise<AssignmentSettingsInfo> {
+  getAssignmentSettings(assignmentName: string): Promise<AssignmentSettingsInfo> {
     this.appService.isLoading$.next(true);
-    return await this.assignmentService.getAssignmentSettings(this.workspaceName, assignmentName).toPromise()
+    return firstValueFrom(this.assignmentService.getAssignmentSettings(this.workspaceName, assignmentName))
       .then((assignmentSettings) => {
         this.assignmentService.setSelectedAssignment(assignmentSettings);
-        return assignmentSettings;
         this.appService.isLoading$.next(false);
+        return assignmentSettings;
       })
       .catch(() => {
         this.appService.isLoading$.next(false);
@@ -144,34 +144,34 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       });
   }
 
-  countFileFilter(startPath: any, filter: string): number {
-    let count = 0;
-
-    if (!fs.existsSync(startPath)) {
-      return 0;
-    }
-
-    let files = fs.readdirSync(startPath);
-    for (let i = 0; i < files.length; i++) {
-      let filename = path.join(startPath, files[i]);
-      let stat = fs.lstatSync(filename);
-      if (stat.isDirectory()) {
-        count = count + this.countFileFilter(filename, filter);
-      } else if (filename.indexOf(filter) >= 0) {
-        count = count + 1;
-      }
-    }
-    return count;
-  }
+  // countFileFilter(startPath: any, filter: string): number {
+  //   let count = 0;
+  //
+  //   if (!fs.existsSync(startPath)) {
+  //     return 0;
+  //   }
+  //
+  //   const files = fs.readdirSync(startPath);
+  //   for (let i = 0; i < files.length; i++) {
+  //     const filename = path.join(startPath, files[i]);
+  //     const stat = fs.lstatSync(filename);
+  //     if (stat.isDirectory()) {
+  //       count = count + this.countFileFilter(filename, filter);
+  //     } else if (filename.indexOf(filter) >= 0) {
+  //       count = count + 1;
+  //     }
+  //   }
+  //   return count;
+  // }
 
   private generateDataFromModel() {
     // let workspaceRows: WorkspaceDetails[] = [];
     this.workspaceRows = [];
     this.workspaceName = (Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '';
     if (this.hierarchyModel[this.workspaceName]) {
-      Object.keys(this.hierarchyModel[this.workspaceName]).forEach(key => {
-        if (key) {
-          let workspaceRow: WorkspaceDetails = {
+      Object.keys(this.hierarchyModel[this.workspaceName]).forEach(assignmentName => {
+        if (assignmentName) {
+          const workspaceRow: WorkspaceDetails = {
             assignmentTitle: '',
             submissionCount: 0,
             marked: 0,
@@ -180,19 +180,20 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
             currentWorkspace: ''
           };
           // Assignment Name
-          workspaceRow.assignmentTitle = key;
+          workspaceRow.assignmentTitle = assignmentName;
           // Submissions Count
-          const assignmentFiles = Object.keys(this.hierarchyModel[this.workspaceName][key]).
-          filter(x => this.sakaiService.getAssignmentRootFiles().indexOf(x) === -1);
+          const assignmentFiles = Object.keys(this.hierarchyModel[this.workspaceName][assignmentName])
+            .filter(x => this.sakaiService.getAssignmentRootFiles().indexOf(x) === -1);
           workspaceRow.submissionCount = assignmentFiles.length;
           // Marked/Not Marked
           this.settingsService.getConfigurations().subscribe((configurations: SettingInfo) => {
-            const count = this.countFileFilter(configurations.defaultPath + sep + this.workspaceName + sep + key, '.marks.json');
+            // TODO fix this. You can access the filesystem from the front-end
+            const count = 0; // this.countFileFilter(configurations.defaultPath + sep + this.workspaceName + sep + assignmentName, '.marks.json');
             workspaceRow.marked = count;
             workspaceRow.notMarked = workspaceRow.submissionCount - workspaceRow.marked;
           });
           // Type
-          this.getAssignmentSettings(key).then((assignmentSettings) => {
+          this.getAssignmentSettings(assignmentName).then((assignmentSettings) => {
             const assignmentSettingsInfo = assignmentSettings;
             workspaceRow.type = assignmentSettingsInfo.rubric ? 'Rubric' : 'Manual';
 
@@ -210,26 +211,13 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
         i += this.pageSize;
         range.push(i);
 
-        if (i > this.assignmentsLength)
+        if (i > this.assignmentsLength) {
           break;
+        }
       }
       this.assignmentPageSizeOptions = range;
       this.appService.isLoading$.next(false);
     }
-  }
-
-  private isNullOrUndefined = (object: any): boolean => {
-    return (object === null || object === undefined);
-  }
-
-  private openYesNoConfirmationDialog(title: string = "Confirm", message: string) {
-    const config = new MatDialogConfig();
-    config.width = "400px";
-    config.maxWidth = "400px";
-    config.data = {
-      title: title,
-      message: message,
-    };
   }
 
   ngOnDestroy(): void {

@@ -20,9 +20,8 @@ import {
 import {existsSync, readFileSync} from 'fs';
 import * as glob from 'glob';
 import {AssignmentSettingsInfo} from '../../src/app/modules/pdf-marker/info-objects/assignment-settings.info';
-import {sep} from 'path';
+import {basename, sep} from 'path';
 import * as JSZip from 'jszip';
-import * as pathinfo from 'locutus/php/filesystem/pathinfo';
 
 
 const zipFileUploadCallback = (req, res, data) => {
@@ -99,7 +98,7 @@ const zipFileUploadCallback = (req, res, data) => {
     let folderCount = 0;
     folders.forEach(folder => {
       if (isFolder(folder)) {
-        folders[folderCount] = pathinfo(folder, 'PATHINFO_BASENAME');
+        folders[folderCount] = basename(folder);
         folderCount++;
       }
     });

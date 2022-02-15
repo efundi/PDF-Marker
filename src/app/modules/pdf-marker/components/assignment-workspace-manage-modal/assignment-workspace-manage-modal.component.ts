@@ -5,6 +5,7 @@ import {WorkspaceService} from '@sharedModule/services/workspace.service';
 import {AppService} from '@coreModule/services/app.service';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
 import {WorkspaceDetails} from '@pdfMarkerModule/components/assignment-workspace-overview/assignment-workspace-overview.component';
+import {PdfmUtilsService} from "@pdfMarkerModule/services/pdfm-utils.service";
 
 export interface WorkspaceDialogResult {
   prevWorkspaceName: string;
@@ -58,8 +59,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
       if (workspaces) {
         this.workspaceList = workspaces;
         this.workspaceNameList = workspaces.map(item => {
-          item = item.substr(item.lastIndexOf("\\") + 1, item.length);
-          return item;
+          return PdfmUtilsService.basename(item);
         });
         const foundIndex = this.workspaceNameList.findIndex(x => x === this.data.workspaceName);
         this.workspaceList.splice(foundIndex, 1);
@@ -154,7 +154,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
         }, error => {
           this.appService.isLoading$.next(false);
           console.log(error);
-          this.appService.openSnackBar(false, error);
+          this.appService.openSnackBar(false, error.error.message);
         });
       }
     }

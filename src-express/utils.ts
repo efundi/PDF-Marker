@@ -1,6 +1,5 @@
 import * as unzipper from 'unzipper';
 import * as etl from 'etl';
-import * as pathinfo from 'locutus/php/filesystem/pathinfo';
 import * as multer from 'multer';
 import {Request, Response} from 'express';
 import {
@@ -8,15 +7,18 @@ import {
   constants,
   createReadStream,
   existsSync,
-  lstatSync, mkdir, mkdirSync,
+  lstatSync,
+  mkdir,
+  mkdirSync,
   readdirSync,
   readFile,
-  rmdirSync, statSync,
+  rmdirSync,
+  statSync,
   unlinkSync,
   writeFile, writeFileSync
 } from 'fs';
 import {FEEDBACK_FOLDER, GRADES_FILE, SUBMISSION_FOLDER, UPLOADS_DIR} from './constants';
-import {sep} from 'path';
+import {sep, extname, dirname} from 'path';
 import {PDFDocument} from 'pdf-lib';
 
 export const sendResponse = (req: Request, res: Response, statusCode: number, message: string) => {
@@ -164,8 +166,10 @@ export const extractZipFile = async (file, destination, newFolder, oldFolder, as
           // console.log("### - File Name First : " + entry.path);
           entry.path = entry.path.replace(oldFolder, newFolder);
 
-          const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
-          const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
+          const directory = dirname(destination + entry.path.replace('/', sep));
+          // const extension = extname(destination + entry.path.replace('/', sep)).substring(1);
+
+
           if (!existsSync(directory)) {
             mkdirSync(directory, {recursive: true});
           }
@@ -246,8 +250,9 @@ export const extractZipFile = async (file, destination, newFolder, oldFolder, as
           //
           const content = await entry.buffer();
           entry.path = entry.path.replace(oldFolder, newFolder);
-          const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
-          const extension = pathinfo(destination + entry.path.replace('/', sep), 'PATHINFO_EXTENSION');
+          const directory = dirname(destination + entry.path.replace('/', sep));
+          const extension = extname(destination + entry.path.replace('/', sep)).substring(1);
+
           if (!existsSync(directory)) {
             mkdirSync(directory, {recursive: true});
           }
