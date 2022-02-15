@@ -74,7 +74,6 @@
     "hex-rgb": "^4.1.0",
     "json-2-csv": "^3.5.7",
     "jszip": "^3.2.2",
-    "locutus": "^2.0.11",
     "lodash": "^4.17.21",
     "multer": "^1.4.4",
     "ngx-color-picker": "^11.0.0",
