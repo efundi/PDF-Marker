@@ -1,20 +1,21 @@
 import {Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {FormArray, FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {RxwebValidators} from "@rxweb/reactive-form-validators";
-import {AlertService} from "@coreModule/services/alert.service";
-import {AssignmentService} from "@sharedModule/services/assignment.service";
-import {AppService} from "@coreModule/services/app.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
-import {ImportService} from "@pdfMarkerModule/services/import.service";
-import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
-import {RoutesEnum} from "@coreModule/utils/routes.enum";
-import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
-import {AssignmentDetails} from "@pdfMarkerModule/components/assignment-overview/assignment-overview.component";
-import {SakaiService} from "@coreModule/services/sakai.service";
-import {MatDialogConfig} from "@angular/material/dialog";
-import {YesAndNoConfirmationDialogComponent} from "@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
+import {FormArray, FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {RxwebValidators} from '@rxweb/reactive-form-validators';
+import {AlertService} from '@coreModule/services/alert.service';
+import {AssignmentService} from '@sharedModule/services/assignment.service';
+import {AppService} from '@coreModule/services/app.service';
+import {ActivatedRoute, Router} from '@angular/router';
+import {IRubric, IRubricName} from '@coreModule/utils/rubric.class';
+import {ImportService} from '@pdfMarkerModule/services/import.service';
+import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
+import {RoutesEnum} from '@coreModule/utils/routes.enum';
+import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
+import {AssignmentDetails} from '@pdfMarkerModule/components/assignment-overview/assignment-overview.component';
+import {SakaiService} from '@coreModule/services/sakai.service';
+import {MatDialogConfig} from '@angular/material/dialog';
+import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
+import {PdfmUtilsService} from "@pdfMarkerModule/services/pdfm-utils.service";
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -29,35 +30,35 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private studentFiles: File[] = [];
 
-  isRubric: boolean = true;
+  isRubric = true;
 
   rubrics: IRubricName[];
 
   selectedRubric: IRubric;
 
-  isEdit: boolean = false;
+  isEdit = false;
 
-  title: string = "Upload PDF Files";
+  title = 'Upload PDF Files';
 
   readonly MimeTypesEnum = MimeTypesEnum;
 
   readonly regEx = /(.*)\((.+)\)/;
 
-  private readonly submissionFolder = "Submission attachment(s)";
+  private readonly submissionFolder = 'Submission attachment(s)';
 
-  private assignmentId :string;
+  private assignmentId: string;
 
-  private workspaceName :string;
+  private workspaceName: string;
 
   workspaces: string[] = [];
   selectedWorkspace: string;
 
-  @ViewChild("assignmentName", {static: true})
+  @ViewChild('assignmentName', {static: true})
   assignmentName: ElementRef;
 
   private assignmentSettings: AssignmentSettingsInfo;
 
-  private studentDetails:any[] = [];
+  private studentDetails: any[] = [];
 
   constructor(private fb: FormBuilder,
               private alertService: AlertService,
@@ -72,11 +73,11 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.initForm();
     this.activatedRoute.params.subscribe(params => {
-      let id = params['id'];
-      let workspaceName = params['workspaceName'];
-      if(id && !!this.assignmentService.getSelectedAssignment()) {
-        this.title = "Manage Submissions";
-        const fields = ["assignmentName", "noRubric", "rubric"];
+      const id = params['id'];
+      const workspaceName = params['workspaceName'];
+      if (id && !!this.assignmentService.getSelectedAssignment()) {
+        this.title = 'Manage Submissions';
+        const fields = ['assignmentName', 'noRubric', 'rubric'];
         this.assignmentId = id;
         this.isEdit = true;
         this.fc.assignmentName.setValue(this.assignmentId);
@@ -106,7 +107,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.rubrics = rubrics;
       this.appService.isLoading$.next(false);
     }, error => {
-      this.appService.openSnackBar(false, "Unable to retrieve rubrics");
+      this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
       this.appService.isLoading$.next(false);
     });
 
@@ -114,8 +115,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       if (workspaces) {
         this.workspaces = [...workspaces];
         this.workspaces = this.workspaces.map(item => {
-          item = item.substr(item.lastIndexOf("\\") + 1, item.length);
-          return item;
+          return PdfmUtilsService.basename(item);
         });
       }
       this.workspaces.unshift('Default Workspace');
@@ -124,19 +124,20 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       }
       this.appService.isLoading$.next(false);
     }, error => {
-      this.appService.openSnackBar(false, "Unable to retrieve workspaces");
+      this.appService.openSnackBar(false, 'Unable to retrieve workspaces');
       this.appService.isLoading$.next(false);
     });
 
-    if(!this.isEdit)
+    if (!this.isEdit) {
       this.addNewRow();
+    }
   }
 
   private generateStudentDetailsFromModel() {
     const hierarchyModel = this.assignmentService.getSelectedAssignment();
 
     const values: AssignmentDetails[] = [];
-    if(hierarchyModel[this.assignmentId]) {
+    if (hierarchyModel[this.assignmentId]) {
       Object.keys(hierarchyModel[this.assignmentId]).forEach(key => {
         if (this.regEx.test(key) && this.sakaiService.getAssignmentRootFiles().indexOf(key) === -1) {
           const value: AssignmentDetails = {
@@ -159,11 +160,11 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private populateStudentDetails(studentDetails: AssignmentDetails[]) {
-    const fields = ["studentId", "studentName", "studentSurname", "studentSubmission"];
-    for(let i = 0; i < studentDetails.length; i++) {
+    const fields = ['studentId', 'studentName', 'studentSurname', 'studentSubmission'];
+    for (let i = 0; i < studentDetails.length; i++) {
       const studentFormGroup: FormGroup = this.newFormGroupRowFromData(studentDetails[i]);
       (this.fc.studentRow as FormArray).push(studentFormGroup);
-      this.studentFiles.push(new File([""], studentDetails[i].assignment));
+      this.studentFiles.push(new File([''], studentDetails[i].assignment));
     }
   }
 
@@ -202,12 +203,12 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private newFormGroupRowFromData(data: AssignmentDetails): FormGroup {
-    const studentNameSplit = data.studentName.split(",");
+    const studentNameSplit = data.studentName.split(',');
     this.populateSavedState(data);
     return this.fb.group({
       studentId: [data.studentNumber, [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
-      studentName:[(studentNameSplit.length == 2) ? studentNameSplit[1].trim():"N/A", Validators.required],
-      studentSurname: [(studentNameSplit.length == 2) ? studentNameSplit[0].trim():"N/A", Validators.required],
+      studentName: [(studentNameSplit.length === 2) ? studentNameSplit[1].trim() : 'N/A', Validators.required],
+      studentSurname: [(studentNameSplit.length === 2) ? studentNameSplit[0].trim() : 'N/A', Validators.required],
       studentSubmission: [data.assignment],
       studentSubmissionText: [data.assignment],
       readonly: [true],
@@ -216,12 +217,12 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private populateSavedState(data: AssignmentDetails) {
-    const studentNameSplit = data.studentName.split(",");
+    const studentNameSplit = data.studentName.split(',');
 
     const studentDetails = {
       studentId: data.studentNumber,
-      studentName: (studentNameSplit.length == 2) ? studentNameSplit[1].trim():"N/A",
-      studentSurname: (studentNameSplit.length == 2) ? studentNameSplit[0].trim():"N/A",
+      studentName: (studentNameSplit.length === 2) ? studentNameSplit[1].trim() : 'N/A',
+      studentSurname: (studentNameSplit.length === 2) ? studentNameSplit[0].trim() : 'N/A',
       studentSubmission: data.assignment,
       shouldDelete: false
     };
@@ -230,7 +231,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   addNewRow() {
-    if(this.studentRow.valid) {
+    if (this.studentRow.valid) {
       (this.fc.studentRow as FormArray).push(this.newFormGroupRow());
     }
   }
@@ -248,7 +249,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   onRubricChange() {
-    if(this.fc.noRubric.value) {
+    if (this.fc.noRubric.value) {
       this.fc.rubric.setValidators(null);
       this.fc.rubric.updateValueAndValidity();
       this.fc.rubric.disable();
@@ -263,18 +264,19 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   async onFileChange(studentIndex: number, event) {
-    if(event.target.files[0] === undefined || event.target.files[0] === null) {
+    if (event.target.files[0] === undefined || event.target.files[0] === null) {
       this.studentFormGroupAtIndex(studentIndex).controls.studentSubmission.setValue(null);
       this.studentFormGroupAtIndex(studentIndex).controls.studentSubmissionText.setValue(null);
     } else {
       const file: File = await event.target.files[0];
-      if(file && file.type === MimeTypesEnum.PDF) {
+      if (file && file.type === MimeTypesEnum.PDF) {
         this.studentFormGroupAtIndex(studentIndex).controls.studentSubmission.setErrors(null);
         this.studentFormGroupAtIndex(studentIndex).controls.studentSubmissionText.setValue(file.name);
-        if(!this.studentFiles[studentIndex])
+        if (!this.studentFiles[studentIndex]) {
           this.studentFiles.push(file);
-        else
+        } else {
           this.studentFiles[studentIndex] = file;
+        }
       } else {
         this.studentFormGroupAtIndex(studentIndex).controls.studentSubmission.setErrors({file: true});
         this.studentFormGroupAtIndex(studentIndex).controls.studentSubmissionText.setValue(file.name);
@@ -284,36 +286,36 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   onStudentInfoRemove(studentIndex: number) {
-    if(this.studentRow.length == 1) {
-      this.alertService.error("Your assignment should have at least one entry");
-      this.appService.openSnackBar(false, "Your assignment should have at least one entry");
+    if (this.studentRow.length === 1) {
+      this.alertService.error('Your assignment should have at least one entry');
+      this.appService.openSnackBar(false, 'Your assignment should have at least one entry');
       this.studentFormGroupAtIndex(0).controls.shouldDelete.setValue(false);
       return;
     }
 
-    let selectedStudentId: string = this.studentFormGroupAtIndex(studentIndex).controls.studentId.value;
-    let found: boolean = false;
+    const selectedStudentId: string = this.studentFormGroupAtIndex(studentIndex).controls.studentId.value;
+    let found = false;
     let foundIndex: number;
-    for(let i = 0; i < this.studentDetails.length; i++) {
-      if(selectedStudentId === this.studentDetails[i].studentId) {
+    for (let i = 0; i < this.studentDetails.length; i++) {
+      if (selectedStudentId === this.studentDetails[i].studentId) {
         foundIndex = i;
-        //this.studentDetails[i].shouldDelete = true;
+        // this.studentDetails[i].shouldDelete = true;
         found = true;
         break;
       }
     }
 
-    if(found) {
+    if (found) {
       const config = new MatDialogConfig();
-      config.width = "400px";
-      config.maxWidth = "400px";
+      config.width = '400px';
+      config.maxWidth = '400px';
       config.data = {
-        title: "Confirmation",
-        message: "This record was previously saved, are you sure you want to continue?"
+        title: 'Confirmation',
+        message: 'This record was previously saved, are you sure you want to continue?'
       };
 
       const shouldContinueFn = (shouldContinue: boolean) => {
-        if(shouldContinue) {
+        if (shouldContinue) {
           this.studentDetails[foundIndex].shouldDelete = true;
           this.studentRow.controls.splice(studentIndex, 1);
           // this.studentFiles.splice(studentIndex, 1);
@@ -334,36 +336,37 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   onSubmit(event) {
     this.alertService.clear();
     if (this.createAssignmentForm.invalid || this.studentRow.invalid) {
-      this.alertService.error("Please fill in the correct details!");
-      this.appService.openSnackBar(false, "Please fill in the correct details!");
+      this.alertService.error('Please fill in the correct details!');
+      this.appService.openSnackBar(false, 'Please fill in the correct details!');
       return;
     }
 
-    if (this.isEdit)
+    if (this.isEdit) {
       this.onEdit();
-    else
+    } else {
       this.onCreate();
+    }
   }
 
   private onEdit() {
     const formValue: any = this.createAssignmentForm.value;
     const savedState: any[] = this.studentDetails;
-    let formData: FormData = new FormData();
+    const formData: FormData = new FormData();
     const studentData: any = [];
     let savedCount = 0;
-    let foundItemsToDelete: boolean = false;
+    let foundItemsToDelete = false;
     let foundItemsCount = 0;
 
     savedState.forEach((studentDetail: any) => {
-      let student: any = {};
+      const student: any = {};
       student.studentId = studentDetail.studentId.trim();
       student.studentName = studentDetail.studentName.trim();
       student.studentSurname = studentDetail.studentSurname.trim();
-      if(studentDetail.shouldDelete) {
+      if (studentDetail.shouldDelete) {
         student.remove = true;
         foundItemsToDelete = true;
         foundItemsCount++;
-        formData.append('file' + savedCount, new File([""], studentDetail.studentSubmission));
+        formData.append('file' + savedCount, new File([''], studentDetail.studentSubmission));
       } else {
         formData.append('file' + savedCount, this.studentFiles[savedCount]);
       }
@@ -392,7 +395,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       count++;
     });
 
-    if(foundItemsCount === studentData.length) {
+    if (foundItemsCount === studentData.length) {
       this.deletionErrorMessage(foundItemsCount);
       return;
     }
@@ -431,12 +434,12 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private onCreate() {
     const formValue: any = this.createAssignmentForm.value;
-    let formData: FormData = new FormData();
+    const formData: FormData = new FormData();
     const studentData: any = [];
     let count = 0;
 
     formValue.studentRow.map((studentRow: any) => {
-      let student: any = {};
+      const student: any = {};
       student.studentId = studentRow.studentId.trim();
       student.studentName = studentRow.studentName.trim();
       student.studentSurname = studentRow.studentSurname.trim();
@@ -491,16 +494,17 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private deletionErrorMessage(count: number = 1) {
-    this.alertService.error("Your assignment should have at least one entry");
-    this.appService.openSnackBar(false, "Your assignment should have at least one entry");
-    for(let i = 0; i < count; i++)
+    this.alertService.error('Your assignment should have at least one entry');
+    this.appService.openSnackBar(false, 'Your assignment should have at least one entry');
+    for (let i = 0; i < count; i++) {
       this.studentFormGroupAtIndex(i).controls.shouldDelete.setValue(false);
+    }
     return;
   }
 
   hasUnsavedChanges() {
     if (this.isEdit) {
-      let found: boolean = false;
+      let found = false;
       for (let i = 0; i < this.studentDetails.length; i++) {
         if (this.studentDetails[i].shouldDelete) {
           found = true;
@@ -514,7 +518,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if(this.assignmentId && this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW)
+    if (this.assignmentId && this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW) {
       this.assignmentService.setSelectedAssignment(null);
+    }
   }
 }

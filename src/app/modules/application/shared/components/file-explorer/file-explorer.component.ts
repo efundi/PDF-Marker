@@ -1,16 +1,12 @@
 import {Component, Input, OnChanges, OnInit} from '@angular/core';
-import {Router} from "@angular/router";
-import {AssignmentService} from "@sharedModule/services/assignment.service";
-import {AppService} from "@coreModule/services/app.service";
-import {Observable, Subscription} from "rxjs";
-import {of} from "rxjs";
-import {FormBuilder, FormGroup} from "@angular/forms";
-import {AssignmentSettingsInfo} from "@pdfMarkerModule/info-objects/assignment-settings.info";
-import {MimeTypesEnum} from "@coreModule/utils/mime.types.enum";
-import {RoutesEnum} from "@coreModule/utils/routes.enum";
+import {Router} from '@angular/router';
+import {AssignmentService} from '@sharedModule/services/assignment.service';
+import {AppService} from '@coreModule/services/app.service';
+import {Observable, of, Subscription} from 'rxjs';
+import {RoutesEnum} from '@coreModule/utils/routes.enum';
 import {ZipService} from '@coreModule/services/zip.service';
-import {values} from 'pdf-lib';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
+import {PdfmUtilsService} from "@pdfMarkerModule/services/pdfm-utils.service";
 
 @Component({
   selector: 'pdf-marker-file-explorer',
@@ -62,9 +58,9 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   ngOnInit() {
     if (this.assignmentRootFolder) {
       this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfFile => {
-        if (this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + "/"))
+        if (this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + '/')) {
           this.filePath = this.assignmentService.getSelectedPdfLocation();
-        else {
+        } else {
           this.isFileSelected = false;
           this.filePath = undefined;
         }
@@ -90,8 +86,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
       let isWorkspace = false;
       if (workspaces) {
         const workspaceNames = workspaces.map(item => {
-          item = item.substr(item.lastIndexOf("\\") + 1, item.length);
-          return item;
+          return PdfmUtilsService.basename(item);
         });
 
         if (folderOrFileKeys.length > 0) {
@@ -104,7 +99,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
       if (!this.isAssignmentRoot(objectName, hierarchyModel) && isWorkspace) {
         this.appService.isLoading$.next(true);
         this.assignmentService.setSelectedWorkspace(hierarchyModel);
-         // if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
+        // if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
         this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);
         $event.stopImmediatePropagation();
       } else if (this.isAssignmentRoot(objectName, hierarchyModel)) {
@@ -152,13 +147,13 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   }
 
   onSelectedPdf(pdfFileLocation: string) {
-    if((this.router.url !== RoutesEnum.ASSIGNMENT_MARKER && this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC) || this.assignmentService.getSelectedPdfLocation() !== pdfFileLocation) {
+    if ((this.router.url !== RoutesEnum.ASSIGNMENT_MARKER && this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC) || this.assignmentService.getSelectedPdfLocation() !== pdfFileLocation) {
       console.log(pdfFileLocation);
       this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
         this.assignmentService.configure(pdfFileLocation, blobData);
       }, error => {
         this.appService.isLoading$.next(false);
-        this.appService.openSnackBar(false, "Unable to read file");
+        this.appService.openSnackBar(false, 'Unable to read file');
       });
     }
   }

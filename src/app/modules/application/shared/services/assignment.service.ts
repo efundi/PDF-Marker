@@ -10,9 +10,8 @@ import {Router} from '@angular/router';
 import {AppService} from '@coreModule/services/app.service';
 import {IRubric} from '@coreModule/utils/rubric.class';
 import {ZipService} from '@coreModule/services/zip.service';
-import {sep} from 'path';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
-import {ShareAssignments} from "@sharedModule/info-objects/share-assignments";
+import {ShareAssignments} from '@sharedModule/info-objects/share-assignments';
 
 @Injectable({
   providedIn: 'root'
@@ -86,7 +85,7 @@ export class AssignmentService {
       assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split('/').length > 0) ? this.selectedPdfLocation.split('/')[0] : '');
     }
     if (workspaceName) {
-      assignmentName = workspaceName + sep + assignmentName;
+      assignmentName = workspaceName + '/' + assignmentName;
     }
 
     const body = {
@@ -97,7 +96,7 @@ export class AssignmentService {
 
   getAssignmentGrades(workspaceName: string = null, assignmentName: string = null) {
     if (workspaceName) {
-      assignmentName = workspaceName + sep + assignmentName;
+      assignmentName = workspaceName + '/' + assignmentName;
     }
     const body = {
       location: assignmentName

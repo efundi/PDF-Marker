@@ -1,35 +1,39 @@
 import {checkAccess, checkClient, isJson, readFromFile, sendResponse, sendResponseData, writeToFile} from '../utils';
 import {CONFIG_DIR, CONFIG_FILE, COULD_NOT_CREATE_CONFIG_DIRECTORY, FORBIDDEN_RESOURCE} from '../constants';
-import {existsSync, mkdir} from 'fs';
+import {mkdir, readFile} from 'fs/promises';
+import {existsSync} from 'fs';
 import {validationResult} from 'express-validator';
+import {noop} from 'lodash';
 
 export const settingsGet = (req, res) => {
   if (!checkClient(req, res)) {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
   }
 
+  let promise: Promise<any> = Promise.resolve();
+
   if (!existsSync(CONFIG_DIR)) {
-    mkdir(CONFIG_DIR, err => {
-      if (err) {
-        return sendResponse(req, res, 500, COULD_NOT_CREATE_CONFIG_DIRECTORY);
-      }
-      return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-        if (!isJson(data)) {
-          return sendResponseData(req, res, 200, {});
-        } else {
-          return sendResponseData(req, res, 200, data.toString());
-        }
+    promise = mkdir(CONFIG_DIR)
+      .then(noop, () => {
+        return Promise.reject(COULD_NOT_CREATE_CONFIG_DIRECTORY);
       });
-    });
-  } else {
-    return readFromFile(req, res, CONFIG_DIR + CONFIG_FILE, (data) => {
-      if (!isJson(data)) {
+  }
+
+  promise
+    .then(() => {
+      return readFile(CONFIG_DIR + CONFIG_FILE)
+        .then(data => data, error => Promise.reject(error.message));
+    })
+    .then((configBuffer) => {
+      if (!isJson(configBuffer)) {
         return sendResponseData(req, res, 200, {});
       } else {
-        return sendResponseData(req, res, 200, data.toString());
+        return sendResponseData(req, res, 200, configBuffer.toString());
       }
+    }, (error) => {
+      return sendResponse(req, res, 500, error);
     });
-  }
+
 };
 
 export const settingsPost = (req, res) => {

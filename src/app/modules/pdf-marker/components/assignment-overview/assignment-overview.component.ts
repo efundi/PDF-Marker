@@ -21,7 +21,6 @@ import {FormBuilder, FormGroup} from '@angular/forms';
 import {RubricViewModalComponent} from '@sharedModule/components/rubric-view-modal/rubric-view-modal.component';
 import {ElectronService} from '@coreModule/services/electron.service';
 import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
-import {sep} from 'path';
 import {SelectionModel} from '@angular/cdk/collections';
 import {ShareAssignments} from "@sharedModule/info-objects/share-assignments";
 
@@ -195,7 +194,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
           value.studentName = matches[1];
           value.studentNumber = matches[2];
           value.assignment = this.hierarchyModel[this.assignmentName][key][this.submissionFolder] ? Object.keys(this.hierarchyModel[this.assignmentName][key][this.submissionFolder])[0] : '';
-          const gradesInfo = this.assignmentGrades.find(gradesInfo => gradesInfo[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
+          const gradesInfo = this.assignmentGrades.find(grade => grade[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
           value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5 : 0);
           value.path = (value.assignment) ? this.assignmentName + '/' + key + '/' + this.submissionFolder + '/' + value.assignment : '';
           value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7 : 'N/A');
@@ -233,7 +232,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   onSelectedPdf(pdfFileLocation: string) {
     this.appService.isLoading$.next(true);
     if (this.workspace !== undefined) {
-      pdfFileLocation = this.workspace + sep + pdfFileLocation;
+      pdfFileLocation = this.workspace + '/' + pdfFileLocation;
     }
     this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
       this.assignmentService.configure(pdfFileLocation, blobData);
