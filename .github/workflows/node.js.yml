@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-20.04
+    runs-on: windows-2019
 
     strategy:
       matrix:
@@ -24,9 +24,5 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - run: sudo dpkg --add-architecture i386
-      - run: sudo apt-get update
-      - run: sudo apt-get install lib32z1 -y
-      - run: sudo apt-get install wine-stable wine32:i386 wine64 -y
       - run: npm install
       - run: npm run deploy
