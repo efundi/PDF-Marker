@@ -12,4 +12,4 @@ directories:
   output: "release"
 
 files:
-  - "!**/{.angular}"
+  - "!.angular"
