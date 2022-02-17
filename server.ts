@@ -68,11 +68,9 @@ import {
   finalizeAssignment,
   finalizeAssignmentRubric,
   getAssignmentGlobalSettings,
-  getAssignments,
   getAssignmentSettings,
   getGrades,
   getMarks,
-  saveMarks,
   savingRubricMarks, shareExport,
   updateAssignment
 } from './src-express/rest/assignment';
@@ -265,8 +263,6 @@ app.post('/api/assignment/rubric/update', [
 
 /* END CHANGE ASSIGNMENT RUBRIC*/
 
-
-app.get('/api/assignments', getAssignments);
 
 const getPdfFile = (req, res) => {
   if (!checkClient(req, res)) {

@@ -1,6 +1,6 @@
 import {Inject, Injectable, Optional, PLATFORM_ID} from '@angular/core';
 import {HttpClient, HttpEvent, HttpHeaders} from '@angular/common/http';
-import {BehaviorSubject, Observable, ReplaySubject, Subject} from 'rxjs';
+import {BehaviorSubject, from, Observable, of, ReplaySubject, Subject} from 'rxjs';
 import {makeStateKey, StateKey, TransferState} from '@angular/platform-browser';
 import {isPlatformServer} from '@angular/common';
 import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
@@ -36,6 +36,8 @@ export class AssignmentService {
   onWorkspaceSourceChange = this.workspaceSourceSubject.asObservable();
   // selectedWorkspaceSource$ = this.selectedWorkspaceSource.asObservable();
 
+  private electronApi: any;
+
   constructor(private http: HttpClient,
               @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
               @Inject(PLATFORM_ID) private platformId: any,
@@ -44,6 +46,7 @@ export class AssignmentService {
               private appService: AppService,
               private zipService: ZipService) {
 
+    this.electronApi = (window as any).electronAPI;
     const transferKey: StateKey<any[]> = makeStateKey<any[]>('ListAssignments');
     if (isPlatformServer(this.platformId)) {
       this.assignmentList((err, assignmentList) => {
@@ -67,12 +70,10 @@ export class AssignmentService {
     this.onAssignmentSourceChange = this.selectedAssignmentSource.asObservable();
   }
 
-  getAssignments(): Observable<object[]> {
-    (window as any).electronAPI.getAssignments().then((response) => {
-      console.log(response);
-    });
+  getAssignments(): Observable<any> {
+    return from(this.electronApi.getAssignments());
 
-    return this.http.get<object[]>('/api/assignments');
+    // return this.http.get<object[]>('/api/assignments');
   }
 
   assignmentSettings(settings: AssignmentSettingsInfo) {
@@ -91,11 +92,7 @@ export class AssignmentService {
     if (workspaceName) {
       assignmentName = workspaceName + '/' + assignmentName;
     }
-
-    const body = {
-      location: assignmentName
-    };
-    return this.http.post<AssignmentSettingsInfo>('/api/assignment/settings/fetch', body);
+    return from(this.electronApi.getAssignmentSettings(assignmentName));
   }
 
   getAssignmentGrades(workspaceName: string = null, assignmentName: string = null) {
@@ -232,24 +229,11 @@ export class AssignmentService {
   }
 
   saveMarks(marks: MarkInfo[][], totalMark: number = 0): Observable<any> {
-    const body = {
-      location: this.selectedPdfLocation,
-      marks: marks,
-      totalMark: totalMark
-    };
-
-    return this.http.post('/api/assignment/marks/save', body);
+    return from(this.electronApi.saveMarks(this.selectedPdfLocation, marks, totalMark));
   }
 
   saveRubricMarks(rubricName: string = '', marks: any[], totalMark: number = 0) {
-    const body = {
-      location: this.selectedPdfLocation,
-      marks: marks,
-      totalMark: totalMark,
-      rubricName: rubricName
-    };
-
-    return this.http.post('/api/assignment/rubric/marks/save', body);
+    return from(this.electronApi.saveRubricMarks(this.selectedPdfLocation, rubricName, marks ));
   }
 
   getSavedMarks(): Observable<MarkInfo[]> {

@@ -3,7 +3,12 @@ import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
 import {writeFileSync} from 'fs';
-import {getAssignments} from './src-electron/ipc/assignments/get-assignment.handler';
+import {
+  getAssignments,
+  getAssignmentSettings,
+  saveMarks,
+  saveRubricMarks
+} from './src-electron/ipc/assignments/get-assignment.handler';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -36,9 +41,9 @@ function createWindow() {
   });
 
   if (serve) {
-    require('electron-reload')(__dirname, {
-      electron: require(`${__dirname}/node_modules/electron`)
-    });
+    // require('electron-reload')(__dirname, {
+    //   electron: require(`${__dirname}/node_modules/electron`)
+    // });
     mainWindow.loadURL('http://localhost:4200');
   } else {
     mainWindow.loadURL(url.format({
@@ -85,11 +90,18 @@ try {
       };
     });
 
+
+    ipcMain.handle('assignments:get', getAssignments);
+    ipcMain.handle('assignments:saveMarks', saveMarks);
+    ipcMain.handle('assignments:saveRubricMarks', saveRubricMarks);
+    ipcMain.handle('assignments:getAssignmentSettings', getAssignmentSettings);
+
+
+
   });
 
 
 
-  ipcMain.handle('assignments:get', getAssignments);
 
   // Quit when all windows are closed.
   app.on('window-all-closed', () => {
