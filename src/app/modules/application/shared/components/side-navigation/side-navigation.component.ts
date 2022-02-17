@@ -1,9 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import {AssignmentService} from "@sharedModule/services/assignment.service";
-import {AppService} from "@coreModule/services/app.service";
-import {RoutesEnum} from "@coreModule/utils/routes.enum";
-import {Router} from "@angular/router";
-import {ZipService} from "@coreModule/services/zip.service";
+import {Component, OnInit} from '@angular/core';
+import {AssignmentService} from '@sharedModule/services/assignment.service';
+import {AppService} from '@coreModule/services/app.service';
 
 @Component({
   selector: 'pdf-marker-side-navigation',
@@ -13,8 +10,7 @@ import {ZipService} from "@coreModule/services/zip.service";
 export class SideNavigationComponent implements OnInit {
 
   constructor(private assignmentService: AssignmentService,
-              private appService: AppService,
-              private zipService: ZipService) { }
+              private appService: AppService) { }
 
   ngOnInit() {
   }
@@ -24,10 +20,10 @@ export class SideNavigationComponent implements OnInit {
     this.assignmentService.getAssignments().subscribe((assignments) => {
       this.assignmentService.update(assignments);
       this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(true, "Refreshed list");
+      this.appService.openSnackBar(true, 'Refreshed list');
     }, error => {
       this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(false, "Could not refresh list");
+      this.appService.openSnackBar(false, 'Could not refresh list');
     });
   }
 }

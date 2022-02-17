@@ -1,5 +1,10 @@
 <ng-container *ngIf="assignments && assignments.length > 0; else empty">
-  <pdf-marker-file-explorer *ngFor="let assignmentModel of assignments" [hierarchyModel]="assignmentModel" [workspace]='workspaceBool' [assignmentRootFolder]="true"></pdf-marker-file-explorer>
+  <pdf-marker-file-explorer
+    *ngFor="let assignmentModel of assignments"
+    [hierarchyModel]="assignmentModel"
+    [workspace]='workspaceBool'
+    [assignmentRootFolder]="true">
+  </pdf-marker-file-explorer>
 </ng-container>
 <ng-template #empty>
   <span class="pdf-marker-empty">No assignments imported...</span>

@@ -68,6 +68,10 @@ export class AssignmentService {
   }
 
   getAssignments(): Observable<object[]> {
+    (window as any).electronAPI.getAssignments().then((response) => {
+      console.log(response);
+    });
+
     return this.http.get<object[]>('/api/assignments');
   }
 

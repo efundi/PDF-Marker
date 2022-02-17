@@ -3,6 +3,7 @@ import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
 import {writeFileSync} from 'fs';
+import {getAssignments} from './src-electron/ipc/assignments/get-assignment.handler';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -30,10 +31,7 @@ function createWindow() {
     width: size.width,
     height: size.height,
     webPreferences: {
-      // TODO this is a security risk, try this instead
-      // https://github.com/electron/electron/issues/9920#issuecomment-575839738
-      nodeIntegration: true,
-      contextIsolation: false
+      preload: path.join(__dirname, 'preload.js'),
     },
   });
 
@@ -67,7 +65,7 @@ try {
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
-  app.on('ready', () => {
+  app.whenReady().then(() => {
 
     if (process.platform === 'win32') {
       app.setAppUserModelId('za.ac.nwu.PDF-Marker'); // set appId from package.json or electron-builder.yml?
@@ -88,6 +86,10 @@ try {
     });
 
   });
+
+
+
+  ipcMain.handle('assignments:get', getAssignments);
 
   // Quit when all windows are closed.
   app.on('window-all-closed', () => {

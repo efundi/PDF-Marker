@@ -77,7 +77,7 @@ export class ElectronService {
 
   private electronCommunication(sentMessage: string, receivedMessage: string, observableSource: Subject<any>, args: any = null) {
     if ((<any> window).require) {
-      this.ipc = (<any> window).require('electron').ipcRenderer;
+      this.ipc = null // (<any> window).require('electron').ipcRenderer;
       if (args === null) {
         this.ipc.send(sentMessage);
       } else {

@@ -1,4 +1,4 @@
-import {Component, Input, OnChanges, OnInit} from '@angular/core';
+import {Component, Input, OnChanges, OnDestroy, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
 import {AppService} from '@coreModule/services/app.service';
@@ -13,7 +13,7 @@ import {PdfmUtilsService} from "@pdfMarkerModule/services/pdfm-utils.service";
   templateUrl: './file-explorer.component.html',
   styleUrls: ['./file-explorer.component.scss']
 })
-export class FileExplorerComponent implements OnInit, OnChanges  {
+export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
 
   @Input()
   hierarchyModel;
@@ -28,9 +28,6 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   @Input()
   hierarchyModelKeys;
-
-  hierarchyModelKeys$: Observable<any>;
-
 
   private subscription: Subscription;
 
@@ -76,6 +73,12 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
     //       console.log(dialogResult.movedAssignments);
     //     }
     //   });
+  }
+
+  ngOnDestroy() {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 
   onAssignment(objectName, hierarchyModel, $event) {
@@ -147,7 +150,7 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
   }
 
   onSelectedPdf(pdfFileLocation: string) {
-    if ((this.router.url !== RoutesEnum.ASSIGNMENT_MARKER && this.router.url !== RoutesEnum.ASSIGNMENT_MARKER_RUBRIC) || this.assignmentService.getSelectedPdfLocation() !== pdfFileLocation) {
+    if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER || this.assignmentService.getSelectedPdfLocation() !== pdfFileLocation) {
       console.log(pdfFileLocation);
       this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
         this.assignmentService.configure(pdfFileLocation, blobData);
@@ -164,7 +167,6 @@ export class FileExplorerComponent implements OnInit, OnChanges  {
 
   ngOnChanges() {
     this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
-    this.hierarchyModelKeys$ = of(Object.keys(this.hierarchyModel));
     this.checkIfWorkspace(this.hierarchyModel);
   }
 
