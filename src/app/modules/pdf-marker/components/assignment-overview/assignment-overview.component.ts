@@ -293,8 +293,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     const reader = new FileReader();
     reader.addEventListener('loadend', () => {
       const fileName: string = this.assignmentName;
-      this.electronService.saveFile({ filename: fileName, buffer: reader.result, name: 'Zip File', extension: ['zip']});
-      this.electronService.saveFileOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+      this.electronService.saveFile({ filename: fileName, buffer: reader.result, name: 'Zip File', extension: ['zip']}).subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
         this.appService.isLoading$.next(false);
         if (appSelectedPathInfo.selectedPath) {
           this.alertService.success(`Successfully exported ${fileName}. You can now upload it to ${this.settings.lmsSelection}.`);
@@ -433,8 +432,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     const reader = new FileReader();
     reader.addEventListener('loadend', () => {
       const fileName: string = this.assignmentName + '_share.zip';
-      this.electronService.saveFile({ filename: fileName, buffer: reader.result, name: 'Zip File', extension: ['zip']});
-      this.electronService.saveFileOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+      this.electronService.saveFile({ filename: fileName, buffer: reader.result, name: 'Zip File', extension: ['zip']})
+        .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
         this.appService.isLoading$.next(false);
         if (appSelectedPathInfo.selectedPath) {
           this.alertService.success(`Successfully exported ${fileName}.`);

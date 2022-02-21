@@ -7,20 +7,20 @@ import {
   createReadStream,
   existsSync,
   lstatSync,
-  mkdir,
-  mkdirSync,
   readdirSync,
   readFile,
   rmdirSync,
   statSync,
   unlinkSync,
-  writeFileSync
+  writeFileSync,
+  mkdirSync
 } from 'fs';
-import {access, writeFile} from 'fs/promises';
+import {access, writeFile, mkdir, cp} from 'fs/promises';
 import {FEEDBACK_FOLDER, GRADES_FILE, SUBMISSION_FOLDER, UPLOADS_DIR} from './constants';
 import {sep, extname, dirname} from 'path';
 import {PDFDocument} from 'pdf-lib';
-import {noop} from "rxjs";
+import {noop} from 'rxjs';
+import {isArray} from 'lodash';
 
 export const sendResponse = (req: Request, res: Response, statusCode: number, message: string) => {
   deleteUploadedFile(req);
@@ -95,6 +95,26 @@ export const readFromFile = (req, res, filePath: string, callback = null, errorM
   });
 };
 
+export function uploadFiles(files: string | string[]): Promise<any> {
+
+  if (!isArray(files)) {
+    files = [files as string];
+  }
+  let promise = Promise.resolve();
+
+
+    if (!existsSync(UPLOADS_DIR)) {
+      promise = mkdir(UPLOADS_DIR);
+    }
+
+    return promise.then(() => {
+
+      const promises = (files as string[]).map((file) => {
+        return cp(file, UPLOADS_DIR); // TODO check if this works properly
+      });
+      return Promise.all(promises);
+    });
+}
 
 export function checkAccess(filePath: string): Promise<any> {
   return access(filePath, constants.F_OK).then(noop, (err) => {
@@ -267,25 +287,6 @@ export const extractZipFile = async (file, destination, newFolder, oldFolder, as
       })).promise();
   }
 };
-
-
-
-const store = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (!existsSync(UPLOADS_DIR)) {
-      mkdir(UPLOADS_DIR, err => cb(err, UPLOADS_DIR));
-    } else {
-      cb(null, UPLOADS_DIR);
-    }
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  }
-});
-
-export const uploadFiles = multer({storage: store}).any();
-export const uploadFile = multer({storage: store}).single('file');
-
 
 
 export const hierarchyModel = (pathInfos, configFolder) => {

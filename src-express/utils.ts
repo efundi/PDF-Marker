@@ -1,6 +1,5 @@
 import * as unzipper from 'unzipper';
 import * as etl from 'etl';
-import * as multer from 'multer';
 import {Request, Response} from 'express';
 import {
   access,
@@ -279,24 +278,6 @@ export const extractZipFile = async (file, destination, newFolder, oldFolder, as
       })).promise();
   }
 };
-
-
-
-const store = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (!existsSync(UPLOADS_DIR)) {
-      mkdir(UPLOADS_DIR, err => cb(err, UPLOADS_DIR));
-    } else {
-      cb(null, UPLOADS_DIR);
-    }
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  }
-});
-
-export const uploadFiles = multer({storage: store}).any();
-export const uploadFile = multer({storage: store}).single('file');
 
 
 

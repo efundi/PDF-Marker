@@ -1,11 +1,11 @@
 import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {SettingsService} from "@pdfMarkerModule/services/settings.service";
-import {AppService} from "@coreModule/services/app.service";
-import {AlertService} from "@coreModule/services/alert.service";
-import {ElectronService} from "@coreModule/services/electron.service";
-import {AppSelectedPathInfo} from "@coreModule/info-objects/app-selected-path.info";
-import {AssignmentService} from "@sharedModule/services/assignment.service";
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {SettingsService} from '@pdfMarkerModule/services/settings.service';
+import {AppService} from '@coreModule/services/app.service';
+import {AlertService} from '@coreModule/services/alert.service';
+import {ElectronService} from '@coreModule/services/electron.service';
+import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
+import {AssignmentService} from '@sharedModule/services/assignment.service';
 
 @Component({
   selector: 'pdf-marker-settings',
@@ -16,7 +16,7 @@ export class SettingsComponent implements OnInit {
 
   isLoading$ = this.appService.isLoading$;
   settingsForm: FormGroup;
-  settingsLMSSelected = "Sakai";
+  settingsLMSSelected = 'Sakai';
   lmsChoices: string[] = ['Sakai'];
 
 
@@ -32,8 +32,8 @@ export class SettingsComponent implements OnInit {
   ngOnInit() {
     this.isLoading$.next(true);
     this.settingsService.getConfigurations().subscribe(configurations => {
-      this.settingsForm.controls.lmsSelection.setValue(configurations.lmsSelection ? configurations.lmsSelection:this.settingsLMSSelected);
-      this.settingsForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath:null);
+      this.settingsForm.controls.lmsSelection.setValue(configurations.lmsSelection ? configurations.lmsSelection : this.settingsLMSSelected);
+      this.settingsForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath : null);
       this.isLoading$.next(false);
     }, error => {
       this.isLoading$.next(false);
@@ -43,18 +43,20 @@ export class SettingsComponent implements OnInit {
 
   private initForm() {
     this.settingsForm = this.fb.group({
-      lmsSelection: ["Sakai", Validators.required],
+      lmsSelection: ['Sakai', Validators.required],
       defaultPath: [null, Validators.required]
     });
   }
 
   setWorkingDirectory(event) {
-    this.electronService.getFolder();
-    this.electronService.getFolderOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-      if (appSelectedPathInfo && appSelectedPathInfo.selectedPath)
+    this.electronService.getFolder()
+    .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+      if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
         this.settingsForm.controls.defaultPath.setValue((appSelectedPathInfo.selectedPath) ? appSelectedPathInfo.selectedPath : null);
-      else if (appSelectedPathInfo.error)
+      }
+      else if (appSelectedPathInfo.error) {
         this.alertService.error(appSelectedPathInfo.error.message);
+ }
     });
   }
 
@@ -80,6 +82,6 @@ export class SettingsComponent implements OnInit {
 
 
   private removeTrailingSlashes(path: string): string {
-    return path.replace(/\\+$/, ''); //Removes one or more trailing slashes
+    return path.replace(/\\+$/, ''); // Removes one or more trailing slashes
   }
 }

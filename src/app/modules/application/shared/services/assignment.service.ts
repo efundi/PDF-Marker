@@ -12,6 +12,8 @@ import {IRubric} from '@coreModule/utils/rubric.class';
 import {ZipService} from '@coreModule/services/zip.service';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
 import {ShareAssignments} from '@sharedModule/info-objects/share-assignments';
+import {AssignmentServiceIpc} from "../../../../../shared/ipc/assignment-service-ipc";
+import {UpdateAssignment} from "../../../../../shared/info-objects/update-assignment";
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +38,7 @@ export class AssignmentService {
   onWorkspaceSourceChange = this.workspaceSourceSubject.asObservable();
   // selectedWorkspaceSource$ = this.selectedWorkspaceSource.asObservable();
 
-  private electronApi: any;
+  private assignmentApi: AssignmentServiceIpc;
 
   constructor(private http: HttpClient,
               @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
@@ -46,7 +48,7 @@ export class AssignmentService {
               private appService: AppService,
               private zipService: ZipService) {
 
-    this.electronApi = (window as any).electronAPI;
+    this.assignmentApi = (window as any).assignmentApi;
     const transferKey: StateKey<any[]> = makeStateKey<any[]>('ListAssignments');
     if (isPlatformServer(this.platformId)) {
       this.assignmentList((err, assignmentList) => {
@@ -71,18 +73,13 @@ export class AssignmentService {
   }
 
   getAssignments(): Observable<any> {
-    return from(this.electronApi.getAssignments());
+    return from(this.assignmentApi.getAssignments());
 
     // return this.http.get<object[]>('/api/assignments');
   }
 
-  assignmentSettings(settings: AssignmentSettingsInfo) {
-    const body = {
-      settings: settings,
-      location: this.selectedPdfLocation
-    };
-
-    return this.http.post('/api/assignment/settings', body);
+  assignmentSettings(updatedSettings: AssignmentSettingsInfo) {
+    return from(this.assignmentApi.updateAssignmentSettings(updatedSettings, this.selectedPdfLocation));
   }
 
   getAssignmentSettings(workspaceName: string = null, assignmentName: string = null): Observable<AssignmentSettingsInfo> {
@@ -92,7 +89,7 @@ export class AssignmentService {
     if (workspaceName) {
       assignmentName = workspaceName + '/' + assignmentName;
     }
-    return from(this.electronApi.getAssignmentSettings(assignmentName));
+    return from(this.assignmentApi.getAssignmentSettings(assignmentName));
   }
 
   getAssignmentGrades(workspaceName: string = null, assignmentName: string = null) {
@@ -229,18 +226,15 @@ export class AssignmentService {
   }
 
   saveMarks(marks: MarkInfo[][], totalMark: number = 0): Observable<any> {
-    return from(this.electronApi.saveMarks(this.selectedPdfLocation, marks, totalMark));
+    return from(this.assignmentApi.saveMarks(this.selectedPdfLocation, marks, totalMark));
   }
 
   saveRubricMarks(rubricName: string = '', marks: any[], totalMark: number = 0) {
-    return from(this.electronApi.saveRubricMarks(this.selectedPdfLocation, rubricName, marks ));
+    return from(this.assignmentApi.saveRubricMarks(this.selectedPdfLocation, rubricName, marks ));
   }
 
-  getSavedMarks(): Observable<MarkInfo[]> {
-    const body = {
-      location: this.selectedPdfLocation
-    };
-    return this.http.post<MarkInfo[]>('/api/assignment/marks/fetch', body);
+  getSavedMarks(): Observable<any> {
+    return from(this.assignmentApi.getMarks(this.selectedPdfLocation));
   }
 
   getAssignmentGlobalSettings() {
@@ -316,8 +310,8 @@ export class AssignmentService {
     return this.http.post('/api/assignment/create', createAssignmentInfo);
   }
 
-  updateAssignment(updateAssignmentInfo: any): Observable<object> {
-    return this.http.put<object>('/api/assignment/update', updateAssignmentInfo);
+  updateAssignment(updateAssignmentInfo: UpdateAssignment): Observable<object> {
+    return from(this.assignmentApi.updateAssignment(updateAssignmentInfo));
   }
 
   updateAssignmentRubric(rubric: string, assignmentName: string): Observable<IRubric> {

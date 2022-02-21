@@ -22,8 +22,8 @@ import {Subscription} from 'rxjs';
 export class RubricImportComponent implements OnInit, OnDestroy {
 
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
-  private file: File;
   private fileContents: IRubric;
+  private appSelectedPathInfo: AppSelectedPathInfo;
   readonly rubricTemplateFile: string = 'Rubric_template.xlsx';
 
   config: MatDialogConfig;
@@ -70,7 +70,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   async onFileChange() {
     this.alertService.clear();
     this.resetPreviousUpload();
-    if (this.file !== undefined && this.file !== null) {
+    if (this.fileContents) {
       this.validateRubricJSON();
     } else {
       this.fc.rubricFile.setValue(null);
@@ -80,21 +80,18 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
   async selectFile() {
     this.alertService.clear();
-    this.electronService.getExcelToJSONOb().subscribe(async (appSelectedPathInfo: AppSelectedPathInfo) => {
+    this.electronService.getExcelToJSON({ name: 'Custom Files', extension: ['xlsx', 'xls'] })
+      .subscribe(async (appSelectedPathInfo: AppSelectedPathInfo) => {
       this.appService.isLoading$.next(false);
       if (appSelectedPathInfo.selectedPath) {
         if (appSelectedPathInfo && appSelectedPathInfo.selectedPath && appSelectedPathInfo.contents) {
-          const pathSplit = appSelectedPathInfo.selectedPath.split('\\');
-
           try {
+            this.appSelectedPathInfo = appSelectedPathInfo;
             const rubric: IRubric = JSON.parse(appSelectedPathInfo.contents);
             if (rubric) {
-              const blob: Blob = new Blob([JSON.stringify(rubric)], {type: MimeTypesEnum.JSON});
-              this.file = await new File(
-                [blob], pathSplit[pathSplit.length - 1], {type: MimeTypesEnum.JSON}
-              );
               this.onFileChange();
             } else {
+
               this.appService.isLoading$.next(false);
             }
           } catch (e) {
@@ -103,56 +100,43 @@ export class RubricImportComponent implements OnInit, OnDestroy {
           }
         }
       } else {
+        this.appSelectedPathInfo = null;
         this.appService.isLoading$.next(false);
         this.alertService.error(appSelectedPathInfo.error.message);
       }
     });
-    this.electronService.getExcelToJSON({ name: 'Custom Files', extension: ['xlsx', 'xls'] });
+
   }
 
   private validateRubricJSON() {
-    const reader = new FileReader();
 
-    reader.addEventListener('loadend', (e) => {
-
-      try {
-        const json: IRubric = JSON.parse(reader.result.toString()) as IRubric;
-
-        if (Mapping.isTypeOf(json, Rubric)) {
-          let isError: boolean;
-          for (let i = 0; i < json.criterias.length; i++) {
-            if (!Mapping.isTypeOf(json.criterias[i], RubricCriteria) || !Mapping.isCollectionTypeOf(json.criterias[i].levels, RubricCriteriaLevels)) {
-              isError = true;
-              break;
-            }
-          }
-
-          if (!isError) {
-            this.fc.rubricFile.setErrors(null);
-            this.fc.rubricFileText.setValue(this.file.name);
-            this.fc.rubricName.setValue(this.getRubricNameFromFilename(this.file.name));
-            this.fileContents = json;
-          } else {
-            this.setErrorMessage(this.file, 'Invalid rubric!');
-          }
-          this.appService.isLoading$.next(false);
-        } else {
-          this.setErrorMessage(this.file, 'Invalid rubric criteria!');
-          this.appService.isLoading$.next(false);
-        }
-      } catch (e) {
-        this.setErrorMessage(this.file, 'Cannot convert provided file to valid JSON!');
-        this.appService.isLoading$.next(false);
-      }
-    });
-
-    reader.readAsText(this.file);
+      // try {
+      //
+      //     let isError: boolean;
+      //     for (let i = 0; i < this.fileContents.criterias.length; i++) {
+      //       if (!Mapping.isTypeOf(this.fileContents.criterias[i], RubricCriteria) || !Mapping.isCollectionTypeOf(this.fileContents.criterias[i].levels, RubricCriteriaLevels)) {
+      //         isError = true;
+      //         break;
+      //       }
+      //     }
+      //
+      //     if (!isError) {
+      //       this.fc.rubricFile.setErrors(null);
+      //       this.fc.rubricFileText.setValue(this.file.name);
+      //       this.fc.rubricName.setValue(this.getRubricNameFromFilename(this.file.name));
+      //     } else {
+      //       this.setErrorMessage(this.file, 'Invalid rubric!');
+      //     }
+      //     this.appService.isLoading$.next(false);
+      //   } else {
+      //     this.setErrorMessage(this.file, 'Invalid rubric criteria!');
+      //     this.appService.isLoading$.next(false);
+      //   }
   }
 
-  private setErrorMessage(file: File, errorMsg: string) {
+  private setErrorMessage(errorMsg: string) {
     this.alertService.error(errorMsg);
     this.fc.rubricFile.setErrors({file: true});
-    this.fc.rubricFileText.setValue(file.name);
     this.fc.rubricName.setValue(null);
   }
 
@@ -167,8 +151,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
   openExternalResource() {
     this.appService.isLoading$.next(true);
-    this.electronService.openExternalLink(this.rubricTemplateFile);
-    this.electronService.getObservable().subscribe(() => {
+    this.electronService.openExternalLink(this.rubricTemplateFile).subscribe(() => {
       this.appService.isLoading$.next(false);
     }, error => {
       this.appService.openSnackBar(false, 'Unable to open resource link');
@@ -184,8 +167,12 @@ export class RubricImportComponent implements OnInit, OnDestroy {
         response.blob().then(async (blob: Blob) => {
           const reader = new FileReader();
           reader.addEventListener('loadend', () => {
-            this.electronService.saveFile({ filename: this.rubricTemplateFile, buffer: reader.result, name: 'Excel File', extension: ["xlsx"]});
-            this.electronService.saveFileOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+            this.electronService.saveFile({
+              filename: this.rubricTemplateFile,
+              buffer: reader.result,
+              name: 'Excel File',
+              extension: ["xlsx"]})
+              .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
               this.appService.isLoading$.next(false);
               if (appSelectedPathInfo.selectedPath) {
                 this.alertService.success(`File saved to downloads folder`);
@@ -270,7 +257,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
     const formData: FormData = new FormData();
     formData.append('rubricName', this.fc.rubricName.value);
-    formData.append('file', this.file);
+    // formData.append('file', this.file);
 
     this.appService.isLoading$.next(true);
     this.importService.importRubricFile(formData).subscribe((rubrics: IRubricName[]) => {

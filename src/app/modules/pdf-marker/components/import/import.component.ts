@@ -146,8 +146,8 @@ export class ImportComponent implements OnInit {
   }
 
   async selectFile() {
-    this.electronService.getFile({ name: 'Zip Files', extension: ['zip'] });
-    this.electronService.getFileOb().subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+    this.electronService.getFile({ name: 'Zip Files', extension: ['zip'] })
+      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
       this.showLoading(false);
       if (appSelectedPathInfo.selectedPath) {
         if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {

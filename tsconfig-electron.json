@@ -117,13 +117,13 @@
     "preload.ts",
   ],
   "include": [
-    "src-electron/**/*",
+    "src/lectron/**/*",
     "main.ts",
     "preload.ts",
   ],
   "exclude": [
-    "src",
-    "src-express",
+    "src/app/**/*",
+    "src-express/**/*",
     "node_modules",
     "**/*.spec.ts"
   ]

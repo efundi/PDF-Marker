@@ -37,7 +37,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.electronService.getAppVersionObservable().subscribe((appVersionInfo: AppVersionInfo) => {
+    this.electronService.getAppVersion().subscribe((appVersionInfo: AppVersionInfo) => {
       if (appVersionInfo && appVersionInfo.version) {
         this.version = appVersionInfo;
       }

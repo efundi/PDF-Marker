@@ -2,13 +2,14 @@ import {app, BrowserWindow, dialog, ipcMain, screen, shell, HandlerDetails} from
 import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
-import {writeFileSync} from 'fs';
 import {
   getAssignments,
   getAssignmentSettings,
+  getMarks,
   saveMarks,
-  saveRubricMarks
-} from './src-electron/ipc/assignments/get-assignment.handler';
+  saveRubricMarks, updateAssignment, updateAssignmentSettings
+} from './src/electron/ipc/assignments/get-assignment.handler';
+import {writeFile} from "fs/promises";
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -90,13 +91,216 @@ try {
       };
     });
 
-
+    // Assignment API
     ipcMain.handle('assignments:get', getAssignments);
+    ipcMain.handle('assignments:update', updateAssignment);
     ipcMain.handle('assignments:saveMarks', saveMarks);
     ipcMain.handle('assignments:saveRubricMarks', saveRubricMarks);
     ipcMain.handle('assignments:getAssignmentSettings', getAssignmentSettings);
+    ipcMain.handle('assignments:updateAssignmentSettings', updateAssignmentSettings);
+    ipcMain.handle('assignments:getMarks', getMarks);
 
 
+    ipcMain.handle('app:version', () => {
+      return { version: app.getVersion() };
+    });
+    ipcMain.handle('app:get_folder', (event) => {
+      return dialog.showOpenDialog(mainWindow, {
+        title: 'Select Folder',
+        properties: ['openDirectory', 'promptToCreate']
+      }).then((data) => {
+        if (data.canceled) {
+          return {selectedPath: null};
+        } else {
+          return {selectedPath: data.filePaths[0]};
+        }
+      }, (reason) => {
+        return {selectedPath: null, error: reason};
+      });
+    });
+
+
+      ipcMain.handle('app:get_file', (event, fileArgs) => {
+        return dialog.showOpenDialog(mainWindow, {
+          title: 'Select File',
+          filters: [
+            { name: fileArgs.name, extensions: fileArgs.extension }
+          ],
+          properties: ['openFile']
+        }).then((data) => {
+          if (data.canceled) {
+           return {selectedPath: null};
+          } else {
+            return {selectedPath: data.filePaths[0]};
+          }
+        }, (reason => {
+          return {selectedPath: null, error: reason };
+        }));
+      });
+
+
+    // tslint:disable-next-line:no-shadowed-variable
+    ipcMain.handle('app:get_excel_to_json', (event, args) => {
+      return dialog.showOpenDialog(mainWindow, {
+        title: 'Select File',
+        filters: [
+          { name: args.name, extensions: args.extension }
+        ],
+        properties: ['openFile']
+      }).then(async (data) => {
+        if (data.canceled) {
+          return{selectedPath: null, blob: null};
+        } else {
+          try {
+            const doc = excelParser.parseXls2Json(data.filePaths[0], { isNested: true });
+            const docInJSON = doc[0] || [];
+
+            if (docInJSON.length === 0) {
+             return { selectedPath: null, error: { message: `No criteria(s) provided` } };
+            } else {
+              let rowCount = 4;
+              const levelCount = 6;
+              let errorMessage: string;
+              let errorFound: boolean;
+              let validLevelLength = 0;
+              const startMessagePrefix = `Error[row = `;
+              const startMessageSuffix = `]: `;
+              const notProvided = `is not provided`;
+
+              const rubric = {
+                criterias: []
+              };
+
+              for (let index = 0; index < docInJSON.length; index++) {
+                if (index > 1) {
+                  const criteriaData = docInJSON[index];
+
+                  errorMessage = '';
+                  errorFound = false;
+
+                  if (isBlank(criteriaData.Criterion_name)) {
+                    errorMessage = joinError(errorMessage, `Criteria name ${notProvided}`);
+                    errorFound = true;
+                  }
+
+                  if (isBlank(criteriaData.Criterion_description)) {
+                    errorMessage = joinError(errorMessage, `Criteria description ${notProvided}`);
+                    errorFound = true;
+                  }
+
+                  if (errorFound && index === 2) {
+                    return { selectedPath: null, error: { message: errorMessage } };
+                  } else if (errorFound) {
+                    return { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) };
+                  }
+
+                  const levels = [];
+
+                  for (let i = 1; ((validLevelLength === 0) ? levelCount : validLevelLength); i++) {
+                    const achievementMark = 'Achievement_level_'  + i + '_mark';
+                    const achievementFeedback = 'Achievement_level_'  + i + '_feedback';
+                    const achievementTitle = 'Achievement_level_'  + i + '_title';
+
+                    if (isBlank(criteriaData[achievementMark])) {
+                      errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementMark} ${notProvided}`);
+                      errorFound = true;
+                    }
+
+                    if (isNaN(criteriaData[achievementMark])) {
+                      errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementMark} is not a valid number`);
+                      errorFound = true;
+                    }
+
+                    criteriaData[achievementMark] = parseInt('' + criteriaData[achievementMark], 10);
+
+                    if (isBlank(criteriaData[achievementTitle])) {
+                      errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementTitle} ${notProvided}`);
+                      errorFound = true;
+                    }
+
+                    if (isBlank(criteriaData[achievementFeedback])) {
+                      errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementFeedback} ${notProvided}`);
+                      errorFound = true;
+                    }
+
+                    if (errorFound && i === 1) {
+                      return{ selectedPath: null, error: { message: errorMessage } };
+                    } else if (errorFound && i > 1) {
+                      if (index === 2)
+                        validLevelLength = i - 1;
+                      break;
+                    } else if ((index === 2) && (i === levelCount)) {
+                      validLevelLength = levelCount;
+                    }
+
+                    levels[i - 1] = {
+                      score: criteriaData[achievementMark],
+                      description: criteriaData[achievementFeedback].trim(),
+                      label: criteriaData[achievementTitle].trim()
+                    };
+                  }
+
+                  if (index !== 2 && levels.length !== validLevelLength) {
+                    errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix} The provided number of achievement levels do not match first row achievement levels`);
+                    return { selectedPath: null, error: { message: errorMessage } };
+                  }
+
+                  rubric.criterias.push({
+                    description: criteriaData.Criterion_description,
+                    name: criteriaData.Criterion_name,
+                    levels
+                  });
+
+                  rowCount++;
+                }
+              }
+
+              if (rubric.criterias.length === 0) {
+                return{ selectedPath: null, error: { message: `No criteria(s) provided` } };
+              } else {
+                return { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) };
+              }
+            }
+          } catch (reason) {
+            return { selectedPath: null, error: reason };
+          }
+        }
+      }, reason => {
+        return { selectedPath: null, error: reason };
+      });
+    });
+
+    ipcMain.handle('app:save_file', (event, args) => {
+      return dialog.showSaveDialog(mainWindow, {
+        defaultPath: args.filename,
+        title: 'Save',
+        filters: [
+          { name: args.name, extensions: args.extension }
+        ]
+      }).then(({filePath}) => {
+        if (filePath) {
+          try {
+            return writeFile(filePath, new Buffer(args.buffer))
+              .then(() => {
+                return { selectedPath: filePath };
+              });
+          } catch (e) {
+            return{ selectedPath: null, error: e.message };
+          }
+        } else {
+          return{ selectedPath: null };
+        }
+      });
+    });
+
+
+    ipcMain.handle('app:open_external_link', (event, args) => {
+      return shell.openExternal(args.resource).then(() => {
+       return{ results: true };
+      }, (reason) => {
+        return { selectedPath: null, error: reason };
+      });
+    });
 
   });
 
@@ -120,11 +324,6 @@ try {
     }
   });
 
-  ipcMain.on('app_version', (event) => {
-    event.sender.send('app_version', { version: app.getVersion() });
-    logger.log('app_version: ' + app.getVersion());
-  });
-
   autoUpdater.on('update-available', () => {
     mainWindow.webContents.send('update_available');
     logger.log('update-available');
@@ -144,202 +343,6 @@ try {
     logger.error(err);
   });
 
-  ipcMain.on('get_app_version', (event) => {
-    event.sender.send('on_get_app_version', { version: app.getVersion() });
-  });
-
-  ipcMain.on('open_external_link', (event, args) => {
-    shell.openExternal(args.resource).then(() => {
-      event.sender.send('on_open_external_link', { results: true });
-    }).catch((reason) => {
-      event.sender.send('on_open_external_link', { selectedPath: null, error: reason });
-    });
-  });
-
-  ipcMain.on('get_folder', (event) => {
-    dialog.showOpenDialog(mainWindow, {
-      title: 'Select Folder',
-      properties: ['openDirectory', 'promptToCreate']
-    }).then((data) => {
-      if (data.canceled) {
-        event.sender.send('on_get_folder', {selectedPath: null});
-      } else {
-        event.sender.send('on_get_folder', {selectedPath: data.filePaths[0]});
-      }
-    }).catch((reason => {
-      event.sender.send('on_get_folder', { selectedPath: null, error: reason });
-    }));
-  });
-
-  ipcMain.on('get_file', (event, args) => {
-    dialog.showOpenDialog(mainWindow, {
-      title: 'Select File',
-      filters: [
-        { name: args.name, extensions: args.extension }
-      ],
-      properties: ['openFile']
-    }).then((data) => {
-      if (data.canceled) {
-        event.sender.send('on_get_file', {selectedPath: null});
-      } else {
-        event.sender.send('on_get_file', {selectedPath: data.filePaths[0]});
-      }
-    }).catch((reason => {
-      event.sender.send('on_get_file', {selectedPath: null, error: reason });
-    }));
-  });
-
-  // tslint:disable-next-line:no-shadowed-variable
-  ipcMain.on('get_excel_to_json', (event, args) => {
-    dialog.showOpenDialog(mainWindow, {
-      title: 'Select File',
-      filters: [
-        { name: args.name, extensions: args.extension }
-      ],
-      properties: ['openFile']
-    }).then(async (data) => {
-      if (data.canceled) {
-        event.sender.send('on_excel_to_json', {selectedPath: null, blob: null});
-      } else {
-        try {
-          const doc = excelParser.parseXls2Json(data.filePaths[0], { isNested: true });
-          const docInJSON = doc[0] || [];
-
-          if (docInJSON.length === 0) {
-            event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: `No criteria(s) provided` } });
-          } else {
-            let rowCount = 4;
-            const levelCount = 6;
-            let errorMessage: string;
-            let errorFound: boolean;
-            let validLevelLength = 0;
-            const startMessagePrefix = `Error[row = `;
-            const startMessageSuffix = `]: `;
-            const notProvided = `is not provided`;
-
-            const rubric = {
-              criterias: []
-            };
-
-            for (let index = 0; index < docInJSON.length; index++) {
-              if (index > 1) {
-                const criteriaData = docInJSON[index];
-
-                errorMessage = '';
-                errorFound = false;
-
-                if (isBlank(criteriaData.Criterion_name)) {
-                  errorMessage = joinError(errorMessage, `Criteria name ${notProvided}`);
-                  errorFound = true;
-                }
-
-                if (isBlank(criteriaData.Criterion_description)) {
-                  errorMessage = joinError(errorMessage, `Criteria description ${notProvided}`);
-                  errorFound = true;
-                }
-
-                if (errorFound && index === 2) {
-                  return event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: errorMessage } });
-                } else if (errorFound) {
-                  return event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) });
-                }
-
-                const levels = [];
-
-                for (let i = 1; ((validLevelLength === 0) ? levelCount : validLevelLength); i++) {
-                  const achievementMark = 'Achievement_level_'  + i + '_mark';
-                  const achievementFeedback = 'Achievement_level_'  + i + '_feedback';
-                  const achievementTitle = 'Achievement_level_'  + i + '_title';
-
-                  if (isBlank(criteriaData[achievementMark])) {
-                    errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementMark} ${notProvided}`);
-                    errorFound = true;
-                  }
-
-                  if (isNaN(criteriaData[achievementMark])) {
-                    errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementMark} is not a valid number`);
-                    errorFound = true;
-                  }
-
-                  criteriaData[achievementMark] = parseInt('' + criteriaData[achievementMark], 10);
-
-                  if (isBlank(criteriaData[achievementTitle])) {
-                    errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementTitle} ${notProvided}`);
-                    errorFound = true;
-                  }
-
-                  if (isBlank(criteriaData[achievementFeedback])) {
-                    errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementFeedback} ${notProvided}`);
-                    errorFound = true;
-                  }
-
-                  if (errorFound && i === 1) {
-                    return event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: errorMessage } });
-                  } else if (errorFound && i > 1) {
-                    if (index === 2)
-                      validLevelLength = i - 1;
-                    break;
-                  } else if ((index === 2) && (i === levelCount)) {
-                    validLevelLength = levelCount;
-                  }
-
-                  levels[i - 1] = {
-                    score: criteriaData[achievementMark],
-                    description: criteriaData[achievementFeedback].trim(),
-                    label: criteriaData[achievementTitle].trim()
-                  };
-                }
-
-                if (index !== 2 && levels.length !== validLevelLength) {
-                  errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix} The provided number of achievement levels do not match first row achievement levels`);
-                  return event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: errorMessage } });
-                }
-
-                rubric.criterias.push({
-                  description: criteriaData.Criterion_description,
-                  name: criteriaData.Criterion_name,
-                  levels
-                });
-
-                rowCount++;
-              }
-            }
-
-            if (rubric.criterias.length === 0) {
-              event.sender.send('on_excel_to_json', { selectedPath: null, error: { message: `No criteria(s) provided` } });
-            } else {
-              event.sender.send('on_excel_to_json', { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) });
-            }
-          }
-        } catch (reason) {
-          event.sender.send('on_excel_to_json', { selectedPath: null, error: reason });
-        }
-      }
-    }).catch((reason => {
-      event.sender.send('on_excel_to_json', { selectedPath: null, error: reason });
-    }));
-  });
-
-  ipcMain.on('save_file', (event, args) => {
-    const filePath: string = dialog.showSaveDialogSync(mainWindow, {
-      defaultPath: args.filename,
-      title: 'Save',
-      filters: [
-        { name: args.name, extensions: args.extension }
-      ]
-    });
-
-    if (filePath) {
-      try {
-        writeFileSync(filePath, new Buffer(args.buffer));
-        event.sender.send('on_save_file', { selectedPath: filePath });
-      } catch (e) {
-        event.sender.send('on_save_file', { selectedPath: null, error: e.message });
-      }
-    } else {
-      event.sender.send('on_save_file', { selectedPath: null });
-    }
-  });
 
 } catch (e) {
   // Catch Error

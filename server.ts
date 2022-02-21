@@ -63,16 +63,12 @@ import {
 } from './src-express/rest/rubric';
 
 import {
-  assignmentSettings,
   createAssignment,
   finalizeAssignment,
   finalizeAssignmentRubric,
   getAssignmentGlobalSettings,
-  getAssignmentSettings,
   getGrades,
-  getMarks,
-  savingRubricMarks, shareExport,
-  updateAssignment
+  shareExport,
 } from './src-express/rest/assignment';
 
 import {check, validationResult} from 'express-validator';
@@ -294,25 +290,6 @@ app.post('/api/pdf/file', [
 ], getPdfFile);
 
 
-app.post('/api/assignment/marks/save', saveMarks);
-
-
-app.post('/api/assignment/rubric/marks/save', savingRubricMarks);
-
-app.post('/api/assignment/marks/fetch', [
-  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
-], getMarks);
-
-app.post('/api/assignment/settings', [
-  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
-], assignmentSettings);
-
-
-app.post('/api/assignment/settings/fetch', [
-  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
-], getAssignmentSettings);
-
-
 app.post('/api/assignment/grade', [
   check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
 ], getGrades);
@@ -347,10 +324,6 @@ app.post('/api/assignment/finalize/rubric', [
 app.post('/api/assignment/create', [
   check('assignmentName').not().isEmpty().withMessage('Assignment name must be provided!')
 ], createAssignment);
-
-app.put('/api/assignment/update', [
-  check('assignmentName').not().isEmpty().withMessage('Assignment name must be provided!')
-], updateAssignment);
 
 
 // All regular routes use the Universal engine

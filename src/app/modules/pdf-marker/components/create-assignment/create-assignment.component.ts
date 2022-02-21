@@ -16,6 +16,7 @@ import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
 import {PdfmUtilsService} from "@pdfMarkerModule/services/pdfm-utils.service";
+import {UpdateAssignment, UpdateAssignmentStudentDetails} from "../../../../../shared/info-objects/update-assignment";
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -351,14 +352,19 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   private onEdit() {
     const formValue: any = this.createAssignmentForm.value;
     const savedState: any[] = this.studentDetails;
-    const formData: FormData = new FormData();
-    const studentData: any = [];
+
+    const updateRequest: UpdateAssignment = {
+      assignmentName: this.assignmentId,
+      workspace: this.workspaceName,
+      studentDetails: [],
+      files: []
+    };
     let savedCount = 0;
     let foundItemsToDelete = false;
     let foundItemsCount = 0;
 
     savedState.forEach((studentDetail: any) => {
-      const student: any = {};
+      const student: UpdateAssignmentStudentDetails = {};
       student.studentId = studentDetail.studentId.trim();
       student.studentName = studentDetail.studentName.trim();
       student.studentSurname = studentDetail.studentSurname.trim();
@@ -366,48 +372,43 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         student.remove = true;
         foundItemsToDelete = true;
         foundItemsCount++;
-        formData.append('file' + savedCount, new File([''], studentDetail.studentSubmission));
+        updateRequest.files.push(studentDetail.studentSubmission.path);
       } else {
-        formData.append('file' + savedCount, this.studentFiles[savedCount]);
+        updateRequest.files.push(this.studentFiles[savedCount].path);
       }
-      studentData.push(student);
+      updateRequest.studentDetails.push(student);
       savedCount++;
     });
 
     let count = 0;
     formValue.studentRow.map((studentRow: any) => {
-      const foundStudent = studentData.find(stud => (stud.studentId  === studentRow.studentId.trim()));
+      const foundStudent = updateRequest.studentDetails.find(stud => (stud.studentId  === studentRow.studentId.trim()));
       if (foundStudent && foundStudent.remove) {
         const student: any = {};
         student.studentId = studentRow.studentId.trim();
         student.studentName = studentRow.studentName.trim();
         student.studentSurname = studentRow.studentSurname.trim();
-        formData.append('file' + savedCount++, this.studentFiles[count]);
-        studentData.push(student);
+
+        updateRequest.files.push(this.studentFiles[count].path);
+        updateRequest.studentDetails.push(student);
       } else if (!foundStudent) {
         const student: any = {};
         student.studentId = studentRow.studentId.trim();
         student.studentName = studentRow.studentName.trim();
         student.studentSurname = studentRow.studentSurname.trim();
-        formData.append('file' + savedCount++, this.studentFiles[count]);
-        studentData.push(student);
+        updateRequest.files.push(this.studentFiles[count].path);
+        updateRequest.studentDetails.push(student);
       }
       count++;
     });
 
-    if (foundItemsCount === studentData.length) {
+    if (foundItemsCount === updateRequest.studentDetails.length) {
       this.deletionErrorMessage(foundItemsCount);
       return;
     }
 
-    formData.append('studentDetails', JSON.stringify(studentData));
-    formData.append('isEdit', 'true');
-    formData.append('assignmentName', this.assignmentId);
-    if (this.workspaceName) {
-      formData.append('workspace', this.workspaceName);
-    }
 
-    this.performUpdate(formData);
+    this.performUpdate(updateRequest);
     /*if(foundItemsToDelete) {
       const config = new MatDialogConfig();
       config.width = "400px";
@@ -476,8 +477,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     });
   }
 
-  private performUpdate(formData: FormData) {
-    this.assignmentService.updateAssignment(formData).subscribe(model => {
+  private performUpdate(updateAssignment: UpdateAssignment) {
+    this.assignmentService.updateAssignment(updateAssignment).subscribe(model => {
       this.assignmentService.getAssignments().subscribe((assignments) => {
         this.isEdit = false;
         this.assignmentService.setSelectedAssignment(model);
