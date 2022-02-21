@@ -3,14 +3,14 @@ import {HttpClient, HttpEvent, HttpHeaders} from '@angular/common/http';
 import {BehaviorSubject, from, Observable, of, ReplaySubject, Subject} from 'rxjs';
 import {makeStateKey, StateKey, TransferState} from '@angular/platform-browser';
 import {isPlatformServer} from '@angular/common';
-import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '../../../../../shared/info-objects/assignment-settings.info';
 import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {RoutesEnum} from '@coreModule/utils/routes.enum';
 import {Router} from '@angular/router';
 import {AppService} from '@coreModule/services/app.service';
 import {ZipService} from '@coreModule/services/zip.service';
-import {MarkInfo} from '@sharedModule/info-objects/mark.info';
-import {ShareAssignments} from '@sharedModule/info-objects/share-assignments';
+import {MarkInfo} from '../../../../../shared/info-objects/mark.info';
+import {ShareAssignments} from '../../../../../shared/info-objects/share-assignments';
 import {AssignmentServiceIpc} from '../../../../../shared/ipc/assignment-service-ipc';
 import {UpdateAssignment} from '../../../../../shared/info-objects/update-assignment';
 import {CreateAssignmentInfo} from '../../../../../shared/info-objects/create-assignment.info';
@@ -93,15 +93,11 @@ export class AssignmentService {
     return from(this.assignmentApi.getAssignmentSettings(assignmentName));
   }
 
-  getAssignmentGrades(workspaceName: string = null, assignmentName: string = null) {
+  getAssignmentGrades(workspaceName: string = null, assignmentName: string = null): Observable<any> {
     if (workspaceName) {
       assignmentName = workspaceName + '/' + assignmentName;
     }
-    const body = {
-      location: assignmentName
-    };
-
-    return this.http.post('/api/assignment/grade', body);
+    return from(this.assignmentApi.getGrades(assignmentName));
   }
 
   getFile(pdfFileLocation: string) {
@@ -238,11 +234,8 @@ export class AssignmentService {
     return from(this.assignmentApi.getMarks(this.selectedPdfLocation));
   }
 
-  getAssignmentGlobalSettings() {
-    const body = {
-      location: this.selectedPdfLocation
-    };
-    return this.http.post('/api/assignment/globalSettings', body);
+  getAssignmentGlobalSettings(): Observable<any> {
+    return from(this.assignmentApi.getAssignmentGlobalSettings(this.selectedPdfLocation));
   }
 
   getSelectedPdfLocation(): string {
@@ -271,40 +264,13 @@ export class AssignmentService {
     });
   }
 
-  finalizeAndExport(workspaceName: string = null, assignmentName: string): Observable<HttpEvent<Blob>> {
-    const body = {
-      workspaceFolder: workspaceName,
-      location: assignmentName
-    };
-    const headers = new HttpHeaders({
-      'Content-Type': MimeTypesEnum.JSON,
-      'Accept': MimeTypesEnum.JSON
-    });
-    return this.http.post<Blob>('/api/assignment/finalize', body, {
-      reportProgress: true,
-      observe: 'events',
-      headers,
-      responseType: 'blob' as 'json',
-    });
+  finalizeAndExport(workspaceName: string = null, assignmentName: string): Observable<Uint8Array> {
+    return from(this.assignmentApi.finalizeAssignment(workspaceName, assignmentName));
   }
 
 
-  finalizeAndExportRubric(workspaceName: string = null, assignmentName: string, assignmentRubric: IRubric) {
-    const body = {
-      workspaceFolder: workspaceName,
-      location: assignmentName,
-      rubricName: assignmentRubric.name
-    };
-    const headers = new HttpHeaders({
-      'Content-Type': MimeTypesEnum.JSON,
-      'Accept': MimeTypesEnum.JSON
-    });
-    return this.http.post<Blob>('/api/assignment/finalize/rubric', body, {
-      reportProgress: true,
-      observe: 'events',
-      headers,
-      responseType: 'blob' as 'json',
-    });
+  finalizeAndExportRubric(workspaceName: string = null, assignmentName: string, assignmentRubric: IRubric): Observable<Uint8Array> {
+    return from(this.assignmentApi.finalizeAssignmentRubric(workspaceName, assignmentName, assignmentRubric.name));
   }
 
   createAssignment(createAssignmentInfo: CreateAssignmentInfo): Observable<any> {

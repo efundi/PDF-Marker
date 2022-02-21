@@ -8,7 +8,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {ImportService} from '@pdfMarkerModule/services/import.service';
 import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {RoutesEnum} from '@coreModule/utils/routes.enum';
-import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '../../../../../shared/info-objects/assignment-settings.info';
 import {AssignmentDetails} from '@pdfMarkerModule/components/assignment-overview/assignment-overview.component';
 import {SakaiService} from '@coreModule/services/sakai.service';
 import {MatDialogConfig} from '@angular/material/dialog';
@@ -30,7 +30,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private readonly noRubricDefaultValue: boolean = false;
 
-  private studentFiles: File[] = [];
+  private studentFiles: any[] = [];
 
   isRubric = true;
 

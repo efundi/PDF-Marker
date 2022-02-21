@@ -1,12 +1,12 @@
 import {Component, ElementRef, Input, OnDestroy, OnInit, Renderer2} from '@angular/core';
-import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
+import {IconTypeEnum} from '../../../../../shared/info-objects/icon-type.enum';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {AppService} from '@coreModule/services/app.service';
 import {
   MarkingCommentModalComponent
 } from '@sharedModule/components/marking-comment-modal/marking-comment-modal.component';
-import {MarkInfo} from '@sharedModule/info-objects/mark.info';
+import {MarkInfo} from '../../../../../shared/info-objects/mark.info';
 import {cloneDeep, isEqual} from 'lodash';
 import {CdkDragEnd} from '@angular/cdk/drag-drop/drag-events';
 import {

@@ -13,7 +13,7 @@ import {HttpErrorResponse, HttpEvent, HttpEventType, HttpResponse} from '@angula
 import {FileSaverService} from 'ngx-filesaver';
 import {SettingsService} from '@pdfMarkerModule/services/settings.service';
 import {SettingInfo} from '@pdfMarkerModule/info-objects/setting.info';
-import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '../../../../../shared/info-objects/assignment-settings.info';
 import {RoutesEnum} from '@coreModule/utils/routes.enum';
 import {ImportService} from '@pdfMarkerModule/services/import.service';
 import {FormBuilder, FormGroup} from '@angular/forms';
@@ -21,7 +21,7 @@ import {RubricViewModalComponent} from '@sharedModule/components/rubric-view-mod
 import {ElectronService} from '@coreModule/services/electron.service';
 import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
 import {SelectionModel} from '@angular/cdk/collections';
-import {ShareAssignments} from "@sharedModule/info-objects/share-assignments";
+import {ShareAssignments} from "../../../../../shared/info-objects/share-assignments";
 import {IRubric, IRubricName} from "../../../../../shared/info-objects/rubric.class";
 
 export interface AssignmentDetails {
@@ -165,7 +165,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         const keys = Object.keys(grades[0]);
         if (keys.length > 0) {
           this.assignmentHeader = keys[0];
-            this.generateDataFromModel();
+          this.generateDataFromModel();
         }
       }
     }, error => {
@@ -267,18 +267,14 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       if (shouldFinalizeAndExport) {
         this.appService.isLoading$.next(true);
         if (!(this.isNullOrUndefined(this.assignmentSettings.rubric))) {
-          this.assignmentService.finalizeAndExportRubric(this.workspace, this.assignmentName, this.assignmentSettings.rubric).subscribe((events: any) => {
-            if (events.type === HttpEventType.Response) {
-              this.onSuccessfulExport(events);
-            }
+          this.assignmentService.finalizeAndExportRubric(this.workspace, this.assignmentName, this.assignmentSettings.rubric).subscribe((data: Uint8Array) => {
+              this.onSuccessfulExport(data);
           }, (responseError) => {
             this.onUnsuccessfulExport(responseError);
           });
         } else {
-          this.assignmentService.finalizeAndExport(this.workspace, this.assignmentName).subscribe((events: any) => {
-            if (events.type === HttpEventType.Response) {
-              this.onSuccessfulExport(events);
-            }
+          this.assignmentService.finalizeAndExport(this.workspace, this.assignmentName).subscribe((blob: Uint8Array) => {
+            this.onSuccessfulExport(blob);
           }, (responseError) => {
             this.onUnsuccessfulExport(responseError);
           });
@@ -288,22 +284,18 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldFinalizeAndExportFn);
   }
 
-  private onSuccessfulExport(events) {
+  private onSuccessfulExport(blob: Uint8Array) {
     this.alertService.clear();
-    const reader = new FileReader();
-    reader.addEventListener('loadend', () => {
-      const fileName: string = this.assignmentName;
-      this.electronService.saveFile({ filename: fileName, buffer: reader.result, name: 'Zip File', extension: ['zip']}).subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        this.appService.isLoading$.next(false);
-        if (appSelectedPathInfo.selectedPath) {
-          this.alertService.success(`Successfully exported ${fileName}. You can now upload it to ${this.settings.lmsSelection}.`);
-        } else if (appSelectedPathInfo.error) {
-          this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
-        }
-      });
+    const fileName: string = this.assignmentName;
+    this.electronService.saveFile({ filename: fileName, buffer: blob, name: 'Zip File', extension: ['zip']}).subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+      this.appService.isLoading$.next(false);
+      if (appSelectedPathInfo.selectedPath) {
+        this.alertService.success(`Successfully exported ${fileName}. You can now upload it to ${this.settings.lmsSelection}.`);
+      } else if (appSelectedPathInfo.error) {
+        this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
+      }
     });
 
-    reader.readAsArrayBuffer(events.body);
   }
 
   private onUnsuccessfulExport(responseError) {
@@ -434,13 +426,13 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       const fileName: string = this.assignmentName + '_share.zip';
       this.electronService.saveFile({ filename: fileName, buffer: reader.result, name: 'Zip File', extension: ['zip']})
         .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        this.appService.isLoading$.next(false);
-        if (appSelectedPathInfo.selectedPath) {
-          this.alertService.success(`Successfully exported ${fileName}.`);
-        } else if (appSelectedPathInfo.error) {
-          this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
-        }
-      });
+          this.appService.isLoading$.next(false);
+          if (appSelectedPathInfo.selectedPath) {
+            this.alertService.success(`Successfully exported ${fileName}.`);
+          } else if (appSelectedPathInfo.error) {
+            this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
+          }
+        });
     });
 
     reader.readAsArrayBuffer(event.body);

@@ -2,7 +2,7 @@ import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {AppService} from '@coreModule/services/app.service';
-import {IComment} from '@coreModule/utils/comment.class';
+import {IComment} from '../../../../../../shared/info-objects/comment.class';
 import {CommentService} from '@pdfMarkerModule/services/comment.service';
 import {MatSelectChange} from '@angular/material/select';
 

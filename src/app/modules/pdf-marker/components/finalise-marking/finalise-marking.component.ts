@@ -1,6 +1,6 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
-import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
+import {IconTypeEnum} from "../../../../../shared/info-objects/icon-type.enum";
 
 @Component({
   selector: 'pdf-marker-finalise-marking',

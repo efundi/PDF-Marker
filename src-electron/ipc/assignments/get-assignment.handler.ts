@@ -1,4 +1,14 @@
-import {existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync} from 'fs';
+import {
+  accessSync,
+  constants,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFileSync
+} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from '../config/config';
 import {
@@ -8,36 +18,43 @@ import {
   isFolder,
   isJson,
   isNullOrUndefined,
-  uploadFiles,
   writeToFile
 } from '../../utils';
 import {
   COMMENTS_FILE,
-  CONFIG_DIR, COULD_NOT_READ_RUBRIC_LIST,
+  CONFIG_DIR,
+  COULD_NOT_READ_RUBRIC_LIST,
   FEEDBACK_FOLDER,
   GRADES_FILE,
   INVALID_PATH_PROVIDED,
   INVALID_RUBRIC_JSON_FILE,
   INVALID_STUDENT_FOLDER,
-  MARK_FILE, NOT_PROVIDED_RUBRIC,
+  MARK_FILE,
+  NOT_PROVIDED_RUBRIC,
   RUBRICS_FILE,
-  SETTING_FILE, SUBMISSION_FOLDER
+  SETTING_FILE,
+  SUBMISSION_FOLDER
 } from '../../constants';
-import {IComment} from '@coreModule/utils/comment.class';
+import * as path from 'path';
 import {basename, dirname, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
-import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
-import {readFile} from 'fs/promises';
-import {MarkInfo} from '@sharedModule/info-objects/mark.info';
+import {access, readFile} from 'fs/promises';
 import {forEach, isNil} from 'lodash';
 import * as Electron from 'electron';
+import {UpdateAssignment} from '../../../src/shared/info-objects/update-assignment';
+import {PDFDocument} from 'pdf-lib';
+import {IRubric} from '../../../src/shared/info-objects/rubric.class';
+import {CreateAssignmentInfo, StudentInfo} from '../../../src/shared/info-objects/create-assignment.info';
+import {annotatePdfFile} from '../../pdf/marking-annotations';
+import {IComment} from '../../../src/shared/info-objects/comment.class';
+import {AssignmentSettingsInfo} from '../../../src/shared/info-objects/assignment-settings.info';
+import {MarkInfo} from '../../../src/shared/info-objects/mark.info';
+
+const zipDir = require('zip-dir');
+
 const csvtojson = require('csvtojson');
 import IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
-import {UpdateAssignment} from '../../../shared/info-objects/update-assignment';
-import {PDFDocument} from 'pdf-lib';
-import * as path from 'path';
-import {IRubric} from '../../../shared/info-objects/rubric.class';
-import {CreateAssignmentInfo, StudentInfo} from '../../../shared/info-objects/create-assignment.info';
+import {annotatePdfRubric} from "../../pdf/rubric-annotations";
 
 export function getAssignments(): Promise<any> {
   return getConfig().then((config) => {
@@ -726,5 +743,257 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
     });
   } catch (e) {
     return Promise.reject(e.message);
+  }
+}
+
+
+
+export function getGrades(event: IpcMainInvokeEvent, location: string): Promise<any> {
+
+  return getConfig().then((config) => {
+    const loc = location.replace(/\//g, sep);
+    const assignmentFolder = config.defaultPath + sep + loc;
+
+    return checkAccess(assignmentFolder + sep + GRADES_FILE).then(() => {
+      return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE);
+    });
+  });
+}
+
+
+
+export function getAssignmentGlobalSettings(event: IpcMainInvokeEvent, location: string): Promise<any> {
+  return getConfig().then((config) => {
+    const loc = location.replace(/\//g, sep);
+
+    const assignmentFolder = config.defaultPath + sep + loc;
+
+    return access(assignmentFolder + sep + '.settings.json', constants.F_OK).then(() => {
+      return (assignmentFolder + sep + '.settings.json');
+    }, (err) => {
+      return Promise.reject({message: 'Could not read settings file'});
+    });
+  });
+}
+
+
+
+
+export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: string, location: string): Promise<any> {
+  try {
+    return getConfig().then((config) => {
+      const loc = location.replace(/\//g, sep);
+      if (workspaceFolder) {
+        workspaceFolder = workspaceFolder.replace(/\//g, sep);
+      } else {
+        workspaceFolder = '';
+      }
+      const assignmentFolder = (workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder + sep + loc : config.defaultPath + sep + loc;
+      return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE).then((gradesJSON) => {
+        const files = glob.sync(assignmentFolder + sep + '/*');
+        const promises: Promise<any>[] = files.map((file) => {
+          if (statSync(file).isDirectory()) {
+            const regEx = /(.*)\((.+)\)$/;
+            if (!regEx.test(file)) {
+              return Promise.reject(INVALID_STUDENT_FOLDER + ' ' + basename(file));
+            }
+
+            const matches = regEx.exec(file);
+
+            const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
+
+            const submissionPromisses: Promise<any>[] = submissionFiles.map((submission) => {
+              try {
+                accessSync(submission, constants.F_OK);
+                const studentFolder = dirname(dirname(submission));
+
+                let marks: MarkInfo[][] = [];
+                let marksData;
+                try {
+                  marksData = readFileSync(studentFolder + sep + MARK_FILE);
+                } catch (e) {
+                  marks = [];
+                }
+
+                if (isJson(marksData)) {
+                  marks = JSON.parse(marksData.toString());
+                }
+
+                if (marks.length > 0) {
+                  const ext = path.extname(submission);
+                  let fileName = path.basename(submission, ext);
+                  return annotatePdfFile(submission, marks).then(async (data) => {
+                    fileName += '_MARK';
+                    writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
+                    unlinkSync(submission);
+                    accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
+                    let changed = false;
+                    let assignmentHeader;
+                    for (let i = 0; i < gradesJSON.length; i++) {
+                      if (i === 0) {
+                        const gradeKeys = Object.keys(gradesJSON[i]);
+                        if (gradeKeys.length > 0) {
+                          assignmentHeader = gradeKeys[0];
+                        }
+                      } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
+                        gradesJSON[i].field5 = data.totalMark;
+                        changed = true;
+                      }
+                    }
+                    if (changed) {
+                      return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
+                        .then(csv => {
+                          writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
+                        }, () => {
+                          return Promise.reject( 'Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
+                        });
+                    } else {
+                      return Promise.reject('Failed to save mark');
+                    }
+                  }, (error) => {
+                    return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
+                  });
+                }
+              } catch (e) {
+                return Promise.reject(e.message);
+              }
+            });
+
+            return Promise.all(submissionPromisses);
+          }
+        });
+        return Promise.all(promises).then(() => {
+          return zipDir((workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder : config.defaultPath,
+            {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(assignmentFolder)) ? true : (path.startsWith((assignmentFolder) + sep))))})
+            .then((buffer) => {
+              return buffer;
+            }, (err) => {
+              return Promise.reject('Could not export assignment');
+            });
+        });
+      });
+    });
+  } catch (e) {
+    return Promise.reject(e.message);
+  }
+}
+
+
+
+
+export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFolder: string, location: string, rubricName: string): Promise<any> {
+  try {
+    return getConfig().then(async (config) => {
+      const loc = location.replace(/\//g, sep);
+      if (workspaceFolder) {
+        workspaceFolder = workspaceFolder.replace(/\//g, sep);
+      } else {
+        workspaceFolder = '';
+      }
+      const assignmentFolder = (workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ?
+        config.defaultPath + sep + workspaceFolder + sep + loc : config.defaultPath + sep + loc;
+      const gradesJSON = await csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE);
+      const files = glob.sync(assignmentFolder + sep + '/*');
+      const assignmentSettingsBuffer = readFileSync(assignmentFolder + sep + SETTING_FILE);
+      if (!isJson(assignmentSettingsBuffer)) {
+        return Promise.reject('Invalid assignment settings file!');
+      }
+
+      const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
+
+      const promises: Promise<any>[] = files.map((file) => {
+        if (statSync(file).isDirectory()) {
+          const regEx = /(.*)\((.+)\)$/;
+          if (!regEx.test(file)) {
+            return Promise.reject(INVALID_STUDENT_FOLDER + ' ' + basename(file));
+          }
+
+          const matches = regEx.exec(file);
+
+          const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
+          rubricName = rubricName.trim();
+
+          if (isNullOrUndefined(assignmentSettingsInfo.rubric)) {
+            return Promise.reject('Assignment\'s settings does not contain a rubric!');
+          } else if (assignmentSettingsInfo.rubric.name !== rubricName) {
+            return Promise.reject('Assignment\'s settings rubric does not match provided!');
+          }
+
+          const rubric = assignmentSettingsInfo.rubric;
+
+          const submissionPromisses: Promise<any>[] = submissionFiles.map((submission) => {
+            try {
+              accessSync(submission, constants.F_OK);
+              const studentFolder = dirname(dirname(submission));
+
+              let marks;
+              let data;
+              try {
+                data = readFileSync(studentFolder + sep + MARK_FILE);
+              } catch (e) {
+                marks = [];
+              }
+
+              if (!isJson(data)) {
+                marks = [];
+              } else {
+                marks = JSON.parse(data.toString());
+              }
+
+              if (marks.length > 0) {
+                return annotatePdfRubric(submission, marks, assignmentSettingsInfo.rubric).then(async (data) => {
+                  const ext = path.extname(submission);
+                  const fileName = path.basename(submission, ext) + '_MARK';
+                  writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
+                  accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
+                  let changed = false;
+                  let assignmentHeader;
+                  for (let i = 0; i < gradesJSON.length; i++) {
+                    if (i === 0) {
+                      const gradesKeys = Object.keys(gradesJSON[i]);
+                      if (gradesKeys.length > 0) {
+                        assignmentHeader = gradesKeys[0];
+                      }
+                    } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
+                      gradesJSON[i].field5 = data.totalMark;
+                      changed = true;
+                      break;
+                    }
+                  }
+                  if (changed) {
+                    return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
+                      .then(csv => {
+                        writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
+                      })
+                      .catch(() => {
+                        return Promise.reject('Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
+                      });
+                  } else {
+                    return Promise.reject('Failed to save mark');
+                  }
+                }, (error) => {
+                  return Promise.reject('Error annotating marks to PDF [' + error.message + ']');
+                });
+              }
+            } catch (e) {
+              return Promise.reject(e.message);
+            }
+          });
+
+          return Promise.all(submissionPromisses);
+        }
+      });
+      return Promise.all(promises).then(() => {
+        return zipDir((workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder : config.defaultPath,
+          {filter: (filterPath: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(filterPath)) && ((filterPath.endsWith(assignmentFolder)) ? true : (filterPath.startsWith(assignmentFolder + sep))))})
+          .then((buffer) => {
+            return buffer;
+          }, (err) => {
+            return Promise.reject('Could not export assignment');
+          });
+      });
+    });
+  } catch (e) {
+    return Promise.reject( e.message);
   }
 }

@@ -1,27 +1,28 @@
 import {readFileSync} from 'fs';
 import {AnnotationFactory} from 'annotpdf';
 import {
-  ColorTypes, PageSizes,
+  ColorTypes,
+  PageSizes,
   PDFDocument,
   PDFPage,
   PDFPageDrawRectangleOptions,
   PDFPageDrawSVGOptions,
   PDFPageDrawTextOptions,
-  rgb, StandardFonts
+  rgb,
+  StandardFonts
 } from 'pdf-lib';
-import {IconTypeEnum} from '../../src/app/modules/pdf-marker/info-objects/icon-type.enum';
+import {IconTypeEnum} from '../../src/shared/info-objects/icon-type.enum';
 import {HIGHTLIGHT_HEIGHT} from '../constants';
-import {MarkInfo} from '../../src/app/modules/application/shared/info-objects/mark.info';
-import * as hexRgb from 'hex-rgb';
-import {IconSvgEnum} from '../../src/app/modules/pdf-marker/info-objects/icon-svg.enum';
-import {adjustPointsForResults, rgbHex} from './pdf-utils';
+import {MarkInfo} from '../../src/shared/info-objects/mark.info';
+import {IconSvgEnum} from '../../src/shared/info-objects/icon-svg.enum';
+import {adjustPointsForResults, hexRgb, RgbaObject, rgbHex} from './pdf-utils';
 import {isEmpty} from '../utils';
 
 const getRgbScale = (rgbValue: number): number => {
   return +parseFloat(((rgbValue / 255) + '')).toFixed(2);
 };
 
-export const annotatePdfFile = async (res, filePath: string, marks: MarkInfo[][] = []) => {
+export const annotatePdfFile = async (filePath: string, marks: MarkInfo[][] = []): Promise<{ pdfBytes: Uint8Array, totalMark: number }> => {
   // Not sure what this is about, but without it the coords are on the wrong place compared to the editor
   const COORD_CONSTANT = (72 / 96);
   // Size of a mark circle
@@ -95,7 +96,7 @@ export const annotatePdfFile = async (res, filePath: string, marks: MarkInfo[][]
   pdfPages.forEach((pdfPage: PDFPage) => {
     if (Array.isArray(marks[pageCount - 1])) {
       marks[pageCount - 1].forEach((mark: MarkInfo) => {
-        let colours = hexRgb('#6F327A');
+        let colours: RgbaObject = hexRgb('#6F327A');
         if (mark.colour.startsWith('#')) {
           colours = hexRgb(mark.colour);
         } else if (mark.colour.startsWith('rgb')) {

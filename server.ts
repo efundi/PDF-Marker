@@ -19,7 +19,7 @@ import 'zone.js/dist/zone-node';
 
 import * as express from 'express';
 import {join, sep} from 'path';
-import {createReadStream, readdirSync, readFile,} from 'fs';
+import {createReadStream, readdirSync, readFile} from 'fs';
 import {
   CONFIG_DIR,
   CONFIG_FILE,
@@ -63,11 +63,7 @@ import {
 } from './src-express/rest/rubric';
 
 import {
-  createAssignment,
-  finalizeAssignment,
   finalizeAssignmentRubric,
-  getAssignmentGlobalSettings,
-  getGrades,
   shareExport,
 } from './src-express/rest/assignment';
 
@@ -290,22 +286,7 @@ app.post('/api/pdf/file', [
 ], getPdfFile);
 
 
-app.post('/api/assignment/grade', [
-  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
-], getGrades);
-
-
-app.post('/api/assignment/globalSettings/fetch', [
-  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
-], getAssignmentGlobalSettings);
-
-
 app.post('/api/workspace', [], getWorkspaces);
-
-app.post('/api/assignment/finalize', [
-  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
-], finalizeAssignment);
-
 
 app.post('/api/assignment/share', [
   // check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
@@ -319,12 +300,6 @@ app.post('/api/assignment/finalize/rubric', [
 
 
 // rubricFinalize
-
-
-app.post('/api/assignment/create', [
-  check('assignmentName').not().isEmpty().withMessage('Assignment name must be provided!')
-], createAssignment);
-
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {

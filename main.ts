@@ -3,13 +3,13 @@ import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
 import {
-  createAssignment,
+  createAssignment, finalizeAssignment, finalizeAssignmentRubric, getAssignmentGlobalSettings,
   getAssignments,
-  getAssignmentSettings,
+  getAssignmentSettings, getGrades,
   getMarks,
   saveMarks,
   saveRubricMarks, updateAssignment, updateAssignmentSettings
-} from './src/electron/ipc/assignments/get-assignment.handler';
+} from './src-electron/ipc/assignments/get-assignment.handler';
 import {writeFile} from "fs/promises";
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
@@ -98,9 +98,13 @@ try {
     ipcMain.handle('assignments:create', createAssignment);
     ipcMain.handle('assignments:saveMarks', saveMarks);
     ipcMain.handle('assignments:saveRubricMarks', saveRubricMarks);
+    ipcMain.handle('assignments:finalizeAssignment', finalizeAssignment);
+    ipcMain.handle('assignments:finalizeAssignmentRubric', finalizeAssignmentRubric);
     ipcMain.handle('assignments:getAssignmentSettings', getAssignmentSettings);
+    ipcMain.handle('assignments:getAssignmentGlobalSettings', getAssignmentGlobalSettings);
     ipcMain.handle('assignments:updateAssignmentSettings', updateAssignmentSettings);
     ipcMain.handle('assignments:getMarks', getMarks);
+    ipcMain.handle('assignments:getGrades', getGrades);
 
 
     ipcMain.handle('app:version', () => {

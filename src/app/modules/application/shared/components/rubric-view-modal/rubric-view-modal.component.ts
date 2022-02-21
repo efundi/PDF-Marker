@@ -1,7 +1,7 @@
 import {Component, ElementRef, Inject, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
 import {AppService} from '@coreModule/services/app.service';
 import {MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef} from '@angular/material/dialog';
-import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '../../../../../../shared/info-objects/assignment-settings.info';
 import {FormBuilder, FormGroup} from '@angular/forms';
 import {SettingsService} from '@pdfMarkerModule/services/settings.service';
 import {ImportService} from '@pdfMarkerModule/services/import.service';

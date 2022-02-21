@@ -1,4 +1,4 @@
-import {IRubric} from "../../../../shared/info-objects/rubric.class";
+import {IRubric} from "./rubric.class";
 
 export interface AssignmentSettingsInfo {
   defaultColour?: string;

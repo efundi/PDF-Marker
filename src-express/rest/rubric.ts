@@ -5,7 +5,6 @@ import {
   readFromFile,
   sendResponse,
   sendResponseData,
-  uploadFile,
   writeToFile
 } from '../utils';
 import {existsSync, mkdir, readFile, readFileSync, unlinkSync, writeFile} from 'fs';
@@ -25,17 +24,13 @@ import {
   UPLOADS_DIR
 } from '../constants';
 import {sep} from 'path';
-import {IRubric, IRubricName} from '../../src/app/modules/application/core/utils/rubric.class';
 import * as glob from 'glob';
-import {AssignmentSettingsInfo} from '../../src/app/modules/pdf-marker/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '../../src/shared/info-objects/assignment-settings.info';
 import * as csvtojson from 'csvtojson';
 import {json2csv} from 'json-2-csv';
+import {IRubric, IRubricName} from "../../src/shared/info-objects/rubric.class";
 
-const rubricFileUpload = (req, res, err) => {
-
-  if (err) {
-    return sendResponseData(req, res, 501, {error: err});
-  }
+const rubricFileUpload = (req, res) => {
 
   if (!req.file) {
     return sendResponse(req, res, 404, 'No file uploaded!');
@@ -145,13 +140,7 @@ export const rubricUploadFn = async (req, res) => {
     return sendResponse(req, res, 401, FORBIDDEN_RESOURCE);
   }
 
-  return uploadFile(req, res, (err) => {
-    if (err) {
-      return sendResponse(req, res, 500, 'Error uploading rubric file');
-    }
-
-    rubricFileUpload(req, res, err);
-  });
+  return rubricFileUpload(req, res);
 };
 
 

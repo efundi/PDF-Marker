@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
-import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '../../../../shared/info-objects/assignment-settings.info';
 
 @Injectable({
   providedIn: 'root'

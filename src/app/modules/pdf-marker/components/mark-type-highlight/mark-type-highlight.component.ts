@@ -6,7 +6,7 @@ import {Subscription} from 'rxjs';
 import {
   AssignmentMarkingPageComponent
 } from '@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component';
-import {MarkInfo} from '@sharedModule/info-objects/mark.info';
+import {MarkInfo} from '../../../../../shared/info-objects/mark.info';
 import {cloneDeep, find} from 'lodash';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {AppService} from '@coreModule/services/app.service';

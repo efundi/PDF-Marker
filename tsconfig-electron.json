@@ -117,7 +117,8 @@
     "preload.ts",
   ],
   "include": [
-    "src/lectron/**/*",
+    "src-electron/**/*",
+    "src/shared/**/*",
     "main.ts",
     "preload.ts",
   ],

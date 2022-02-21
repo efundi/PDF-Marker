@@ -1,4 +1,4 @@
-import {IconTypeEnum} from "@pdfMarkerModule/info-objects/icon-type.enum";
+import {IconTypeEnum} from "../../../../shared/info-objects/icon-type.enum";
 
 export interface IconInfo {
   icon: string,

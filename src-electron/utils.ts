@@ -1,7 +1,6 @@
 import * as unzipper from 'unzipper';
 import * as etl from 'etl';
 import multer from 'multer';
-import {Request, Response} from 'express';
 import {
   constants,
   createReadStream,
@@ -22,23 +21,6 @@ import {PDFDocument} from 'pdf-lib';
 import {noop} from 'rxjs';
 import {isArray} from 'lodash';
 
-export const sendResponse = (req: Request, res: Response, statusCode: number, message: string) => {
-  deleteUploadedFile(req);
-  deleteMultipleFiles(req);
-  return res.status(statusCode).send({message});
-};
-
-export const sendResponseData = (req: Request, res: Response, statusCode: number, data: any) => {
-  deleteUploadedFile(req);
-  deleteMultipleFiles(req);
-  return res.status(statusCode).send(data);
-};
-
-
-
-export const checkClient = (req: Request, res: Response) => {
-  return (req.headers.client_id && req.headers.client_id === 'PDF_MARKER');
-};
 
 export const isFunction = (functionToCheck) => {
   return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
@@ -83,39 +65,6 @@ export function writeToFile(filePath: string,
 
 
 /*HELPER FUNCTIONS*/
-export const readFromFile = (req, res, filePath: string, callback = null, errorMessage: string = null) => {
-  return readFile(filePath, (err, data) => {
-    if (err) {
-      return sendResponse(req, res, 500, (errorMessage) ? errorMessage : err.message);
-    }
-
-    if (callback && isFunction(callback)) {
-      callback(data);
-    }
-  });
-};
-
-export function uploadFiles(files: string | string[]): Promise<any> {
-
-  if (!isArray(files)) {
-    files = [files as string];
-  }
-  let promise = Promise.resolve();
-
-
-    if (!existsSync(UPLOADS_DIR)) {
-      promise = mkdir(UPLOADS_DIR);
-    }
-
-    return promise.then(() => {
-
-      const promises = (files as string[]).map((file) => {
-        return cp(file, UPLOADS_DIR); // TODO check if this works properly
-      });
-      return Promise.all(promises);
-    });
-}
-
 export function checkAccess(filePath: string): Promise<any> {
   return access(filePath, constants.F_OK).then(noop, (err) => {
       return Promise.reject(err.message);

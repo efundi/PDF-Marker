@@ -15,8 +15,12 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   saveMarks: (location: any, marks: any[], totalMarks: any) => ipcRenderer.invoke('assignments:saveMarks', location, marks, totalMarks),
   saveRubricMarks: (location: string, rubricName: string, marks: any[] = []) => ipcRenderer.invoke('assignments:saveRubricMarks', location, rubricName, marks),
   getAssignmentSettings: (location: string) => ipcRenderer.invoke('assignments:getAssignmentSettings', location),
+  getAssignmentGlobalSettings: (location: string) => ipcRenderer.invoke('assignments:getAssignmentGlobalSettings', location),
   updateAssignmentSettings: (updatedSettings: any, location: string) => ipcRenderer.invoke('assignments:updateAssignmentSettings', updatedSettings, location),
+  finalizeAssignment: (workspaceFolder: any, location: string) => ipcRenderer.invoke('assignments:finalizeAssignment', workspaceFolder, location),
+  finalizeAssignmentRubric: (workspaceFolder: string, location: string, rubricName: string) => ipcRenderer.invoke('assignments:finalizeAssignmentRubric', workspaceFolder, location, rubricName),
   getMarks: (location: string) => ipcRenderer.invoke('assignments:getMarks', location),
+  getGrades: (location: string) => ipcRenderer.invoke('assignments:getGrades', location),
 } as AssignmentServiceIpc);
 
 contextBridge.exposeInMainWorld('electronAPI', {

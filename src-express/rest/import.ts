@@ -9,7 +9,6 @@ import {
   sendResponse,
   writeToFile
 } from '../utils';
-import {IRubric} from '../../src/app/modules/application/core/utils/rubric.class';
 import {
   CONFIG_DIR, CONFIG_FILE,
   COULD_NOT_READ_RUBRIC_LIST, EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, FORBIDDEN_RESOURCE,
@@ -19,9 +18,10 @@ import {
 } from '../constants';
 import {existsSync, readFileSync} from 'fs';
 import * as glob from 'glob';
-import {AssignmentSettingsInfo} from '../../src/app/modules/pdf-marker/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '../../src/shared/info-objects/assignment-settings.info';
 import {basename, sep} from 'path';
 import * as JSZip from 'jszip';
+import {IRubric} from "../../src/shared/info-objects/rubric.class";
 
 
 const zipFileUploadCallback = (req, res, data) => {

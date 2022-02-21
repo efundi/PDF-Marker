@@ -8,7 +8,7 @@ import {
 } from '../constants';
 import {validationResult} from 'express-validator';
 import {existsSync, mkdir, readFileSync, writeFileSync} from 'fs';
-import {IComment} from '../../src/app/modules/application/core/utils/comment.class';
+import {IComment} from '../../src/shared/info-objects/comment.class';
 
 export const saveNewComment = async (req, res) => {
   if (!checkClient(req, res)) {

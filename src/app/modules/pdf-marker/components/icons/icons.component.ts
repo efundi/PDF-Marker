@@ -10,7 +10,7 @@ import {
   Output,
   SimpleChanges
 } from '@angular/core';
-import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
+import {IconTypeEnum} from '../../../../../shared/info-objects/icon-type.enum';
 import {IconInfo} from '@pdfMarkerModule/info-objects/icon.info';
 import {
   AssignmentMarkingSessionService

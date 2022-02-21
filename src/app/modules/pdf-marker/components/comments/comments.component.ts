@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlertService } from '@coreModule/services/alert.service';
 import { AppService } from '@coreModule/services/app.service';
-import { IComment } from '@coreModule/utils/comment.class';
+import { IComment } from '../../../../../shared/info-objects/comment.class';
 import { CommentService } from '@pdfMarkerModule/services/comment.service';
 import { SettingsService } from '@pdfMarkerModule/services/settings.service';
 import {MatDialogConfig} from '@angular/material/dialog';

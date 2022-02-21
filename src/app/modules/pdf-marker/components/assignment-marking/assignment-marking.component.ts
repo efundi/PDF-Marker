@@ -16,11 +16,11 @@ import {mergeMap, Observable, of, Subscription, tap, throwError} from 'rxjs';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AppService} from '@coreModule/services/app.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
-import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '../../../../../shared/info-objects/assignment-settings.info';
 import {FinaliseMarkingComponent} from '@pdfMarkerModule/components/finalise-marking/finalise-marking.component';
 import {getDocument, PDFDocumentProxy, GlobalWorkerOptions} from 'pdfjs-dist';
 import {cloneDeep, isNil, times} from 'lodash';
-import {MarkInfo} from '@sharedModule/info-objects/mark.info';
+import {MarkInfo} from '../../../../../shared/info-objects/mark.info';
 import {catchError, map} from 'rxjs/operators';
 import {
   YesAndNoConfirmationDialogComponent

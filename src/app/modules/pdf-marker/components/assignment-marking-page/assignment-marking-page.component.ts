@@ -12,13 +12,13 @@ import {
 import {AnnotationLayer, LinkTarget, PDFDocumentProxy, PDFPageProxy, } from 'pdfjs-dist';
 import {EventBus, PDFLinkService} from 'pdfjs-dist/web/pdf_viewer';
 import {MarkTypeIconComponent} from '@pdfMarkerModule/components/mark-type-icon/mark-type-icon.component';
-import {IconTypeEnum} from '@pdfMarkerModule/info-objects/icon-type.enum';
+import {IconTypeEnum} from '../../../../../shared/info-objects/icon-type.enum';
 import {
   MarkingCommentModalComponent
 } from '@sharedModule/components/marking-comment-modal/marking-comment-modal.component';
 import {AppService} from '@coreModule/services/app.service';
 import {AssignmentMarkingComponent} from '@pdfMarkerModule/components/assignment-marking/assignment-marking.component';
-import {MarkInfo} from '@sharedModule/info-objects/mark.info';
+import {MarkInfo} from '../../../../../shared/info-objects/mark.info';
 import {Observable, Subscription} from 'rxjs';
 import {cloneDeep, isNil} from 'lodash';
 import {
