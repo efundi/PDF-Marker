@@ -1,5 +1,5 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {IRubric, IRubricCriteria} from '@coreModule/utils/rubric.class';
+import {IRubric, IRubricCriteria} from '../../../../../../shared/info-objects/rubric.class';
 
 @Component({
   selector: 'pdf-marker-rubric-view-marking',

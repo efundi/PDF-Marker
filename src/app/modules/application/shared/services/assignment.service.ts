@@ -8,12 +8,13 @@ import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {RoutesEnum} from '@coreModule/utils/routes.enum';
 import {Router} from '@angular/router';
 import {AppService} from '@coreModule/services/app.service';
-import {IRubric} from '@coreModule/utils/rubric.class';
 import {ZipService} from '@coreModule/services/zip.service';
 import {MarkInfo} from '@sharedModule/info-objects/mark.info';
 import {ShareAssignments} from '@sharedModule/info-objects/share-assignments';
-import {AssignmentServiceIpc} from "../../../../../shared/ipc/assignment-service-ipc";
-import {UpdateAssignment} from "../../../../../shared/info-objects/update-assignment";
+import {AssignmentServiceIpc} from '../../../../../shared/ipc/assignment-service-ipc';
+import {UpdateAssignment} from '../../../../../shared/info-objects/update-assignment';
+import {CreateAssignmentInfo} from '../../../../../shared/info-objects/create-assignment.info';
+import {IRubric} from "../../../../../shared/info-objects/rubric.class";
 
 @Injectable({
   providedIn: 'root'
@@ -306,11 +307,11 @@ export class AssignmentService {
     });
   }
 
-  createAssignment(createAssignmentInfo: any): Observable<object> {
-    return this.http.post('/api/assignment/create', createAssignmentInfo);
+  createAssignment(createAssignmentInfo: CreateAssignmentInfo): Observable<any> {
+    return from(this.assignmentApi.createAssignment(createAssignmentInfo));
   }
 
-  updateAssignment(updateAssignmentInfo: UpdateAssignment): Observable<object> {
+  updateAssignment(updateAssignmentInfo: UpdateAssignment): Observable<any> {
     return from(this.assignmentApi.updateAssignment(updateAssignmentInfo));
   }
 

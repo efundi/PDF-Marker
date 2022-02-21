@@ -5,10 +5,12 @@ import {
 import {FileFilterInfo} from './src/app/modules/application/core/info-objects/file-filter.info';
 import {AssignmentServiceIpc} from './src/shared/ipc/assignment-service-ipc';
 import {UpdateAssignment} from './src/shared/info-objects/update-assignment';
+import {CreateAssignmentInfo} from './src/shared/info-objects/create-assignment.info';
 
 
 contextBridge.exposeInMainWorld('assignmentApi', {
   getAssignments: () => ipcRenderer.invoke('assignments:get'),
+  createAssignment: (createAssignmentInfo: CreateAssignmentInfo) => ipcRenderer.invoke('assignments:create', createAssignmentInfo),
   updateAssignment: (updateRequest: UpdateAssignment) => ipcRenderer.invoke('assignments:update', updateRequest),
   saveMarks: (location: any, marks: any[], totalMarks: any) => ipcRenderer.invoke('assignments:saveMarks', location, marks, totalMarks),
   saveRubricMarks: (location: string, rubricName: string, marks: any[] = []) => ipcRenderer.invoke('assignments:saveRubricMarks', location, rubricName, marks),

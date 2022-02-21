@@ -5,7 +5,6 @@ import {AlertService} from '@coreModule/services/alert.service';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
 import {AppService} from '@coreModule/services/app.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {IRubric, IRubricName} from '@coreModule/utils/rubric.class';
 import {ImportService} from '@pdfMarkerModule/services/import.service';
 import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {RoutesEnum} from '@coreModule/utils/routes.enum';
@@ -15,8 +14,10 @@ import {SakaiService} from '@coreModule/services/sakai.service';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
-import {PdfmUtilsService} from "@pdfMarkerModule/services/pdfm-utils.service";
-import {UpdateAssignment, UpdateAssignmentStudentDetails} from "../../../../../shared/info-objects/update-assignment";
+import {PdfmUtilsService} from '@pdfMarkerModule/services/pdfm-utils.service';
+import {UpdateAssignment, UpdateAssignmentStudentDetails} from '../../../../../shared/info-objects/update-assignment';
+import {IRubric, IRubricName} from '../../../../../shared/info-objects/rubric.class';
+import {CreateAssignmentInfo, StudentInfo} from "../../../../../shared/info-objects/create-assignment.info";
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -435,36 +436,28 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private onCreate() {
     const formValue: any = this.createAssignmentForm.value;
-    const formData: FormData = new FormData();
-    const studentData: any = [];
-    let count = 0;
+    const createRequest: CreateAssignmentInfo = {
+      assignmentName: formValue.assignmentName.trim(),
+      workspace: formValue.workspaceFolder,
+      noRubric: formValue.noRubric,
+      rubric: formValue.rubric,
+      studentRow: [],
+      files: []
+    };
 
-    formValue.studentRow.map((studentRow: any) => {
-      const student: any = {};
-      student.studentId = studentRow.studentId.trim();
-      student.studentName = studentRow.studentName.trim();
-      student.studentSurname = studentRow.studentSurname.trim();
-      formData.append('file' + count, this.studentFiles[count]);
-      studentData.push(student);
-      count++;
+    createRequest.studentRow = formValue.studentRow.map((studentRow: any, index: number) => {
+      createRequest.files.push(this.studentFiles[index].path);
+      return {
+        studentId: studentRow.studentId.trim(),
+        studentName: studentRow.studentName.trim(),
+        studentSurname: studentRow.studentSurname.trim(),
+      } as StudentInfo;
     });
-    formData.append('studentDetails', JSON.stringify(studentData));
 
-    const {
-      assignmentName,
-      workspaceFolder,
-      noRubric,
-      rubric
-    } = this.createAssignmentForm.value;
-
-    formData.append('assignmentName', assignmentName.trim());
-    formData.append( 'workspace', workspaceFolder);
-    formData.append('noRubric', noRubric);
-    formData.append('rubric', rubric);
-    this.performCreate(formData);
+    this.performCreate(createRequest);
   }
 
-  private performCreate(formData: FormData) {
+  private performCreate(formData: CreateAssignmentInfo) {
     this.appService.isLoading$.next(true);
     this.assignmentService.createAssignment(formData).subscribe((model) => {
       this.assignmentService.getAssignments().subscribe((assignments) => {

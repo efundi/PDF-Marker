@@ -28,10 +28,10 @@ import {
 import {
   AssignmentMarkingSessionService, ZoomChangeEvent
 } from '@pdfMarkerModule/components/assignment-marking/assignment-marking-session.service';
-import {IRubric} from '@coreModule/utils/rubric.class';
 import {
   AssignmentMarkingPageComponent
 } from '@pdfMarkerModule/components/assignment-marking-page/assignment-marking-page.component';
+import {IRubric} from "../../../../../shared/info-objects/rubric.class";
 
 
 GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';

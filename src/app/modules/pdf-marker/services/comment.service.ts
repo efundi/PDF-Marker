@@ -1,8 +1,7 @@
-import { Injectable } from '@angular/core';
-import {HttpClient, HttpEvent} from "@angular/common/http";
-import {Observable} from "rxjs";
-import { IComment } from '@coreModule/utils/comment.class';
-import {IRubric} from '@coreModule/utils/rubric.class';
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {Observable} from 'rxjs';
+import {IComment} from '@coreModule/utils/comment.class';
 
 @Injectable({
   providedIn: 'root'

@@ -1,9 +1,9 @@
 import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
-import {IRubric} from '@coreModule/utils/rubric.class';
 import {Router} from '@angular/router';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
 import {AppService} from '@coreModule/services/app.service';
 import {isArray} from 'lodash';
+import {IRubric} from '../../../../../../shared/info-objects/rubric.class';
 
 @Component({
   selector: 'pdf-marker-rubric',
@@ -65,8 +65,7 @@ export class RubricComponent implements OnInit, OnChanges {
     if (this.isMarkingRubricPage) {
       if (this.rubricSelections[criteriaIndex] === criteriaLevelIndex) {
         this.rubricSelections[criteriaIndex] = null;
-      }
-      else {
+      } else {
         this.rubricSelections[criteriaIndex] = criteriaLevelIndex;
       }
       this.getTotalMark();

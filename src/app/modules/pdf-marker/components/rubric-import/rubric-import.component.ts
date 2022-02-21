@@ -5,7 +5,6 @@ import {MatDialogConfig} from '@angular/material/dialog';
 import {AlertService} from '@coreModule/services/alert.service';
 import {AppService} from '@coreModule/services/app.service';
 import {Mapping} from '@coreModule/utils/mapping.class';
-import {IRubric, IRubricName, Rubric, RubricCriteria, RubricCriteriaLevels} from '@coreModule/utils/rubric.class';
 import {ImportService} from '@pdfMarkerModule/services/import.service';
 import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
@@ -13,6 +12,7 @@ import {RubricViewModalComponent} from '@sharedModule/components/rubric-view-mod
 import {ElectronService} from '@coreModule/services/electron.service';
 import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
 import {Subscription} from 'rxjs';
+import {IRubric, IRubricName} from "../../../../../shared/info-objects/rubric.class";
 
 @Component({
   selector: 'pdf-marker-rubric-import',

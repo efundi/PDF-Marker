@@ -9,12 +9,12 @@ import {AppService} from '@coreModule/services/app.service';
 import {ImportService} from '@pdfMarkerModule/services/import.service';
 import {HttpEventType} from '@angular/common/http';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
-import {IRubricName} from '@coreModule/utils/rubric.class';
 import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
 import {ElectronService} from '@coreModule/services/electron.service';
 import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
 import {PdfmUtilsService} from '@pdfMarkerModule/services/pdfm-utils.service';
+import {IRubricName} from "../../../../../shared/info-objects/rubric.class";
 
 @Component({
   selector: 'pdf-marker-import',

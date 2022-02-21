@@ -3,6 +3,7 @@ import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
 import {
+  createAssignment,
   getAssignments,
   getAssignmentSettings,
   getMarks,
@@ -94,6 +95,7 @@ try {
     // Assignment API
     ipcMain.handle('assignments:get', getAssignments);
     ipcMain.handle('assignments:update', updateAssignment);
+    ipcMain.handle('assignments:create', createAssignment);
     ipcMain.handle('assignments:saveMarks', saveMarks);
     ipcMain.handle('assignments:saveRubricMarks', saveRubricMarks);
     ipcMain.handle('assignments:getAssignmentSettings', getAssignmentSettings);

@@ -16,13 +16,13 @@ import {SettingInfo} from '@pdfMarkerModule/info-objects/setting.info';
 import {AssignmentSettingsInfo} from '@pdfMarkerModule/info-objects/assignment-settings.info';
 import {RoutesEnum} from '@coreModule/utils/routes.enum';
 import {ImportService} from '@pdfMarkerModule/services/import.service';
-import {IRubric, IRubricName} from '@coreModule/utils/rubric.class';
 import {FormBuilder, FormGroup} from '@angular/forms';
 import {RubricViewModalComponent} from '@sharedModule/components/rubric-view-modal/rubric-view-modal.component';
 import {ElectronService} from '@coreModule/services/electron.service';
 import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
 import {SelectionModel} from '@angular/cdk/collections';
 import {ShareAssignments} from "@sharedModule/info-objects/share-assignments";
+import {IRubric, IRubricName} from "../../../../../shared/info-objects/rubric.class";
 
 export interface AssignmentDetails {
   index?: number;

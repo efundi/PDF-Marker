@@ -1,12 +1,14 @@
 export interface CreateAssignmentInfo {
+  workspace: string;
   assignmentName: string;
   noRubric: boolean;
   rubric: string;
-  studentRow?: StudentInfo[]
+  studentRow?: StudentInfo[];
+  files: string[];
 }
 
-interface StudentInfo {
-  studentId: string | number;
+export interface StudentInfo {
+  studentId: string;
   studentName: string;
   studentSurname: string;
   studentSubmission: File;

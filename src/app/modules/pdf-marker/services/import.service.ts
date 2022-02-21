@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
-import {HttpClient, HttpEvent} from "@angular/common/http";
-import {Observable} from "rxjs";
-import {IRubric, IRubricName} from "@coreModule/utils/rubric.class";
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {Observable} from 'rxjs';
+import {IRubric} from "../../../../shared/info-objects/rubric.class";
 
 @Injectable({
   providedIn: 'root'

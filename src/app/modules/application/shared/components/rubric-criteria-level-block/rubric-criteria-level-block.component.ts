@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {IRubricCriteriaLevels} from "@coreModule/utils/rubric.class";
+import {IRubricCriteriaLevels} from '../../../../../../shared/info-objects/rubric.class';
 
 @Component({
   selector: 'pdf-marker-rubric-criteria-level-block',
@@ -25,8 +25,9 @@ export class RubricCriteriaLevelBlockComponent implements OnInit {
   }
 
   onCriteriaLevelClick() {
-    if(this.isMarkingRubricPage)
+    if (this.isMarkingRubricPage) {
       this.selectedCriteriaLevel.emit(this.criteriaLevel);
+    }
   }
 
 }

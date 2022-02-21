@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {IRubricCriteria, IRubricCriteriaLevels} from "@coreModule/utils/rubric.class";
+import {IRubricCriteria, IRubricCriteriaLevels} from '../../../../../../shared/info-objects/rubric.class';
 
 @Component({
   selector: 'pdf-marker-rubric-criteria',
@@ -18,7 +18,7 @@ export class RubricCriteriaComponent implements OnInit {
   selectedCriteriaLevelIndex: EventEmitter<number> = new EventEmitter<number>();
 
   @Input()
-  selectedCriteriaLevel: number = -1;
+  selectedCriteriaLevel = -1;
 
   constructor() { }
 
@@ -26,13 +26,15 @@ export class RubricCriteriaComponent implements OnInit {
   }
 
   onCriteriaLevelClicked(criteriaLevel: IRubricCriteriaLevels, selectedIndex: number) {
-    if(this.isMarkingRubricPage) {
+    if (this.isMarkingRubricPage) {
       if (this.criteria) {
         if (selectedIndex >= 0 && selectedIndex < this.criteria.levels.length) {
-          if (this.selectedCriteriaLevel === this.criteria.levels.indexOf(criteriaLevel))
+          if (this.selectedCriteriaLevel === this.criteria.levels.indexOf(criteriaLevel)) {
             this.selectedCriteriaLevel = -1;
-          else
+          }
+          else {
             this.selectedCriteriaLevel = this.criteria.levels.indexOf(criteriaLevel);
+          }
           this.selectedCriteriaLevelIndex.emit(this.criteria.levels.indexOf(criteriaLevel));
         }
       }

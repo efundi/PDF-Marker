@@ -5,6 +5,7 @@ import {
   checkAccess,
   deleteFolderRecursive,
   hierarchyModel,
+  isFolder,
   isJson,
   isNullOrUndefined,
   uploadFiles,
@@ -12,12 +13,14 @@ import {
 } from '../../utils';
 import {
   COMMENTS_FILE,
-  CONFIG_DIR,
+  CONFIG_DIR, COULD_NOT_READ_RUBRIC_LIST,
   FEEDBACK_FOLDER,
   GRADES_FILE,
   INVALID_PATH_PROVIDED,
+  INVALID_RUBRIC_JSON_FILE,
   INVALID_STUDENT_FOLDER,
-  MARK_FILE,
+  MARK_FILE, NOT_PROVIDED_RUBRIC,
+  RUBRICS_FILE,
   SETTING_FILE, SUBMISSION_FOLDER
 } from '../../constants';
 import {IComment} from '@coreModule/utils/comment.class';
@@ -30,8 +33,11 @@ import {forEach, isNil} from 'lodash';
 import * as Electron from 'electron';
 const csvtojson = require('csvtojson');
 import IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
-import {UpdateAssignment} from "../../../shared/info-objects/update-assignment";
+import {UpdateAssignment} from '../../../shared/info-objects/update-assignment';
 import {PDFDocument} from 'pdf-lib';
+import * as path from 'path';
+import {IRubric} from '../../../shared/info-objects/rubric.class';
+import {CreateAssignmentInfo, StudentInfo} from '../../../shared/info-objects/create-assignment.info';
 
 export function getAssignments(): Promise<any> {
   return getConfig().then((config) => {
@@ -570,6 +576,150 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
         const files = glob.sync(config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + '/**');
         files.sort((a, b) => (a > b) ? 1 : -1);
         const folderModel = hierarchyModel(files, config.defaultPath + sep + updateRequest.workspace);
+        return folderModel;
+      }
+
+    });
+  } catch (e) {
+    return Promise.reject(e.message);
+  }
+}
+
+
+
+export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAssignmentInfo): Promise<any> {
+
+  if (createInfo.assignmentName.length < 5) {
+    return Promise.reject(`Assignment must be > 5 characters`);
+  }
+
+  let assignmentName: string = createInfo.assignmentName.trim();
+
+  try {
+    return getConfig().then(async (config) => {
+      const folders = glob.sync(config.defaultPath + '/*');
+
+      let foundCount = 0;
+      for (let i = 0; i < folders.length; i++) {
+        if (isFolder(folders[i])) {
+          const assignmentDirectoryName = path.basename(folders[i]);
+          // Doing a casesensitive check on the directory names - for Window's sake
+          if (assignmentName.toLowerCase() === assignmentDirectoryName.toLowerCase()) {
+            foundCount++;
+
+            // Doing a casesensitive check on the directory names - for Window's sake
+          } else if ((assignmentName.toLowerCase() + ' (' + (foundCount + 1) + ')') === assignmentDirectoryName.toLowerCase()) {
+            foundCount++;
+          }
+        }
+      }
+
+      if (foundCount > 0) {
+        assignmentName = assignmentName + ' (' + (foundCount + 1) + ')';
+      }
+
+      const noRubric: boolean = createInfo.noRubric;
+      let rubricName: string;
+      let rubric: IRubric = null;
+      let rubricIndex: number;
+      let rubrics: IRubric[];
+
+      if (!noRubric) {
+        if (isNil(createInfo.rubric)) {
+          return Promise.reject(NOT_PROVIDED_RUBRIC);
+        }
+
+        rubricName = createInfo.rubric.trim();
+        if (!isNullOrUndefined(rubricName)) {
+          const rubricData = readFileSync(CONFIG_DIR + RUBRICS_FILE);
+          try {
+            if (!isJson(rubricData)) {
+              return Promise.reject(INVALID_RUBRIC_JSON_FILE);
+            }
+
+            rubrics = JSON.parse(rubricData.toString());
+
+            if (Array.isArray(rubrics)) {
+              let index = -1;
+              for (let i = 0; i < rubrics.length; i++) {
+                if (rubrics[i].name === rubricName) {
+                  index = i;
+                  break;
+                }
+              }
+
+              if (index !== -1) {
+                rubric = rubrics[index];
+                rubricIndex = index;
+              }
+            } else {
+              return Promise.reject(COULD_NOT_READ_RUBRIC_LIST);
+            }
+
+          } catch (e) {
+            return Promise.reject(e.message);
+          }
+        }
+      }
+      const studentDetails: StudentInfo[] = createInfo.studentRow;
+
+      if (!Array.isArray(studentDetails)) {
+        return Promise.reject(`Student details must be a list`);
+      }
+
+      if (studentDetails.length !== createInfo.files.length) {
+        return Promise.reject(`Student details is not equal to number of files sent!`);
+      }
+
+      const settings: AssignmentSettingsInfo = {defaultColour: '#6F327A', rubric, isCreated: true};
+
+      let count = 0;
+      const headers = `'${assignmentName}','SCORE_GRADE_TYPE'\n`;
+      const line = `''\n`;
+      const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
+      let csvString = headers + line + subheaders;
+      for (const studentInfo of studentDetails) {
+        const file: any = createInfo.files[count];
+        const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
+        const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
+        const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
+        const csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
+        csvString += csvData;
+
+        if (createInfo.workspace === 'Default Workspace' || isNil(createInfo.workspace)) {
+          const filename = basename(file);
+          mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
+          mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
+          const content = readFileSync(file);
+          const pdfDoc = await PDFDocument.load(content);
+          const pdfBytes = await pdfDoc.save();
+          await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + filename, pdfBytes);
+          count++;
+        } else {
+          const filename = basename(file);
+          mkdirSync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + feedbackFolder, {recursive: true});
+          mkdirSync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + submissionFolder, {recursive: true});
+          const content = readFileSync(file);
+          const pdfDoc = await PDFDocument.load(content);
+          const pdfBytes = await pdfDoc.save();
+          await writeFileSync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + submissionFolder + sep + filename, pdfBytes);
+          count++;
+        }
+      }
+
+      if (createInfo.workspace === 'Default Workspace' || isNil(createInfo.workspace)) {
+        writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
+        writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
+        const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
+        files.sort((a, b) => (a > b) ? 1 : -1);
+        const folderModel = hierarchyModel(files, config.defaultPath);
+        return folderModel;
+      } else {
+        writeFileSync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + GRADES_FILE, csvString);
+        writeFileSync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
+        const files = glob.sync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + '/**');
+        files.sort((a, b) => (a > b) ? 1 : -1);
+        const folderModel = hierarchyModel(files, config.defaultPath + sep + createInfo.workspace);
         return folderModel;
       }
 
