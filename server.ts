@@ -38,7 +38,6 @@ import {
   sendResponse,
   sendResponseData
 } from './src-express/utils';
-import {settingsGet, settingsPost} from './src-express/rest/settings';
 import {
   getRubricsFn,
   rubricUploadFn
@@ -101,17 +100,6 @@ app.get('*.*', express.static(DIST_FOLDER, {
   maxAge: '1y'
 }));
 
-
-
-
-
-app.post('/api/settings', [
-  check('lmsSelection').not().isEmpty().withMessage('LMS type not provided!'),
-  check('defaultPath').not().isEmpty().withMessage('Default path not provided!')
-], settingsPost);
-
-
-app.get('/api/settings', settingsGet);
 
 app.post('/api/rubric/import', [
   check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC)

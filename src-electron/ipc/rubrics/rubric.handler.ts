@@ -16,7 +16,7 @@ import {
 import {NOT_CONFIGURED_CONFIG_DIRECTORY, SETTING_FILE} from '../../../src-express/constants';
 import * as glob from 'glob';
 import {AssignmentSettingsInfo} from '../../../src/shared/info-objects/assignment-settings.info';
-import {getConfig} from '../config/config';
+import {getConfig} from '../config/config.handler';
 
 const excelParser = new (require('simple-excel-to-json').XlsParser)();
 

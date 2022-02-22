@@ -1,4 +1,4 @@
-import {existsSync, readFileSync} from 'fs';
+import {existsSync} from 'fs';
 import * as glob from 'glob';
 import {basename, sep} from 'path';
 import {AssignmentSettingsInfo} from '../../../src/shared/info-objects/assignment-settings.info';
@@ -6,7 +6,7 @@ import {IpcMainInvokeEvent} from 'electron';
 import {ImportInfo} from '../../../src/shared/info-objects/import.info';
 import {isNil} from 'lodash';
 import {readFile} from 'fs/promises';
-import {getConfig} from '../config/config';
+import {getConfig} from '../config/config.handler';
 import {getRubrics, writeRubricFile} from '../rubrics/rubric.handler';
 import {EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, NOT_PROVIDED_RUBRIC} from '../../constants';
 import {IRubric} from '../../../src/shared/info-objects/rubric.class';

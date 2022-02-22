@@ -1,8 +1,8 @@
 import {readFile, writeFile} from 'fs/promises';
 import {IComment} from '../../../src/shared/info-objects/comment.class';
-import {ensureConfigDirectory} from '../config/config';
-import {COMMENTS_FILE, CONFIG_DIR, COULD_NOT_READ_COMMENT_LIST} from '../../constants';
-import {existsSync, writeFileSync} from 'fs';
+import {ensureConfigDirectory} from '../config/config.handler';
+import {COMMENTS_FILE, COULD_NOT_READ_COMMENT_LIST} from '../../constants';
+import {existsSync} from 'fs';
 import {isJson} from '../../utils';
 import {IpcMainInvokeEvent} from 'electron';
 import {randomUUID} from 'crypto';

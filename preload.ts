@@ -8,11 +8,10 @@ import {RubricServiceIpc} from './src/shared/ipc/rubric-service-ipc';
 import {IRubric} from './src/shared/info-objects/rubric.class';
 import {ImportInfo} from './src/shared/info-objects/import.info';
 import {ImportServiceIpc} from './src/shared/ipc/import-service-ipc';
-import {getZipEntries} from "./src-electron/ipc/import/import.handler";
-import {deleteWorkspace, getWorkspaces, moveWorkspaceAssignments} from "./src-electron/ipc/workspace/workspace.handler";
-import {WorkspaceServiceIpc} from "./src/shared/ipc/workspace-service-ipc";
-import {CommentServiceIpc} from "./src/shared/ipc/comment-service-ipc";
-import {addComment} from "./src-electron/ipc/comment/comment.handler";
+import {WorkspaceServiceIpc} from './src/shared/ipc/workspace-service-ipc';
+import {CommentServiceIpc} from './src/shared/ipc/comment-service-ipc';
+import {ConfigServiceIpc} from './src/shared/ipc/config-service-ipc';
+import {SettingInfo} from './src/shared/info-objects/setting.info';
 
 
 contextBridge.exposeInMainWorld('assignmentApi', {
@@ -32,6 +31,7 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   rubricUpdate: (rubricName: string, assignmentName: string) => ipcRenderer.invoke('assignments:rubricUpdate', rubricName, assignmentName),
 } as AssignmentServiceIpc);
 
+
 contextBridge.exposeInMainWorld('rubricApi', {
   getRubricNames: () => ipcRenderer.invoke('rubrics:getRubricNames'),
   rubricUpload: (rubric: IRubric) => ipcRenderer.invoke('rubrics:rubricUpload', rubric),
@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld('rubricApi', {
   deleteRubric: (rubricName: string) => ipcRenderer.invoke('rubrics:deleteRubric', rubricName),
   getRubric: (rubricName: string) => ipcRenderer.invoke('rubrics:getRubric', rubricName),
 } as RubricServiceIpc);
+
 
 contextBridge.exposeInMainWorld('importApi', {
   importZip: (importInfo: ImportInfo) => ipcRenderer.invoke('import:importZip', importInfo),
@@ -58,7 +59,6 @@ contextBridge.exposeInMainWorld('workspaceApi', {
 } as WorkspaceServiceIpc);
 
 
-
 contextBridge.exposeInMainWorld('commentApi', {
   getComments: () => ipcRenderer.invoke('comments:getComments'),
   deleteComment: (commentId: string) => ipcRenderer.invoke('comments:deleteComment', commentId),
@@ -66,6 +66,10 @@ contextBridge.exposeInMainWorld('commentApi', {
 } as CommentServiceIpc);
 
 
+contextBridge.exposeInMainWorld('configApi', {
+  getConfig: () => ipcRenderer.invoke('config:getConfig'),
+  updateConfig: (config: SettingInfo) => ipcRenderer.invoke('config:updateConfig', config),
+} as ConfigServiceIpc);
 
 
 contextBridge.exposeInMainWorld('electronAPI', {

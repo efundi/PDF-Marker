@@ -9,7 +9,7 @@ import {MatDialogConfig} from '@angular/material/dialog';
 import {AlertService} from '@coreModule/services/alert.service';
 import {FileSaverService} from 'ngx-filesaver';
 import {SettingsService} from '@pdfMarkerModule/services/settings.service';
-import {SettingInfo} from '@pdfMarkerModule/info-objects/setting.info';
+import {SettingInfo} from '../../../../../shared/info-objects/setting.info';
 import {AssignmentSettingsInfo} from '../../../../../shared/info-objects/assignment-settings.info';
 import {FormBuilder} from '@angular/forms';
 // import * as fs from 'fs';

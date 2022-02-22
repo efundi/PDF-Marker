@@ -73,7 +73,7 @@ export class SettingsComponent implements OnInit {
       this.assignmentService.getAssignments().subscribe(assignments => {
         this.assignmentService.update(assignments);
       });
-      this.appService.openSnackBar(true, response.message);
+      this.appService.openSnackBar(true, 'Successfully updated settings!');
       this.isLoading$.next(false);
     }, error => {
       this.isLoading$.next(false);

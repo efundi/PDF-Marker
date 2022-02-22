@@ -12,7 +12,7 @@ import {
   mkdtempSync
 } from 'fs';
 import * as glob from 'glob';
-import {getConfig} from '../config/config';
+import {getConfig} from '../config/config.handler';
 import {
   checkAccess,
   deleteFolderRecursive,

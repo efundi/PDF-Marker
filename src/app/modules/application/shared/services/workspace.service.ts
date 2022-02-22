@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable, Subject} from 'rxjs';
 import {WorkspaceDialogResult} from '@pdfMarkerModule/components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
-import {SettingInfo} from '@pdfMarkerModule/info-objects/setting.info';
+import {SettingInfo} from '../../../../../shared/info-objects/setting.info';
 import {WorkspaceServiceIpc} from "../../../../../shared/ipc/workspace-service-ipc";
 import {fromIpcResponse} from "@sharedModule/services/ipc.utils";
 

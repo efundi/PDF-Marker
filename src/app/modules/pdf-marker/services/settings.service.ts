@@ -1,20 +1,25 @@
-import { Injectable } from '@angular/core';
-import {HttpClient} from "@angular/common/http";
-import {Observable} from "rxjs";
-import {SettingInfo} from "@pdfMarkerModule/info-objects/setting.info";
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
+import {SettingInfo} from '../../../../shared/info-objects/setting.info';
+import {ConfigServiceIpc} from '../../../../shared/ipc/config-service-ipc';
+import {fromIpcResponse} from '@sharedModule/services/ipc.utils';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SettingsService {
 
-  constructor(private http: HttpClient) { }
+  private configApi: ConfigServiceIpc;
 
-  saveConfigurations(settings: SettingInfo):Observable<any> {
-    return this.http.post('/api/settings', settings);
+  constructor() {
+    this.configApi = (window as any).configApi;
   }
 
-  getConfigurations(): Observable<any> {
-    return this.http.get('/api/settings');
+  saveConfigurations(settings: SettingInfo): Observable<SettingInfo> {
+    return fromIpcResponse(this.configApi.updateConfig(settings));
+  }
+
+  getConfigurations(): Observable<SettingInfo> {
+    return fromIpcResponse(this.configApi.getConfig());
   }
 }

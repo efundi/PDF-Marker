@@ -1,26 +1,11 @@
 import {forEach, isNil} from 'lodash';
-import {getConfig, updateConfig} from '../config/config';
+import {getConfig, updateConfigFile} from '../config/config.handler';
 import {basename, sep} from 'path';
 import {writeFile} from 'fs/promises';
-import {SETTING_FILE} from '../../constants';
-import {existsSync, mkdirSync, readdirSync, readFile, renameSync, writeFileSync} from 'fs';
-import {
-  checkClient,
-  isJson,
-  isNullOrUndefined,
-  readFromFile,
-  sendResponse,
-  sendResponseData
-} from "../../../src-express/utils";
-import {
-  CONFIG_DIR, CONFIG_FILE, COULD_NOT_READ_COMMENT_LIST, COULD_NOT_READ_WORKSPACE_LIST,
-  FORBIDDEN_RESOURCE, NOT_CONFIGURED_CONFIG_DIRECTORY,
-  NOT_PROVIDED_NEW_WORKSPACE_NAME,
-  NOT_PROVIDED_WORKSPACE_NAME
-} from "../../../src-express/constants";
-import {validationResult} from "express-validator";
+import {CONFIG_DIR, CONFIG_FILE, SETTING_FILE} from '../../constants';
+import {existsSync, mkdirSync, readdirSync, renameSync, writeFileSync} from 'fs';
 import {IpcMainInvokeEvent, shell} from 'electron';
-import * as fse from "fs-extra";
+import {moveSync} from 'fs-extra';
 
 export function getWorkingDirectory(workspaceName: string): Promise<string> {
   return getConfig().then((config) => {
@@ -60,7 +45,7 @@ export function createWorkingFolder(event: IpcMainInvokeEvent, workFolderName: s
     }
     config.folders.push(fullPath);
     console.log(config);
-    return updateConfig(config).then(() => fullPath);
+    return updateConfigFile(config).then(() => fullPath);
   });
 }
 
@@ -112,7 +97,7 @@ export function moveWorkspaceAssignments(
         try {
           const src = assignmentPath;
           const dest = newAssignmentPath;
-          fse.move(src, dest);
+          moveSync(src, dest);
         } catch (e) {
           console.log(e);
           error = e.message;
@@ -172,7 +157,7 @@ export function deleteWorkspace(event: IpcMainInvokeEvent, deleteFolder: string)
         folders.splice(indexFound, 1);
         config.folders = folders;
       })
-        .then(() => updateConfig(config))
+        .then(() => updateConfigFile(config))
         .then(() => folders);
     }
     return Promise.resolve([]);

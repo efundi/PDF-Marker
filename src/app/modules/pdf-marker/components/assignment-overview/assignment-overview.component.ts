@@ -12,7 +12,7 @@ import {AlertService} from '@coreModule/services/alert.service';
 import {HttpErrorResponse, HttpEvent, HttpEventType, HttpResponse} from '@angular/common/http';
 import {FileSaverService} from 'ngx-filesaver';
 import {SettingsService} from '@pdfMarkerModule/services/settings.service';
-import {SettingInfo} from '@pdfMarkerModule/info-objects/setting.info';
+import {SettingInfo} from '../../../../../shared/info-objects/setting.info';
 import {AssignmentSettingsInfo} from '../../../../../shared/info-objects/assignment-settings.info';
 import {RoutesEnum} from '@coreModule/utils/routes.enum';
 import {ImportService} from '@pdfMarkerModule/services/import.service';

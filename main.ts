@@ -29,6 +29,7 @@ import {
   updateWorkspaceName
 } from "./src-electron/ipc/workspace/workspace.handler";
 import {addComment, deleteComment, getComments} from "./src-electron/ipc/comment/comment.handler";
+import {getConfig, updateConfig} from "./src-electron/ipc/config/config.handler";
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -151,6 +152,12 @@ try {
     ipcMain.handle('comments:getComments', toIpcResponse(getComments));
     ipcMain.handle('comments:deleteComment', toIpcResponse(deleteComment));
     ipcMain.handle('comments:addComment', toIpcResponse(addComment));
+
+    // Config api
+    ipcMain.handle('config:getConfig', toIpcResponse(getConfig));
+    ipcMain.handle('config:updateConfig', toIpcResponse(updateConfig));
+
+
 
     ipcMain.handle('app:version', () => {
       return { version: app.getVersion() };
