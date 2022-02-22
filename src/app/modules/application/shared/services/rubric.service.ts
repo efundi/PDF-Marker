@@ -27,6 +27,10 @@ export class RubricService {
     return fromIpcResponse(this.rubricApi.getRubricNames());
   }
 
+  getRubrics(): Observable<IRubric[]> {
+    return fromIpcResponse(this.rubricApi.getRubrics());
+  }
+
   deleteRubricCheck(rubricName: string): Observable<boolean> {
     return fromIpcResponse(this.rubricApi.deleteRubricCheck(rubricName));
   }

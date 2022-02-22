@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('rubricApi', {
   deleteRubricCheck: (rubricName: string) => ipcRenderer.invoke('rubrics:deleteRubricCheck', rubricName),
   deleteRubric: (rubricName: string) => ipcRenderer.invoke('rubrics:deleteRubric', rubricName),
   getRubric: (rubricName: string) => ipcRenderer.invoke('rubrics:getRubric', rubricName),
+  getRubrics: () => ipcRenderer.invoke('rubrics:getRubrics'),
 } as RubricServiceIpc);
 
 

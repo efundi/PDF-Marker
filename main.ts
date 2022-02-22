@@ -15,7 +15,7 @@ import {stat, statSync} from 'fs';
 import {
   deleteRubric,
   deleteRubricCheck, getRubric,
-  getRubricNames,
+  getRubricNames, getRubrics,
   rubricUpload,
   selectRubricFile
 } from './src-electron/ipc/rubrics/rubric.handler';
@@ -36,7 +36,7 @@ const args = process.argv.slice(1);
 serve = args.some(val => val === '--serve');
 
 // Import the express server which will start up automatically
-const server = require('./dist/server');
+// const server = require('./dist/server');
 const logger = require('electron-log');
 const excelParser = new (require('simple-excel-to-json').XlsParser)();
 
@@ -134,6 +134,7 @@ try {
     ipcMain.handle('rubrics:deleteRubricCheck', toIpcResponse(deleteRubricCheck));
     ipcMain.handle('rubrics:deleteRubric', toIpcResponse(deleteRubric));
     ipcMain.handle('rubrics:getRubric', toIpcResponse(getRubric));
+    ipcMain.handle('rubrics:getRubrics', toIpcResponse(getRubrics));
 
     // Import API
     ipcMain.handle('import:importZip', toIpcResponse(importZip));

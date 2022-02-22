@@ -8,4 +8,5 @@ export interface RubricServiceIpc {
   deleteRubricCheck(rubricName: string): Promise<IpcResponse<boolean>>;
   deleteRubric(rubricName: string): Promise<IpcResponse<IRubricName[]>>;
   getRubric(rubricName: string): Promise<IpcResponse<IRubric>>;
+  getRubrics(): Promise<IpcResponse<IRubric[]>>;
 }

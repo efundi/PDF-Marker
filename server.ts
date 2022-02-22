@@ -38,10 +38,6 @@ import {
   sendResponse,
   sendResponseData
 } from './src-express/utils';
-import {
-  getRubricsFn,
-  rubricUploadFn
-} from './src-express/rest/rubric';
 
 import {check, validationResult} from 'express-validator';
 import * as glob from 'glob';
@@ -99,21 +95,6 @@ app.set('views', DIST_FOLDER);
 app.get('*.*', express.static(DIST_FOLDER, {
   maxAge: '1y'
 }));
-
-
-app.post('/api/rubric/import', [
-  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC)
-], rubricUploadFn);
-/*END RUBRIC IMPORT API*/
-
-
-/* READ RUBRICS */
-
-
-app.get('/api/rubric/import', getRubricsFn);
-/* END READ RUBRICS */
-
-/* DELETE RUBRICS */
 
 const getPdfFile = (req, res) => {
   if (!checkClient(req, res)) {
