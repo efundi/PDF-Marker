@@ -11,6 +11,8 @@ import {ImportServiceIpc} from './src/shared/ipc/import-service-ipc';
 import {getZipEntries} from "./src-electron/ipc/import/import.handler";
 import {deleteWorkspace, getWorkspaces, moveWorkspaceAssignments} from "./src-electron/ipc/workspace/workspace.handler";
 import {WorkspaceServiceIpc} from "./src/shared/ipc/workspace-service-ipc";
+import {CommentServiceIpc} from "./src/shared/ipc/comment-service-ipc";
+import {addComment} from "./src-electron/ipc/comment/comment.handler";
 
 
 contextBridge.exposeInMainWorld('assignmentApi', {
@@ -54,6 +56,14 @@ contextBridge.exposeInMainWorld('workspaceApi', {
   deleteWorkspace: (workspaceFolder: string) => ipcRenderer.invoke('workspace:deleteWorkspace', workspaceFolder),
   deleteWorkspaceCheck: (workspaceFolder: string) => ipcRenderer.invoke('workspace:deleteWorkspaceCheck', workspaceFolder),
 } as WorkspaceServiceIpc);
+
+
+
+contextBridge.exposeInMainWorld('commentApi', {
+  getComments: () => ipcRenderer.invoke('comments:getComments'),
+  deleteComment: (commentId: string) => ipcRenderer.invoke('comments:deleteComment', commentId),
+  addComment: (commentText: string) => ipcRenderer.invoke('comments:addComment', commentText)
+} as CommentServiceIpc);
 
 
 

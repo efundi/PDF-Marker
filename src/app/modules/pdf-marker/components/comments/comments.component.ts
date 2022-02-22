@@ -66,10 +66,8 @@ export class GenericCommentsComponent implements OnInit {
       return;
     }
 
-    const formData: FormData = new FormData();
-    formData.append('newComment', this.fc.newComment.value);
     this.appService.isLoading$.next(true);
-    this.commentsService.saveComments( this.genericCommentsForm.value).subscribe((comments: IComment[]) => {
+    this.commentsService.addComment( this.genericCommentsForm.value.newComment).subscribe((comments: IComment[]) => {
       this.populateComments(comments);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Comment saved');
@@ -82,35 +80,25 @@ export class GenericCommentsComponent implements OnInit {
 
   deleteComment(item: IComment) {
     this.appService.isLoading$.next(true);
-    const data = {id: item.id};
-    this.commentsService.deleteCommentCheck(data).subscribe((inUse: boolean) => {
-      if (inUse) {
-        const config = new MatDialogConfig();
-        config.width = '400px';
-        config.maxWidth = '400px';
-        config.data = {
-          title: 'Confirmation',
-          message: item.inUse ? 'This comment is in use, are your sure you want to delete it?' : 'Are you sure you want to delete this comment?'
-        };
-        const shouldDeleteFn = (shouldDelete: boolean) => {
-          if (shouldDelete) {
-            this.deleteCommentImpl(item.id, shouldDelete);
-          }
-        };
-
-        this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
-      } else {
-        this.deleteCommentImpl(item.id, true);
+    const config = new MatDialogConfig();
+    config.width = '400px';
+    config.maxWidth = '400px';
+    config.data = {
+      title: 'Confirmation',
+      message: item.inUse ? 'This comment is in use, are your sure you want to delete it?' : 'Are you sure you want to delete this comment?'
+    };
+    const shouldDeleteFn = (shouldDelete: boolean) => {
+      if (shouldDelete) {
+        this.deleteCommentImpl(item.id);
       }
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to delete comment');
-      this.appService.isLoading$.next(false);
-    });
+    };
+
+    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+
   }
 
-  private deleteCommentImpl(id: number, confirmation: boolean) {
-    const newData = { id, confirmation};
-    this.commentsService.deleteComment(newData).subscribe((comments: IComment[]) => {
+  private deleteCommentImpl(id: string) {
+    this.commentsService.deleteComment(id).subscribe((comments: IComment[]) => {
       this.populateComments(comments);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Comment deleted');

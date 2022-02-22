@@ -104,7 +104,7 @@ export class ImportComponent implements OnInit {
   }
 
   compareCategoryObjects(object1: any, object2: any) {
-    return object1 && object2 && object1.id == object2.id;
+    return object1 && object2 && object1.id === object2.id;
   }
 
   private initForm() {

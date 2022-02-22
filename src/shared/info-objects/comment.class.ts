@@ -1,5 +1,5 @@
 export class IComment {
-  id?: number;
+  id?: string;
   title?: string;
   inUse?: boolean;
 }

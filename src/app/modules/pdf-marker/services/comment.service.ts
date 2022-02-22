@@ -2,27 +2,30 @@ import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {IComment} from '../../../../shared/info-objects/comment.class';
+import {CommentServiceIpc} from '../../../../shared/ipc/comment-service-ipc';
+import {fromIpcResponse} from '@sharedModule/services/ipc.utils';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CommentService {
 
-  constructor(private http: HttpClient) { }
+  private commentApi: CommentServiceIpc;
 
-  saveComments(data: FormData): Observable<IComment[]> {
-    return this.http.post<IComment[]>('/api/comment/save', data);
+  constructor(private http: HttpClient) {
+    this.commentApi = (window as any).commentApi;
+  }
+
+  addComment(commentText: string): Observable<IComment[]> {
+    return fromIpcResponse(this.commentApi.addComment(commentText));
   }
 
   getCommentDetails(): Observable<IComment[]> {
-    return this.http.get<IComment[]>('/api/comment/list');
+    return fromIpcResponse(this.commentApi.getComments());
   }
 
-  deleteComment(data: any): Observable<IComment[]> {
-    return this.http.post<IComment[]>('/api/comment/delete', data);
+  deleteComment(commentId: string): Observable<IComment[]> {
+    return fromIpcResponse(this.commentApi.deleteComment(commentId));
   }
 
-  deleteCommentCheck(data: any): Observable<boolean> {
-    return this.http.post<boolean>('/api/comment/delete/check', data);
-  }
 }

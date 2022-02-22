@@ -39,7 +39,6 @@ import {
   sendResponseData
 } from './src-express/utils';
 import {settingsGet, settingsPost} from './src-express/rest/settings';
-import {deleteCommentConfirmation, deleteCommentFn, getComments, saveNewComment} from './src-express/rest/comment';
 import {
   getRubricsFn,
   rubricUploadFn
@@ -113,22 +112,6 @@ app.post('/api/settings', [
 
 
 app.get('/api/settings', settingsGet);
-
-
-/* Comment API*/
-app.post('/api/comment/save', [
-  check('newComment').not().isEmpty().withMessage('comment not provided!'),
-], saveNewComment);
-
-app.get('/api/comment/list', getComments);
-
-app.post('/api/comment/delete/check',
-  check('id').not().isEmpty().withMessage(NOT_PROVIDED_COMMENT), deleteCommentFn);
-
-app.post('/api/comment/delete',
-  check('id').not().isEmpty().withMessage(NOT_PROVIDED_COMMENT), deleteCommentConfirmation);
-
-/* Rubric Import API*/
 
 app.post('/api/rubric/import', [
   check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC)
