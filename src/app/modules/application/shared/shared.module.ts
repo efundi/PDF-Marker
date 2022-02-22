@@ -22,27 +22,30 @@ import {MatSelectModule} from '@angular/material/select';
 import {MatExpansionModule} from '@angular/material/expansion';
 import {MatDialogModule} from '@angular/material/dialog';
 import {MatProgressBarModule} from '@angular/material/progress-bar';
-import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
-import {PdfMarkerErrorInterceptorService} from '@sharedModule/services/pdf-marker-error-interceptor.service';
+import {HttpClientModule} from '@angular/common/http';
 import {AssignmentListComponent} from '@sharedModule/components/assignment-list/assignment-list.component';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
 import {MatTableModule} from '@angular/material/table';
 import {MatBadgeModule} from '@angular/material/badge';
 import {MatPaginatorModule} from '@angular/material/paginator';
 import {DragDropModule} from '@angular/cdk/drag-drop';
-import {YesAndNoConfirmationDialogComponent} from './components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {
+  YesAndNoConfirmationDialogComponent
+} from './components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {MarkingCommentModalComponent} from './components/marking-comment-modal/marking-comment-modal.component';
 import {MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule} from '@angular/material/snack-bar';
 import {SnackBarComponent} from './components/snack-bar/snack-bar.component';
-import {RubricCriteriaLevelBlockComponent} from '@sharedModule/components/rubric-criteria-level-block/rubric-criteria-level-block.component';
+import {
+  RubricCriteriaLevelBlockComponent
+} from '@sharedModule/components/rubric-criteria-level-block/rubric-criteria-level-block.component';
 import {RubricViewModalComponent} from '@sharedModule/components/rubric-view-modal/rubric-view-modal.component';
 import {RubricViewMarkingComponent} from './components/rubric-view-marking/rubric-view-marking.component';
 import {RubricCriteriaComponent} from './components/rubric-criteria/rubric-criteria.component';
-import { RubricComponent } from './components/rubric/rubric.component';
+import {RubricComponent} from './components/rubric/rubric.component';
 import {MatOptionModule} from '@angular/material/core';
 import {MatRadioModule} from '@angular/material/radio';
-import { MarkingHighlightModalComponent } from './components/marking-highlight-modal/marking-highlight-modal.component';
-import {MatProgressSpinnerModule, MatSpinner} from "@angular/material/progress-spinner";
+import {MarkingHighlightModalComponent} from './components/marking-highlight-modal/marking-highlight-modal.component';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 
 
 const SHARED_MODULES = [
@@ -110,7 +113,6 @@ const SHARED_COMPONENTS = [FileExplorerComponent, FileExplorerModalComponent, Al
     MatProgressSpinnerModule
   ],
   providers: [
-    { provide: HTTP_INTERCEPTORS, useClass: PdfMarkerErrorInterceptorService, multi: true },
     { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
     AssignmentService
   ],

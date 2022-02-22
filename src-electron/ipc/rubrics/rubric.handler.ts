@@ -10,14 +10,12 @@ import {
   COULD_NOT_CREATE_CONFIG_DIRECTORY,
   COULD_NOT_CREATE_RUBRIC_FILE,
   COULD_NOT_READ_RUBRIC_LIST,
-  INVALID_RUBRIC_JSON_FILE,
-  RUBRICS_FILE
+  INVALID_RUBRIC_JSON_FILE, NOT_CONFIGURED_CONFIG_DIRECTORY,
+  RUBRICS_FILE, SETTING_FILE
 } from '../../constants';
-import {FORBIDDEN_RESOURCE, NOT_CONFIGURED_CONFIG_DIRECTORY, SETTING_FILE} from '../../../src-express/constants';
 import * as glob from 'glob';
 import {AssignmentSettingsInfo} from '../../../src/shared/info-objects/assignment-settings.info';
 import {getConfig} from '../config/config.handler';
-import {checkClient, readFromFile, sendResponse, sendResponseData} from "../../../src-express/utils";
 
 const excelParser = new (require('simple-excel-to-json').XlsParser)();
 
