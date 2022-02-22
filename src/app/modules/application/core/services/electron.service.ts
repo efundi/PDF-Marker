@@ -28,9 +28,7 @@ export class ElectronService {
     return from(this.electronApi.getFile(fileFilter));
   }
 
-  getExcelToJSON(fileFilter: FileFilterInfo): Observable<any> {
-    return from(this.electronApi.getExcelToJson(fileFilter));
-  }
+
 
   saveFile(fileFilter: FileFilterInfo): Observable<any> {
     if (!fileFilter.filename) {

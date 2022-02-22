@@ -9,6 +9,7 @@ import {Subscription} from 'rxjs';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {IRubric, IRubricName} from '../../../../../../shared/info-objects/rubric.class';
+import {RubricService} from "@sharedModule/services/rubric.service";
 
 
 @Component({
@@ -35,6 +36,7 @@ export class RubricViewModalComponent implements OnInit {
 
   constructor(private appService: AppService, private dialogRef: MatDialogRef<RubricViewModalComponent>, private settingsService: SettingsService,
               private importService: ImportService,
+              private rubricService: RubricService,
               private fb: FormBuilder, private assignmentService: AssignmentService,
               @Inject(MAT_DIALOG_DATA) config) {
 
@@ -60,7 +62,7 @@ export class RubricViewModalComponent implements OnInit {
     this.rubricForm.controls.rubric.setValue(this.assignmentSettingsInfo.rubric.name);
     // this.previouslyEmitted = this.assignmentSettingsInfo.rubric.name;
     this.selectedRubric = this.assignmentSettingsInfo.rubric.name;
-    this.importService.getRubricDetails().subscribe((rubrics: IRubricName[]) => {
+    this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
       this.rubrics = rubrics;
     });
 
@@ -89,8 +91,7 @@ export class RubricViewModalComponent implements OnInit {
       console.log(value.rubric !== this.previouslyEmitted && value.rubric !== this.selectedRubric);
       if (value.rubric !== this.previouslyEmitted && value.rubric !== this.selectedRubric) {
         this.previouslyEmitted = value.rubric;
-        const rubric = {rubricName: value.rubric};
-        this.rubricMarkingSub = this.importService.getRubricContents(rubric).subscribe((rubric: IRubric) => {
+        this.rubricMarkingSub = this.rubricService.getRubric(value.rubric).subscribe((rubric: IRubric) => {
           this.rubricMarking = rubric;
           this.selectedRubric = rubric.name;
         });

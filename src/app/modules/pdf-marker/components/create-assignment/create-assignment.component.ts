@@ -17,7 +17,8 @@ import {WorkspaceService} from '@sharedModule/services/workspace.service';
 import {PdfmUtilsService} from '@pdfMarkerModule/services/pdfm-utils.service';
 import {UpdateAssignment, UpdateAssignmentStudentDetails} from '../../../../../shared/info-objects/update-assignment';
 import {IRubric, IRubricName} from '../../../../../shared/info-objects/rubric.class';
-import {CreateAssignmentInfo, StudentInfo} from "../../../../../shared/info-objects/create-assignment.info";
+import {CreateAssignmentInfo, StudentInfo} from '../../../../../shared/info-objects/create-assignment.info';
+import {RubricService} from '@sharedModule/services/rubric.service';
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -70,6 +71,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
               private router: Router,
               private activatedRoute: ActivatedRoute,
               private importService: ImportService,
+              private rubricService: RubricService,
               private sakaiService: SakaiService) {}
 
   ngOnInit() {
@@ -105,7 +107,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.importService.getRubricDetails().subscribe((rubrics: IRubricName[]) => {
+    this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
       this.rubrics = rubrics;
       this.appService.isLoading$.next(false);
     }, error => {

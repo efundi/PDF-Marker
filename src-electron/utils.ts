@@ -1,26 +1,49 @@
 import * as unzipper from 'unzipper';
 import * as etl from 'etl';
-import multer from 'multer';
 import {
   constants,
   createReadStream,
   existsSync,
   lstatSync,
+  mkdirSync,
   readdirSync,
-  readFile,
   rmdirSync,
   statSync,
   unlinkSync,
-  writeFileSync,
-  mkdirSync
+  writeFileSync
 } from 'fs';
-import {access, writeFile, mkdir, cp} from 'fs/promises';
+import {access, writeFile} from 'fs/promises';
 import {FEEDBACK_FOLDER, GRADES_FILE, SUBMISSION_FOLDER, UPLOADS_DIR} from './constants';
-import {sep, extname, dirname} from 'path';
+import {dirname, extname, sep} from 'path';
 import {PDFDocument} from 'pdf-lib';
 import {noop} from 'rxjs';
-import {isArray} from 'lodash';
+import {IpcResponse} from '../src/shared/ipc/ipc-response';
+import {IpcMainInvokeEvent} from 'electron';
 
+declare type IpcHandler<T> = (event: IpcMainInvokeEvent, ...args: any[]) => Promise<T>;
+
+/**
+ * This is a middleware response used for IPC to work around a bug in electron where rejected promises
+ * loose the original reason. This way, the main process always returns a resolved promise, but the result IpcResponse
+ * will contain information if there was an error or not, and then reject the promise in the renderer side
+ * https://github.com/electron/electron/issues/24427
+ * @param listener
+ */
+export function toIpcResponse<T>(listener: IpcHandler<T>): IpcHandler<IpcResponse<T>> {
+  // Return a function that can be used as an IPC handler
+  return (event, ...args) => {
+    return listener(event, ...args).then(
+      (data) => {
+        return {
+          data
+        } as IpcResponse<T>;
+      }, (error) => {
+        return {
+          error
+        } as IpcResponse<T>;
+      });
+  };
+}
 
 export const isFunction = (functionToCheck) => {
   return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
@@ -32,13 +55,6 @@ export const isNullOrUndefined = (object: any): boolean => {
 
 export const isNullOrUndefinedOrEmpty = (object: string): boolean => {
   return (object === null || object === undefined || object === '');
-};
-
-
-export const deleteUploadedFile = (req) => {
-  if (req.file && existsSync(UPLOADS_DIR + sep + req.file.originalname)) {
-    unlinkSync(UPLOADS_DIR + sep + req.file.originalname);
-  }
 };
 
 export const deleteMultipleFiles = (req) => {
@@ -266,14 +282,6 @@ export const hierarchyModel = (pathInfos, configFolder) => {
   return model;
 };
 
-
-export const asyncForEach = async (array, callback) => {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array);
-  }
-};
-
-
 export const validateRequest = (requiredKeys = [], receivedKeys = []): boolean => {
   let invalidKeyFound = false;
   for (const key of receivedKeys) {
@@ -287,4 +295,21 @@ export const validateRequest = (requiredKeys = [], receivedKeys = []): boolean =
 
 export function isEmpty(str: string) {
   return str === null || str === undefined || str.length === 0;
+}
+
+export function isBlank(data: string = '') {
+
+  if (data === null || data === undefined) {
+    return true;
+  }
+
+  data += '';
+  return data === '' || data.trim() === '';
+}
+
+
+
+export function joinError(currentMessage: string = '', newMessage: string = ''): string {
+  currentMessage += (!isEmpty(currentMessage)) ? `, ${newMessage}` : newMessage;
+  return currentMessage;
 }

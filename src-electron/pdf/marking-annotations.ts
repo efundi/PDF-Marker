@@ -16,7 +16,7 @@ import {HIGHTLIGHT_HEIGHT} from '../constants';
 import {MarkInfo} from '../../src/shared/info-objects/mark.info';
 import {IconSvgEnum} from '../../src/shared/info-objects/icon-svg.enum';
 import {adjustPointsForResults, hexRgb, RgbaObject, rgbHex} from './pdf-utils';
-import {isEmpty} from '../utils';
+import {isEmpty} from "lodash";
 
 const getRgbScale = (rgbValue: number): number => {
   return +parseFloat(((rgbValue / 255) + '')).toFixed(2);

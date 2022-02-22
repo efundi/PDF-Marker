@@ -15,6 +15,7 @@ import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
 import {PdfmUtilsService} from '@pdfMarkerModule/services/pdfm-utils.service';
 import {IRubricName} from "../../../../../shared/info-objects/rubric.class";
+import {RubricService} from "@sharedModule/services/rubric.service";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -70,6 +71,7 @@ export class ImportComponent implements OnInit {
               private sakaiService: SakaiService,
               private appService: AppService,
               private importService: ImportService,
+              private rubricService: RubricService,
               private assignmentService: AssignmentService,
               private workspaceService: WorkspaceService,
               private electronService: ElectronService) { }
@@ -101,7 +103,7 @@ export class ImportComponent implements OnInit {
     });
 
     this.appService.isLoading$.next(true);
-    this.importService.getRubricDetails().subscribe((rubrics: IRubricName[]) => {
+    this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
       this.rubrics = rubrics;
       this.appService.isLoading$.next(false);
     }, error => {

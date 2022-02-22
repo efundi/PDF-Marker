@@ -1,4 +1,4 @@
-import {
+import fs, {
   accessSync,
   constants,
   existsSync,
@@ -39,8 +39,8 @@ import * as path from 'path';
 import {basename, dirname, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
 import {access, readFile} from 'fs/promises';
-import {forEach, isNil} from 'lodash';
-import * as Electron from 'electron';
+import {find, forEach, isNil} from 'lodash';
+import {IpcMainInvokeEvent} from 'electron';
 import {UpdateAssignment} from '../../../src/shared/info-objects/update-assignment';
 import {PDFDocument} from 'pdf-lib';
 import {IRubric} from '../../../src/shared/info-objects/rubric.class';
@@ -49,12 +49,14 @@ import {annotatePdfFile} from '../../pdf/marking-annotations';
 import {IComment} from '../../../src/shared/info-objects/comment.class';
 import {AssignmentSettingsInfo} from '../../../src/shared/info-objects/assignment-settings.info';
 import {MarkInfo} from '../../../src/shared/info-objects/mark.info';
+import {annotatePdfRubric} from '../../pdf/rubric-annotations';
+import {ShareAssignments} from '../../../src/shared/info-objects/share-assignments';
+import os from 'os';
+import {copySync} from 'fs-extra';
 
 const zipDir = require('zip-dir');
 
 const csvtojson = require('csvtojson');
-import IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
-import {annotatePdfRubric} from "../../pdf/rubric-annotations";
 
 export function getAssignments(): Promise<any> {
   return getConfig().then((config) => {
@@ -996,4 +998,169 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
   } catch (e) {
     return Promise.reject( e.message);
   }
+}
+
+
+function cleanupTemp(tmpDir: string) {
+  try {
+    if (tmpDir) {
+      fs.rmSync(tmpDir, { recursive: true });
+    }
+  } catch (e) {
+    console.error(`An error has occurred while removing the temp folder at ${tmpDir}. Please remove it manually. Error: ${e}`);
+  }
+}
+
+export function shareExport(event: IpcMainInvokeEvent, shareRequest: ShareAssignments): Promise<any> {
+
+  try {
+    return getConfig().then(async (config) => {
+      const assignmentName = shareRequest.assignmentName.replace(/\//g, sep);
+      let workspaceFolder = '';
+      if (shareRequest.workspaceFolder) {
+        workspaceFolder = shareRequest.workspaceFolder.replace(/\//g, sep);
+      }
+      const originalAssignmentDirectory = (workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder + sep + assignmentName : config.defaultPath + sep + assignmentName;
+      const gradesJSON = await csvtojson({
+        noheader: true,
+        trim: false
+      }).fromFile(originalAssignmentDirectory + sep + GRADES_FILE);
+      let tmpDir;
+      // Create a temp directory to construct files to zip
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
+
+      const tempAssignmentDirectory = tmpDir + sep + assignmentName;
+      fs.mkdirSync(tempAssignmentDirectory);
+
+      // Now copy each submission
+      shareRequest.submissions.forEach((submission) => {
+        const submissionDirectoryName = submission.studentName + '(' + submission.studentNumber + ')';
+        copySync(originalAssignmentDirectory + sep + submissionDirectoryName, tempAssignmentDirectory + sep + submissionDirectoryName);
+      });
+
+      const shareGradesJson = [
+        gradesJSON[0],
+        gradesJSON[1],
+        gradesJSON[2],
+      ];
+      for (let i = 3; i < gradesJSON.length; i++) {
+        const gradesStudentId = gradesJSON[i].field2;
+        const shouldExport = !isNil(find(shareRequest.submissions, {studentNumber: gradesStudentId}));
+        if (shouldExport) {
+          shareGradesJson.push(gradesJSON[i]);
+        }
+      }
+
+      return json2csvAsync(shareGradesJson, {emptyFieldValue: '', prependHeader: false})
+        .then(csv => {
+          writeFileSync(tempAssignmentDirectory + sep + GRADES_FILE, csv);
+        })
+        .then(() => {
+          return zipDir(tmpDir);
+        })
+        .then((buffer) => {
+          cleanupTemp(tmpDir);
+          return buffer;
+        }, (error) => {
+          cleanupTemp(tmpDir);
+          return Promise.reject(error.message);
+        });
+    });
+  } catch (e) {
+    console.error(e);
+    return Promise.reject('Error trying to export share');
+  }
+}
+
+
+
+
+export function rubricUpdate(event: IpcMainInvokeEvent, rubricName: string, assignmentName: string): Promise<IRubric> {
+
+  if (existsSync(CONFIG_DIR + RUBRICS_FILE)) {
+    return readFile(CONFIG_DIR + RUBRICS_FILE).then( (data) => {
+      if (!isJson(data)) {
+        return Promise.reject({message: INVALID_RUBRIC_JSON_FILE});
+      }
+      const rubrics: IRubric[] = JSON.parse(data.toString());
+      let rubric: IRubric;
+      if (Array.isArray(rubrics)) {
+        if (rubricName) {
+          let indexFound = -1;
+
+          for (let i = 0; i < rubrics.length; i++) {
+            if (rubrics[i].name.toLowerCase() === rubricName.toLowerCase()) {
+              indexFound = i;
+              break;
+            }
+          }
+
+          if (indexFound === -1) {
+            return Promise.reject({message: 'Could not find rubric'});
+          }
+
+          rubric = rubrics[indexFound];
+        } else {
+          rubric = null;
+        }
+
+        return getConfig().then((config) => {
+          try {
+            const markFiles = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**/' + MARK_FILE);
+            markFiles.forEach(markFile => {
+              unlinkSync(markFile);
+            });
+            return readFile( config.defaultPath + sep + assignmentName + sep + SETTING_FILE).then( (assignmentSettingsBuffer) => {
+              if (!isJson(assignmentSettingsBuffer)) {
+                return Promise.reject('invalid assignment settings');
+              }
+
+              const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
+              assignmentSettingsInfo.rubric = rubric;
+
+              return writeToFile( config.defaultPath + sep + assignmentName + sep + SETTING_FILE,
+                JSON.stringify(assignmentSettingsInfo), null, null).then(() => {
+
+                  return checkAccess(config.defaultPath + sep + assignmentName + sep + GRADES_FILE).then(() => {
+                    return csvtojson({noheader: true, trim: false}).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
+                      .then((gradesJSON) => {
+                        let changed = false;
+                        let assignmentHeader;
+                        for (let i = 0; i < gradesJSON.length; i++) {
+                          if (i === 0) {
+                            const keys = Object.keys(gradesJSON[i]);
+                            if (keys.length > 0) {
+                              assignmentHeader = keys[0];
+                            }
+                          } else if (i > 1) {
+                            gradesJSON[i].field5 = 0;
+                            changed = true;
+                          }
+                        }
+
+                        if (changed) {
+                          return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false}).then( ( csv) => {
+                            return writeToFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!').then(() => {
+                              return assignmentSettingsInfo.rubric;
+                            });
+                          }, (err) => {
+                            return Promise.reject('Failed to convert json to csv!');
+                          });
+                        } else {
+                          return Promise.reject('Failed to save mark');
+                        }
+                      }, reason => {
+                        return Promise.reject( reason);
+                      });
+                  });
+                });
+            });
+          } catch (e) {
+            return Promise.reject(e.message);
+          }
+        });
+      }
+    });
+  }
+  return Promise.reject({message: COULD_NOT_READ_RUBRIC_LIST});
 }

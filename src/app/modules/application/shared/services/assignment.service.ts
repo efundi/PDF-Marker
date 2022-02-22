@@ -1,8 +1,6 @@
-import {Inject, Injectable, Optional, PLATFORM_ID} from '@angular/core';
-import {HttpClient, HttpEvent, HttpHeaders} from '@angular/common/http';
-import {BehaviorSubject, from, Observable, of, ReplaySubject, Subject} from 'rxjs';
-import {makeStateKey, StateKey, TransferState} from '@angular/platform-browser';
-import {isPlatformServer} from '@angular/common';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {BehaviorSubject, from, Observable, ReplaySubject, Subject} from 'rxjs';
 import {AssignmentSettingsInfo} from '../../../../../shared/info-objects/assignment-settings.info';
 import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {RoutesEnum} from '@coreModule/utils/routes.enum';
@@ -14,7 +12,8 @@ import {ShareAssignments} from '../../../../../shared/info-objects/share-assignm
 import {AssignmentServiceIpc} from '../../../../../shared/ipc/assignment-service-ipc';
 import {UpdateAssignment} from '../../../../../shared/info-objects/update-assignment';
 import {CreateAssignmentInfo} from '../../../../../shared/info-objects/create-assignment.info';
-import {IRubric} from "../../../../../shared/info-objects/rubric.class";
+import {IRubric} from '../../../../../shared/info-objects/rubric.class';
+import {fromIpcResponse} from "@sharedModule/services/ipc.utils";
 
 @Injectable({
   providedIn: 'root'
@@ -24,7 +23,6 @@ export class AssignmentService {
   private assignmentListSource$: Subject<object[]> = new ReplaySubject<object[]>(1);
   private selectedAssignmentSource: Subject<object> = new Subject<object>();
   onAssignmentSourceChange: Observable<object>;
-  private assignments: object[] = new Array<object>();
   private selectedAssignment: object;
   private selectedPdfLocation: string;
   private selectedPdfURL: string;
@@ -42,45 +40,28 @@ export class AssignmentService {
   private assignmentApi: AssignmentServiceIpc;
 
   constructor(private http: HttpClient,
-              @Optional() @Inject('ASSIGNMENT_LIST') private assignmentList: (callback) => void,
-              @Inject(PLATFORM_ID) private platformId: any,
-              private transferState: TransferState,
               private router: Router,
               private appService: AppService,
               private zipService: ZipService) {
 
     this.assignmentApi = (window as any).assignmentApi;
-    const transferKey: StateKey<any[]> = makeStateKey<any[]>('ListAssignments');
-    if (isPlatformServer(this.platformId)) {
-      this.assignmentList((err, assignmentList) => {
-        if (err) {
-          console.log('Error ', err);
-        } else {
-          this.assignments = assignmentList;
-          this.transferState.set(transferKey, this.assignments);
-        }
-      });
-    } else {
+
       this.getAssignments().subscribe(assignments => {
-        this.assignments = this.transferState.get<object[]>(transferKey, assignments);
-        this.assignmentListSource$.next(this.assignments);
+        this.assignmentListSource$.next(assignments);
       }, error => {
         // this.assignments = this.transferState.get<object[]>(transferKey, []);
       });
-    }
-    // this.assignmentListSource$.next(this.assignments);
+
     this.onWorkspaceSourceChange = this.workspaceSourceSubject.asObservable();
     this.onAssignmentSourceChange = this.selectedAssignmentSource.asObservable();
   }
 
   getAssignments(): Observable<any> {
-    return from(this.assignmentApi.getAssignments());
-
-    // return this.http.get<object[]>('/api/assignments');
+    return fromIpcResponse(this.assignmentApi.getAssignments());
   }
 
   assignmentSettings(updatedSettings: AssignmentSettingsInfo) {
-    return from(this.assignmentApi.updateAssignmentSettings(updatedSettings, this.selectedPdfLocation));
+    return fromIpcResponse(this.assignmentApi.updateAssignmentSettings(updatedSettings, this.selectedPdfLocation));
   }
 
   getAssignmentSettings(workspaceName: string = null, assignmentName: string = null): Observable<AssignmentSettingsInfo> {
@@ -90,14 +71,14 @@ export class AssignmentService {
     if (workspaceName) {
       assignmentName = workspaceName + '/' + assignmentName;
     }
-    return from(this.assignmentApi.getAssignmentSettings(assignmentName));
+    return fromIpcResponse(this.assignmentApi.getAssignmentSettings(assignmentName));
   }
 
   getAssignmentGrades(workspaceName: string = null, assignmentName: string = null): Observable<any> {
     if (workspaceName) {
       assignmentName = workspaceName + '/' + assignmentName;
     }
-    return from(this.assignmentApi.getGrades(assignmentName));
+    return fromIpcResponse(this.assignmentApi.getGrades(assignmentName));
   }
 
   getFile(pdfFileLocation: string) {
@@ -154,8 +135,7 @@ export class AssignmentService {
         }
       }
     });
-    this.assignments = assignmentsHierarchy;
-    this.assignmentListSource$.next(this.assignments);
+    this.assignmentListSource$.next(assignmentsHierarchy);
     // this.assignmentListSource$.next(this.assignments);
   }
 
@@ -223,70 +203,46 @@ export class AssignmentService {
   }
 
   saveMarks(marks: MarkInfo[][], totalMark: number = 0): Observable<any> {
-    return from(this.assignmentApi.saveMarks(this.selectedPdfLocation, marks, totalMark));
+    return fromIpcResponse(this.assignmentApi.saveMarks(this.selectedPdfLocation, marks, totalMark));
   }
 
   saveRubricMarks(rubricName: string = '', marks: any[], totalMark: number = 0) {
-    return from(this.assignmentApi.saveRubricMarks(this.selectedPdfLocation, rubricName, marks ));
+    return fromIpcResponse(this.assignmentApi.saveRubricMarks(this.selectedPdfLocation, rubricName, marks ));
   }
 
   getSavedMarks(): Observable<any> {
-    return from(this.assignmentApi.getMarks(this.selectedPdfLocation));
+    return fromIpcResponse(this.assignmentApi.getMarks(this.selectedPdfLocation));
   }
 
   getAssignmentGlobalSettings(): Observable<any> {
-    return from(this.assignmentApi.getAssignmentGlobalSettings(this.selectedPdfLocation));
+    return fromIpcResponse(this.assignmentApi.getAssignmentGlobalSettings(this.selectedPdfLocation));
   }
 
   getSelectedPdfLocation(): string {
     return this.selectedPdfLocation;
   }
 
-  saveStudentGrade(grade: number) {
-    const body = {
-      location: this.selectedPdfLocation,
-      totalMark: grade
-    };
-
-    return this.http.post('/api/assignment/student/grade', body);
-  }
-
-  shareExport(shareRequest: ShareAssignments): Observable<HttpEvent<Blob>> {
-    const headers = new HttpHeaders({
-      'Content-Type': MimeTypesEnum.JSON,
-      'Accept': MimeTypesEnum.JSON
-    });
-    return this.http.post<Blob>('/api/assignment/share', shareRequest, {
-      reportProgress: true,
-      observe: 'events',
-      headers,
-      responseType: 'blob' as 'json',
-    });
+  shareExport(shareRequest: ShareAssignments): Observable<Uint8Array> {
+    return fromIpcResponse(this.assignmentApi.shareExport(shareRequest));
   }
 
   finalizeAndExport(workspaceName: string = null, assignmentName: string): Observable<Uint8Array> {
-    return from(this.assignmentApi.finalizeAssignment(workspaceName, assignmentName));
+    return fromIpcResponse(this.assignmentApi.finalizeAssignment(workspaceName, assignmentName));
   }
 
-
   finalizeAndExportRubric(workspaceName: string = null, assignmentName: string, assignmentRubric: IRubric): Observable<Uint8Array> {
-    return from(this.assignmentApi.finalizeAssignmentRubric(workspaceName, assignmentName, assignmentRubric.name));
+    return fromIpcResponse(this.assignmentApi.finalizeAssignmentRubric(workspaceName, assignmentName, assignmentRubric.name));
   }
 
   createAssignment(createAssignmentInfo: CreateAssignmentInfo): Observable<any> {
-    return from(this.assignmentApi.createAssignment(createAssignmentInfo));
+    return fromIpcResponse(this.assignmentApi.createAssignment(createAssignmentInfo));
   }
 
   updateAssignment(updateAssignmentInfo: UpdateAssignment): Observable<any> {
-    return from(this.assignmentApi.updateAssignment(updateAssignmentInfo));
+    return fromIpcResponse(this.assignmentApi.updateAssignment(updateAssignmentInfo));
   }
 
   updateAssignmentRubric(rubric: string, assignmentName: string): Observable<IRubric> {
-    const body = {
-      rubricName: rubric,
-      assignmentName: assignmentName
-    };
-
-    return this.http.post<IRubric>('/api/assignment/rubric/update', body);
+    return fromIpcResponse(this.assignmentApi.rubricUpdate(rubric, assignmentName));
   }
 }

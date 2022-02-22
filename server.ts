@@ -25,7 +25,6 @@ import {
   CONFIG_FILE,
   FORBIDDEN_RESOURCE,
   NOT_CONFIGURED_CONFIG_DIRECTORY,
-  NOT_PROVIDED_ASSIGNMENT_LOCATION,
   NOT_PROVIDED_COMMENT,
   NOT_PROVIDED_NEW_WORKSPACE_NAME,
   NOT_PROVIDED_RUBRIC,
@@ -53,19 +52,10 @@ import {settingsGet, settingsPost} from './src-express/rest/settings';
 import {importFn} from './src-express/rest/import';
 import {deleteCommentConfirmation, deleteCommentFn, getComments, saveNewComment} from './src-express/rest/comment';
 import {
-  assignmentRubricUpdateFn,
-  deleteRubricConfirmation,
-  deleteRubricsFn,
   getRubricContentsFn,
-  getRubricNamesFn,
   getRubricsFn,
   rubricUploadFn
 } from './src-express/rest/rubric';
-
-import {
-  finalizeAssignmentRubric,
-  shareExport,
-} from './src-express/rest/assignment';
 
 import {check, validationResult} from 'express-validator';
 import * as glob from 'glob';
@@ -226,19 +216,7 @@ app.post('/api/rubric/import', [
 app.get('/api/rubric/import', getRubricsFn);
 /* END READ RUBRICS */
 
-/*READ RUBRIC NAMES*/
-app.get('/api/rubric/details', getRubricNamesFn);
-/* END RUBRIC NAMES*/
-
 /* DELETE RUBRICS */
-
-app.post('/api/rubric/delete/check',
-  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), deleteRubricsFn);
-
-
-app.post('/api/rubric/delete',
-  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), deleteRubricConfirmation);
-/* DELETE READ RUBRICS */
 
 /*READ RUBRIC CONTENTS*/
 app.post('/api/rubric/contents',
@@ -246,15 +224,6 @@ app.post('/api/rubric/contents',
 
 
 /* END RUBRIC CONTENTS*/
-
-/* CHANGE ASSIGNEMNT RUBRIC */
-
-app.post('/api/assignment/rubric/update', [
-  check('assignmentName').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
-], assignmentRubricUpdateFn);
-
-/* END CHANGE ASSIGNMENT RUBRIC*/
-
 
 const getPdfFile = (req, res) => {
   if (!checkClient(req, res)) {
@@ -287,16 +256,6 @@ app.post('/api/pdf/file', [
 
 
 app.post('/api/workspace', [], getWorkspaces);
-
-app.post('/api/assignment/share', [
-  // check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
-], shareExport);
-
-
-app.post('/api/assignment/finalize/rubric', [
-  check('location').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION),
-  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_ASSIGNMENT_LOCATION)
-], finalizeAssignmentRubric);
 
 
 // rubricFinalize

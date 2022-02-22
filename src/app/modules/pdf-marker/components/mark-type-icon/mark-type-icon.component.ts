@@ -216,7 +216,7 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
       this.assignmentMarkingPageComponent.onMarkChanged(this.index, updateMark).subscribe(() => {
           this.mark.totalMark = updateMark.totalMark;
           this.mark.sectionLabel = updateMark.sectionLabel;
-          this.mark.comment = updateMark.markingComment;
+          this.mark.comment = updateMark.comment;
       });
     };
     this.appService.createDialog(MarkingCommentModalComponent, config, handleCommentFN);

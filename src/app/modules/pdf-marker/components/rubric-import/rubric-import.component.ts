@@ -12,7 +12,8 @@ import {RubricViewModalComponent} from '@sharedModule/components/rubric-view-mod
 import {ElectronService} from '@coreModule/services/electron.service';
 import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
 import {Subscription} from 'rxjs';
-import {IRubric, IRubricName} from "../../../../../shared/info-objects/rubric.class";
+import {IRubric, IRubricName, SelectedRubric} from "../../../../../shared/info-objects/rubric.class";
+import {RubricService} from "@sharedModule/services/rubric.service";
 
 @Component({
   selector: 'pdf-marker-rubric-import',
@@ -22,8 +23,7 @@ import {IRubric, IRubricName} from "../../../../../shared/info-objects/rubric.cl
 export class RubricImportComponent implements OnInit, OnDestroy {
 
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
-  private fileContents: IRubric;
-  private appSelectedPathInfo: AppSelectedPathInfo;
+  private selectedRubric: SelectedRubric;
   readonly rubricTemplateFile: string = 'Rubric_template.xlsx';
 
   config: MatDialogConfig;
@@ -40,12 +40,13 @@ export class RubricImportComponent implements OnInit, OnDestroy {
               private alertService: AlertService,
               private appService: AppService,
               private importService: ImportService,
-              private electronService: ElectronService) {
+              private electronService: ElectronService,
+              private rubricService: RubricService) {
   }
 
   ngOnInit() {
     this.appService.isLoading$.next(true);
-    this.importService.getRubricDetails().subscribe((rubrics: IRubric[]) => {
+    this.rubricService.getRubricNames().subscribe((rubrics: IRubric[]) => {
       this.populateRubrics(rubrics);
       this.appService.isLoading$.next(false);
     }, error => {
@@ -67,83 +68,29 @@ export class RubricImportComponent implements OnInit, OnDestroy {
     return this.rubricForm.controls;
   }
 
-  async onFileChange() {
-    this.alertService.clear();
-    this.resetPreviousUpload();
-    if (this.fileContents) {
-      this.validateRubricJSON();
-    } else {
-      this.fc.rubricFile.setValue(null);
-      this.fc.rubricFileText.setValue(null);
-    }
-  }
 
   async selectFile() {
     this.alertService.clear();
-    this.electronService.getExcelToJSON({ name: 'Custom Files', extension: ['xlsx', 'xls'] })
-      .subscribe(async (appSelectedPathInfo: AppSelectedPathInfo) => {
-      this.appService.isLoading$.next(false);
-      if (appSelectedPathInfo.selectedPath) {
-        if (appSelectedPathInfo && appSelectedPathInfo.selectedPath && appSelectedPathInfo.contents) {
-          try {
-            this.appSelectedPathInfo = appSelectedPathInfo;
-            const rubric: IRubric = JSON.parse(appSelectedPathInfo.contents);
-            if (rubric) {
-              this.onFileChange();
-            } else {
-
-              this.appService.isLoading$.next(false);
-            }
-          } catch (e) {
-            this.appService.isLoading$.next(false);
-            this.alertService.error(e);
+    this.rubricService.selectRubricFile()
+      .subscribe({
+        next: (selectedRubric) => {
+          this.selectedRubric = selectedRubric;
+          this.fc.rubricFile.setErrors(null);
+          this.fc.rubricFileText.setValue(selectedRubric.selectedPath);
+          this.fc.rubricName.setValue(selectedRubric.rubric.name);
+          this.appService.isLoading$.next(false);
+        }, error: (error) => {
+          this.selectedRubric = null;
+          this.appService.isLoading$.next(false);
+          if (error) {
+            this.alertService.error(error);
+            this.fc.rubricFile.setErrors({file: true});
+            this.fc.rubricName.setValue(null);
           }
         }
-      } else {
-        this.appSelectedPathInfo = null;
-        this.appService.isLoading$.next(false);
-        this.alertService.error(appSelectedPathInfo.error.message);
-      }
-    });
-
+      });
   }
 
-  private validateRubricJSON() {
-
-      // try {
-      //
-      //     let isError: boolean;
-      //     for (let i = 0; i < this.fileContents.criterias.length; i++) {
-      //       if (!Mapping.isTypeOf(this.fileContents.criterias[i], RubricCriteria) || !Mapping.isCollectionTypeOf(this.fileContents.criterias[i].levels, RubricCriteriaLevels)) {
-      //         isError = true;
-      //         break;
-      //       }
-      //     }
-      //
-      //     if (!isError) {
-      //       this.fc.rubricFile.setErrors(null);
-      //       this.fc.rubricFileText.setValue(this.file.name);
-      //       this.fc.rubricName.setValue(this.getRubricNameFromFilename(this.file.name));
-      //     } else {
-      //       this.setErrorMessage(this.file, 'Invalid rubric!');
-      //     }
-      //     this.appService.isLoading$.next(false);
-      //   } else {
-      //     this.setErrorMessage(this.file, 'Invalid rubric criteria!');
-      //     this.appService.isLoading$.next(false);
-      //   }
-  }
-
-  private setErrorMessage(errorMsg: string) {
-    this.alertService.error(errorMsg);
-    this.fc.rubricFile.setErrors({file: true});
-    this.fc.rubricName.setValue(null);
-  }
-
-  private joinError(currentMessage: string, newMessage: string): string {
-    currentMessage += (!this.isBlank(currentMessage)) ? `, ${newMessage}` : newMessage;
-    return currentMessage;
-  }
 
   showRubric(rubricName: string) {
     this.openRubricModal(rubricName);
@@ -173,13 +120,13 @@ export class RubricImportComponent implements OnInit, OnDestroy {
               name: 'Excel File',
               extension: ["xlsx"]})
               .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-              this.appService.isLoading$.next(false);
-              if (appSelectedPathInfo.selectedPath) {
-                this.alertService.success(`File saved to downloads folder`);
-              } else if (appSelectedPathInfo.error) {
-                this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
-              }
-            });
+                this.appService.isLoading$.next(false);
+                if (appSelectedPathInfo.selectedPath) {
+                  this.alertService.success(`File saved to downloads folder`);
+                } else if (appSelectedPathInfo.error) {
+                  this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
+                }
+              });
             this.appService.isLoading$.next(false);
           });
 
@@ -197,8 +144,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
   deleteRubric(item: IRubric) {
     this.appService.isLoading$.next(true);
-    const data = {rubricName: item.name};
-    this.importService.deleteRubricCheck(data).subscribe((isFound: boolean) => {
+    this.rubricService.deleteRubricCheck(item.name).subscribe((isFound: boolean) => {
       if (isFound) {
         const config = new MatDialogConfig();
         config.width = '400px';
@@ -209,13 +155,13 @@ export class RubricImportComponent implements OnInit, OnDestroy {
         };
         const shouldDeleteFn = (shouldDelete: boolean) => {
           if (shouldDelete) {
-            this.deleteRubricImpl(item.name, shouldDelete);
+            this.deleteRubricImpl(item.name);
           }
         };
 
         this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
       } else {
-        this.deleteRubricImpl(item.name, true);
+        this.deleteRubricImpl(item.name);
       }
     }, error => {
       this.appService.openSnackBar(false, 'Unable to delete');
@@ -223,9 +169,8 @@ export class RubricImportComponent implements OnInit, OnDestroy {
     });
   }
 
-  private deleteRubricImpl(rubricName: string, confirmation: boolean) {
-    const newData = { rubricName, confirmation};
-    this.importService.deleteRubric(newData).subscribe((rubrics: IRubric[]) => {
+  private deleteRubricImpl(rubricName: string) {
+    this.rubricService.deleteRubric(rubricName).subscribe((rubrics: IRubric[]) => {
       this.populateRubrics(rubrics);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Rubric deleted');
@@ -244,10 +189,6 @@ export class RubricImportComponent implements OnInit, OnDestroy {
     this.resetPreviousUpload();
   }
 
-  private getRubricNameFromFilename(filename: string): string {
-    return filename.replace(/\.[^/.]+$/, '');
-  }
-
   onSubmit(event) {
     this.alertService.clear();
     if (this.rubricForm.invalid) {
@@ -255,12 +196,12 @@ export class RubricImportComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const formData: FormData = new FormData();
-    formData.append('rubricName', this.fc.rubricName.value);
-    // formData.append('file', this.file);
-
+    const rubric: IRubric = {
+      ...this.selectedRubric.rubric,
+      name: this.fc.rubricName.value
+    };
     this.appService.isLoading$.next(true);
-    this.importService.importRubricFile(formData).subscribe((rubrics: IRubricName[]) => {
+    this.rubricService.uploadRubric(rubric).subscribe((rubrics: IRubricName[]) => {
       this.populateRubrics(rubrics);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Rubric saved');
@@ -277,8 +218,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   }
 
   private openRubricModal(rubricName: string) {
-    const data = {rubricName};
-    this.importService.getRubricContents(data).subscribe((rubric: IRubric) => {
+    this.rubricService.getRubric(rubricName).subscribe((rubric: IRubric) => {
       this.openRubricModalDialog(rubric);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Rubric View Opened');

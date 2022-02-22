@@ -6,11 +6,20 @@ import {
   createAssignment, finalizeAssignment, finalizeAssignmentRubric, getAssignmentGlobalSettings,
   getAssignments,
   getAssignmentSettings, getGrades,
-  getMarks,
+  getMarks, rubricUpdate,
   saveMarks,
-  saveRubricMarks, updateAssignment, updateAssignmentSettings
-} from './src-electron/ipc/assignments/get-assignment.handler';
+  saveRubricMarks, shareExport, updateAssignment, updateAssignmentSettings
+} from './src-electron/ipc/assignments/assignment.handler';
 import {writeFile} from "fs/promises";
+import {
+  deleteRubric,
+  deleteRubricCheck, getRubric,
+  getRubricNames,
+  rubricUpload,
+  selectRubricFile
+} from "./src-electron/ipc/rubrics/rubric.handler";
+import {joinError, toIpcResponse} from "./src-electron/utils";
+import {IpcResponse} from "./src/shared/ipc/ipc-response";
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -93,19 +102,28 @@ try {
     });
 
     // Assignment API
-    ipcMain.handle('assignments:get', getAssignments);
-    ipcMain.handle('assignments:update', updateAssignment);
-    ipcMain.handle('assignments:create', createAssignment);
-    ipcMain.handle('assignments:saveMarks', saveMarks);
-    ipcMain.handle('assignments:saveRubricMarks', saveRubricMarks);
-    ipcMain.handle('assignments:finalizeAssignment', finalizeAssignment);
-    ipcMain.handle('assignments:finalizeAssignmentRubric', finalizeAssignmentRubric);
-    ipcMain.handle('assignments:getAssignmentSettings', getAssignmentSettings);
-    ipcMain.handle('assignments:getAssignmentGlobalSettings', getAssignmentGlobalSettings);
-    ipcMain.handle('assignments:updateAssignmentSettings', updateAssignmentSettings);
-    ipcMain.handle('assignments:getMarks', getMarks);
-    ipcMain.handle('assignments:getGrades', getGrades);
+    ipcMain.handle('assignments:get', toIpcResponse(getAssignments));
+    ipcMain.handle('assignments:update', toIpcResponse(updateAssignment));
+    ipcMain.handle('assignments:create', toIpcResponse(createAssignment));
+    ipcMain.handle('assignments:saveMarks', toIpcResponse(saveMarks));
+    ipcMain.handle('assignments:saveRubricMarks', toIpcResponse(saveRubricMarks));
+    ipcMain.handle('assignments:finalizeAssignment', toIpcResponse(finalizeAssignment));
+    ipcMain.handle('assignments:finalizeAssignmentRubric', toIpcResponse(finalizeAssignmentRubric));
+    ipcMain.handle('assignments:getAssignmentSettings', toIpcResponse(getAssignmentSettings));
+    ipcMain.handle('assignments:getAssignmentGlobalSettings', toIpcResponse(getAssignmentGlobalSettings));
+    ipcMain.handle('assignments:updateAssignmentSettings', toIpcResponse(updateAssignmentSettings));
+    ipcMain.handle('assignments:shareExport', toIpcResponse(shareExport));
+    ipcMain.handle('assignments:getMarks', toIpcResponse(getMarks));
+    ipcMain.handle('assignments:getGrades', toIpcResponse(getGrades));
+    ipcMain.handle('assignments:rubricUpdate', toIpcResponse(rubricUpdate));
 
+    // Rubric API
+    ipcMain.handle('rubrics:selectRubricFile', toIpcResponse(selectRubricFile));
+    ipcMain.handle('rubrics:rubricUpload', toIpcResponse(rubricUpload));
+    ipcMain.handle('rubrics:getRubricNames', toIpcResponse(getRubricNames));
+    ipcMain.handle('rubrics:deleteRubricCheck', toIpcResponse(deleteRubricCheck));
+    ipcMain.handle('rubrics:deleteRubric', toIpcResponse(deleteRubric));
+    ipcMain.handle('rubrics:getRubric', toIpcResponse(getRubric));
 
     ipcMain.handle('app:version', () => {
       return { version: app.getVersion() };
@@ -363,9 +381,4 @@ function isBlank(data: string = '') {
 
   data += '';
   return data === '' || data.trim() === '';
-}
-
-function joinError(currentMessage: string = '', newMessage: string = ''): string {
-  currentMessage += (!isBlank(currentMessage)) ? `, ${newMessage}` : newMessage;
-  return currentMessage;
 }

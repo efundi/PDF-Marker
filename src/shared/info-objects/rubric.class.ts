@@ -63,3 +63,9 @@ export interface IRubricCriteriaLevels {
 
   label: string;
 }
+
+
+export interface SelectedRubric {
+  selectedPath: string;
+  rubric: IRubric;
+}

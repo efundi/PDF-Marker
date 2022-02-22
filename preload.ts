@@ -6,6 +6,9 @@ import {FileFilterInfo} from './src/app/modules/application/core/info-objects/fi
 import {AssignmentServiceIpc} from './src/shared/ipc/assignment-service-ipc';
 import {UpdateAssignment} from './src/shared/info-objects/update-assignment';
 import {CreateAssignmentInfo} from './src/shared/info-objects/create-assignment.info';
+import {ShareAssignments} from './src/shared/info-objects/share-assignments';
+import {RubricServiceIpc} from './src/shared/ipc/rubric-service-ipc';
+import {IRubric} from './src/shared/info-objects/rubric.class';
 
 
 contextBridge.exposeInMainWorld('assignmentApi', {
@@ -21,13 +24,23 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   finalizeAssignmentRubric: (workspaceFolder: string, location: string, rubricName: string) => ipcRenderer.invoke('assignments:finalizeAssignmentRubric', workspaceFolder, location, rubricName),
   getMarks: (location: string) => ipcRenderer.invoke('assignments:getMarks', location),
   getGrades: (location: string) => ipcRenderer.invoke('assignments:getGrades', location),
+  shareExport: (shareRequest: ShareAssignments) => ipcRenderer.invoke('assignments:shareExport', shareRequest),
+  rubricUpdate: (rubricName: string, assignmentName: string) => ipcRenderer.invoke('assignments:rubricUpdate', rubricName, assignmentName),
 } as AssignmentServiceIpc);
+
+contextBridge.exposeInMainWorld('rubricApi', {
+  getRubricNames: () => ipcRenderer.invoke('rubrics:getRubricNames'),
+  rubricUpload: (rubric: IRubric) => ipcRenderer.invoke('rubrics:rubricUpload', rubric),
+  selectRubricFile: () => ipcRenderer.invoke('rubrics:selectRubricFile'),
+  deleteRubricCheck: (rubricName: string) => ipcRenderer.invoke('rubrics:deleteRubricCheck', rubricName),
+  deleteRubric: (rubricName: string) => ipcRenderer.invoke('rubrics:deleteRubric', rubricName),
+  getRubric: (rubricName: string) => ipcRenderer.invoke('rubrics:getRubric', rubricName),
+} as RubricServiceIpc);
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('app:version'),
   getFolder: () => ipcRenderer.invoke('app:get_folder'),
   getFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:get_file', fileFilter),
   saveFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:save_file', fileFilter),
-  getExcelToJson: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:get_excel_to_json', fileFilter),
   openExternalLink: (link: any) => ipcRenderer.invoke('app:open_external_link', link),
 });
