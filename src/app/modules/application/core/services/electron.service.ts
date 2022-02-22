@@ -1,6 +1,6 @@
 import {Injectable, NgZone} from '@angular/core';
 import {from, Observable} from 'rxjs';
-import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
+import {AppSelectedPathInfo} from '../../../../../shared/info-objects/app-selected-path.info';
 import {FileFilterInfo} from '@coreModule/info-objects/file-filter.info';
 
 @Injectable({

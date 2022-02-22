@@ -1,20 +1,30 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {ImportInfo} from '../../../../shared/info-objects/import.info';
+import {fromIpcResponse} from '@sharedModule/services/ipc.utils';
+import {ImportServiceIpc} from '../../../../shared/ipc/import-service-ipc';
 import {Observable} from 'rxjs';
-import {IRubric} from "../../../../shared/info-objects/rubric.class";
+import {ZipInfo} from '../../../../shared/info-objects/zip.info';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ImportService {
 
-  constructor(private http: HttpClient) { }
+  private importService: ImportServiceIpc;
+  constructor() {
+    this.importService = (window as any).importApi;
+  }
 
-  importAssignmentFile(data: any) {
-    return this.http.post('/api/import', data, {
-      reportProgress: true,
-      observe: 'events'
-    });
+  importAssignmentFile(data: ImportInfo) {
+    return fromIpcResponse(this.importService.importZip(data));
+  }
+
+  isValidSakaiZip(filePath: string): Observable<boolean> {
+    return fromIpcResponse(this.importService.isValidSakaiZip(filePath));
+  }
+
+  getZipEntries(filePath: string): Observable<ZipInfo[]> {
+    return fromIpcResponse(this.importService.getZipEntries(filePath));
   }
 
 

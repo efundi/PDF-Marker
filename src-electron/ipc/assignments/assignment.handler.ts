@@ -1,4 +1,4 @@
-import fs, {
+import {
   accessSync,
   constants,
   existsSync,
@@ -7,7 +7,9 @@ import fs, {
   readFileSync,
   statSync,
   unlinkSync,
-  writeFileSync
+  writeFileSync,
+  rmSync,
+  mkdtempSync
 } from 'fs';
 import * as glob from 'glob';
 import {getConfig} from '../config/config';
@@ -51,7 +53,7 @@ import {AssignmentSettingsInfo} from '../../../src/shared/info-objects/assignmen
 import {MarkInfo} from '../../../src/shared/info-objects/mark.info';
 import {annotatePdfRubric} from '../../pdf/rubric-annotations';
 import {ShareAssignments} from '../../../src/shared/info-objects/share-assignments';
-import os from 'os';
+import * as os from 'os';
 import {copySync} from 'fs-extra';
 
 const zipDir = require('zip-dir');
@@ -1004,7 +1006,7 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
 function cleanupTemp(tmpDir: string) {
   try {
     if (tmpDir) {
-      fs.rmSync(tmpDir, { recursive: true });
+      rmSync(tmpDir, { recursive: true });
     }
   } catch (e) {
     console.error(`An error has occurred while removing the temp folder at ${tmpDir}. Please remove it manually. Error: ${e}`);
@@ -1027,10 +1029,10 @@ export function shareExport(event: IpcMainInvokeEvent, shareRequest: ShareAssign
       }).fromFile(originalAssignmentDirectory + sep + GRADES_FILE);
       let tmpDir;
       // Create a temp directory to construct files to zip
-      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
+      tmpDir = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
 
       const tempAssignmentDirectory = tmpDir + sep + assignmentName;
-      fs.mkdirSync(tempAssignmentDirectory);
+      mkdirSync(tempAssignmentDirectory);
 
       // Now copy each submission
       shareRequest.submissions.forEach((submission) => {

@@ -19,7 +19,7 @@ import {ImportService} from '@pdfMarkerModule/services/import.service';
 import {FormBuilder, FormGroup} from '@angular/forms';
 import {RubricViewModalComponent} from '@sharedModule/components/rubric-view-modal/rubric-view-modal.component';
 import {ElectronService} from '@coreModule/services/electron.service';
-import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
+import {AppSelectedPathInfo} from '../../../../../shared/info-objects/app-selected-path.info';
 import {SelectionModel} from '@angular/cdk/collections';
 import {ShareAssignments} from "../../../../../shared/info-objects/share-assignments";
 import {IRubric, IRubricName} from "../../../../../shared/info-objects/rubric.class";

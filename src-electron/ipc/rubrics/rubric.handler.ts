@@ -7,22 +7,16 @@ import {isNil, noop} from 'lodash';
 import {basename, extname, sep} from 'path';
 import {
   CONFIG_DIR,
-  COULD_NOT_CREATE_CONFIG_DIRECTORY, COULD_NOT_CREATE_RUBRIC_FILE,
+  COULD_NOT_CREATE_CONFIG_DIRECTORY,
+  COULD_NOT_CREATE_RUBRIC_FILE,
   COULD_NOT_READ_RUBRIC_LIST,
   INVALID_RUBRIC_JSON_FILE,
   RUBRICS_FILE
 } from '../../constants';
-import {IpcResponse} from "../../../src/shared/ipc/ipc-response";
-import {checkClient, readFromFile, sendResponse, sendResponseData} from "../../../src-express/utils";
-import {
-  CONFIG_FILE,
-  FORBIDDEN_RESOURCE,
-  NOT_CONFIGURED_CONFIG_DIRECTORY,
-  NOT_PROVIDED_RUBRIC, SETTING_FILE
-} from "../../../src-express/constants";
-import * as glob from "glob";
-import {AssignmentSettingsInfo} from "../../../src/shared/info-objects/assignment-settings.info";
-import {getConfig} from "../config/config";
+import {NOT_CONFIGURED_CONFIG_DIRECTORY, SETTING_FILE} from '../../../src-express/constants';
+import * as glob from 'glob';
+import {AssignmentSettingsInfo} from '../../../src/shared/info-objects/assignment-settings.info';
+import {getConfig} from '../config/config';
 
 const excelParser = new (require('simple-excel-to-json').XlsParser)();
 
@@ -160,7 +154,7 @@ export function selectRubricFile(): Promise<SelectedRubric> {
   });
 }
 
-function getRubrics(): Promise<IRubric[]> {
+export function getRubrics(): Promise<IRubric[]> {
   if (existsSync(CONFIG_DIR + RUBRICS_FILE)) {
     return readFile(CONFIG_DIR + RUBRICS_FILE).then((data) => {
       if (!isJson(data)) {
@@ -203,11 +197,12 @@ export function rubricUpload(event: IpcMainInvokeEvent, rubric: IRubric): Promis
     }
 
     rubrics.unshift(rubric);
-    return writeRubricFile(rubrics);
+    return writeRubricFile(rubrics)
+      .then(r => toRubricNames(r));
   });
 }
 
-function writeRubricFile(rubricData: IRubric[]): Promise<IRubricName[]> {
+export function writeRubricFile(rubricData: IRubric[]): Promise<IRubric[]> {
   let promise: Promise<any> = Promise.resolve();
   if (!existsSync(CONFIG_DIR)) {
     promise = mkdir(CONFIG_DIR).then(noop, err => {
@@ -216,9 +211,7 @@ function writeRubricFile(rubricData: IRubric[]): Promise<IRubricName[]> {
   }
   return promise.then(() => {
     return writeFile(CONFIG_DIR + RUBRICS_FILE, JSON.stringify(rubricData));
-  }).then(() => {
-      return toRubricNames(rubricData);
-    }, (err) => {
+  }).then(() => rubricData, (err) => {
       return Promise.reject(COULD_NOT_CREATE_RUBRIC_FILE);
     });
 }

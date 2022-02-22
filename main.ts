@@ -10,16 +10,19 @@ import {
   saveMarks,
   saveRubricMarks, shareExport, updateAssignment, updateAssignmentSettings
 } from './src-electron/ipc/assignments/assignment.handler';
-import {writeFile} from "fs/promises";
+import {writeFile} from 'fs/promises';
+import {stat, statSync} from 'fs';
 import {
   deleteRubric,
   deleteRubricCheck, getRubric,
   getRubricNames,
   rubricUpload,
   selectRubricFile
-} from "./src-electron/ipc/rubrics/rubric.handler";
-import {joinError, toIpcResponse} from "./src-electron/utils";
-import {IpcResponse} from "./src/shared/ipc/ipc-response";
+} from './src-electron/ipc/rubrics/rubric.handler';
+import {joinError, toIpcResponse} from './src-electron/utils';
+import {getZipEntries, importZip, isValidSakaiZip} from './src-electron/ipc/import/import.handler';
+import {AppSelectedPathInfo} from './src/shared/info-objects/app-selected-path.info';
+import {basename, extname} from 'path';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -125,6 +128,11 @@ try {
     ipcMain.handle('rubrics:deleteRubric', toIpcResponse(deleteRubric));
     ipcMain.handle('rubrics:getRubric', toIpcResponse(getRubric));
 
+    // Import API
+    ipcMain.handle('import:importZip', toIpcResponse(importZip));
+    ipcMain.handle('import:isValidSakaiZip', toIpcResponse(isValidSakaiZip));
+    ipcMain.handle('import:getZipEntries', toIpcResponse(getZipEntries));
+
     ipcMain.handle('app:version', () => {
       return { version: app.getVersion() };
     });
@@ -155,9 +163,16 @@ try {
           if (data.canceled) {
            return {selectedPath: null};
           } else {
-            return {selectedPath: data.filePaths[0]};
+            return {
+              selectedPath: data.filePaths[0],
+              fileName: basename(data.filePaths[0], extname(data.filePaths[0])),
+              ext: extname(data.filePaths[0]),
+              basename: basename(data.filePaths[0]),
+              info: statSync(data.filePaths[0])
+            } as AppSelectedPathInfo;
           }
         }, (reason => {
+          // TODO instead return a rejected promise
           return {selectedPath: null, error: reason };
         }));
       });
@@ -250,8 +265,9 @@ try {
                     if (errorFound && i === 1) {
                       return{ selectedPath: null, error: { message: errorMessage } };
                     } else if (errorFound && i > 1) {
-                      if (index === 2)
+                      if (index === 2) {
                         validLevelLength = i - 1;
+                      }
                       break;
                     } else if ((index === 2) && (i === levelCount)) {
                       validLevelLength = levelCount;

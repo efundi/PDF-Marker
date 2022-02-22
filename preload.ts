@@ -1,7 +1,4 @@
-import {
-  contextBridge,
-  ipcRenderer
-} from 'electron';
+import {contextBridge, ipcRenderer} from 'electron';
 import {FileFilterInfo} from './src/app/modules/application/core/info-objects/file-filter.info';
 import {AssignmentServiceIpc} from './src/shared/ipc/assignment-service-ipc';
 import {UpdateAssignment} from './src/shared/info-objects/update-assignment';
@@ -9,6 +6,9 @@ import {CreateAssignmentInfo} from './src/shared/info-objects/create-assignment.
 import {ShareAssignments} from './src/shared/info-objects/share-assignments';
 import {RubricServiceIpc} from './src/shared/ipc/rubric-service-ipc';
 import {IRubric} from './src/shared/info-objects/rubric.class';
+import {ImportInfo} from './src/shared/info-objects/import.info';
+import {ImportServiceIpc} from './src/shared/ipc/import-service-ipc';
+import {getZipEntries} from "./src-electron/ipc/import/import.handler";
 
 
 contextBridge.exposeInMainWorld('assignmentApi', {
@@ -36,6 +36,15 @@ contextBridge.exposeInMainWorld('rubricApi', {
   deleteRubric: (rubricName: string) => ipcRenderer.invoke('rubrics:deleteRubric', rubricName),
   getRubric: (rubricName: string) => ipcRenderer.invoke('rubrics:getRubric', rubricName),
 } as RubricServiceIpc);
+
+contextBridge.exposeInMainWorld('importApi', {
+  importZip: (importInfo: ImportInfo) => ipcRenderer.invoke('import:importZip', importInfo),
+  getZipEntries: (filePath: string) => ipcRenderer.invoke('import:getZipEntries', filePath),
+  isValidSakaiZip: (filePath: string) => ipcRenderer.invoke('import:isValidSakaiZip', filePath),
+} as ImportServiceIpc);
+
+
+
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('app:version'),

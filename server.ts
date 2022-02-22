@@ -52,7 +52,6 @@ import {settingsGet, settingsPost} from './src-express/rest/settings';
 import {importFn} from './src-express/rest/import';
 import {deleteCommentConfirmation, deleteCommentFn, getComments, saveNewComment} from './src-express/rest/comment';
 import {
-  getRubricContentsFn,
   getRubricsFn,
   rubricUploadFn
 } from './src-express/rest/rubric';
@@ -217,13 +216,6 @@ app.get('/api/rubric/import', getRubricsFn);
 /* END READ RUBRICS */
 
 /* DELETE RUBRICS */
-
-/*READ RUBRIC CONTENTS*/
-app.post('/api/rubric/contents',
-  check('rubricName').not().isEmpty().withMessage(NOT_PROVIDED_RUBRIC), getRubricContentsFn);
-
-
-/* END RUBRIC CONTENTS*/
 
 const getPdfFile = (req, res) => {
   if (!checkClient(req, res)) {

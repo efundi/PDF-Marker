@@ -7,15 +7,16 @@ import {AlertService} from '@coreModule/services/alert.service';
 import {SakaiService} from '@coreModule/services/sakai.service';
 import {AppService} from '@coreModule/services/app.service';
 import {ImportService} from '@pdfMarkerModule/services/import.service';
-import {HttpEventType} from '@angular/common/http';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
-import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
+import {AppSelectedPathInfo} from '../../../../../shared/info-objects/app-selected-path.info';
 import {ElectronService} from '@coreModule/services/electron.service';
-import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {WorkspaceService} from '@sharedModule/services/workspace.service';
 import {PdfmUtilsService} from '@pdfMarkerModule/services/pdfm-utils.service';
-import {IRubricName} from "../../../../../shared/info-objects/rubric.class";
-import {RubricService} from "@sharedModule/services/rubric.service";
+import {IRubricName} from '../../../../../shared/info-objects/rubric.class';
+import {RubricService} from '@sharedModule/services/rubric.service';
+import {ImportInfo} from '../../../../../shared/info-objects/import.info';
+import {SakaiConstants} from '../../../../../shared/constants/sakai.constants';
+import {isNil} from 'lodash';
 
 @Component({
   selector: 'pdf-marker-import',
@@ -30,13 +31,9 @@ export class ImportComponent implements OnInit {
 
   readonly noRubricDefaultValue: boolean = false;
 
-  private hierarchyModel$ = this.zipService.hierarchyModel$;
-
   private hierarchyModel;
 
   private hierarchyModelKeys;
-
-  private file: File;
 
   isFileLoaded = false;
 
@@ -45,8 +42,6 @@ export class ImportComponent implements OnInit {
   isRubric = true;
 
   isModalOpened = false;
-
-  validMime: boolean;
 
   isValidFormat: boolean;
 
@@ -77,30 +72,6 @@ export class ImportComponent implements OnInit {
               private electronService: ElectronService) { }
 
   ngOnInit() {
-    this.hierarchyModel$.subscribe(value => {
-      if (value !== null && value !== undefined) {
-        this.hierarchyModel = value;
-        this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
-
-        const config = new MatDialogConfig();
-        config.height = '400px';
-        config.width = '600px';
-
-        config.data = {
-          hierarchyModel: this.hierarchyModel,
-          hierarchyModelKeys : this.hierarchyModelKeys,
-          filename: this.hierarchyModelKeys[0]
-        };
-
-        const isModalOpenedFn = () => {
-          this.isModalOpened = !this.isModalOpened;
-        };
-
-        const reference = this.appService.createDialog(FileExplorerModalComponent, config, isModalOpenedFn);
-        reference.beforeClosed().subscribe(() => {
-        });
-      }
-    });
 
     this.appService.isLoading$.next(true);
     this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
@@ -150,88 +121,51 @@ export class ImportComponent implements OnInit {
   async selectFile() {
     this.electronService.getFile({ name: 'Zip Files', extension: ['zip'] })
       .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-      this.showLoading(false);
-      if (appSelectedPathInfo.selectedPath) {
-        if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
+        this.showLoading(false);
+        if (appSelectedPathInfo.selectedPath) {
           this.showLoading(true);
-          fetch('file:///' + appSelectedPathInfo.selectedPath)
-            .then(response => {
-              response.blob().then(async (blob: Blob) => {
-                const pathSplit = appSelectedPathInfo.selectedPath.split('\\');
-                this.file = await new File([blob], pathSplit[pathSplit.length - 1], { type: MimeTypesEnum.ZIP });
-                this.actualFilePath = appSelectedPathInfo.selectedPath;
-                this.onFileChange();
-              }).catch(error => {
-                this.showErrorMessage(error);
-                this.showLoading(false);
-              });
-            })
-            .catch(error => {
-              this.showErrorMessage(error);
-              this.showLoading(false);
-            });
-        } else {
-          this.file = undefined;
-          this.onFileChange();
+          this.actualFilePath = appSelectedPathInfo.selectedPath;
         }
-      } else if (appSelectedPathInfo.error) {
-        this.alertService.error(appSelectedPathInfo.error.message);
-      }
-    });
+
+        this.onFileChange(appSelectedPathInfo);
+        if (appSelectedPathInfo.error) {
+          this.alertService.error(appSelectedPathInfo.error.message);
+        }
+      });
   }
 
-  onFileChange() {
-    if (this.file !== undefined) {
-      this.validMime = this.isValidMimeType(this.file.type);
-      this.setFileDetailsAndAssignmentName(this.file);
-    } else {
-      this.validMime = false;
-      this.setFileDetailsAndAssignmentName(undefined);
-    }
+  onFileChange(appSelectedPathInfo: AppSelectedPathInfo) {
+
+    this.fc.assignmentZipFileText.setValue((appSelectedPathInfo) ? appSelectedPathInfo.basename : '');
+    this.fc.assignmentName.setValue(appSelectedPathInfo ? this.getAssignmentNameFromFilename(appSelectedPathInfo.fileName) : '');
+
     this.selectedType = this.fc.assignmentType.value;
-      if (this.validMime &&  this.selectedType === 'Assignment') {
+    if (this.selectedType === 'Assignment') {
       // Is zip, then checks structure.
-              this.zipService.isValidZip(this.fc.assignmentName.value, this.file).subscribe((isValidFormat: boolean) => {
-          this.isValidFormat = isValidFormat;
-          if (!this.isValidFormat) {
-            this.alertService.error(this.sakaiService.formatErrorMessage);
-          } else {
-            this.clearError();
-          }
-          this.isFileLoaded = true;
-          this.showLoading(false);
-        }, error => {
-          this.showErrorMessage(error);
-          this.showLoading(false);
-        });
-      } else  if (this.validMime &&  this.selectedType === 'Generic') {
+      this.importService.isValidSakaiZip(appSelectedPathInfo.selectedPath).subscribe((isValidFormat: boolean) => {
+        this.isValidFormat = isValidFormat;
+        if (!this.isValidFormat) {
+          this.alertService.error(SakaiConstants.formatErrorMessage);
+        } else {
+          this.clearError();
+        }
+        this.isFileLoaded = true;
+        this.showLoading(false);
+      }, error => {
+        this.showErrorMessage(error);
+        this.showLoading(false);
+      });
+    } else  if (this.selectedType === 'Generic') {
       this.isValidFormat = true;
       this.isFileLoaded = true;
-        this.showLoading(false);
+      this.showLoading(false);
     }  else {
       this.showLoading(false);
-  }
     }
-
-  private setFileDetailsAndAssignmentName(file: File) {
-    this.file = file;
-    this.fc.assignmentZipFileText.setValue((file) ? file.name : '');
-    this.fc.assignmentName.setValue(file ? this.getAssignmentNameFromFilename(file.name) : '');
   }
 
   private getAssignmentNameFromFilename(filename: string): string {
     return filename.replace(/\.[^/.]+$/, '');
-  }
-
-  private isValidMimeType(type: string): boolean {
-    const isValid = this.acceptMimeType.indexOf(type) !== -1;
-    if (!isValid) {
-      this.alertService.error('Not a valid zip file. Please select a file with a .zip extension!');
-      this.appService.isLoading$.next(false);
-    } else {
-      this.alertService.clear();
-    }
-    return isValid;
   }
 
   get fc() {
@@ -259,13 +193,38 @@ export class ImportComponent implements OnInit {
 
   onPreview() {
     this.appService.isLoading$.next(true);
-    this.zipService.getEntries(this.file, true).subscribe();
+    this.importService.getZipEntries(this.actualFilePath)
+      .subscribe((zipInfor) => {
+        const value = this.zipService.getZipModel(zipInfor);
+        if (!isNil(value)) {
+          this.hierarchyModel = value;
+          this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
+
+          const config = new MatDialogConfig();
+          config.height = '400px';
+          config.width = '600px';
+
+          config.data = {
+            hierarchyModel: this.hierarchyModel,
+            hierarchyModelKeys : this.hierarchyModelKeys,
+            filename: this.hierarchyModelKeys[0]
+          };
+
+          const isModalOpenedFn = () => {
+            this.isModalOpened = !this.isModalOpened;
+          };
+
+          const reference = this.appService.createDialog(FileExplorerModalComponent, config, isModalOpenedFn);
+          reference.beforeClosed().subscribe(() => {
+          });
+        }
+      });
     this.isModalOpened = !this.isModalOpened;
   }
 
   onSubmit(event) {
     this.clearError();
-    if (this.importForm.invalid || !this.validMime || !this.isValidFormat) {
+    if (this.importForm.invalid || !this.isValidFormat) {
       this.showErrorMessage('Please fill in the correct details!');
       return;
     }
@@ -277,25 +236,20 @@ export class ImportComponent implements OnInit {
       workspaceFolder
     } = this.importForm.value;
 
-    const importData = {
+    const importData: ImportInfo = {
       file: this.actualFilePath,
-      'workspace': workspaceFolder,
-      'noRubric': noRubric,
-      'rubric': rubric,
-      'assignmentName': assignmentName,
-      'assignmentType': this.selectedType
+      workspace: workspaceFolder,
+      noRubric: noRubric,
+      rubricName: rubric,
+      assignmentName: assignmentName,
+      assignmentType: this.selectedType
     };
     this.appService.isLoading$.next(true);
-    this.importService.importAssignmentFile(importData).subscribe((events) => {
+    this.importService.importAssignmentFile(importData).subscribe((msg) => {
 
-        if (events.type === HttpEventType.UploadProgress) {
-
-        } else if (events.type === HttpEventType.Response) {
-          this.appService.isLoading$.next(false);
-          const response: any = events.body;
-          this.alertService.success(response.message);
-          this.resetForm();
-        }
+        this.appService.isLoading$.next(false);
+        this.alertService.success(msg);
+        this.resetForm();
       }
       , error => this.appService.isLoading$.next(false));
   }
@@ -313,11 +267,9 @@ export class ImportComponent implements OnInit {
 
   private resetForm() {
     this.importForm.reset();
-    this.file = undefined;
     this.isFileLoaded = false;
     this.isRubric = true;
     this.isModalOpened = false;
-    this.validMime = false;
     this.isValidFormat = false;
     this.selectedType = undefined;
     this.fc.noRubric.setValue(this.noRubricDefaultValue);

@@ -4,7 +4,7 @@ import {SettingsService} from '@pdfMarkerModule/services/settings.service';
 import {AppService} from '@coreModule/services/app.service';
 import {AlertService} from '@coreModule/services/alert.service';
 import {ElectronService} from '@coreModule/services/electron.service';
-import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
+import {AppSelectedPathInfo} from '../../../../../shared/info-objects/app-selected-path.info';
 import {AssignmentService} from '@sharedModule/services/assignment.service';
 
 @Component({

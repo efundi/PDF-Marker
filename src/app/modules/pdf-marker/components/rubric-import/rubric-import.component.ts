@@ -10,7 +10,7 @@ import {MimeTypesEnum} from '@coreModule/utils/mime.types.enum';
 import {YesAndNoConfirmationDialogComponent} from '@sharedModule/components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {RubricViewModalComponent} from '@sharedModule/components/rubric-view-modal/rubric-view-modal.component';
 import {ElectronService} from '@coreModule/services/electron.service';
-import {AppSelectedPathInfo} from '@coreModule/info-objects/app-selected-path.info';
+import {AppSelectedPathInfo} from '../../../../../shared/info-objects/app-selected-path.info';
 import {Subscription} from 'rxjs';
 import {IRubric, IRubricName, SelectedRubric} from "../../../../../shared/info-objects/rubric.class";
 import {RubricService} from "@sharedModule/services/rubric.service";
