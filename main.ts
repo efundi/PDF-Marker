@@ -23,6 +23,11 @@ import {joinError, toIpcResponse} from './src-electron/utils';
 import {getZipEntries, importZip, isValidSakaiZip} from './src-electron/ipc/import/import.handler';
 import {AppSelectedPathInfo} from './src/shared/info-objects/app-selected-path.info';
 import {basename, extname} from 'path';
+import {
+  createWorkingFolder, deleteWorkspace, deleteWorkspaceCheck, getWorkspaces,
+  moveWorkspaceAssignments,
+  updateWorkspaceName
+} from "./src-electron/ipc/workspace/workspace.handler";
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -132,6 +137,14 @@ try {
     ipcMain.handle('import:importZip', toIpcResponse(importZip));
     ipcMain.handle('import:isValidSakaiZip', toIpcResponse(isValidSakaiZip));
     ipcMain.handle('import:getZipEntries', toIpcResponse(getZipEntries));
+
+    // Workspace API
+    ipcMain.handle('workspace:moveWorkspaceAssignments', toIpcResponse(moveWorkspaceAssignments));
+    ipcMain.handle('workspace:updateWorkspaceName', toIpcResponse(updateWorkspaceName));
+    ipcMain.handle('workspace:createWorkingFolder', toIpcResponse(createWorkingFolder));
+    ipcMain.handle('workspace:getWorkspaces', toIpcResponse(getWorkspaces));
+    ipcMain.handle('workspace:deleteWorkspace', toIpcResponse(deleteWorkspace));
+    ipcMain.handle('workspace:deleteWorkspaceCheck', toIpcResponse(deleteWorkspaceCheck));
 
     ipcMain.handle('app:version', () => {
       return { version: app.getVersion() };

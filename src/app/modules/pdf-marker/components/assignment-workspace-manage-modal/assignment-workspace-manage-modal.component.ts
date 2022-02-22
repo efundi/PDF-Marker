@@ -129,7 +129,6 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
   onMove($event) {
     if (this.manageForm.valid) {
-      console.log(this.manageForm.get('selectedAssignments').value);
       const assignments = this.manageForm.get('selectedAssignments').value;
       const newFolder = this.manageForm.get('newWorkspaceFolder').value;
       let folder = this.data.workspaceName;
@@ -154,7 +153,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
         }, error => {
           this.appService.isLoading$.next(false);
           console.log(error);
-          this.appService.openSnackBar(false, error.error.message);
+          this.appService.openSnackBar(false, error);
         });
       }
     }

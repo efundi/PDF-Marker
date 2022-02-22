@@ -3,6 +3,8 @@ import {HttpClient} from '@angular/common/http';
 import {Observable, Subject} from 'rxjs';
 import {WorkspaceDialogResult} from '@pdfMarkerModule/components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
 import {SettingInfo} from '@pdfMarkerModule/info-objects/setting.info';
+import {WorkspaceServiceIpc} from "../../../../../shared/ipc/workspace-service-ipc";
+import {fromIpcResponse} from "@sharedModule/services/ipc.utils";
 
 const API_PATH = '/api/workspace';
 
@@ -15,44 +17,37 @@ export class WorkspaceService {
 
   dialogResultSource$ = this.dialogResultSource.asObservable();
 
+  private workspaceApi: WorkspaceServiceIpc;
+
   constructor(private http: HttpClient) {
+    this.workspaceApi = (window as any).workspaceApi;
   }
 
   announceWorkspaceChanges(workspaceModal: WorkspaceDialogResult) {
     this.dialogResultSource.next(workspaceModal);
   }
 
-  createWorkingFolder(settings: SettingInfo): Observable<any> {
-    return this.http.post(`${API_PATH}/create`, settings);
+  createWorkingFolder(folderName: string): Observable<string> {
+    return fromIpcResponse(this.workspaceApi.createWorkingFolder(folderName));
   }
 
-  deleteWorkspace(data: any): Observable<any> {
-    return this.http.post<any[]>(`${API_PATH}/delete`, data);
+  deleteWorkspace(workingFolder: string): Observable<string[]> {
+    return fromIpcResponse(this.workspaceApi.deleteWorkspace(workingFolder));
   }
 
-  deleteWorkspaceCheck(data: any): Observable<boolean> {
-    return this.http.post<boolean>(`${API_PATH}/delete/check`, data);
+  deleteWorkspaceCheck(workingFolder: string): Observable<boolean> {
+    return fromIpcResponse(this.workspaceApi.deleteWorkspaceCheck(workingFolder));
   }
 
   getWorkspaces(): Observable<string[]> {
-    const body = {};
-    return this.http.post<string[]>(API_PATH, body);
+    return fromIpcResponse(this.workspaceApi.getWorkspaces());
   }
 
   updateWorkspaceName(workspaceName: string, newWorkspaceName: string): Observable<string> {
-    const body = {
-      workspaceName: workspaceName,
-      newWorkspaceName: newWorkspaceName
-    };
-    return this.http.post<string>(`${API_PATH}/update`, body);
+    return fromIpcResponse(this.workspaceApi.updateWorkspaceName(workspaceName, newWorkspaceName));
   }
 
-  moveWorkspaceAssignments(workspaceName: string, newWorkspaceName: string, selectedAssignments: any[]) {
-    const body = {
-      currentWorkspaceName: workspaceName,
-      workspaceName: newWorkspaceName,
-      assignments: selectedAssignments
-    };
-    return this.http.post(`${API_PATH}/move`, body);
+  moveWorkspaceAssignments(workspaceName: string, newWorkspaceName: string, selectedAssignments: any[]): Observable<any> {
+    return fromIpcResponse(this.workspaceApi.moveWorkspaceAssignments(workspaceName, newWorkspaceName, selectedAssignments));
   }
 }

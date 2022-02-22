@@ -9,6 +9,8 @@ import {IRubric} from './src/shared/info-objects/rubric.class';
 import {ImportInfo} from './src/shared/info-objects/import.info';
 import {ImportServiceIpc} from './src/shared/ipc/import-service-ipc';
 import {getZipEntries} from "./src-electron/ipc/import/import.handler";
+import {deleteWorkspace, getWorkspaces, moveWorkspaceAssignments} from "./src-electron/ipc/workspace/workspace.handler";
+import {WorkspaceServiceIpc} from "./src/shared/ipc/workspace-service-ipc";
 
 
 contextBridge.exposeInMainWorld('assignmentApi', {
@@ -42,6 +44,16 @@ contextBridge.exposeInMainWorld('importApi', {
   getZipEntries: (filePath: string) => ipcRenderer.invoke('import:getZipEntries', filePath),
   isValidSakaiZip: (filePath: string) => ipcRenderer.invoke('import:isValidSakaiZip', filePath),
 } as ImportServiceIpc);
+
+
+contextBridge.exposeInMainWorld('workspaceApi', {
+  createWorkingFolder: (name: string) => ipcRenderer.invoke('workspace:createWorkingFolder', name),
+  updateWorkspaceName: (workspaceName: string, newWorkspaceName: string) => ipcRenderer.invoke('workspace:updateWorkspaceName', workspaceName, newWorkspaceName),
+  moveWorkspaceAssignments: (currentWorkspaceName: string, workspaceName: string, assignments: any[]) => ipcRenderer.invoke('workspace:moveWorkspaceAssignments', currentWorkspaceName, workspaceName, assignments),
+  getWorkspaces: () => ipcRenderer.invoke('workspace:getWorkspaces'),
+  deleteWorkspace: (workspaceFolder: string) => ipcRenderer.invoke('workspace:deleteWorkspace', workspaceFolder),
+  deleteWorkspaceCheck: (workspaceFolder: string) => ipcRenderer.invoke('workspace:deleteWorkspaceCheck', workspaceFolder),
+} as WorkspaceServiceIpc);
 
 
 

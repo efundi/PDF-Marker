@@ -93,11 +93,11 @@ export class WorkingFolderComponent implements OnInit {
     }
     // Call Service to handle rest calls... also use interceptors
     this.isLoading$.next(true);
-    this.workspaceService.createWorkingFolder(this.createFolderForm.value).subscribe((response) => {
+    this.workspaceService.createWorkingFolder(this.createFolderForm.value.workingFolders).subscribe((response) => {
       this.workspaceService.getWorkspaces().subscribe(data => {
         this.populateWorkspaces(data);
         this.appService.isLoading$.next(false);
-        this.appService.openSnackBar(true, response.message);
+        this.appService.openSnackBar(true, 'Workspace created');
         this.createFolderForm.reset();
         this.refreshSideBar();
       });
@@ -145,7 +145,7 @@ export class WorkingFolderComponent implements OnInit {
 
   private deleteFolderImpl(folder: string, confirmation: boolean) {
     // const newData = { folder, confirmation};
-    this.workspaceService.deleteWorkspace(folder).subscribe((folders: any[]) => {
+    this.workspaceService.deleteWorkspace(folder).subscribe((folders: string[]) => {
       this.populateWorkspaces(folders);
       this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Workspace deleted');

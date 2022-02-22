@@ -26,9 +26,7 @@ import {
   FORBIDDEN_RESOURCE,
   NOT_CONFIGURED_CONFIG_DIRECTORY,
   NOT_PROVIDED_COMMENT,
-  NOT_PROVIDED_NEW_WORKSPACE_NAME,
   NOT_PROVIDED_RUBRIC,
-  NOT_PROVIDED_WORKSPACE_NAME
 } from './src-express/constants';
 
 import {
@@ -40,16 +38,7 @@ import {
   sendResponse,
   sendResponseData
 } from './src-express/utils';
-import {
-  createWorkingFolder,
-  deleteWorkspaceCheck,
-  deleteWorkspaceConfirmation,
-  getWorkspaces,
-  moveWorkspaceAssignments,
-  updateWorkspaceName
-} from './src-express/rest/working-folder';
 import {settingsGet, settingsPost} from './src-express/rest/settings';
-import {importFn} from './src-express/rest/import';
 import {deleteCommentConfirmation, deleteCommentFn, getComments, saveNewComment} from './src-express/rest/comment';
 import {
   getRubricsFn,
@@ -88,40 +77,6 @@ global.window.requestAnimationFrame = function(callback) {
   return 0;
 };
 
-
-const assignmentList = (callback) => {
-  readFile(CONFIG_DIR + CONFIG_FILE, (err, data) => {
-    if (err) {
-      return [];
-    }
-
-    if (!isJson(data)) {
-      return [];
-    }
-
-    const config = JSON.parse(data.toString());
-    const folderModels = [];
-    try {
-      const folders: string[] = readdirSync(config.defaultPath);
-      const folderCount = folders.length;
-      if (folders.length) {
-        folders.forEach(folder => {
-          const files = glob.sync(config.defaultPath + '/' + folder + '/**');
-          files.sort((a, b) => (a > b) ? 1 : -1);
-          folderModels.push(hierarchyModel(files, config.defaultPath));
-          if (folderModels.length === folderCount) {
-            callback(null, folderModels);
-          }
-        });
-      } else {
-        callback(null, folderModels);
-      }
-    } catch (e) {
-      callback(null, folderModels);
-    }
-  });
-};
-
 // Express server
 const app = express();
 app.use(express.json());
@@ -135,9 +90,6 @@ const {AppServerModuleNgFactory, ngExpressEngine} = require('./dist/server/main'
 // Our Universal express-engine (found @ https://github.com/angular/universal/tree/master/modules/express-engine)
 app.engine('html', ngExpressEngine({
   bootstrap: AppServerModuleNgFactory,
-  providers: [
-    {provide: 'ASSIGNMENT_LIST', useValue: assignmentList}
-  ]
 }));
 
 app.set('view engine', 'html');
@@ -162,31 +114,6 @@ app.post('/api/settings', [
 
 app.get('/api/settings', settingsGet);
 
-
-/* Working Folder API */
-
-
-app.post('/api/workspace/create', [
-  check('workingFolders').not().isEmpty().withMessage('Folder name not provided!'),
-], createWorkingFolder);
-
-app.post('/api/workspace/update', [
-  check('workspaceName').not().isEmpty().withMessage(NOT_PROVIDED_WORKSPACE_NAME),
-  check('newWorkspaceName').not().isEmpty().withMessage(NOT_PROVIDED_NEW_WORKSPACE_NAME)
-], updateWorkspaceName);
-
-
-app.post('/api/workspace/move', moveWorkspaceAssignments);
-
-app.post('/api/workspace/delete',
-  check('folder').not().isEmpty().withMessage(NOT_PROVIDED_WORKSPACE_NAME), deleteWorkspaceConfirmation);
-
-app.post('/api/workspace/delete/check',
-  check('folder').not().isEmpty().withMessage(NOT_PROVIDED_WORKSPACE_NAME), deleteWorkspaceCheck);
-
-
-/* Import API*/
-app.post('/api/import', importFn);
 
 /* Comment API*/
 app.post('/api/comment/save', [
@@ -246,11 +173,6 @@ app.post('/api/pdf/file', [
   check('location').not().isEmpty().withMessage('File location not provided!')
 ], getPdfFile);
 
-
-app.post('/api/workspace', [], getWorkspaces);
-
-
-// rubricFinalize
 
 // All regular routes use the Universal engine
 app.get('*', (req, res) => {

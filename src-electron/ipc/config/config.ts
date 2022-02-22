@@ -1,4 +1,4 @@
-import {readFile} from 'fs/promises';
+import {readFile, writeFile} from 'fs/promises';
 import {CONFIG_FILE, CONFIG_DIR, NOT_CONFIGURED_CONFIG_DIRECTORY} from '../../constants';
 import {isJson} from '../../utils';
 
@@ -11,4 +11,9 @@ export function getConfig(): Promise<any> {
 
     return JSON.parse(data.toString());
   });
+}
+
+export function updateConfig(config: any): Promise<any>{
+  return writeFile(CONFIG_DIR + CONFIG_FILE, JSON.stringify(config))
+    .then(() => config);
 }
