@@ -1,7 +1,7 @@
 import {IRubric, IRubricName, SelectedRubric} from '../info-objects/rubric.class';
 import {IpcResponse} from './ipc-response';
 
-export interface RubricServiceIpc {
+export interface RubricIpcService {
   getRubricNames(): Promise<IpcResponse<IRubricName[]>>;
   rubricUpload(rubric: IRubric): Promise<IpcResponse<IRubricName[]>>;
   selectRubricFile(): Promise<IpcResponse<SelectedRubric>>;

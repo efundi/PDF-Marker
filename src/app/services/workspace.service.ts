@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable, Subject} from 'rxjs';
 import {WorkspaceDialogResult} from '../components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
-import {WorkspaceServiceIpc} from '@shared/ipc/workspace-service-ipc';
+import {WorkspaceIpcService} from '@shared/ipc/workspace.ipc-service';
 import {fromIpcResponse} from './ipc.utils';
 
 @Injectable({
@@ -9,7 +9,7 @@ import {fromIpcResponse} from './ipc.utils';
 })
 export class WorkspaceService {
 
-  private workspaceApi: WorkspaceServiceIpc;
+  private workspaceApi: WorkspaceIpcService;
 
   constructor() {
     this.workspaceApi = (window as any).workspaceApi;

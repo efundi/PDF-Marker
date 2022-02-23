@@ -6,6 +6,7 @@ import {AppService} from '../../services/app.service';
 import {AssignmentService} from '../../services/assignment.service';
 import {WorkspaceDetails} from '../assignment-workspace-overview/assignment-workspace-overview.component';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
+import { PdfmConstants } from '@shared/constants/pdfm.constants';
 
 export interface WorkspaceDialogResult {
   prevWorkspaceName: string;
@@ -65,8 +66,8 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
         this.workspaceList.splice(foundIndex, 1);
         this.workspaceNameList.splice(foundIndex, 1);
       }
-      this.workspaceList.unshift('Default Workspace');
-      this.workspaceNameList.unshift('Default Workspace');
+      this.workspaceList.unshift(PdfmConstants.DEFAULT_WORKSPACE);
+      this.workspaceNameList.unshift(PdfmConstants.DEFAULT_WORKSPACE);
     });
   }
 

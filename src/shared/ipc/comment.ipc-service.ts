@@ -2,7 +2,7 @@ import {IpcResponse} from "./ipc-response";
 import {IComment} from "../info-objects/comment.class";
 
 
-export interface CommentServiceIpc {
+export interface CommentIpcService {
 
   getComments(): Promise<IpcResponse<IComment[]>>;
 

@@ -1,7 +1,7 @@
 import {IpcResponse} from "./ipc-response";
 import {SettingInfo} from "../info-objects/setting.info";
 
-export interface ConfigServiceIpc {
+export interface ConfigIpcService {
 
   getConfig(): Promise<IpcResponse<SettingInfo>>;
 

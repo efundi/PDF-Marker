@@ -9,7 +9,7 @@ import {
   unlinkSync,
   writeFileSync,
   rmSync,
-  mkdtempSync
+  mkdtempSync, lstatSync
 } from 'fs';
 import * as glob from 'glob';
 import {getConfig} from '../config/config.handler';
@@ -55,6 +55,8 @@ import {annotatePdfRubric} from '../../pdf/rubric-annotations';
 import {ShareAssignments} from '@shared/info-objects/share-assignments';
 import * as os from 'os';
 import {copySync} from 'fs-extra';
+import {getAssignmentDirectory} from '../workspace/workspace.handler';
+import {PdfmConstants} from '@shared/constants/pdfm.constants';
 
 const zipDir = require('zip-dir');
 
@@ -489,7 +491,7 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
   try {
     return getConfig().then(async (config) => {
       let assignmentSettingsBuffer;
-      if (updateRequest.workspace === 'Default Workspace' || isNil(updateRequest.workspace)) {
+      if (updateRequest.workspace === PdfmConstants.DEFAULT_WORKSPACE || isNil(updateRequest.workspace)) {
         assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
         if (!isJson(assignmentSettingsBuffer)) {
           return Promise.reject('Invalid assignment settings file!');
@@ -514,7 +516,7 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
         noheader: true,
         trim: false
       }).fromFile(
-        (updateRequest.workspace === 'Default Workspace' || isNil(updateRequest.workspace)) ?
+        (updateRequest.workspace === PdfmConstants.DEFAULT_WORKSPACE || isNil(updateRequest.workspace)) ?
           config.defaultPath + sep + assignmentName + sep + GRADES_FILE :
           config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + GRADES_FILE);
 
@@ -530,7 +532,7 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
         const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
         let csvData = '';
 
-        if (updateRequest.workspace === 'Default Workspace' || isNil(updateRequest.workspace)) {
+        if (updateRequest.workspace === PdfmConstants.DEFAULT_WORKSPACE || isNil(updateRequest.workspace)) {
           if (existsSync(config.defaultPath + sep + assignmentName + sep + studentFolder)) {
             if (studentInfo.remove) {
               deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder);
@@ -584,7 +586,7 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
       }
 
       //
-      if (updateRequest.workspace === 'Default Workspace' || isNil(updateRequest.workspace)) {
+      if (updateRequest.workspace === PdfmConstants.DEFAULT_WORKSPACE || isNil(updateRequest.workspace)) {
         writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
         // writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
         const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
@@ -707,7 +709,7 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
         const csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
         csvString += csvData;
 
-        if (createInfo.workspace === 'Default Workspace' || isNil(createInfo.workspace)) {
+        if (createInfo.workspace === PdfmConstants.DEFAULT_WORKSPACE || isNil(createInfo.workspace)) {
           const filename = basename(file);
           mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
           mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
@@ -728,7 +730,7 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
         }
       }
 
-      if (createInfo.workspace === 'Default Workspace' || isNil(createInfo.workspace)) {
+      if (createInfo.workspace === PdfmConstants.DEFAULT_WORKSPACE || isNil(createInfo.workspace)) {
         writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
         writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
         const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
@@ -1123,39 +1125,39 @@ export function rubricUpdate(event: IpcMainInvokeEvent, rubricName: string, assi
               return writeToFile( config.defaultPath + sep + assignmentName + sep + SETTING_FILE,
                 JSON.stringify(assignmentSettingsInfo), null, null).then(() => {
 
-                  return checkAccess(config.defaultPath + sep + assignmentName + sep + GRADES_FILE).then(() => {
-                    return csvtojson({noheader: true, trim: false}).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
-                      .then((gradesJSON) => {
-                        let changed = false;
-                        let assignmentHeader;
-                        for (let i = 0; i < gradesJSON.length; i++) {
-                          if (i === 0) {
-                            const keys = Object.keys(gradesJSON[i]);
-                            if (keys.length > 0) {
-                              assignmentHeader = keys[0];
-                            }
-                          } else if (i > 1) {
-                            gradesJSON[i].field5 = 0;
-                            changed = true;
+                return checkAccess(config.defaultPath + sep + assignmentName + sep + GRADES_FILE).then(() => {
+                  return csvtojson({noheader: true, trim: false}).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
+                    .then((gradesJSON) => {
+                      let changed = false;
+                      let assignmentHeader;
+                      for (let i = 0; i < gradesJSON.length; i++) {
+                        if (i === 0) {
+                          const keys = Object.keys(gradesJSON[i]);
+                          if (keys.length > 0) {
+                            assignmentHeader = keys[0];
                           }
+                        } else if (i > 1) {
+                          gradesJSON[i].field5 = 0;
+                          changed = true;
                         }
+                      }
 
-                        if (changed) {
-                          return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false}).then( ( csv) => {
-                            return writeToFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!').then(() => {
-                              return assignmentSettingsInfo.rubric;
-                            });
-                          }, (err) => {
-                            return Promise.reject('Failed to convert json to csv!');
+                      if (changed) {
+                        return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false}).then( ( csv) => {
+                          return writeToFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!').then(() => {
+                            return assignmentSettingsInfo.rubric;
                           });
-                        } else {
-                          return Promise.reject('Failed to save mark');
-                        }
-                      }, reason => {
-                        return Promise.reject( reason);
-                      });
-                  });
+                        }, (err) => {
+                          return Promise.reject('Failed to convert json to csv!');
+                        });
+                      } else {
+                        return Promise.reject('Failed to save mark');
+                      }
+                    }, reason => {
+                      return Promise.reject( reason);
+                    });
                 });
+              });
             });
           } catch (e) {
             return Promise.reject(e.message);
@@ -1176,5 +1178,31 @@ export function getPdfFile(event: IpcMainInvokeEvent, location: string): Promise
     return checkAccess(actualPath).then(() => {
       return readFile(actualPath);
     });
+  });
+}
+
+function countFileFilter(startPath: any, filter: string): number {
+  let count = 0;
+
+  if (!existsSync(startPath)) {
+    return 0;
+  }
+
+  const files = readdirSync(startPath);
+  for (let i = 0; i < files.length; i++) {
+    const filename = path.join(startPath, files[i]);
+    const stat = lstatSync(filename);
+    if (stat.isDirectory()) {
+      count = count + countFileFilter(filename, filter);
+    } else if (filename.indexOf(filter) >= 0) {
+      count = count + 1;
+    }
+  }
+  return count;
+}
+
+export function getMarkedAssignmentsCount(event: IpcMainInvokeEvent, workingFolder: string, assignmentName: string): Promise<number> {
+  return getAssignmentDirectory(workingFolder, assignmentName).then((assignmentDirectory) => {
+    return countFileFilter(assignmentDirectory, '.marks.json');
   });
 }

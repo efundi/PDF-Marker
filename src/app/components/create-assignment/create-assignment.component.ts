@@ -19,6 +19,8 @@ import {UpdateAssignment, UpdateAssignmentStudentDetails} from '@shared/info-obj
 import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-assignment.info';
 import {RubricService} from '../../services/rubric.service';
+import {isNil} from 'lodash';
+import {PdfmConstants} from '@shared/constants/pdfm.constants';
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -78,18 +80,19 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     this.initForm();
     this.activatedRoute.params.subscribe(params => {
       const id = params['id'];
-      const workspaceName = params['workspaceName'];
+      let workspaceName = params['workspaceName'];
       if (id && !!this.assignmentService.getSelectedAssignment()) {
         this.title = 'Manage Submissions';
         const fields = ['assignmentName', 'noRubric', 'rubric'];
         this.assignmentId = id;
         this.isEdit = true;
         this.fc.assignmentName.setValue(this.assignmentId);
-        if (workspaceName) {
-          this.workspaceName = workspaceName;
-          this.fc.workspaceFolder.setValue(this.workspaceName);
-          fields.push('workspaceFolder');
+        if (isNil(workspaceName)) {
+          workspaceName = PdfmConstants.DEFAULT_WORKSPACE;
         }
+        this.workspaceName = workspaceName;
+        this.fc.workspaceFolder.setValue(this.workspaceName);
+        fields.push('workspaceFolder');
         this.assignmentService.getAssignmentSettings(this.workspaceName, id).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
           this.assignmentSettings = assignmentSettings;
           if (this.assignmentSettings.rubric) {
@@ -122,9 +125,9 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
           return PdfmUtilsService.basename(item);
         });
       }
-      this.workspaces.unshift('Default Workspace');
+      this.workspaces.unshift(PdfmConstants.DEFAULT_WORKSPACE);
       if (this.workspaces.length <= 1) {
-        this.createAssignmentForm.controls.workspaceFolder.setValue('Default Workspace');
+        this.createAssignmentForm.controls.workspaceFolder.setValue(PdfmConstants.DEFAULT_WORKSPACE);
       }
       this.appService.isLoading$.next(false);
     }, error => {

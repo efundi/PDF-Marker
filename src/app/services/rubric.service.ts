@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {RubricServiceIpc} from '@shared/ipc/rubric-service-ipc';
+import {RubricIpcService} from '@shared/ipc/rubric.ipc-service';
 import {Observable} from 'rxjs';
 import {IRubric, IRubricName, SelectedRubric} from '@shared/info-objects/rubric.class';
 import {fromIpcResponse} from './ipc.utils';
@@ -9,7 +9,7 @@ import {fromIpcResponse} from './ipc.utils';
 })
 export class RubricService {
 
-  private rubricApi: RubricServiceIpc;
+  private rubricApi: RubricIpcService;
 
   constructor() {
     this.rubricApi = (window as any).rubricApi;
