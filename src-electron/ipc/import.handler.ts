@@ -6,14 +6,14 @@ import {IpcMainInvokeEvent} from 'electron';
 import {ImportInfo} from '@shared/info-objects/import.info';
 import {isNil} from 'lodash';
 import {readFile} from 'fs/promises';
-import {getConfig} from '../config/config.handler';
-import {getRubrics, writeRubricFile} from '../rubrics/rubric.handler';
-import {EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, NOT_PROVIDED_RUBRIC} from '../../constants';
+import {getConfig} from './config.handler';
+import {getRubrics, writeRubricFile} from './rubric.handler';
+import {EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, NOT_PROVIDED_RUBRIC} from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
-import {deleteFolderRecursive, extractZipFile, isFolder} from '../../utils';
+import {deleteFolderRecursive, extractZipFile, isFolder} from '../utils';
 
 import JSZip from 'jszip';
-import {getWorkingDirectory, writeAssignmentSettings} from '../workspace/workspace.handler';
+import {getWorkingDirectory, writeAssignmentSettings} from './workspace.handler';
 import {SakaiConstants} from '@shared/constants/sakai.constants';
 import {ZipInfo} from '@shared/info-objects/zip.info';
 

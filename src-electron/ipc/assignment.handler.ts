@@ -12,7 +12,7 @@ import {
   mkdtempSync, lstatSync
 } from 'fs';
 import * as glob from 'glob';
-import {getConfig} from '../config/config.handler';
+import {getConfig} from './config.handler';
 import {
   checkAccess,
   deleteFolderRecursive,
@@ -21,7 +21,7 @@ import {
   isJson,
   isNullOrUndefined,
   writeToFile
-} from '../../utils';
+} from '../utils';
 import {
   COMMENTS_FILE,
   CONFIG_DIR,
@@ -36,7 +36,7 @@ import {
   RUBRICS_FILE,
   SETTING_FILE,
   SUBMISSION_FOLDER
-} from '../../constants';
+} from '../constants';
 import * as path from 'path';
 import {basename, dirname, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
@@ -47,15 +47,15 @@ import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {PDFDocument} from 'pdf-lib';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-assignment.info';
-import {annotatePdfFile} from '../../pdf/marking-annotations';
+import {annotatePdfFile} from '../pdf/marking-annotations';
 import {IComment} from '@shared/info-objects/comment.class';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {MarkInfo} from '@shared/info-objects/mark.info';
-import {annotatePdfRubric} from '../../pdf/rubric-annotations';
+import {annotatePdfRubric} from '../pdf/rubric-annotations';
 import {ShareAssignments} from '@shared/info-objects/share-assignments';
 import * as os from 'os';
 import {copySync} from 'fs-extra';
-import {getAssignmentDirectory} from '../workspace/workspace.handler';
+import {getAssignmentDirectory} from './workspace.handler';
 import {PdfmConstants} from '@shared/constants/pdfm.constants';
 
 const zipDir = require('zip-dir');

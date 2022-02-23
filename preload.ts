@@ -13,7 +13,7 @@ import {CommentIpcService} from './src/shared/ipc/comment.ipc-service';
 import {ConfigIpcService} from './src/shared/ipc/config.ipc-service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {ApplicationIpcService} from './src/shared/ipc/application.ipc-service';
-import {getMarkedAssignmentsCount} from "./src-electron/ipc/assignments/assignment.handler";
+import {getMarkedAssignmentsCount} from "./src-electron/ipc/assignment.handler";
 
 contextBridge.exposeInMainWorld('updateApi', {
   onUpdateAvailable: (callback) => {

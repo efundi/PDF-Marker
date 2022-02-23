@@ -1,8 +1,8 @@
 import {forEach, isNil} from 'lodash';
-import {getConfig, updateConfigFile} from '../config/config.handler';
+import {getConfig, updateConfigFile} from './config.handler';
 import {basename, sep} from 'path';
 import {writeFile} from 'fs/promises';
-import {CONFIG_DIR, CONFIG_FILE, SETTING_FILE} from '../../constants';
+import {CONFIG_DIR, CONFIG_FILE, SETTING_FILE} from '../constants';
 import {existsSync, mkdirSync, readdirSync, renameSync, writeFileSync} from 'fs';
 import {IpcMainInvokeEvent, shell} from 'electron';
 import {moveSync} from 'fs-extra';
