@@ -1,16 +1,5 @@
-const path = require("path");
 const nodeExternals = require("webpack-node-externals");
 const {TsconfigPathsPlugin} = require("tsconfig-paths-webpack-plugin");
-
-const envName = (env) => {
-  if (env.production) {
-    return "production";
-  }
-  if (env.test) {
-    return "test";
-  }
-  return "development";
-};
 
 const envToMode = (env) => {
   if (env.production) {
@@ -28,9 +17,6 @@ module.exports = env => {
       __filename: false
     },
     resolve: {
-      // alias : {
-      //   canvas : false
-      // },
       extensions: ['.ts', '.js'],
       plugins: [
         new TsconfigPathsPlugin({

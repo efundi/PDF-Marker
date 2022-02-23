@@ -13,7 +13,6 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
 
   assignments: object[];
   private assignmentSubscription: Subscription;
-  private workspaceSubscription: Subscription;
   workspaces: any;
   workspaceBool = false;
   constructor(private assignmentService: AssignmentService,
@@ -22,7 +21,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
   ngOnInit() {
 
     // this.workspaces = this.workspaceService.getWorkspaces();
-    this.workspaceSubscription = this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
+    this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
        this.workspaces = workspaces;
     });
     this.assignmentSubscription = this.assignmentService.dataChanged().subscribe(assignments => {
@@ -32,7 +31,6 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
 }
 
   ngOnDestroy() {
-    this.workspaceSubscription.unsubscribe();
     this.assignmentSubscription.unsubscribe();
   }
 

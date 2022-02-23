@@ -9,18 +9,10 @@ import {fromIpcResponse} from './ipc.utils';
 })
 export class WorkspaceService {
 
-  private dialogResultSource = new Subject<WorkspaceDialogResult>();
-
-  dialogResultSource$ = this.dialogResultSource.asObservable();
-
   private workspaceApi: WorkspaceServiceIpc;
 
   constructor() {
     this.workspaceApi = (window as any).workspaceApi;
-  }
-
-  announceWorkspaceChanges(workspaceModal: WorkspaceDialogResult) {
-    this.dialogResultSource.next(workspaceModal);
   }
 
   createWorkingFolder(folderName: string): Observable<string> {

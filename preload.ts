@@ -14,6 +14,23 @@ import {ConfigServiceIpc} from '@shared/ipc/config-service-ipc';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {ApplicationServiceIpc} from '@shared/ipc/application-service-ipc';
 
+contextBridge.exposeInMainWorld('updateApi', {
+  onUpdateAvailable: (callback) => {
+    ipcRenderer.on('update_available', () => {
+      ipcRenderer.removeAllListeners('update_available');
+      callback();
+    });
+  },
+  onUpdateDownloaded: (callback) => {
+    ipcRenderer.on('update_downloaded', () => {
+      ipcRenderer.removeAllListeners('update_downloaded');
+      callback();
+    });
+  },
+  restartApp: () => {
+    ipcRenderer.send('restart_app');
+  }
+});
 
 contextBridge.exposeInMainWorld('assignmentApi', {
   getAssignments: () => ipcRenderer.invoke('assignments:get'),

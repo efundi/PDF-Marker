@@ -7,7 +7,6 @@ import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {AlertService} from '../../services/alert.service';
-import {FileSaverService} from 'ngx-filesaver';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
@@ -62,9 +61,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
               private router: Router,
               private appService: AppService,
               private alertService: AlertService,
-              private fileSaverService: FileSaverService,
-              private settingsService: SettingsService,
-              private fb: FormBuilder) {
+              private settingsService: SettingsService) {
   }
 
   ngOnInit() {

@@ -11,7 +11,6 @@ import {
   YesAndNoConfirmationDialogComponent
 } from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {AlertService} from '../../services/alert.service';
-import {FileSaverService} from 'ngx-filesaver';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
@@ -83,7 +82,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
               private activatedRoute: ActivatedRoute,
               private appService: AppService,
               private alertService: AlertService,
-              private fileSaverService: FileSaverService,
               private settingsService: SettingsService,
               private importService: ImportService,
               private rubricService: RubricService,

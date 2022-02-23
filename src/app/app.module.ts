@@ -63,12 +63,20 @@ import {MarkTypeIconComponent} from './components/mark-type-icon/mark-type-icon.
 import {SettingsComponent} from './components/settings/settings.component';
 import {WelcomeComponent} from './components/welcome/welcome.component';
 import {ColorPickerModule} from 'ngx-color-picker';
-import {FileSaverModule} from 'ngx-filesaver';
 import {RxReactiveFormsModule} from '@rxweb/reactive-form-validators';
 import {HomeComponent} from './components/home/home.component';
 import {RubricViewModalComponent} from './components/rubric-view-modal/rubric-view-modal.component';
 import {ImportService} from './services/import.service';
 import {SettingsService} from './services/settings.service';
+import {MatDialogModule} from "@angular/material/dialog";
+import {MatSnackBarModule} from "@angular/material/snack-bar";
+import {MatSidenavModule} from "@angular/material/sidenav";
+import {MatMenuModule} from "@angular/material/menu";
+import {HttpClientModule} from "@angular/common/http";
+import {MatPaginatorModule} from "@angular/material/paginator";
+import {MatProgressBarModule} from "@angular/material/progress-bar";
+import {MatTableModule} from "@angular/material/table";
+import {MatCheckboxModule} from "@angular/material/checkbox";
 
 @NgModule({
   declarations: [
@@ -110,11 +118,15 @@ import {SettingsService} from './services/settings.service';
     ScrollVisibilityDirective,
   ],
   imports: [
+    HttpClientModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     ColorPickerModule,
-    FileSaverModule,
     RxReactiveFormsModule,
+    MatSidenavModule,
+    MatMenuModule,
+    MatDialogModule,
+    MatSnackBarModule,
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
@@ -122,6 +134,10 @@ import {SettingsService} from './services/settings.service';
     MatListModule,
     MatDividerModule,
     MatToolbarModule,
+    MatPaginatorModule,
+    MatProgressBarModule,
+    MatTableModule,
+    MatCheckboxModule,
     FormsModule,
     ReactiveFormsModule,
     MatInputModule,

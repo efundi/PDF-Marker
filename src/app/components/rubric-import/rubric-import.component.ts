@@ -141,8 +141,8 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
   deleteRubric(item: IRubric) {
     this.appService.isLoading$.next(true);
-    this.rubricService.deleteRubricCheck(item.name).subscribe((isFound: boolean) => {
-      if (isFound) {
+    this.rubricService.deleteRubricCheck(item.name).subscribe((inUse: boolean) => {
+      if (inUse) {
         const config = new MatDialogConfig();
         config.width = '400px';
         config.maxWidth = '400px';

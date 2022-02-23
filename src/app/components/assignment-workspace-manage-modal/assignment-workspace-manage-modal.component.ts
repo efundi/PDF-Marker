@@ -86,7 +86,6 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
     if (this.returnSelectedAssignments && this.returnSelectedAssignments.length > 0) {
       returnVar.movedAssignments = [...this.returnSelectedAssignments];
     }
-    this.workspaceService.announceWorkspaceChanges(returnVar);
     this.dialogRef.close(returnVar);
   }
 
