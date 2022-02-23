@@ -104,7 +104,7 @@ export function moveWorkspaceAssignments(
           return false; // Stop looping
         }
       } else {
-        error = 'Assignment with name already exists.';
+        error = 'Assignment with the same name already exists.';
         return false; // Stop looping
         // return sendResponse(req, res, 400, 'Assignment with name already exists.');
       }
