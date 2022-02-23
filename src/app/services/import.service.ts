@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {ImportInfo} from '@shared/info-objects/import.info';
 import {fromIpcResponse} from './ipc.utils';
-import {ImportServiceIpc} from '@shared/ipc/import-service-ipc';
+import {ImportIpcService} from '@shared/ipc/import.ipc-service';
 import {Observable} from 'rxjs';
 import {ZipInfo} from '@shared/info-objects/zip.info';
 
@@ -10,7 +10,7 @@ import {ZipInfo} from '@shared/info-objects/zip.info';
 })
 export class ImportService {
 
-  private importService: ImportServiceIpc;
+  private importService: ImportIpcService;
 
   constructor() {
     this.importService = (window as any).importApi;

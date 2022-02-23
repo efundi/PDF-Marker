@@ -8,7 +8,7 @@ import {
   getAssignmentGlobalSettings,
   getAssignments,
   getAssignmentSettings,
-  getGrades,
+  getGrades, getMarkedAssignmentsCount,
   getMarks,
   getPdfFile,
   rubricUpdate,
@@ -17,7 +17,7 @@ import {
   shareExport,
   updateAssignment,
   updateAssignmentSettings
-} from './src-electron/ipc/assignments/assignment.handler';
+} from './src-electron/ipc/assignment.handler';
 import {
   deleteRubric,
   deleteRubricCheck,
@@ -26,9 +26,9 @@ import {
   getRubrics,
   rubricUpload,
   selectRubricFile
-} from './src-electron/ipc/rubrics/rubric.handler';
+} from './src-electron/ipc/rubric.handler';
 import {toIpcResponse} from './src-electron/utils';
-import {getZipEntries, importZip, isValidSakaiZip} from './src-electron/ipc/import/import.handler';
+import {getZipEntries, importZip, isValidSakaiZip} from './src-electron/ipc/import.handler';
 import {
   createWorkingFolder,
   deleteWorkspace,
@@ -36,16 +36,16 @@ import {
   getWorkspaces,
   moveWorkspaceAssignments,
   updateWorkspaceName
-} from './src-electron/ipc/workspace/workspace.handler';
-import {addComment, deleteComment, getComments} from './src-electron/ipc/comment/comment.handler';
-import {getConfig, updateConfig} from './src-electron/ipc/config/config.handler';
+} from './src-electron/ipc/workspace.handler';
+import {addComment, deleteComment, getComments} from './src-electron/ipc/comment.handler';
+import {getConfig, updateConfig} from './src-electron/ipc/config.handler';
 import {
   getFile,
   getFolder,
   getVersion,
   openExternalLink,
   saveFile
-} from './src-electron/ipc/application/application.handler';
+} from './src-electron/ipc/application.handler';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -131,6 +131,7 @@ try {
     ipcMain.handle('assignments:getGrades', toIpcResponse(getGrades));
     ipcMain.handle('assignments:rubricUpdate', toIpcResponse(rubricUpdate));
     ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
+    ipcMain.handle('assignments:getMarkedAssignmentsCount', toIpcResponse(getMarkedAssignmentsCount));
 
     // Rubric API
     ipcMain.handle('rubrics:selectRubricFile', toIpcResponse(selectRubricFile));

@@ -1,6 +1,6 @@
 import {mkdir, readFile, writeFile} from 'fs/promises';
-import {CONFIG_DIR, CONFIG_FILE, NOT_CONFIGURED_CONFIG_DIRECTORY} from '../../constants';
-import {isJson} from '../../utils';
+import {CONFIG_DIR, CONFIG_FILE, NOT_CONFIGURED_CONFIG_DIRECTORY} from '../constants';
+import {isJson} from '../utils';
 import {existsSync} from 'fs';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {IpcMainInvokeEvent} from 'electron';

@@ -1,15 +1,16 @@
 import {forEach, isNil} from 'lodash';
-import {getConfig, updateConfigFile} from '../config/config.handler';
+import {getConfig, updateConfigFile} from './config.handler';
 import {basename, sep} from 'path';
 import {writeFile} from 'fs/promises';
-import {CONFIG_DIR, CONFIG_FILE, SETTING_FILE} from '../../constants';
+import {CONFIG_DIR, CONFIG_FILE, SETTING_FILE} from '../constants';
 import {existsSync, mkdirSync, readdirSync, renameSync, writeFileSync} from 'fs';
 import {IpcMainInvokeEvent, shell} from 'electron';
 import {moveSync} from 'fs-extra';
+import {PdfmConstants} from '@shared/constants/pdfm.constants';
 
 export function getWorkingDirectory(workspaceName: string): Promise<string> {
   return getConfig().then((config) => {
-    if (workspaceName === 'Default Workspace' || isNil(workspaceName)) {
+    if (workspaceName === PdfmConstants.DEFAULT_WORKSPACE || isNil(workspaceName)) {
       return config.defaultPath;
     } else {
       return config.defaultPath + sep + workspaceName;
@@ -84,7 +85,7 @@ export function moveWorkspaceAssignments(
   assignments: any[] = []): Promise<any> {
   return getConfig().then((config) => {
     const loc = currentWorkspaceName.replace(/\//g, sep);
-    const isDefault = workspaceName === 'Default Workspace';
+    const isDefault = workspaceName === PdfmConstants.DEFAULT_WORKSPACE;
     const loc2 = workspaceName.replace(/\//g, sep);
 
     const workspacePath = config.defaultPath + sep + loc;
@@ -106,10 +107,9 @@ export function moveWorkspaceAssignments(
       } else {
         error = 'Assignment with the same name already exists.';
         return false; // Stop looping
-        // return sendResponse(req, res, 400, 'Assignment with name already exists.');
       }
     });
-    if (error) {
+    if (!error) {
       return 'Successfully renamed the directory.';
     } else {
       return Promise.reject(error);

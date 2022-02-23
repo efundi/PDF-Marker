@@ -3,7 +3,7 @@ import {Observable, Subject} from 'rxjs';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {SnackBarComponent} from '../components/snack-bar/snack-bar.component';
 import {MatSnackBar, MatSnackBarRef} from '@angular/material/snack-bar';
-import {ApplicationServiceIpc} from '@shared/ipc/application-service-ipc';
+import {ApplicationIpcService} from '@shared/ipc/application.ipc-service';
 import {fromIpcResponse} from './ipc.utils';
 import {AppVersionInfo} from '@shared/info-objects/app-version.info';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
@@ -16,7 +16,7 @@ export type ComponentType<T> = new (...args: any[]) => T;
 })
 export class AppService {
 
-  private applicationApi: ApplicationServiceIpc;
+  private applicationApi: ApplicationIpcService;
 
   isLoading$: Subject<boolean> = new Subject<boolean>();
 

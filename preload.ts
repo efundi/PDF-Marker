@@ -1,18 +1,19 @@
 import {contextBridge, ipcRenderer} from 'electron';
 import {FileFilterInfo} from '@shared/info-objects/file-filter.info';
-import {AssignmentServiceIpc} from '@shared/ipc/assignment-service-ipc';
+import {AssignmentIpcService} from './src/shared/ipc/assignment.ipc-service';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info';
 import {ShareAssignments} from '@shared/info-objects/share-assignments';
-import {RubricServiceIpc} from '@shared/ipc/rubric-service-ipc';
+import {RubricIpcService} from './src/shared/ipc/rubric.ipc-service';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {ImportInfo} from '@shared/info-objects/import.info';
-import {ImportServiceIpc} from '@shared/ipc/import-service-ipc';
-import {WorkspaceServiceIpc} from '@shared/ipc/workspace-service-ipc';
-import {CommentServiceIpc} from '@shared/ipc/comment-service-ipc';
-import {ConfigServiceIpc} from '@shared/ipc/config-service-ipc';
+import {ImportIpcService} from './src/shared/ipc/import.ipc-service';
+import {WorkspaceIpcService} from './src/shared/ipc/workspace.ipc-service';
+import {CommentIpcService} from './src/shared/ipc/comment.ipc-service';
+import {ConfigIpcService} from './src/shared/ipc/config.ipc-service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {ApplicationServiceIpc} from '@shared/ipc/application-service-ipc';
+import {ApplicationIpcService} from './src/shared/ipc/application.ipc-service';
+import {getMarkedAssignmentsCount} from "./src-electron/ipc/assignment.handler";
 
 contextBridge.exposeInMainWorld('updateApi', {
   onUpdateAvailable: (callback) => {
@@ -48,7 +49,8 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   shareExport: (shareRequest: ShareAssignments) => ipcRenderer.invoke('assignments:shareExport', shareRequest),
   rubricUpdate: (rubricName: string, assignmentName: string) => ipcRenderer.invoke('assignments:rubricUpdate', rubricName, assignmentName),
   getPdfFile: (location: string) => ipcRenderer.invoke('assignments:getPdfFile', location),
-} as AssignmentServiceIpc);
+  getMarkedAssignmentsCount: (workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:getMarkedAssignmentsCount', workspaceName, assignmentName),
+} as AssignmentIpcService);
 
 
 contextBridge.exposeInMainWorld('rubricApi', {
@@ -59,14 +61,14 @@ contextBridge.exposeInMainWorld('rubricApi', {
   deleteRubric: (rubricName: string) => ipcRenderer.invoke('rubrics:deleteRubric', rubricName),
   getRubric: (rubricName: string) => ipcRenderer.invoke('rubrics:getRubric', rubricName),
   getRubrics: () => ipcRenderer.invoke('rubrics:getRubrics'),
-} as RubricServiceIpc);
+} as RubricIpcService);
 
 
 contextBridge.exposeInMainWorld('importApi', {
   importZip: (importInfo: ImportInfo) => ipcRenderer.invoke('import:importZip', importInfo),
   getZipEntries: (filePath: string) => ipcRenderer.invoke('import:getZipEntries', filePath),
   isValidSakaiZip: (filePath: string) => ipcRenderer.invoke('import:isValidSakaiZip', filePath),
-} as ImportServiceIpc);
+} as ImportIpcService);
 
 
 contextBridge.exposeInMainWorld('workspaceApi', {
@@ -76,20 +78,20 @@ contextBridge.exposeInMainWorld('workspaceApi', {
   getWorkspaces: () => ipcRenderer.invoke('workspace:getWorkspaces'),
   deleteWorkspace: (workspaceFolder: string) => ipcRenderer.invoke('workspace:deleteWorkspace', workspaceFolder),
   deleteWorkspaceCheck: (workspaceFolder: string) => ipcRenderer.invoke('workspace:deleteWorkspaceCheck', workspaceFolder),
-} as WorkspaceServiceIpc);
+} as WorkspaceIpcService);
 
 
 contextBridge.exposeInMainWorld('commentApi', {
   getComments: () => ipcRenderer.invoke('comments:getComments'),
   deleteComment: (commentId: string) => ipcRenderer.invoke('comments:deleteComment', commentId),
   addComment: (commentText: string) => ipcRenderer.invoke('comments:addComment', commentText)
-} as CommentServiceIpc);
+} as CommentIpcService);
 
 
 contextBridge.exposeInMainWorld('configApi', {
   getConfig: () => ipcRenderer.invoke('config:getConfig'),
   updateConfig: (config: SettingInfo) => ipcRenderer.invoke('config:updateConfig', config),
-} as ConfigServiceIpc);
+} as ConfigIpcService);
 
 contextBridge.exposeInMainWorld('applicationApi', {
   getAppVersion: () => ipcRenderer.invoke('app:version'),
@@ -97,4 +99,4 @@ contextBridge.exposeInMainWorld('applicationApi', {
   getFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:getFile', fileFilter),
   saveFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:saveFile', fileFilter),
   openExternalLink: (link: any) => ipcRenderer.invoke('app:openExternalLink', link),
-} as ApplicationServiceIpc);
+} as ApplicationIpcService);

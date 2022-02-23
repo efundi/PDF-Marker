@@ -141,26 +141,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       });
   }
 
-  // countFileFilter(startPath: any, filter: string): number {
-  //   let count = 0;
-  //
-  //   if (!fs.existsSync(startPath)) {
-  //     return 0;
-  //   }
-  //
-  //   const files = fs.readdirSync(startPath);
-  //   for (let i = 0; i < files.length; i++) {
-  //     const filename = path.join(startPath, files[i]);
-  //     const stat = fs.lstatSync(filename);
-  //     if (stat.isDirectory()) {
-  //       count = count + this.countFileFilter(filename, filter);
-  //     } else if (filename.indexOf(filter) >= 0) {
-  //       count = count + 1;
-  //     }
-  //   }
-  //   return count;
-  // }
-
   private generateDataFromModel() {
     // let workspaceRows: WorkspaceDetails[] = [];
     this.workspaceRows = [];
@@ -183,9 +163,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
             .filter(x => this.sakaiService.getAssignmentRootFiles().indexOf(x) === -1);
           workspaceRow.submissionCount = assignmentFiles.length;
           // Marked/Not Marked
-          this.settingsService.getConfigurations().subscribe((configurations: SettingInfo) => {
-            // TODO fix this. You can access the filesystem from the front-end
-            const count = 0; // this.countFileFilter(configurations.defaultPath + sep + this.workspaceName + sep + assignmentName, '.marks.json');
+          this.assignmentService.getMarkedAssignmentsCount(this.workspaceName , assignmentName).subscribe((count) => {
             workspaceRow.marked = count;
             workspaceRow.notMarked = workspaceRow.submissionCount - workspaceRow.marked;
           });

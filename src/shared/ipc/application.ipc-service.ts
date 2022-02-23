@@ -3,7 +3,7 @@ import {AppVersionInfo} from '../info-objects/app-version.info';
 import {AppSelectedPathInfo} from '../info-objects/app-selected-path.info';
 import {FileFilterInfo} from '../info-objects/file-filter.info';
 
-export interface ApplicationServiceIpc {
+export interface ApplicationIpcService {
 
   getAppVersion(): Promise<IpcResponse<AppVersionInfo>>;
   getFolder(): Promise<IpcResponse<AppSelectedPathInfo>>;

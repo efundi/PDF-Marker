@@ -8,11 +8,12 @@ import {AppService} from './app.service';
 import {ZipService} from './zip.service';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {ShareAssignments} from '@shared/info-objects/share-assignments';
-import {AssignmentServiceIpc} from '@shared/ipc/assignment-service-ipc';
+import {AssignmentIpcService} from '@shared/ipc/assignment.ipc-service';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {fromIpcResponse} from './ipc.utils';
+import {PdfmConstants} from '@shared/constants/pdfm.constants';
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +37,7 @@ export class AssignmentService {
   onWorkspaceSourceChange = this.workspaceSourceSubject.asObservable();
   // selectedWorkspaceSource$ = this.selectedWorkspaceSource.asObservable();
 
-  private assignmentApi: AssignmentServiceIpc;
+  private assignmentApi: AssignmentIpcService;
 
   constructor(private router: Router,
               private appService: AppService,
@@ -44,11 +45,11 @@ export class AssignmentService {
 
     this.assignmentApi = (window as any).assignmentApi;
 
-      this.getAssignments().subscribe(assignments => {
-        this.assignmentListSource$.next(assignments);
-      }, error => {
-        // this.assignments = this.transferState.get<object[]>(transferKey, []);
-      });
+    this.getAssignments().subscribe(assignments => {
+      this.assignmentListSource$.next(assignments);
+    }, error => {
+      // this.assignments = this.transferState.get<object[]>(transferKey, []);
+    });
 
     this.onWorkspaceSourceChange = this.workspaceSourceSubject.asObservable();
     this.onAssignmentSourceChange = this.selectedAssignmentSource.asObservable();
@@ -66,7 +67,7 @@ export class AssignmentService {
     if (!assignmentName) {
       assignmentName = ((this.selectedPdfLocation && this.selectedPdfLocation.split('/').length > 0) ? this.selectedPdfLocation.split('/')[0] : '');
     }
-    if (workspaceName) {
+    if (workspaceName && workspaceName !== PdfmConstants.DEFAULT_WORKSPACE) {
       assignmentName = workspaceName + '/' + assignmentName;
     }
     return fromIpcResponse(this.assignmentApi.getAssignmentSettings(assignmentName));
@@ -79,11 +80,11 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.getGrades(assignmentName));
   }
 
-  getFile(pdfFileLocation: string): Observable<Buffer> {
+  getFile(pdfFileLocation: string): Observable<Uint8Array> {
     return fromIpcResponse(this.assignmentApi.getPdfFile(pdfFileLocation));
   }
 
-  configure(pdfLocation: string, blobData: Buffer) {
+  configure(pdfLocation: string, blobData: Uint8Array) {
     const blob = new Blob([blobData], {type: MimeTypesEnum.PDF});
     const fileUrl = URL.createObjectURL(blob);
     let assignmentName = '';
@@ -237,5 +238,9 @@ export class AssignmentService {
 
   updateAssignmentRubric(rubric: string, assignmentName: string): Observable<IRubric> {
     return fromIpcResponse(this.assignmentApi.rubricUpdate(rubric, assignmentName));
+  }
+
+  getMarkedAssignmentsCount(workspaceName: string, assignmentName): Observable<number>{
+    return fromIpcResponse(this.assignmentApi.getMarkedAssignmentsCount(workspaceName, assignmentName));
   }
 }

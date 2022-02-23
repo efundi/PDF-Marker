@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {IComment} from '@shared/info-objects/comment.class';
-import {CommentServiceIpc} from '@shared/ipc/comment-service-ipc';
+import {CommentIpcService} from '@shared/ipc/comment.ipc-service';
 import {fromIpcResponse} from './ipc.utils';
 
 @Injectable({
@@ -9,7 +9,7 @@ import {fromIpcResponse} from './ipc.utils';
 })
 export class CommentService {
 
-  private commentApi: CommentServiceIpc;
+  private commentApi: CommentIpcService;
 
   constructor() {
     this.commentApi = (window as any).commentApi;

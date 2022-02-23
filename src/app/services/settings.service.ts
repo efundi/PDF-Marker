@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {ConfigServiceIpc} from '@shared/ipc/config-service-ipc';
+import {ConfigIpcService} from '@shared/ipc/config.ipc-service';
 import {fromIpcResponse} from './ipc.utils';
 
 @Injectable({
@@ -9,7 +9,7 @@ import {fromIpcResponse} from './ipc.utils';
 })
 export class SettingsService {
 
-  private configApi: ConfigServiceIpc;
+  private configApi: ConfigIpcService;
 
   constructor() {
     this.configApi = (window as any).configApi;

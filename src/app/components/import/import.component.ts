@@ -16,6 +16,7 @@ import {RubricService} from '../../services/rubric.service';
 import {ImportInfo} from '@shared/info-objects/import.info';
 import {SakaiConstants} from '@shared/constants/sakai.constants';
 import {isNil} from 'lodash';
+import { PdfmConstants } from '@shared/constants/pdfm.constants';
 
 @Component({
   selector: 'pdf-marker-import',
@@ -86,9 +87,9 @@ export class ImportComponent implements OnInit {
           return PdfmUtilsService.basename(item);
         });
       }
-      this.workspaces.unshift('Default Workspace');
+      this.workspaces.unshift(PdfmConstants.DEFAULT_WORKSPACE);
       if (this.workspaces.length <= 1) {
-        this.importForm.controls.workspaceFolder.setValue('Default Workspace');
+        this.importForm.controls.workspaceFolder.setValue(PdfmConstants.DEFAULT_WORKSPACE);
       }
       this.appService.isLoading$.next(false);
     }, error => {
