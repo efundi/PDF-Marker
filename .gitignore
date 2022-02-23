@@ -52,3 +52,9 @@ electron-builder.*
 
 # Uncomment temporarily if you want to commit default changes
 electron-builder.yml
+
+# Compiled files
+preload.js
+preload.js.map
+main.js
+main.js.map

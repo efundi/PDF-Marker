@@ -1,0 +1,64 @@
+<ng-container>
+  <ul *ngFor="let object of hierarchyModelKeys"
+      [class]="hierarchyModel[object].path ? 'folder-list':'file-list'">
+    <li
+      *ngIf="hierarchyModel[object].path && hierarchyModel[object].isPdf"
+      class="pdf-marker-file-explorer-pdf file-name-selected-hover"
+      (click)="onSelectedPdf(hierarchyModel[object].path)">
+      <span class="file-name">{{ (filePath && filePath.endsWith(object) && scrollToElement) ? scrollToFile():''  }}
+        <mat-icon class="file">insert_drive_file</mat-icon>
+        <span class="file-name-text" [class.file-name-selected]="this.assignmentService.getSelectedPdfLocation() === hierarchyModel[object].path">{{ object }}</span>
+      </span>
+    </li>
+
+    <li *ngIf="hierarchyModel[object].path && !hierarchyModel[object].isPdf"><span class="file-name file-name-selected-hover">
+      <mat-icon class="file">insert_drive_file</mat-icon><span class="file-name-text">{{ object }}</span></span></li>
+
+    <li #element
+        *ngIf="!hierarchyModel[object].path"
+        [class.assignmentRootFolder-li]="assignmentRootFolder">
+      <mat-accordion>
+        <mat-expansion-panel
+          style="margin: 0"
+          (opened)="element.value = 1;"
+          (closed)="element.value = 0;"
+          [expanded]="((assignmentRootFolder && filePath) ? filePath.startsWith(object):(!assignmentRootFolder && filePath) ? filePath.startsWith(parent + '/' + object):false)">
+          <mat-expansion-panel-header>
+            <span class="file-name-text folder-name file-name-selected-hover">
+              <mat-icon class="folder">{{ (element.value === 1) ? 'keyboard_arrow_down':'keyboard_arrow_right' }}</mat-icon>
+              <span class="folder-content" (click)="onAssignment(object, hierarchyModel, $event)"> {{ object }}</span>
+            </span>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <div class="folder-content" [class.hide]="element.value !== 1">
+              <pdf-marker-file-explorer
+                *ngIf="assignmentRootFolder"
+                [parent]="object"
+                [filePath]="filePath"
+                [hierarchyModel]="hierarchyModel[object]"
+                [hierarchyModelKeys]="hierarchyModel[object]">
+              </pdf-marker-file-explorer>
+              <pdf-marker-file-explorer
+                *ngIf="!assignmentRootFolder && !scrollToElement"
+                [scrollToElement]="element"
+                [parent]="parent + '/' + object"
+                [filePath]="filePath"
+                [hierarchyModel]="hierarchyModel[object]"
+                [hierarchyModelKeys]="hierarchyModel[object]">
+              </pdf-marker-file-explorer>
+              <pdf-marker-file-explorer
+                *ngIf="!assignmentRootFolder && scrollToElement"
+                [scrollToElement]="scrollToElement"
+                [parent]="parent + '/' + object"
+                [filePath]="filePath"
+                [hierarchyModel]="hierarchyModel[object]"
+                [hierarchyModelKeys]="hierarchyModel[object]">
+              </pdf-marker-file-explorer>
+            </div>
+          </ng-template>
+        </mat-expansion-panel>
+        <!-- button mat-button *ngIf="assignmentRootFolder" [class.selected-assignment]="isSelected()" class="pdf-marker-overview" (click)="onAssignment(hierarchyModel)"><mat-icon>keyboard_arrow_right</mat-icon></button> -->
+      </mat-accordion>
+    </li>
+  </ul>
+</ng-container>
