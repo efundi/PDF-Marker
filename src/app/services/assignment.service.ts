@@ -80,11 +80,11 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.getGrades(assignmentName));
   }
 
-  getFile(pdfFileLocation: string): Observable<Buffer> {
+  getFile(pdfFileLocation: string): Observable<Uint8Array> {
     return fromIpcResponse(this.assignmentApi.getPdfFile(pdfFileLocation));
   }
 
-  configure(pdfLocation: string, blobData: Buffer) {
+  configure(pdfLocation: string, blobData: Uint8Array) {
     const blob = new Blob([blobData], {type: MimeTypesEnum.PDF});
     const fileUrl = URL.createObjectURL(blob);
     let assignmentName = '';

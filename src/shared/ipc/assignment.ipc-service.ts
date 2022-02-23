@@ -21,5 +21,5 @@ export interface AssignmentIpcService {
   shareExport(shareRequest: ShareAssignments): Promise<IpcResponse<any>>;
   rubricUpdate(rubricName: string, assignmentName: string): Promise<IpcResponse<IRubric>>;
   getMarkedAssignmentsCount(workspaceName: string, assignmentName): Promise<IpcResponse<number>>;
-  getPdfFile(location: string): Promise<IpcResponse<Buffer>>;
+  getPdfFile(location: string): Promise<IpcResponse<Uint8Array>>;
 }

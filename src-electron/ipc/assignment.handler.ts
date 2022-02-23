@@ -1170,7 +1170,7 @@ export function rubricUpdate(event: IpcMainInvokeEvent, rubricName: string, assi
 }
 
 
-export function getPdfFile(event: IpcMainInvokeEvent, location: string): Promise<Buffer> {
+export function getPdfFile(event: IpcMainInvokeEvent, location: string): Promise<Uint8Array> {
   return getConfig().then((config) => {
     const loc = location.replace(/\//g, sep);
     const actualPath = config.defaultPath + sep + loc;
