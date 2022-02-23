@@ -1047,7 +1047,7 @@ export function shareExport(event: IpcMainInvokeEvent, shareRequest: ShareAssign
       ];
       for (let i = 3; i < gradesJSON.length; i++) {
         const gradesStudentId = gradesJSON[i].field2;
-        const shouldExport = !isNil(find(shareRequest.submissions, {studentNumber: gradesStudentId}));
+        const shouldExport = !isNil(find(shareRequest.submissions, (student) => student.studentNumber.toUpperCase() === gradesStudentId.toUpperCase()));
         if (shouldExport) {
           shareGradesJson.push(gradesJSON[i]);
         }
