@@ -20,4 +20,6 @@ export interface AssignmentServiceIpc {
   updateAssignmentSettings(updatedSettings: any, location: string): Promise<IpcResponse<any>>;
   shareExport(shareRequest: ShareAssignments): Promise<IpcResponse<any>>;
   rubricUpdate(rubricName: string, assignmentName: string): Promise<IpcResponse<IRubric>>;
+
+  getPdfFile(location: string): Promise<IpcResponse<Buffer>>;
 }

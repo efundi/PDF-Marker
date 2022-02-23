@@ -1,9 +1,9 @@
 import {mkdir, readFile, writeFile} from 'fs/promises';
-import {CONFIG_FILE, CONFIG_DIR, NOT_CONFIGURED_CONFIG_DIRECTORY} from '../../constants';
+import {CONFIG_DIR, CONFIG_FILE, NOT_CONFIGURED_CONFIG_DIRECTORY} from '../../constants';
 import {isJson} from '../../utils';
 import {existsSync} from 'fs';
-import {SettingInfo} from '../../../src/shared/info-objects/setting.info';
-import {IpcMainInvokeEvent} from "electron";
+import {SettingInfo} from '@shared/info-objects/setting.info';
+import {IpcMainInvokeEvent} from 'electron';
 
 export function ensureConfigDirectory(): Promise<string> {
   let promise = Promise.resolve();
@@ -23,7 +23,7 @@ export function getConfig(): Promise<SettingInfo> {
   });
 }
 
-export function updateConfig(event: IpcMainInvokeEvent, config: SettingInfo): Promise<SettingInfo>{
+export function updateConfig(event: IpcMainInvokeEvent, config: SettingInfo): Promise<SettingInfo> {
   return updateConfigFile(config);
 }
 

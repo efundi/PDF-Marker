@@ -1,44 +1,57 @@
-import {app, BrowserWindow, dialog, ipcMain, screen, shell, HandlerDetails} from 'electron';
+import {app, BrowserWindow, HandlerDetails, ipcMain, screen, shell} from 'electron';
 import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
-import * as url from 'url';
 import {
-  createAssignment, finalizeAssignment, finalizeAssignmentRubric, getAssignmentGlobalSettings,
+  createAssignment,
+  finalizeAssignment,
+  finalizeAssignmentRubric,
+  getAssignmentGlobalSettings,
   getAssignments,
-  getAssignmentSettings, getGrades,
-  getMarks, rubricUpdate,
+  getAssignmentSettings,
+  getGrades,
+  getMarks,
+  getPdfFile,
+  rubricUpdate,
   saveMarks,
-  saveRubricMarks, shareExport, updateAssignment, updateAssignmentSettings
+  saveRubricMarks,
+  shareExport,
+  updateAssignment,
+  updateAssignmentSettings
 } from './src-electron/ipc/assignments/assignment.handler';
-import {writeFile} from 'fs/promises';
-import {stat, statSync} from 'fs';
 import {
   deleteRubric,
-  deleteRubricCheck, getRubric,
-  getRubricNames, getRubrics,
+  deleteRubricCheck,
+  getRubric,
+  getRubricNames,
+  getRubrics,
   rubricUpload,
   selectRubricFile
 } from './src-electron/ipc/rubrics/rubric.handler';
-import {joinError, toIpcResponse} from './src-electron/utils';
+import {toIpcResponse} from './src-electron/utils';
 import {getZipEntries, importZip, isValidSakaiZip} from './src-electron/ipc/import/import.handler';
-import {AppSelectedPathInfo} from './src/shared/info-objects/app-selected-path.info';
-import {basename, extname} from 'path';
 import {
-  createWorkingFolder, deleteWorkspace, deleteWorkspaceCheck, getWorkspaces,
+  createWorkingFolder,
+  deleteWorkspace,
+  deleteWorkspaceCheck,
+  getWorkspaces,
   moveWorkspaceAssignments,
   updateWorkspaceName
-} from "./src-electron/ipc/workspace/workspace.handler";
-import {addComment, deleteComment, getComments} from "./src-electron/ipc/comment/comment.handler";
-import {getConfig, updateConfig} from "./src-electron/ipc/config/config.handler";
+} from './src-electron/ipc/workspace/workspace.handler';
+import {addComment, deleteComment, getComments} from './src-electron/ipc/comment/comment.handler';
+import {getConfig, updateConfig} from './src-electron/ipc/config/config.handler';
+import {
+  getFile,
+  getFolder,
+  getVersion,
+  openExternalLink,
+  saveFile
+} from './src-electron/ipc/application/application.handler';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
 serve = args.some(val => val === '--serve');
 
-// Import the express server which will start up automatically
-// const server = require('./dist/server');
 const logger = require('electron-log');
-const excelParser = new (require('simple-excel-to-json').XlsParser)();
 
 function createWindow() {
 
@@ -49,11 +62,6 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     x: 0,
     y: 0,
-    // fullscreen: true,
-    // title: PRODUCT_NAME,
-    // icon: ctx.locations.icon,
-    // show: false,
-    // autoHideMenuBar: true,
     width: size.width,
     height: size.height,
     webPreferences: {
@@ -67,11 +75,7 @@ function createWindow() {
     // });
     mainWindow.loadURL('http://localhost:4200');
   } else {
-    mainWindow.loadURL(url.format({
-      pathname: path.join(__dirname, 'dist/browser/index.html'),
-      protocol: 'file:',
-      slashes: true
-    }));
+    mainWindow.loadFile(path.join(__dirname, 'dist/browser/index.html'));
   }
 
   if (serve) {
@@ -103,7 +107,7 @@ try {
     });
 
 
-    mainWindow.webContents.setWindowOpenHandler(( details: HandlerDetails) => {
+    mainWindow.webContents.setWindowOpenHandler((details: HandlerDetails) => {
       // For now we assume all links are external
       shell.openExternal(details.url);
       return {
@@ -126,6 +130,7 @@ try {
     ipcMain.handle('assignments:getMarks', toIpcResponse(getMarks));
     ipcMain.handle('assignments:getGrades', toIpcResponse(getGrades));
     ipcMain.handle('assignments:rubricUpdate', toIpcResponse(rubricUpdate));
+    ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
 
     // Rubric API
     ipcMain.handle('rubrics:selectRubricFile', toIpcResponse(selectRubricFile));
@@ -154,225 +159,20 @@ try {
     ipcMain.handle('comments:deleteComment', toIpcResponse(deleteComment));
     ipcMain.handle('comments:addComment', toIpcResponse(addComment));
 
-    // Config api
+    // Config API
     ipcMain.handle('config:getConfig', toIpcResponse(getConfig));
     ipcMain.handle('config:updateConfig', toIpcResponse(updateConfig));
 
 
+    // Application API
+    ipcMain.handle('app:saveFile', toIpcResponse(saveFile));
+    ipcMain.handle('app:version', toIpcResponse(getVersion));
+    ipcMain.handle('app:getFolder', toIpcResponse(getFolder));
+    ipcMain.handle('app:getFile', toIpcResponse(getFile));
+    ipcMain.handle('app:openExternalLink', toIpcResponse(openExternalLink));
 
-    ipcMain.handle('app:version', () => {
-      return { version: app.getVersion() };
-    });
-    ipcMain.handle('app:get_folder', (event) => {
-      return dialog.showOpenDialog(mainWindow, {
-        title: 'Select Folder',
-        properties: ['openDirectory', 'promptToCreate']
-      }).then((data) => {
-        if (data.canceled) {
-          return {selectedPath: null};
-        } else {
-          return {selectedPath: data.filePaths[0]};
-        }
-      }, (reason) => {
-        return {selectedPath: null, error: reason};
-      });
-    });
-
-
-      ipcMain.handle('app:get_file', (event, fileArgs) => {
-        return dialog.showOpenDialog(mainWindow, {
-          title: 'Select File',
-          filters: [
-            { name: fileArgs.name, extensions: fileArgs.extension }
-          ],
-          properties: ['openFile']
-        }).then((data) => {
-          if (data.canceled) {
-           return {selectedPath: null};
-          } else {
-            return {
-              selectedPath: data.filePaths[0],
-              fileName: basename(data.filePaths[0], extname(data.filePaths[0])),
-              ext: extname(data.filePaths[0]),
-              basename: basename(data.filePaths[0]),
-              info: statSync(data.filePaths[0])
-            } as AppSelectedPathInfo;
-          }
-        }, (reason => {
-          // TODO instead return a rejected promise
-          return {selectedPath: null, error: reason };
-        }));
-      });
-
-
-    // tslint:disable-next-line:no-shadowed-variable
-    ipcMain.handle('app:get_excel_to_json', (event, args) => {
-      return dialog.showOpenDialog(mainWindow, {
-        title: 'Select File',
-        filters: [
-          { name: args.name, extensions: args.extension }
-        ],
-        properties: ['openFile']
-      }).then(async (data) => {
-        if (data.canceled) {
-          return{selectedPath: null, blob: null};
-        } else {
-          try {
-            const doc = excelParser.parseXls2Json(data.filePaths[0], { isNested: true });
-            const docInJSON = doc[0] || [];
-
-            if (docInJSON.length === 0) {
-             return { selectedPath: null, error: { message: `No criteria(s) provided` } };
-            } else {
-              let rowCount = 4;
-              const levelCount = 6;
-              let errorMessage: string;
-              let errorFound: boolean;
-              let validLevelLength = 0;
-              const startMessagePrefix = `Error[row = `;
-              const startMessageSuffix = `]: `;
-              const notProvided = `is not provided`;
-
-              const rubric = {
-                criterias: []
-              };
-
-              for (let index = 0; index < docInJSON.length; index++) {
-                if (index > 1) {
-                  const criteriaData = docInJSON[index];
-
-                  errorMessage = '';
-                  errorFound = false;
-
-                  if (isBlank(criteriaData.Criterion_name)) {
-                    errorMessage = joinError(errorMessage, `Criteria name ${notProvided}`);
-                    errorFound = true;
-                  }
-
-                  if (isBlank(criteriaData.Criterion_description)) {
-                    errorMessage = joinError(errorMessage, `Criteria description ${notProvided}`);
-                    errorFound = true;
-                  }
-
-                  if (errorFound && index === 2) {
-                    return { selectedPath: null, error: { message: errorMessage } };
-                  } else if (errorFound) {
-                    return { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) };
-                  }
-
-                  const levels = [];
-
-                  for (let i = 1; ((validLevelLength === 0) ? levelCount : validLevelLength); i++) {
-                    const achievementMark = 'Achievement_level_'  + i + '_mark';
-                    const achievementFeedback = 'Achievement_level_'  + i + '_feedback';
-                    const achievementTitle = 'Achievement_level_'  + i + '_title';
-
-                    if (isBlank(criteriaData[achievementMark])) {
-                      errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementMark} ${notProvided}`);
-                      errorFound = true;
-                    }
-
-                    if (isNaN(criteriaData[achievementMark])) {
-                      errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementMark} is not a valid number`);
-                      errorFound = true;
-                    }
-
-                    criteriaData[achievementMark] = parseInt('' + criteriaData[achievementMark], 10);
-
-                    if (isBlank(criteriaData[achievementTitle])) {
-                      errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementTitle} ${notProvided}`);
-                      errorFound = true;
-                    }
-
-                    if (isBlank(criteriaData[achievementFeedback])) {
-                      errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix}${achievementFeedback} ${notProvided}`);
-                      errorFound = true;
-                    }
-
-                    if (errorFound && i === 1) {
-                      return{ selectedPath: null, error: { message: errorMessage } };
-                    } else if (errorFound && i > 1) {
-                      if (index === 2) {
-                        validLevelLength = i - 1;
-                      }
-                      break;
-                    } else if ((index === 2) && (i === levelCount)) {
-                      validLevelLength = levelCount;
-                    }
-
-                    levels[i - 1] = {
-                      score: criteriaData[achievementMark],
-                      description: criteriaData[achievementFeedback].trim(),
-                      label: criteriaData[achievementTitle].trim()
-                    };
-                  }
-
-                  if (index !== 2 && levels.length !== validLevelLength) {
-                    errorMessage = joinError(errorMessage, `${startMessagePrefix}${rowCount}${startMessageSuffix} The provided number of achievement levels do not match first row achievement levels`);
-                    return { selectedPath: null, error: { message: errorMessage } };
-                  }
-
-                  rubric.criterias.push({
-                    description: criteriaData.Criterion_description,
-                    name: criteriaData.Criterion_name,
-                    levels
-                  });
-
-                  rowCount++;
-                }
-              }
-
-              if (rubric.criterias.length === 0) {
-                return{ selectedPath: null, error: { message: `No criteria(s) provided` } };
-              } else {
-                return { selectedPath: data.filePaths[0], contents: JSON.stringify(rubric) };
-              }
-            }
-          } catch (reason) {
-            return { selectedPath: null, error: reason };
-          }
-        }
-      }, reason => {
-        return { selectedPath: null, error: reason };
-      });
-    });
-
-    ipcMain.handle('app:save_file', (event, args) => {
-      return dialog.showSaveDialog(mainWindow, {
-        defaultPath: args.filename,
-        title: 'Save',
-        filters: [
-          { name: args.name, extensions: args.extension }
-        ]
-      }).then(({filePath}) => {
-        if (filePath) {
-          try {
-            return writeFile(filePath, new Buffer(args.buffer))
-              .then(() => {
-                return { selectedPath: filePath };
-              });
-          } catch (e) {
-            return{ selectedPath: null, error: e.message };
-          }
-        } else {
-          return{ selectedPath: null };
-        }
-      });
-    });
-
-
-    ipcMain.handle('app:open_external_link', (event, args) => {
-      return shell.openExternal(args.resource).then(() => {
-       return{ results: true };
-      }, (reason) => {
-        return { selectedPath: null, error: reason };
-      });
-    });
 
   });
-
-
-
 
   // Quit when all windows are closed.
   app.on('window-all-closed', () => {
@@ -414,14 +214,4 @@ try {
 } catch (e) {
   // Catch Error
   // throw e;
-}
-
-function isBlank(data: string = '') {
-
-  if (data === null || data === undefined) {
-    return true;
-  }
-
-  data += '';
-  return data === '' || data.trim() === '';
 }

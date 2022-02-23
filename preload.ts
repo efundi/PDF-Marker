@@ -1,17 +1,18 @@
 import {contextBridge, ipcRenderer} from 'electron';
-import {FileFilterInfo} from './src/app/modules/application/core/info-objects/file-filter.info';
-import {AssignmentServiceIpc} from './src/shared/ipc/assignment-service-ipc';
-import {UpdateAssignment} from './src/shared/info-objects/update-assignment';
-import {CreateAssignmentInfo} from './src/shared/info-objects/create-assignment.info';
-import {ShareAssignments} from './src/shared/info-objects/share-assignments';
-import {RubricServiceIpc} from './src/shared/ipc/rubric-service-ipc';
-import {IRubric} from './src/shared/info-objects/rubric.class';
-import {ImportInfo} from './src/shared/info-objects/import.info';
-import {ImportServiceIpc} from './src/shared/ipc/import-service-ipc';
-import {WorkspaceServiceIpc} from './src/shared/ipc/workspace-service-ipc';
-import {CommentServiceIpc} from './src/shared/ipc/comment-service-ipc';
-import {ConfigServiceIpc} from './src/shared/ipc/config-service-ipc';
-import {SettingInfo} from './src/shared/info-objects/setting.info';
+import {FileFilterInfo} from '@shared/info-objects/file-filter.info';
+import {AssignmentServiceIpc} from '@shared/ipc/assignment-service-ipc';
+import {UpdateAssignment} from '@shared/info-objects/update-assignment';
+import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info';
+import {ShareAssignments} from '@shared/info-objects/share-assignments';
+import {RubricServiceIpc} from '@shared/ipc/rubric-service-ipc';
+import {IRubric} from '@shared/info-objects/rubric.class';
+import {ImportInfo} from '@shared/info-objects/import.info';
+import {ImportServiceIpc} from '@shared/ipc/import-service-ipc';
+import {WorkspaceServiceIpc} from '@shared/ipc/workspace-service-ipc';
+import {CommentServiceIpc} from '@shared/ipc/comment-service-ipc';
+import {ConfigServiceIpc} from '@shared/ipc/config-service-ipc';
+import {SettingInfo} from '@shared/info-objects/setting.info';
+import {ApplicationServiceIpc} from '@shared/ipc/application-service-ipc';
 
 
 contextBridge.exposeInMainWorld('assignmentApi', {
@@ -29,6 +30,7 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   getGrades: (location: string) => ipcRenderer.invoke('assignments:getGrades', location),
   shareExport: (shareRequest: ShareAssignments) => ipcRenderer.invoke('assignments:shareExport', shareRequest),
   rubricUpdate: (rubricName: string, assignmentName: string) => ipcRenderer.invoke('assignments:rubricUpdate', rubricName, assignmentName),
+  getPdfFile: (location: string) => ipcRenderer.invoke('assignments:getPdfFile', location),
 } as AssignmentServiceIpc);
 
 
@@ -72,11 +74,10 @@ contextBridge.exposeInMainWorld('configApi', {
   updateConfig: (config: SettingInfo) => ipcRenderer.invoke('config:updateConfig', config),
 } as ConfigServiceIpc);
 
-
-contextBridge.exposeInMainWorld('electronAPI', {
+contextBridge.exposeInMainWorld('applicationApi', {
   getAppVersion: () => ipcRenderer.invoke('app:version'),
-  getFolder: () => ipcRenderer.invoke('app:get_folder'),
-  getFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:get_file', fileFilter),
-  saveFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:save_file', fileFilter),
-  openExternalLink: (link: any) => ipcRenderer.invoke('app:open_external_link', link),
-});
+  getFolder: () => ipcRenderer.invoke('app:getFolder'),
+  getFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:getFile', fileFilter),
+  saveFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:saveFile', fileFilter),
+  openExternalLink: (link: any) => ipcRenderer.invoke('app:openExternalLink', link),
+} as ApplicationServiceIpc);

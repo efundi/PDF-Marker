@@ -1,21 +1,21 @@
 import {existsSync} from 'fs';
 import * as glob from 'glob';
 import {basename, sep} from 'path';
-import {AssignmentSettingsInfo} from '../../../src/shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {IpcMainInvokeEvent} from 'electron';
-import {ImportInfo} from '../../../src/shared/info-objects/import.info';
+import {ImportInfo} from '@shared/info-objects/import.info';
 import {isNil} from 'lodash';
 import {readFile} from 'fs/promises';
 import {getConfig} from '../config/config.handler';
 import {getRubrics, writeRubricFile} from '../rubrics/rubric.handler';
 import {EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, NOT_PROVIDED_RUBRIC} from '../../constants';
-import {IRubric} from '../../../src/shared/info-objects/rubric.class';
+import {IRubric} from '@shared/info-objects/rubric.class';
 import {deleteFolderRecursive, extractZipFile, isFolder} from '../../utils';
 
 import JSZip from 'jszip';
 import {getWorkingDirectory, writeAssignmentSettings} from '../workspace/workspace.handler';
-import {SakaiConstants} from '../../../src/shared/constants/sakai.constants';
-import {ZipInfo} from '../../../src/shared/info-objects/zip.info';
+import {SakaiConstants} from '@shared/constants/sakai.constants';
+import {ZipInfo} from '@shared/info-objects/zip.info';
 
 export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<any> {
 

@@ -1,5 +1,5 @@
 import {readFile, writeFile} from 'fs/promises';
-import {IComment} from '../../../src/shared/info-objects/comment.class';
+import {IComment} from '@shared/info-objects/comment.class';
 import {ensureConfigDirectory} from '../config/config.handler';
 import {COMMENTS_FILE, COULD_NOT_READ_COMMENT_LIST} from '../../constants';
 import {existsSync} from 'fs';

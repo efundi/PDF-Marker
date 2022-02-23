@@ -43,16 +43,16 @@ import {json2csvAsync} from 'json-2-csv';
 import {access, readFile} from 'fs/promises';
 import {find, forEach, isNil} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
-import {UpdateAssignment} from '../../../src/shared/info-objects/update-assignment';
+import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {PDFDocument} from 'pdf-lib';
-import {IRubric} from '../../../src/shared/info-objects/rubric.class';
-import {CreateAssignmentInfo, StudentInfo} from '../../../src/shared/info-objects/create-assignment.info';
+import {IRubric} from '@shared/info-objects/rubric.class';
+import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-assignment.info';
 import {annotatePdfFile} from '../../pdf/marking-annotations';
-import {IComment} from '../../../src/shared/info-objects/comment.class';
-import {AssignmentSettingsInfo} from '../../../src/shared/info-objects/assignment-settings.info';
-import {MarkInfo} from '../../../src/shared/info-objects/mark.info';
+import {IComment} from '@shared/info-objects/comment.class';
+import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
+import {MarkInfo} from '@shared/info-objects/mark.info';
 import {annotatePdfRubric} from '../../pdf/rubric-annotations';
-import {ShareAssignments} from '../../../src/shared/info-objects/share-assignments';
+import {ShareAssignments} from '@shared/info-objects/share-assignments';
 import * as os from 'os';
 import {copySync} from 'fs-extra';
 
@@ -1165,4 +1165,16 @@ export function rubricUpdate(event: IpcMainInvokeEvent, rubricName: string, assi
     });
   }
   return Promise.reject({message: COULD_NOT_READ_RUBRIC_LIST});
+}
+
+
+export function getPdfFile(event: IpcMainInvokeEvent, location: string): Promise<Buffer> {
+  return getConfig().then((config) => {
+    const loc = location.replace(/\//g, sep);
+    const actualPath = config.defaultPath + sep + loc;
+
+    return checkAccess(actualPath).then(() => {
+      return readFile(actualPath);
+    });
+  });
 }

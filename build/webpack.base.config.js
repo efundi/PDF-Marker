@@ -1,5 +1,6 @@
 const path = require("path");
 const nodeExternals = require("webpack-node-externals");
+const {TsconfigPathsPlugin} = require("tsconfig-paths-webpack-plugin");
 
 const envName = (env) => {
   if (env.production) {
@@ -27,10 +28,15 @@ module.exports = env => {
       __filename: false
     },
     resolve: {
-      alias : {
-        canvas : false
-      },
-      extensions: ['.ts', '.js']
+      // alias : {
+      //   canvas : false
+      // },
+      extensions: ['.ts', '.js'],
+      plugins: [
+        new TsconfigPathsPlugin({
+          configFile: "tsconfig-electron.json"
+        })
+      ]
     },
     externals: [nodeExternals()],
     devtool: "source-map",
@@ -42,7 +48,7 @@ module.exports = env => {
           } },
         {
           test: /\.js$/,
-          exclude: /(node_modules)|(dist\/server)/,
+          exclude: /(node_modules)/,
           loader: "babel-loader",
           options: {
           }
@@ -52,6 +58,6 @@ module.exports = env => {
           use: ["style-loader", "css-loader"]
         }
       ]
-    },
+    }
   };
 };
