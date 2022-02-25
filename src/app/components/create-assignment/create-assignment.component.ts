@@ -187,7 +187,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private initForm() {
     this.createAssignmentForm = this.fb.group({
-      assignmentName: [null, [Validators.required, Validators.maxLength(50)]],
+      assignmentName: [null, Validators.compose([Validators.required, Validators.maxLength(50), Validators.minLength(5)])],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required],
       workspaceFolder: [null, Validators.required],
@@ -471,6 +471,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         this.appService.isLoading$.next(false);
       });
     }, error => {
+      this.appService.openSnackBar(false, error);
       this.appService.isLoading$.next(false);
     });
   }
@@ -488,6 +489,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         this.appService.isLoading$.next(false);
       });
     }, error => {
+      this.appService.openSnackBar(false, error);
       this.appService.isLoading$.next(false);
     });
   }

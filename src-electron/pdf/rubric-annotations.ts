@@ -2,7 +2,7 @@ import {readFileSync} from 'fs';
 import {PDFDocument, rgb} from 'pdf-lib';
 import {isNullOrUndefinedOrEmpty} from '../utils';
 import {adjustPointsForResults} from './pdf-utils';
-import {IRubric} from "../../src/shared/info-objects/rubric.class";
+import {IRubric} from '@shared/info-objects/rubric.class';
 
 export const annotatePdfRubric = async (filePath: string, marks = [], rubric: IRubric): Promise<{ pdfBytes: Uint8Array, totalMark: number }> => {
   const file = readFileSync(filePath);
