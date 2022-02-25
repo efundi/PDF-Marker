@@ -24,7 +24,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
        this.workspaces = workspaces;
     });
-    this.assignmentSubscription = this.assignmentService.dataChanged().subscribe(assignments => {
+    this.assignmentSubscription = this.assignmentService.assignmentListChanged.subscribe(assignments => {
       this.assignments = assignments;
     });
 

@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import {isNil} from "lodash";
+import {PdfmConstants} from "@shared/constants/pdfm.constants";
 
 @Injectable({
   providedIn: 'root'
@@ -26,5 +28,41 @@ export class PdfmUtilsService {
     }
 
     return path.slice(path.lastIndexOf(separator) + 1);
+  }
+
+  /**
+   * @param {String} path Absolute path
+   * @return {String} File name
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/lastIndexOf
+   * @example basename('/home/johndoe/github/my-package/webpack.config.js') = "/home/johndoe/github/my-package"
+   * @example basename('C:\\Users\\johndoe\\github\\my-package\\webpack.config.js') = "C:\\Users\\johndoe\\github\\my-package\\"
+   */
+  public static dirname(path: string): string{
+    let separator = '/';
+
+    const windowsSeparator = '\\';
+
+    if (path.includes(windowsSeparator)) {
+      separator = windowsSeparator;
+    }
+
+    return path.slice(0, path.lastIndexOf(separator));
+  }
+
+  public static defaultWorkspaceName(workspaceName?: string): string{
+    if (isNil(workspaceName)) {
+      return PdfmConstants.DEFAULT_WORKSPACE;
+    }
+    return workspaceName;
+  }
+
+  public static buildFilePath(workspaceName: string, assignmentName: string, ...paths: string[]): string{
+    let finalPath;
+    if (!isNil(workspaceName) && workspaceName !== PdfmConstants.DEFAULT_WORKSPACE){
+      finalPath = workspaceName + '/';
+    }
+    return assignmentName + '/' + paths.join('/');
   }
 }

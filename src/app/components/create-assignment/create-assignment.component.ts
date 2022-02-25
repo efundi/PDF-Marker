@@ -79,21 +79,19 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.initForm();
     this.activatedRoute.params.subscribe(params => {
-      const id = params['id'];
-      let workspaceName = params['workspaceName'];
-      if (id && !!this.assignmentService.getSelectedAssignment()) {
+      this.assignmentId = params['id'];
+      this.workspaceName = params['workspaceName'];
+      if (!isNil(this.assignmentId)) {
         this.title = 'Manage Submissions';
         const fields = ['assignmentName', 'noRubric', 'rubric'];
-        this.assignmentId = id;
         this.isEdit = true;
         this.fc.assignmentName.setValue(this.assignmentId);
-        if (isNil(workspaceName)) {
-          workspaceName = PdfmConstants.DEFAULT_WORKSPACE;
+        if (isNil(this.workspaceName)) {
+          this.workspaceName = PdfmConstants.DEFAULT_WORKSPACE;
         }
-        this.workspaceName = workspaceName;
         this.fc.workspaceFolder.setValue(this.workspaceName);
         fields.push('workspaceFolder');
-        this.assignmentService.getAssignmentSettings(this.workspaceName, id).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
+        this.assignmentService.getAssignmentSettings(this.workspaceName, this.assignmentId).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
           this.assignmentSettings = assignmentSettings;
           if (this.assignmentSettings.rubric) {
             this.selectedRubric = this.assignmentSettings.rubric;
@@ -141,7 +139,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private generateStudentDetailsFromModel() {
-    const hierarchyModel = this.assignmentService.getSelectedAssignment();
+    const hierarchyModel = this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentId);
 
     const values: AssignmentDetails[] = [];
     if (hierarchyModel[this.assignmentId]) {
@@ -466,8 +464,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     this.appService.isLoading$.next(true);
     this.assignmentService.createAssignment(formData).subscribe((model) => {
       this.assignmentService.getAssignments().subscribe((assignments) => {
-        this.assignmentService.setSelectedAssignment(model);
-        this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]).then(() => this.assignmentService.update(assignments));
+        this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]).then(() => this.assignmentService.update(assignments));
         this.appService.isLoading$.next(false);
       });
     }, error => {
@@ -480,12 +477,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     this.assignmentService.updateAssignment(updateAssignment).subscribe(model => {
       this.assignmentService.getAssignments().subscribe((assignments) => {
         this.isEdit = false;
-        this.assignmentService.setSelectedAssignment(model);
-        if (this.workspaceName) {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.workspaceName]).then(() => this.assignmentService.update(assignments));
-        } else {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]).then(() => this.assignmentService.update(assignments));
-        }
+        this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentName, this.workspaceName]).then(() => this.assignmentService.update(assignments));
         this.appService.isLoading$.next(false);
       });
     }, error => {
@@ -519,8 +511,5 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.assignmentId && this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW) {
-      this.assignmentService.setSelectedAssignment(null);
-    }
   }
 }

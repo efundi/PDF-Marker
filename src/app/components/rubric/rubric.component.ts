@@ -1,9 +1,10 @@
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
+import {Component, Input, OnChanges, OnInit, Optional, SimpleChanges} from '@angular/core';
 import {Router} from '@angular/router';
 import {AssignmentService} from '../../services/assignment.service';
 import {AppService} from '../../services/app.service';
-import {isArray} from 'lodash';
+import {cloneDeep, isArray} from 'lodash';
 import {IRubric} from '@shared/info-objects/rubric.class';
+import {AssignmentMarkingComponent} from '../assignment-marking/assignment-marking.component';
 
 @Component({
   selector: 'pdf-marker-rubric',
@@ -18,9 +19,6 @@ export class RubricComponent implements OnInit, OnChanges {
   @Input()
   private rubricSelections;
 
-  @Output()
-  marksUpdated: EventEmitter<any[]> = new EventEmitter<any[]>();
-
   maxScore = 0;
 
   totalTally = 0;
@@ -29,6 +27,7 @@ export class RubricComponent implements OnInit, OnChanges {
 
   constructor(private router: Router,
               private assignmentService: AssignmentService,
+              @Optional() private assignmentMarkingComponent: AssignmentMarkingComponent,
               private appService: AppService) {
   }
 
@@ -63,22 +62,15 @@ export class RubricComponent implements OnInit, OnChanges {
 
   selectedCriteria(criteriaLevelIndex: number, criteriaIndex) {
     if (this.isMarkingRubricPage) {
-      if (this.rubricSelections[criteriaIndex] === criteriaLevelIndex) {
-        this.rubricSelections[criteriaIndex] = null;
+      const marks = cloneDeep(this.rubricSelections);
+      if (marks[criteriaIndex] === criteriaLevelIndex) {
+        marks[criteriaIndex] = null;
       } else {
-        this.rubricSelections[criteriaIndex] = criteriaLevelIndex;
+        marks[criteriaIndex] = criteriaLevelIndex;
       }
       this.getTotalMark();
       // call assignmentService
-      this.appService.isLoading$.next(true);
-      this.assignmentService.saveRubricMarks(this.rubric.name, this.rubricSelections, this.totalTally).subscribe(() => {
-        this.marksUpdated.emit(this.rubricSelections);
-        this.appService.openSnackBar(true, 'Saved');
-        this.appService.isLoading$.next(false);
-      }, error => {
-        this.appService.openSnackBar(false, 'Unable to save marks');
-        this.appService.isLoading$.next(false);
-      });
+      this.assignmentMarkingComponent.saveRubricMarks(marks).subscribe();
     }
   }
 

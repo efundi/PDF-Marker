@@ -54,25 +54,16 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
 
   ngOnInit() {
     if (this.assignmentRootFolder) {
-      this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfFile => {
-        if (this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + '/')) {
-          this.filePath = this.assignmentService.getSelectedPdfLocation();
-        } else {
-          this.isFileSelected = false;
-          this.filePath = undefined;
-        }
-      });
+      // TODO need to fix this
+      // this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfFile => {
+      //   if (this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + '/')) {
+      //     this.filePath = this.assignmentService.getSelectedPdfLocation();
+      //   } else {
+      //     this.isFileSelected = false;
+      //     this.filePath = undefined;
+      //   }
+      // });
     }
-    // this.subscription = this.workspaceService.dialogResultSource$.subscribe(
-    //   dialogResult => {
-    //     if (dialogResult && dialogResult.workspaceName && dialogResult.workspaceName !== dialogResult.prevWorkspaceName) {
-    //       console.log(dialogResult.prevWorkspaceName);
-    //       console.log(dialogResult.workspaceName);
-    //     }
-    //     if (dialogResult && dialogResult.movedAssignments && dialogResult.movedAssignments.length > 0) {
-    //       console.log(dialogResult.movedAssignments);
-    //     }
-    //   });
   }
 
   ngOnDestroy() {
@@ -101,27 +92,15 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
       }
       if (!this.isAssignmentRoot(objectName, hierarchyModel) && isWorkspace) {
         this.appService.isLoading$.next(true);
-        this.assignmentService.setSelectedWorkspace(hierarchyModel);
-        // if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
-        this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);
+        this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW, objectName]);
         $event.stopImmediatePropagation();
       } else if (this.isAssignmentRoot(objectName, hierarchyModel)) {
-
-        // if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW) {
         if (this.parent !== undefined) {
           this.appService.isLoading$.next(true);
-          if (folderOrFileKeys.length > 1) {
-            const arr = Object.entries(hierarchyModel).find(x => x[0] === objectName);
-            const obj1 = Object.fromEntries(new Map([arr]));
-            this.assignmentService.setSelectedAssignment(obj1);
-          } else {
-            this.assignmentService.setSelectedAssignment(hierarchyModel);
-          }
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.parent]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, objectName, this.parent]);
         } else {
           this.appService.isLoading$.next(true);
-          this.assignmentService.setSelectedAssignment(hierarchyModel);
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, objectName]);
         }
         // }
         $event.stopImmediatePropagation();
@@ -145,20 +124,10 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
     this.isFileSelected = true;
   }
 
-  isSelected() {
-    return ((JSON.stringify(this.hierarchyModel) === JSON.stringify(this.assignmentService.getSelectedAssignment())) && this.router.url === RoutesEnum.ASSIGNMENT_OVERVIEW);
-  }
-
-  onSelectedPdf(pdfFileLocation: string) {
-    if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER || this.assignmentService.getSelectedPdfLocation() !== pdfFileLocation) {
-      console.log(pdfFileLocation);
-      this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
-        this.assignmentService.configure(pdfFileLocation, blobData);
-      }, error => {
-        this.appService.isLoading$.next(false);
-        this.appService.openSnackBar(false, 'Unable to read file');
-      });
-    }
+  onSelectedPdf(hierarchiralModel: any) {
+    const workspaceName = "todoworkspace";
+    const assignmentName = "todoassignmentName";
+    this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, 'TODO Student', hierarchiralModel.path]);
   }
 
   checkIfWorkspace(hierarchyModel) {

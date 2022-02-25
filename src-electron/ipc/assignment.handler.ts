@@ -88,7 +88,7 @@ export function getAssignments(): Promise<any> {
 }
 
 
-export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: any[] = [], totalMarks: any): Promise<any> {
+export function saveMarks(event: IpcMainInvokeEvent, workspaceName: string, assignmentName, marks: any[] = [], totalMarks: any): Promise<any> {
 
   let totalMark = 0;
   if (!isNullOrUndefined(marks)) {
@@ -120,9 +120,8 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: an
     }
   }
 
-  return getConfig().then((config) => {
+  return getAssignmentDirectory(workspaceName, assignmentName).then((assignmentDirectory) => {
     // console.log("Path Recieved: " + req.body.location);
-    const loc = location.replace(/\//g, sep);
     console.log('loc after path: ' + loc);
     const pathSplit = loc.split(sep);
     console.log('split: ' + pathSplit);
@@ -364,31 +363,6 @@ export function saveRubricMarks(event: IpcMainInvokeEvent, location: string, rub
 }
 
 
-
-
-export function getAssignmentSettings(event: IpcMainInvokeEvent, location: string): Promise<any> {
-
-  return getConfig().then((config) => {
-    const loc = location;
-    if (isNullOrUndefined(loc) || loc === '') {
-      return Promise.reject(INVALID_PATH_PROVIDED);
-    }
-
-    const assignmentFolder = config.defaultPath + sep + loc;
-    if (existsSync(assignmentFolder)) {
-      return readFile(assignmentFolder + sep + SETTING_FILE).then((data) => {
-        if (!isJson(data)) {
-          return Promise.reject('Assignment settings is not JSON');
-        }
-        return JSON.parse(data.toString());
-      }, (error) => {
-        return Promise.reject(error.message);
-      });
-    } else {
-      return Promise.reject('Could not load assignment settings');
-    }
-  });
-}
 
 
 
@@ -766,6 +740,31 @@ export function getGrades(event: IpcMainInvokeEvent, location: string): Promise<
   });
 }
 
+
+
+export function getAssignmentSettings(event: IpcMainInvokeEvent, workspaceName: string, assignmentName: string): Promise<any> {
+
+  return getConfig().then((config) => {
+    let assignmentFolder;
+    if (isNil(workspaceName) || workspaceName === PdfmConstants.DEFAULT_WORKSPACE) {
+      assignmentFolder = config.defaultPath + sep + assignmentName;
+    } else {
+      assignmentFolder = config.defaultPath + sep + workspaceName + sep + assignmentName;
+    }
+    if (existsSync(assignmentFolder)) {
+      return readFile(assignmentFolder + sep + SETTING_FILE).then((data) => {
+        if (!isJson(data)) {
+          return Promise.reject('Assignment settings is not JSON');
+        }
+        return JSON.parse(data.toString());
+      }, (error) => {
+        return Promise.reject(error.message);
+      });
+    } else {
+      return Promise.reject('Could not load assignment settings');
+    }
+  });
+}
 
 
 export function getAssignmentGlobalSettings(event: IpcMainInvokeEvent, location: string): Promise<any> {
