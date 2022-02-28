@@ -1,113 +1,111 @@
-<ng-container>
-  <pdf-marker-alert></pdf-marker-alert>
-  <form [formGroup]="createAssignmentForm">
-    <h1>
-      <mat-icon>picture_as_pdf</mat-icon>&nbsp;{{ title }}</h1>
-    <mat-divider></mat-divider>
-    <div class="pdf-spacer"></div>
-    <mat-form-field class="settings-halfWidth">
-      <mat-label>Assignment:</mat-label>
-      <input #assignmentName formControlName="assignmentName" type="text" placeholder="My Assignment" matInput required
-             [autocomplete]="false" maxlength="50">
-    </mat-form-field>
-    <div class="pdf-spacer"></div>
-    <mat-label class="pdf-marker-form-labels">Rubric</mat-label>
-    <div class="pdf-marker-rubric-container">
-      <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange()">No Rubric</mat-checkbox>
-      <ng-container>
-        <br>
-        <mat-form-field [hideRequiredMarker]="createAssignmentForm.get('noRubric').value">
-          <mat-label>Select Rubric</mat-label>
-          <mat-select formControlName="rubric" required="createAssignmentForm.get('noRubric').value">
-            <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{rubric.name}}</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </ng-container>
-      <div class="pdf-spacer"></div>
-      <mat-label class="pdf-marker-form-labels">Working Folder:&nbsp;</mat-label>
-      <mat-form-field>
-        <mat-label>Select folder</mat-label>
-        <mat-select formControlName="workspaceFolder" required>
-          <mat-option *ngFor="let workspace of workspaces" [value]="workspace">{{workspace}}</mat-option>
+<pdf-marker-alert></pdf-marker-alert>
+<form [formGroup]="createAssignmentForm">
+  <h1>
+    <mat-icon>picture_as_pdf</mat-icon>&nbsp;{{ title }}</h1>
+  <mat-divider></mat-divider>
+  <div class="pdf-spacer"></div>
+  <mat-form-field class="settings-halfWidth">
+    <mat-label>Assignment:</mat-label>
+    <input #assignmentName formControlName="assignmentName" type="text" placeholder="My Assignment" matInput required
+           [autocomplete]="false" maxlength="50">
+  </mat-form-field>
+  <div class="pdf-spacer"></div>
+  <mat-label class="pdf-marker-form-labels">Rubric</mat-label>
+  <div class="pdf-marker-rubric-container">
+    <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange()">No Rubric</mat-checkbox>
+    <ng-container>
+      <br>
+      <mat-form-field [hideRequiredMarker]="createAssignmentForm.get('noRubric').value">
+        <mat-label>Select Rubric</mat-label>
+        <mat-select formControlName="rubric" required="createAssignmentForm.get('noRubric').value">
+          <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{rubric.name}}</mat-option>
         </mat-select>
       </mat-form-field>
-    </div>
+    </ng-container>
     <div class="pdf-spacer"></div>
-    <div>
-      <mat-label class="pdf-marker-form-labels">Students</mat-label>
-      <table>
-        <tbody formArrayName="studentRow">
-        <tr *ngFor="let studentInfo of studentRow.controls; let studentIndex=index" [formGroupName]="studentIndex">
-          <td class="pdf-marker-create-assignment-cell-position">
-            <mat-form-field class="settings-halfWidth">
-              <mat-label>Student ID</mat-label>
-              <input formControlName="studentId" type="text" matInput required [autocomplete]="false"
-                     [readonly]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value">
-            </mat-form-field>
-            <span class="pdf-marker-create-assignment-tooltip-error"
-                  *ngIf="studentInfo.get('studentId')?.errors?.minlength">must be >= 5 characters!</span>
-            <span class="pdf-marker-create-assignment-tooltip-error"
-                  *ngIf="studentInfo.get('studentId')?.errors?.maxlength">must be <= 50 characters!</span>
-            <span class="pdf-marker-create-assignment-tooltip-error"
-                  *ngIf="studentInfo.get('studentId')?.errors?.unique">must be unique!</span>
-          </td>
-          <td>
-            <mat-form-field class="settings-halfWidth">
-              <mat-label>Student Name</mat-label>
-              <input formControlName="studentName" type="text" matInput required [autocomplete]="false"
-                     [readonly]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value">
-            </mat-form-field>
-          </td>
-          <td>
-            <mat-form-field class="settings-halfWidth">
-              <mat-label>Student Surname</mat-label>
-              <input formControlName="studentSurname" type="text" matInput required [autocomplete]="false"
-                     [readonly]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value">
-            </mat-form-field>
-          </td>
-          <td class="pdf-marker-create-assignment-cell-position">
-            <div class="pdf-marker-file-upload"
-                 [class.pdf-marker-file-upload-error]="(studentInfo.get('studentSubmission')?.errors && studentInfo.get('studentSubmission')?.touched && studentInfo.get('studentSubmission')?.dirty)">
-              <button type="button" [disabled]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value"
-                      mat-raised-button>Browse<input formControlName="studentSubmission"
-                                                     [class.button-visibility]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value"
-                                                     type="file" class="pdf-marker-upload" [accept]="MimeTypesEnum.PDF"
-                                                     required (change)="onFileChange(studentIndex, $event)"></button>
-              &nbsp;&nbsp;
-              <input type="text" formControlName="studentSubmissionText" class="pdf-marker-upload-display" readonly
-                     placeholder="Choose PDF File">
-            </div>
-            <span class="pdf-marker-create-assignment-tooltip-error"
-                  *ngIf="studentInfo.get('studentSubmission')?.errors?.file">must be a PDF file!</span>
-          </td>
-          <td>
-            <!--<mat-checkbox [class.button-visibility]="!isEdit" [disabled]="!studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value || (studentRow.length) === 1" formControlName="shouldDelete" color="primary">Delete</mat-checkbox>-->
-            <button
-              [disabled]="studentFormGroupAtIndex(studentIndex).invalid || (studentRow.length) - 1 !== studentIndex"
-              [class.pdf-marker-create-assignment-disabled]="studentFormGroupAtIndex(studentIndex).invalid || (studentRow.length) - 1 !== studentIndex"
-              type="button" matTooltip="Add" mat-button mat-icon-button (click)="addNewRow()">
-              <mat-icon
-                [class.pdf-marker-create-assignment-add]="(studentRow.length) - 1 === studentIndex && !studentFormGroupAtIndex(studentIndex).invalid"
-                [class.pdf-icon-disabled]="(studentRow.length) - 1 !== studentIndex || studentFormGroupAtIndex(studentIndex).invalid">
-                add_circle
-              </mat-icon>
-            </button>
-            <button [disabled]="studentRow.length == 1"
-                    [class.pdf-marker-create-assignment-disabled]="studentRow.length == 1" type="button"
-                    matTooltip="Remove" mat-button mat-icon-button (click)="onStudentInfoRemove(studentIndex)">
-              <mat-icon [class.pdf-marker-create-assignment-remove]="!(studentRow.length == 1)"
-                        [class.pdf-icon-disabled]="studentRow.length == 1">remove_circle
-              </mat-icon>
-            </button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="pdf-marker-submit">
-      <button type="button" mat-raised-button [disabled]="createAssignmentForm.invalid || studentRow.invalid"
-              (click)="onSubmit($event)">Submit
-      </button>
-    </div>
-  </form>
-</ng-container>
+    <mat-label class="pdf-marker-form-labels">Working Folder:&nbsp;</mat-label>
+    <mat-form-field>
+      <mat-label>Select folder</mat-label>
+      <mat-select formControlName="workspaceFolder" required>
+        <mat-option *ngFor="let workspace of workspaces" [value]="workspace">{{workspace}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="pdf-spacer"></div>
+  <div>
+    <mat-label class="pdf-marker-form-labels">Students</mat-label>
+    <table>
+      <tbody formArrayName="studentRow">
+      <tr *ngFor="let studentInfo of studentRow.controls; let studentIndex=index" [formGroupName]="studentIndex">
+        <td class="pdf-marker-create-assignment-cell-position">
+          <mat-form-field class="settings-halfWidth">
+            <mat-label>Student ID</mat-label>
+            <input formControlName="studentId" type="text" matInput required [autocomplete]="false"
+                   [readonly]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value">
+          </mat-form-field>
+          <span class="pdf-marker-create-assignment-tooltip-error"
+                *ngIf="studentInfo.get('studentId')?.errors?.minlength">must be >= 5 characters!</span>
+          <span class="pdf-marker-create-assignment-tooltip-error"
+                *ngIf="studentInfo.get('studentId')?.errors?.maxlength">must be <= 50 characters!</span>
+          <span class="pdf-marker-create-assignment-tooltip-error"
+                *ngIf="studentInfo.get('studentId')?.errors?.unique">must be unique!</span>
+        </td>
+        <td>
+          <mat-form-field class="settings-halfWidth">
+            <mat-label>Student Name</mat-label>
+            <input formControlName="studentName" type="text" matInput required [autocomplete]="false"
+                   [readonly]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value">
+          </mat-form-field>
+        </td>
+        <td>
+          <mat-form-field class="settings-halfWidth">
+            <mat-label>Student Surname</mat-label>
+            <input formControlName="studentSurname" type="text" matInput required [autocomplete]="false"
+                   [readonly]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value">
+          </mat-form-field>
+        </td>
+        <td class="pdf-marker-create-assignment-cell-position">
+          <div class="pdf-marker-file-upload"
+               [class.pdf-marker-file-upload-error]="(studentInfo.get('studentSubmission')?.errors && studentInfo.get('studentSubmission')?.touched && studentInfo.get('studentSubmission')?.dirty)">
+            <button type="button" [disabled]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value"
+                    mat-raised-button>Browse<input formControlName="studentSubmission"
+                                                   [class.button-visibility]="studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value"
+                                                   type="file" class="pdf-marker-upload" [accept]="MimeTypesEnum.PDF"
+                                                   required (change)="onFileChange(studentIndex, $event)"></button>
+            &nbsp;&nbsp;
+            <input type="text" formControlName="studentSubmissionText" class="pdf-marker-upload-display" readonly
+                   placeholder="Choose PDF File">
+          </div>
+          <span class="pdf-marker-create-assignment-tooltip-error"
+                *ngIf="studentInfo.get('studentSubmission')?.errors?.file">must be a PDF file!</span>
+        </td>
+        <td>
+          <!--<mat-checkbox [class.button-visibility]="!isEdit" [disabled]="!studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value || (studentRow.length) === 1" formControlName="shouldDelete" color="primary">Delete</mat-checkbox>-->
+          <button
+            [disabled]="studentFormGroupAtIndex(studentIndex).invalid || (studentRow.length) - 1 !== studentIndex"
+            [class.pdf-marker-create-assignment-disabled]="studentFormGroupAtIndex(studentIndex).invalid || (studentRow.length) - 1 !== studentIndex"
+            type="button" matTooltip="Add" mat-button mat-icon-button (click)="addNewRow()">
+            <mat-icon
+              [class.pdf-marker-create-assignment-add]="(studentRow.length) - 1 === studentIndex && !studentFormGroupAtIndex(studentIndex).invalid"
+              [class.pdf-icon-disabled]="(studentRow.length) - 1 !== studentIndex || studentFormGroupAtIndex(studentIndex).invalid">
+              add_circle
+            </mat-icon>
+          </button>
+          <button [disabled]="studentRow.length == 1"
+                  [class.pdf-marker-create-assignment-disabled]="studentRow.length == 1" type="button"
+                  matTooltip="Remove" mat-button mat-icon-button (click)="onStudentInfoRemove(studentIndex)">
+            <mat-icon [class.pdf-marker-create-assignment-remove]="!(studentRow.length == 1)"
+                      [class.pdf-icon-disabled]="studentRow.length == 1">remove_circle
+            </mat-icon>
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="pdf-marker-submit">
+    <button type="button" mat-raised-button [disabled]="createAssignmentForm.invalid || studentRow.invalid"
+            (click)="onSubmit($event)">Submit
+    </button>
+  </div>
+</form>

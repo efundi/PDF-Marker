@@ -12,6 +12,7 @@ import {
 } from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
+import {BusyService} from "../../services/busy.service";
 
 
 @Component({
@@ -40,6 +41,7 @@ export class RubricViewModalComponent implements OnInit {
               private importService: ImportService,
               private rubricService: RubricService,
               private fb: FormBuilder, private assignmentService: AssignmentService,
+              private busyService: BusyService,
               @Inject(MAT_DIALOG_DATA) config) {
 
     if (config != null) {
@@ -61,13 +63,14 @@ export class RubricViewModalComponent implements OnInit {
 
   ngOnInit() {
     this.initForm();
-    this.rubricForm.controls.rubric.setValue(this.assignmentSettingsInfo.rubric.name);
-    // this.previouslyEmitted = this.assignmentSettingsInfo.rubric.name;
-    this.selectedRubric = this.assignmentSettingsInfo.rubric.name;
-    this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
-      this.rubrics = rubrics;
-    });
-
+    if (this.overviewPage) {
+      this.rubricForm.controls.rubric.setValue(this.assignmentSettingsInfo.rubric.name);
+      // this.previouslyEmitted = this.assignmentSettingsInfo.rubric.name;
+      this.selectedRubric = this.assignmentSettingsInfo.rubric.name;
+      this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
+        this.rubrics = rubrics;
+      });
+    }
 
   }
 
@@ -107,14 +110,14 @@ export class RubricViewModalComponent implements OnInit {
 
   saveRubricChange() {
 
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.assignmentService.updateAssignmentRubric(this.selectedRubric, this.assignmentName).subscribe((rubric: IRubric) => {
       this.selectedRubric = (rubric) ? rubric.name : null;
       this.isRubric = !this.isNullOrUndefined(this.selectedRubric);
       this.appService.openSnackBar(true, 'Successfully updated rubric');
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     }, error => {
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
       this.appService.openSnackBar(false, 'Unable to update rubric');
     });
     this.dialogRef.close();

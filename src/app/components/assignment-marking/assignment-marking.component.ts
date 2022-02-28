@@ -28,7 +28,8 @@ import {
 import {AssignmentMarkingSessionService, ZoomChangeEvent} from './assignment-marking-session.service';
 import {AssignmentMarkingPageComponent} from '../assignment-marking-page/assignment-marking-page.component';
 import {IRubric} from '@shared/info-objects/rubric.class';
-import {PdfmUtilsService} from "../../services/pdfm-utils.service";
+import {PdfmUtilsService} from '../../services/pdfm-utils.service';
+import {BusyService} from '../../services/busy.service';
 
 
 GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
@@ -48,6 +49,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   constructor(private renderer: Renderer2,
               private assignmentService: AssignmentService,
+              private busyService: BusyService,
               private el: ElementRef,
               private dialog: MatDialog,
               private resolver: ComponentFactoryResolver,
@@ -71,7 +73,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   isPdfLoaded: boolean;
   currentPage = 1;
   assignmentSettings: AssignmentSettingsInfo;
-  totalMark = 0;
   private paramsSubscription: Subscription;
   private colorChangeSubscription: Subscription;
   private zoomChangeSubscription: Subscription;
@@ -107,7 +108,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   private loadAssignment() {
     this.currentPage = 1;
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.assignmentService.getFile(this.pdf)
       .pipe(
         mergeMap((data) => this.loadPdf(data)),
@@ -116,13 +117,14 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       ).subscribe({
       next: (settings: AssignmentSettingsInfo) => {
         this.appService.initializeScrollPosition();
+        this.isPdfLoaded = true;
+        this.busyService.stop();
       },
       error: (error) => {
         console.log(error);
-      },
-      complete: () => {
-        this.isPdfLoaded = true;
-        this.appService.isLoading$.next(false);
+        this.isPdfLoaded = false;
+        this.busyService.stop();
+        this.router.navigate(['/marker']);
       }
     });
   }
@@ -242,14 +244,14 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   onAssignmentSettings(settings: AssignmentSettingsInfo) {
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.assignmentService.updateAssignmentSettings(settings, this.workspaceName, this.assignmentName).subscribe({
       next: (assignmentSettings: AssignmentSettingsInfo) => {
         this.assignmentSettings = assignmentSettings;
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       },
       error: (error) => {
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       }}
     );
   }
@@ -272,18 +274,18 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   saveMarks(marks: MarkInfo[][] = null): Observable<any> {
     const originalMarks = cloneDeep(this.marks);
     const markDetails = marks || this.marks;
-    this.appService.isLoading$.next(true);
-    return this.assignmentService.saveMarks(PdfmUtilsService.dirname(this.pdf, 2), markDetails, this.totalMark)
+    this.busyService.start();
+    return this.assignmentService.saveMarks(PdfmUtilsService.dirname(this.pdf, 2), markDetails)
       .pipe(
         map(() => {
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
           this.marks = this.setupMark(markDetails);
           this.appService.openSnackBar(true, 'Saved');
         })
       )
       .pipe(
         catchError((error) => {
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
           this.marks = originalMarks;
           this.appService.openSnackBar(false, 'Unable to save');
           return throwError(error);
@@ -294,18 +296,18 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   saveRubricMarks(marks: any[]): Observable<any> {
     const originalMarks = cloneDeep(this.marks);
     const markDetails = marks || this.marks;
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     return this.assignmentService.saveRubricMarks(PdfmUtilsService.dirname(this.pdf, 2), this.rubric.name, markDetails)
       .pipe(
         map(() => {
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
           this.marks = this.setupMark(markDetails);
           this.appService.openSnackBar(true, 'Saved');
         })
       )
       .pipe(
         catchError((error) => {
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
           this.marks = originalMarks;
           this.appService.openSnackBar(false, 'Unable to save');
           return throwError(error);

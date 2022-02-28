@@ -21,7 +21,9 @@ import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-ass
 import {RubricService} from '../../services/rubric.service';
 import {isNil} from 'lodash';
 import {PdfmConstants} from '@shared/constants/pdfm.constants';
-import {mergeMap, tap} from 'rxjs';
+import {forkJoin, mergeMap, Observable, tap, throwError} from 'rxjs';
+import {BusyService} from "../../services/busy.service";
+import {catchError} from "rxjs/operators";
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -68,6 +70,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   constructor(private fb: FormBuilder,
               private alertService: AlertService,
+              private busyService: BusyService,
               private assignmentService: AssignmentService,
               private appService: AppService,
               private workspaceService: WorkspaceService,
@@ -79,6 +82,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.initForm();
+
+    this.busyService.start();
     this.activatedRoute.params.subscribe(params => {
       this.assignmentId = params['id'];
       this.workspaceName = params['workspaceName'];
@@ -92,52 +97,73 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         }
         this.fc.workspaceFolder.setValue(this.workspaceName);
         fields.push('workspaceFolder');
-        this.assignmentService.getAssignmentSettings(this.workspaceName, this.assignmentId).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
-          this.assignmentSettings = assignmentSettings;
-          if (this.assignmentSettings.rubric) {
-            this.selectedRubric = this.assignmentSettings.rubric;
-            this.fc.noRubric.setValue(this.noRubricDefaultValue);
-            this.fc.rubric.setValue(this.assignmentSettings.rubric.name);
-          } else {
-            this.fc.noRubric.setValue(!this.noRubricDefaultValue);
-          }
-          this.disableFields(this.createAssignmentForm, fields);
-          this.generateStudentDetailsFromModel();
+        this.busyService.start();
+        this.assignmentService.getAssignmentSettings(this.workspaceName, this.assignmentId).subscribe({
+          next: (assignmentSettings: AssignmentSettingsInfo) => {
+            this.assignmentSettings = assignmentSettings;
+            if (this.assignmentSettings.rubric) {
+              this.selectedRubric = this.assignmentSettings.rubric;
+              this.fc.noRubric.setValue(this.noRubricDefaultValue);
+              this.fc.rubric.setValue(this.assignmentSettings.rubric.name);
+            } else {
+              this.fc.noRubric.setValue(!this.noRubricDefaultValue);
+            }
+            this.disableFields(this.createAssignmentForm, fields);
+            this.generateStudentDetailsFromModel();
+            this.busyService.stop();
+          },
+          error: () => this.busyService.stop()
         });
       } else {
         this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD]);
       }
     });
 
-    this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
-      this.rubrics = rubrics;
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
-      this.appService.isLoading$.next(false);
-    });
-
-    this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
-      if (workspaces) {
-        this.workspaces = [...workspaces];
-        this.workspaces = this.workspaces.map(item => {
-          return PdfmUtilsService.basename(item);
-        });
-      }
-      this.workspaces.unshift(PdfmConstants.DEFAULT_WORKSPACE);
-      if (this.workspaces.length <= 1) {
-        this.createAssignmentForm.controls.workspaceFolder.setValue(PdfmConstants.DEFAULT_WORKSPACE);
-      }
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to retrieve workspaces');
-      this.appService.isLoading$.next(false);
-    });
 
     if (!this.isEdit) {
       this.addNewRow();
     }
+    forkJoin([
+      this.loadRubrics(),
+      this.loadWorkspaces()
+    ]).subscribe({
+      complete: () => {
+        this.busyService.stop();
+      },
+      error: (reason) => {
+        this.appService.openSnackBar(false, reason);
+        this.busyService.stop();
+      }
+    });
+
+
   }
+
+  private loadWorkspaces(): Observable<string[]>{
+    return this.workspaceService.getWorkspaces().pipe(
+      catchError(() => throwError(() => 'Unable to retrieve workspaces')),
+      tap((workspaces: string[]) => {
+        if (workspaces) {
+          this.workspaces = [...workspaces];
+          this.workspaces = this.workspaces.map(item => {
+            return PdfmUtilsService.basename(item);
+          });
+        }
+        this.workspaces.unshift(PdfmConstants.DEFAULT_WORKSPACE);
+        if (this.workspaces.length <= 1) {
+          this.createAssignmentForm.controls.workspaceFolder.setValue(PdfmConstants.DEFAULT_WORKSPACE);
+        }
+      })
+    );
+  }
+
+  private loadRubrics(): Observable<IRubricName[]>{
+    return this.rubricService.getRubricNames().pipe(
+      catchError(() => throwError(() => 'Unable to retrieve rubrics')),
+      tap((rubrics) => this.rubrics = rubrics)
+    );
+  }
+
 
   private generateStudentDetailsFromModel() {
     const hierarchyModel = this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentId);
@@ -438,22 +464,23 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private performCreate(createAssignmentInfo: CreateAssignmentInfo) {
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.assignmentService.createAssignment(createAssignmentInfo)
       .pipe(
         mergeMap(() => this.assignmentService.getAssignments()),
         tap((assignments) => this.assignmentService.update(assignments))
       ).subscribe({
       next: () => {
-        if (PdfmUtilsService.isDefaultWorkspace(this.workspaceName)) {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
+        if (PdfmUtilsService.isDefaultWorkspace(createAssignmentInfo.workspace)) {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, createAssignmentInfo.assignmentName]);
         } else {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, createAssignmentInfo.assignmentName, createAssignmentInfo.workspace]);
         }
+        this.busyService.stop()
       },
       error: (error) => {
         this.appService.openSnackBar(false, error);
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       }
     });
   }
@@ -474,7 +501,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.appService.openSnackBar(false, error);
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       }
     });
   }

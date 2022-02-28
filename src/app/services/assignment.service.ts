@@ -104,8 +104,8 @@ export class AssignmentService {
     this.assignmentsHierarchy = assignmentsHierarchy;
   }
 
-  saveMarks(location: string, marks: MarkInfo[][], totalMark: number = 0): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.saveMarks(location, marks, totalMark));
+  saveMarks(location: string, marks: MarkInfo[][]): Observable<any> {
+    return fromIpcResponse(this.assignmentApi.saveMarks(location, marks));
   }
 
   saveRubricMarks(location: string, rubricName: string = '', marks: any[]): Observable<any> {

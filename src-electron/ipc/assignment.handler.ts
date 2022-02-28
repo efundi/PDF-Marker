@@ -88,7 +88,7 @@ export function getAssignments(): Promise<any> {
 }
 
 
-export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: any[] = [], totalMarks: any): Promise<any> {
+export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: any[] = []): Promise<any> {
 
   let totalMark = 0;
   if (!isNullOrUndefined(marks)) {
@@ -120,7 +120,7 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: an
     }
   }
 
-  return saveToMarks(location, marks, totalMarks);
+  return saveToMarks(location, marks, totalMark);
 }
 
 function saveToMarks(studentLocation: string, marks: any, totalMark: number): Promise<any>{

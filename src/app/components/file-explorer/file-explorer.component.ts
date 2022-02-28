@@ -7,6 +7,7 @@ import {RoutesEnum} from '../../utils/routes.enum';
 import {ZipService} from '../../services/zip.service';
 import {WorkspaceService} from '../../services/workspace.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
+import {BusyService} from "../../services/busy.service";
 
 @Component({
   selector: 'pdf-marker-file-explorer',
@@ -49,6 +50,7 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
               public activatedRoute: ActivatedRoute,
               public assignmentService: AssignmentService,
               private workspaceService: WorkspaceService,
+              private busyService: BusyService,
               private appService: AppService,
               private zipService: ZipService) { }
 
@@ -75,6 +77,7 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
 
   onAssignment(objectName, hierarchyModel, $event) {
 
+    this.busyService.start();
     this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
       this.workspaceList = workspaces;
       const folderOrFileKeys = Object.keys(hierarchyModel);
@@ -92,22 +95,19 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
         }
       }
       if (!this.isAssignmentRoot(objectName, hierarchyModel) && isWorkspace) {
-        this.appService.isLoading$.next(true);
-        this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW, objectName]);
+        this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW, objectName]).then(() => this.busyService.stop());
         $event.stopImmediatePropagation();
       } else if (this.isAssignmentRoot(objectName, hierarchyModel)) {
         if (this.parent !== undefined) {
-          this.appService.isLoading$.next(true);
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, objectName, this.parent]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, objectName, this.parent]).then(() => this.busyService.stop());
         } else {
-          this.appService.isLoading$.next(true);
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, objectName]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, objectName]).then(() => this.busyService.stop());
         }
-        // }
         $event.stopImmediatePropagation();
+      } else {
+        this.busyService.stop();
       }
     });
-    this.appService.isLoading$.next(false);
   }
 
   isAssignmentRoot(objectName: string, hierarchyModel: object): boolean {

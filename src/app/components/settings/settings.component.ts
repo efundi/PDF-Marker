@@ -5,6 +5,7 @@ import {AppService} from '../../services/app.service';
 import {AlertService} from '../../services/alert.service';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {AssignmentService} from '../../services/assignment.service';
+import {BusyService} from '../../services/busy.service';
 
 @Component({
   selector: 'pdf-marker-settings',
@@ -13,7 +14,6 @@ import {AssignmentService} from '../../services/assignment.service';
 })
 export class SettingsComponent implements OnInit {
 
-  isLoading$ = this.appService.isLoading$;
   settingsForm: FormGroup;
   settingsLMSSelected = 'Sakai';
   lmsChoices: string[] = ['Sakai'];
@@ -24,19 +24,22 @@ export class SettingsComponent implements OnInit {
               private settingsService: SettingsService,
               private appService: AppService,
               private alertService: AlertService,
+              private busyService: BusyService,
               private assignmentService: AssignmentService) {
+
+    this.initForm();
   }
 
   ngOnInit() {
-    this.isLoading$.next(true);
+
+    this.busyService.start();
     this.settingsService.getConfigurations().subscribe(configurations => {
       this.settingsForm.controls.lmsSelection.setValue(configurations.lmsSelection ? configurations.lmsSelection : this.settingsLMSSelected);
       this.settingsForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath : null);
-      this.isLoading$.next(false);
+      this.busyService.stop();
     }, error => {
-      this.isLoading$.next(false);
+      this.busyService.stop();
     });
-    this.initForm();
   }
 
   private initForm() {
@@ -65,15 +68,15 @@ export class SettingsComponent implements OnInit {
     }
     this.settingsForm.controls.defaultPath.setValue(this.removeTrailingSlashes(this.settingsForm.controls.defaultPath.value));
     // Call Service to handle rest calls... also use interceptors
-    this.isLoading$.next(true);
+    this.busyService.start();
     this.settingsService.saveConfigurations(this.settingsForm.value).subscribe((response) => {
       this.assignmentService.getAssignments().subscribe(assignments => {
         this.assignmentService.update(assignments);
       });
       this.appService.openSnackBar(true, 'Successfully updated settings!');
-      this.isLoading$.next(false);
+      this.busyService.stop();
     }, error => {
-      this.isLoading$.next(false);
+      this.busyService.stop();
     });
   }
 

@@ -8,6 +8,7 @@ import { SettingsService } from '../../services/settings.service';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {MatTableDataSource} from '@angular/material/table';
+import {BusyService} from "../../services/busy.service";
 
 @Component({
   selector: 'pdf-marker-comments',
@@ -27,21 +28,24 @@ export class GenericCommentsComponent implements OnInit {
               private settingsService: SettingsService,
               private appService: AppService,
               private commentsService: CommentService,
+              private busyService: BusyService,
               private alertService: AlertService) {
+
+    this.initForm();
   }
 
   ngOnInit() {
-    this.appService.isLoading$.next(true);
-    this.initForm();
-    this.commentsService.getCommentDetails().subscribe((comments: IComment[]) => {
-      this.populateComments(comments);
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
-      this.appService.isLoading$.next(false);
+    this.busyService.start();
+    this.commentsService.getCommentDetails().subscribe({
+      next: (comments: IComment[]) => {
+        this.populateComments(comments);
+        this.busyService.stop();
+      },
+      error: (error) => {
+        this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
+        this.busyService.stop();
+      }
     });
-
-    this.appService.isLoading$.next(false);
   }
 
   private populateComments(comments: IComment[]) {
@@ -66,20 +70,23 @@ export class GenericCommentsComponent implements OnInit {
       return;
     }
 
-    this.appService.isLoading$.next(true);
-    this.commentsService.addComment( this.genericCommentsForm.value.newComment).subscribe((comments: IComment[]) => {
-      this.populateComments(comments);
-      this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(true, 'Comment saved');
-      this.genericCommentsForm.reset();
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to save comment');
-      this.appService.isLoading$.next(false);
+    this.busyService.start();
+    this.commentsService.addComment( this.genericCommentsForm.value.newComment).subscribe({
+      next: (comments: IComment[]) => {
+        this.populateComments(comments);
+        this.appService.openSnackBar(true, 'Comment saved');
+        this.genericCommentsForm.reset();
+        this.busyService.stop()
+      },
+      error: (error) => {
+        this.appService.openSnackBar(false, 'Unable to save comment');
+        this.busyService.stop()
+      },
     });
   }
 
   deleteComment(item: IComment) {
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     const config = new MatDialogConfig();
     config.width = '400px';
     config.maxWidth = '400px';
@@ -100,11 +107,11 @@ export class GenericCommentsComponent implements OnInit {
   private deleteCommentImpl(id: string) {
     this.commentsService.deleteComment(id).subscribe((comments: IComment[]) => {
       this.populateComments(comments);
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
       this.appService.openSnackBar(true, 'Comment deleted');
     }, error => {
       this.appService.openSnackBar(false, 'Unable to delete comment');
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     });
   }
 

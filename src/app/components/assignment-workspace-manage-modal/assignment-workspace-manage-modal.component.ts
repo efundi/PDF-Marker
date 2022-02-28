@@ -7,6 +7,7 @@ import {AssignmentService} from '../../services/assignment.service';
 import {WorkspaceDetails} from '../assignment-workspace-overview/assignment-workspace-overview.component';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import { PdfmConstants } from '@shared/constants/pdfm.constants';
+import {BusyService} from "../../services/busy.service";
 
 export interface WorkspaceDialogResult {
   prevWorkspaceName: string;
@@ -43,6 +44,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
               public dialogRef: MatDialogRef<AssignmentWorkspaceManageModalComponent>,
               private appService: AppService,
               private assignmentService: AssignmentService,
+              private busyService: BusyService,
               private workspaceService: WorkspaceService,
               @Inject(MAT_DIALOG_DATA) public data: any) {
   }
@@ -106,9 +108,9 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
         this.appService.openSnackBar(true, "Successfully updated workspace name");
         this.data.workspaceName = workspaceName;
         this.workspaceName = workspaceName;
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       }, error => {
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
         console.log(error);
         this.appService.openSnackBar(false, "Unable to update workspace name");
       });
@@ -138,7 +140,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
       if (folder && newFolder && (assignments && assignments.length > 0)) {
         this.workspaceService.moveWorkspaceAssignments(folder, newFolder, assignments).subscribe((workspaceName: string) => {
           this.appService.openSnackBar(true, "Successfully moved selected assignments");
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
           if (assignments && assignments.length > 0) {
 
             assignments.forEach(assignment => {
@@ -151,7 +153,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
             });
           }
         }, error => {
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
           console.log(error);
           this.appService.openSnackBar(false, error);
         });

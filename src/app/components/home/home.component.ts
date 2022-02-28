@@ -1,11 +1,12 @@
-import {AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {ActivatedRoute, NavigationEnd, PRIMARY_OUTLET, Router} from '@angular/router';
 import {filter, map} from 'rxjs/operators';
 import {AppService} from '../../services/app.service';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {AppVersionInfo} from '@shared/info-objects/app-version.info';
-import {Subscription} from "rxjs";
+import {Observable, Subscription} from "rxjs";
+import {BusyService} from "../../services/busy.service";
 
 @Component({
   selector: 'pdf-marker-home',
@@ -16,7 +17,7 @@ import {Subscription} from "rxjs";
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly title = 'PDF Marker';
   version: AppVersionInfo;
-  isLoading$: boolean;
+  isLoading: boolean;
   breadcrumbs: any;
   isMarkingPage: boolean;
   routeList: string[] = [];
@@ -27,11 +28,12 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(private router: Router,
               private activatedRoute: ActivatedRoute,
-              private appService: AppService) {
-    this.subscription = this.appService.isLoading.subscribe(isloading => {
-      // console.log('Pre: ' + this.isLoading$);
-      this.isLoading$ = isloading;
-      // console.log('Post: ' + this.isLoading$);
+              private busyService: BusyService,
+              private appService: AppService,
+              private cd: ChangeDetectorRef) {
+    this.subscription = this.busyService.busy$.subscribe(isloading => {
+      this.isLoading = isloading;
+      this.cd.detectChanges();
     });
   }
 

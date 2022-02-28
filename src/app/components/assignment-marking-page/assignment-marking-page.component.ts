@@ -25,6 +25,7 @@ import {IconInfo} from '../../info-objects/icon.info';
 import {MarkTypeHighlightComponent} from '../mark-type-highlight/mark-type-highlight.component';
 import {PageViewport} from 'pdfjs-dist/types/web/interfaces';
 import {ScrollVisibilityDirective} from '../../directives/scroll-visibility.directive';
+import {BusyService} from "../../services/busy.service";
 
 const eventBus = new EventBus();
 
@@ -134,7 +135,8 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   constructor(private renderer: Renderer2,
               private elementRef: ElementRef,
               private appService: AppService,
-              private assignmentMarkingComponent: AssignmentMarkingComponent,
+              private busyService: BusyService,
+              public assignmentMarkingComponent: AssignmentMarkingComponent,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService,
               private ngZone: NgZone) { }
 
@@ -275,12 +277,12 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
 
   ngAfterViewInit() {
 
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.pdf.getPage(this.pageIndex + 1).then((page) => {
       this.page = page;
       this.resizePage();
     }).then(() => {
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     });
   }
 

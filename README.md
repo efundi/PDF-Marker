@@ -1,6 +1,7 @@
 # PdfMarker
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.1.3.
+An application to mark PDF assignments. Assignments can be sourced from Sakai, a generic zip file, 
+or individually imported PDF files.
 
 ## Development Setup
 
@@ -13,32 +14,8 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 npm install
 ```
 
-
 ### Run with hot reloading
-
-After compiling the backend, you can run the front-end with hot reloading, by which any code changes in Angular will be automatically reloaded in the electron window.
-
-This works be having electron run its services on port 4300 and the angular server running on 4200 while proxying api calls to the backend (running on 4300)
-
-Files involved to make this work included
-
-- `proxy.conf.json` Angular’s proxy file
-- `environment.electron.ts` (an environment file configured for the electron build)
-
 The run electron with hot reloading
-Make sure the server side is built
-```bash
-npm run build:ssr
-```
-Run electron
-```bash
-npm run electron
-```
-
-
-
-## Test the application
-The application will start with web debugger open
 ```bash
 npm run start
 ```

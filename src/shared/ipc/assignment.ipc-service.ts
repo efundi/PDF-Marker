@@ -9,7 +9,7 @@ export interface AssignmentIpcService {
   getAssignments(): Promise<IpcResponse<any>>;
   createAssignment(createAssignmentInfo: CreateAssignmentInfo): Promise<IpcResponse<any>>;
   updateAssignment(updateRequest: UpdateAssignment): Promise<IpcResponse<any>>;
-  saveMarks(location: string, marks: any[], totalMarks: any): Promise<IpcResponse<any>>;
+  saveMarks(location: string, marks: any[]): Promise<IpcResponse<any>>;
   saveRubricMarks(location: string, rubricName: string, marks: any[]): Promise<IpcResponse<any>>;
   finalizeAssignment(workspaceFolder: string, assignmentName: string): Promise<IpcResponse<Uint8Array>>;
   finalizeAssignmentRubric(workspaceFolder: string, assignmentName: string, rubricName: string): Promise<IpcResponse<Uint8Array>>;

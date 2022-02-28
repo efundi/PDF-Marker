@@ -151,11 +151,14 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
           // If the save was not a success, reset the mark to original location
           this.mark.coordinates.x = updatedMark.coordinates.x;
           this.mark.coordinates.y = updatedMark.coordinates.y;
+
+          // Reposition the icon
+          this.positionTick();
+
+          // Clear drag transforms - we've already placed the icon at the correct top/left position
+          event.source.reset();
         },
         error: () => {
-          // Nothing to do here, the icon will be placed at original position on complete
-        },
-        complete: () => {
           // Reposition the icon
           this.positionTick();
 

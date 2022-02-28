@@ -1,4 +1,4 @@
-import {app, BrowserWindow, HandlerDetails, ipcMain, screen, shell} from 'electron';
+import {app, BrowserWindow, HandlerDetails, ipcMain, Menu, MenuItemConstructorOptions, screen, shell} from 'electron';
 import {autoUpdater} from 'electron-updater';
 import * as path from 'path';
 import {
@@ -8,7 +8,8 @@ import {
   getAssignmentGlobalSettings,
   getAssignments,
   getAssignmentSettings,
-  getGrades, getMarkedAssignmentsCount,
+  getGrades,
+  getMarkedAssignmentsCount,
   getMarks,
   getPdfFile,
   rubricUpdate,
@@ -39,13 +40,7 @@ import {
 } from './src-electron/ipc/workspace.handler';
 import {addComment, deleteComment, getComments} from './src-electron/ipc/comment.handler';
 import {getConfig, updateConfig} from './src-electron/ipc/config.handler';
-import {
-  getFile,
-  getFolder,
-  getVersion,
-  openExternalLink,
-  saveFile
-} from './src-electron/ipc/application.handler';
+import {getFile, getFolder, getVersion, openExternalLink, saveFile} from './src-electron/ipc/application.handler';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -69,6 +64,10 @@ function createWindow() {
     },
   });
 
+
+  const menu = Menu.buildFromTemplate(MENU_TEMPLATE);
+  Menu.setApplicationMenu(menu);
+
   if (serve) {
     // require('electron-reload')(__dirname, {
     //   electron: require(`${__dirname}/node_modules/electron`)
@@ -91,11 +90,57 @@ function createWindow() {
   });
 }
 
+const MENU_TEMPLATE: MenuItemConstructorOptions[] = [{
+  label: 'File',
+  submenu: [{
+    role: 'quit'
+  }]
+}, {
+  label: 'View',
+  submenu: [
+    {
+      label: 'Reload',
+      accelerator: 'CmdOrCtrl+R',
+      click (item, focusedWindow) {
+        if (focusedWindow) {
+          focusedWindow.reload();
+        }
+      }
+    },
+    {
+      label: 'Toggle Developer Tools',
+      accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
+      click (item, focusedWindow) {
+        if (focusedWindow) {
+          focusedWindow.webContents.toggleDevTools();
+        }
+      }
+    },
+    {
+      type: 'separator'
+    },
+    {
+      role: 'togglefullscreen'
+    }
+  ]
+}, {
+  label: 'Window',
+  submenu: [
+    {
+      role: 'minimize'
+    },
+    {
+      role: 'close'
+    }
+  ]
+}];
+
 try {
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
   app.whenReady().then(() => {
+
 
     if (process.platform === 'win32') {
       app.setAppUserModelId('za.ac.nwu.PDF-Marker'); // set appId from package.json or electron-builder.yml?
