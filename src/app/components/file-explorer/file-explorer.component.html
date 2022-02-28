@@ -6,9 +6,7 @@
     (click)="onSelectedPdf(hierarchyModel[object])">
       <span class="file-name">{{ (filePath && filePath.endsWith(object) && scrollToElement) ? scrollToFile():''  }}
         <mat-icon class="file">insert_drive_file</mat-icon>
-        <span class="file-name-text" [class.file-name-selected]="this.filePath === hierarchyModel[object].path">{{ object }}</span>
-        <span style="display: none">{{this.filePath}}</span>
-        <span style="display: none">{{hierarchyModel[object].path}}</span>
+        <span class="file-name-text" [class.file-name-selected]="this.selectedPdfPath === hierarchyModel[object].path">{{ object }}</span>
       </span>
   </li>
 

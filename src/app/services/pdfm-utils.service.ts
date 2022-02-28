@@ -60,6 +60,10 @@ export class PdfmUtilsService {
     }
   }
 
+  public static isDefaultWorkspace(workspaceName: string): boolean{
+    return isNil(workspaceName) || workspaceName === PdfmConstants.DEFAULT_WORKSPACE;
+  }
+
   public static defaultWorkspaceName(workspaceName?: string): string{
     if (isNil(workspaceName)) {
       return PdfmConstants.DEFAULT_WORKSPACE;

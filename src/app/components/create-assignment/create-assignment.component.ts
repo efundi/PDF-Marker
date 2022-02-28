@@ -21,6 +21,7 @@ import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-ass
 import {RubricService} from '../../services/rubric.service';
 import {isNil} from 'lodash';
 import {PdfmConstants} from '@shared/constants/pdfm.constants';
+import {mergeMap, tap} from 'rxjs';
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -410,31 +411,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.deletionErrorMessage(foundItemsCount);
       return;
     }
-
-
     this.performUpdate(updateRequest);
-    /*if(foundItemsToDelete) {
-      const config = new MatDialogConfig();
-      config.width = "400px";
-      config.maxWidth = "400px";
-      config.data = {
-        title: "Confirmation",
-        message: "There are entries that you marked for deletion, are you sure you want to continue?",
-      };
-
-      const shouldContinueFn = (shouldContinue: boolean) => {
-        if(shouldContinue) {
-
-        } else {
-          return;
-        }
-      };
-      // Create Dialog
-      this.performUpdate(formData);
-      this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldContinueFn);
-    } else {
-      this.performUpdate(formData);
-    }*/
   }
 
   private onCreate() {
@@ -460,29 +437,45 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     this.performCreate(createRequest);
   }
 
-  private performCreate(formData: CreateAssignmentInfo) {
+  private performCreate(createAssignmentInfo: CreateAssignmentInfo) {
     this.appService.isLoading$.next(true);
-    this.assignmentService.createAssignment(formData).subscribe((model) => {
-      this.assignmentService.getAssignments().subscribe((assignments) => {
-        this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]).then(() => this.assignmentService.update(assignments));
+    this.assignmentService.createAssignment(createAssignmentInfo)
+      .pipe(
+        mergeMap(() => this.assignmentService.getAssignments()),
+        tap((assignments) => this.assignmentService.update(assignments))
+      ).subscribe({
+      next: () => {
+        if (PdfmUtilsService.isDefaultWorkspace(this.workspaceName)) {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
+        } else {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
+        }
+      },
+      error: (error) => {
+        this.appService.openSnackBar(false, error);
         this.appService.isLoading$.next(false);
-      });
-    }, error => {
-      this.appService.openSnackBar(false, error);
-      this.appService.isLoading$.next(false);
+      }
     });
   }
 
   private performUpdate(updateAssignment: UpdateAssignment) {
-    this.assignmentService.updateAssignment(updateAssignment).subscribe(model => {
-      this.assignmentService.getAssignments().subscribe((assignments) => {
+    this.assignmentService.updateAssignment(updateAssignment)
+      .pipe(
+        mergeMap(() => this.assignmentService.getAssignments()),
+        tap((assignments) => this.assignmentService.update(assignments))
+      ).subscribe({
+      next: () => {
         this.isEdit = false;
-        this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentName, this.workspaceName]).then(() => this.assignmentService.update(assignments));
+        if (PdfmUtilsService.isDefaultWorkspace(this.workspaceName)) {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
+        } else {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
+        }
+      },
+      error: (error) => {
+        this.appService.openSnackBar(false, error);
         this.appService.isLoading$.next(false);
-      });
-    }, error => {
-      this.appService.openSnackBar(false, error);
-      this.appService.isLoading$.next(false);
+      }
     });
   }
 

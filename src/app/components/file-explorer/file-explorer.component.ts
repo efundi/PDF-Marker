@@ -33,6 +33,7 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
 
   @Input()
   filePath: string = undefined;
+  selectedPdfPath: string = undefined;
 
   @Input()
   parent: string = undefined;
@@ -52,10 +53,14 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
               private zipService: ZipService) { }
 
   ngOnInit() {
+    this.selectedPdfPath = this.filePath;
     if (this.assignmentRootFolder) {
       this.assignmentService.selectedSubmissionChanged.subscribe((selectedSubmission) => {
         if (selectedSubmission) {
+          this.selectedPdfPath = selectedSubmission.pdfPath;
           this.filePath = selectedSubmission.pdfPath;
+        } else {
+          // this.filePath = null;
         }
         // Ignore if current selected submission changes to null, else it collapses the whole tree
       });
@@ -116,6 +121,7 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
 
   scrollToFile() {
     this.scrollToElement.scrollIntoView({ block: 'start', behavior: 'smooth'});
+    this.filePath = undefined;
   }
 
   onSelectedPdf(hierarchiralModel: any) {
