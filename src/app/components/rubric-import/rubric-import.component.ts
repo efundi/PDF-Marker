@@ -12,6 +12,7 @@ import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {Subscription} from 'rxjs';
 import {IRubric, IRubricName, SelectedRubric} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
+import {BusyService} from "../../services/busy.service";
 
 @Component({
   selector: 'pdf-marker-rubric-import',
@@ -38,22 +39,24 @@ export class RubricImportComponent implements OnInit, OnDestroy {
               private alertService: AlertService,
               private appService: AppService,
               private importService: ImportService,
+              private busyService: BusyService,
               private rubricService: RubricService) {
+
+    this.initForm();
   }
 
   ngOnInit() {
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.rubricService.getRubricNames().subscribe((rubrics: IRubric[]) => {
       this.populateRubrics(rubrics);
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     }, error => {
       this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     });
-    this.init();
   }
 
-  private init() {
+  private initForm() {
     this.rubricForm = this.fb.group({
       rubricName: [null, Validators.required],
       rubricFile: [null, Validators.required],
@@ -75,10 +78,10 @@ export class RubricImportComponent implements OnInit, OnDestroy {
           this.fc.rubricFile.setErrors(null);
           this.fc.rubricFileText.setValue(selectedRubric.selectedPath);
           this.fc.rubricName.setValue(selectedRubric.rubric.name);
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
         }, error: (error) => {
           this.selectedRubric = null;
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
           if (error) {
             this.alertService.error(error);
             this.fc.rubricFile.setErrors({file: true});
@@ -94,18 +97,18 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   }
 
   openExternalResource() {
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.appService.openExternalLink(this.rubricTemplateFile).subscribe(() => {
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     }, error => {
       this.appService.openSnackBar(false, 'Unable to open resource link');
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     });
   }
 
   downloadFile() {
     this.alertService.clear();
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     fetch('assets/' + this.rubricTemplateFile)
       .then(response => {
         response.blob().then(async (blob: Blob) => {
@@ -117,30 +120,30 @@ export class RubricImportComponent implements OnInit, OnDestroy {
               name: 'Excel File',
               extension: ['xlsx']})
               .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-                this.appService.isLoading$.next(false);
+                this.busyService.stop();
                 if (appSelectedPathInfo.selectedPath) {
                   this.alertService.success(`File saved to downloads folder`);
                 } else if (appSelectedPathInfo.error) {
                   this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
                 }
               });
-            this.appService.isLoading$.next(false);
           });
 
+          this.busyService.start();
           reader.readAsArrayBuffer(blob);
         }).catch(error => {
           this.alertService.error(error.message);
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
         });
       })
       .catch(error => {
         this.alertService.error(error.message);
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       });
   }
 
   deleteRubric(item: IRubric) {
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.rubricService.deleteRubricCheck(item.name).subscribe((inUse: boolean) => {
       if (inUse) {
         const config = new MatDialogConfig();
@@ -162,18 +165,18 @@ export class RubricImportComponent implements OnInit, OnDestroy {
       }
     }, error => {
       this.appService.openSnackBar(false, 'Unable to delete');
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     });
   }
 
   private deleteRubricImpl(rubricName: string) {
     this.rubricService.deleteRubric(rubricName).subscribe((rubrics: IRubric[]) => {
       this.populateRubrics(rubrics);
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
       this.appService.openSnackBar(true, 'Rubric deleted');
     }, error => {
       this.appService.openSnackBar(false, 'Unable to delete');
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     });
   }
 
@@ -197,15 +200,15 @@ export class RubricImportComponent implements OnInit, OnDestroy {
       ...this.selectedRubric.rubric,
       name: this.fc.rubricName.value
     };
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.rubricService.uploadRubric(rubric).subscribe((rubrics: IRubricName[]) => {
       this.populateRubrics(rubrics);
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
       this.appService.openSnackBar(true, 'Rubric saved');
       this.resetPreviousUpload();
     }, error => {
       this.appService.openSnackBar(false, 'Unable to save');
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     });
   }
 
@@ -217,11 +220,9 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   private openRubricModal(rubricName: string) {
     this.rubricService.getRubric(rubricName).subscribe((rubric: IRubric) => {
       this.openRubricModalDialog(rubric);
-      this.appService.isLoading$.next(false);
       this.appService.openSnackBar(true, 'Rubric View Opened');
     }, error => {
       this.appService.openSnackBar(false, 'Rubric View Failed');
-      this.appService.isLoading$.next(false);
     });
   }
 
@@ -235,10 +236,6 @@ export class RubricImportComponent implements OnInit, OnDestroy {
     };
 
     this.appService.createDialog(RubricViewModalComponent, config);
-  }
-
-  private isBlank(data) {
-    return (data === '' || data === null || data === undefined);
   }
 
   ngOnDestroy(): void {

@@ -17,7 +17,7 @@ import {FEEDBACK_FOLDER, GRADES_FILE, SUBMISSION_FOLDER, UPLOADS_DIR} from './co
 import {dirname, extname, sep} from 'path';
 import {PDFDocument} from 'pdf-lib';
 import {noop} from 'rxjs';
-import {IpcResponse} from '../src/shared/ipc/ipc-response';
+import {IpcResponse} from '@shared/ipc/ipc-response';
 import {IpcMainInvokeEvent} from 'electron';
 
 declare type IpcHandler<T> = (event: IpcMainInvokeEvent, ...args: any[]) => Promise<T>;
@@ -55,16 +55,6 @@ export const isNullOrUndefined = (object: any): boolean => {
 
 export const isNullOrUndefinedOrEmpty = (object: string): boolean => {
   return (object === null || object === undefined || object === '');
-};
-
-export const deleteMultipleFiles = (req) => {
-  if (req.files && req.files.length > 0) {
-    for (let i = 0; i < req.files.length; i++) {
-      if (req.files[i] && existsSync(UPLOADS_DIR + sep + req.files[i].originalname)) {
-        unlinkSync(UPLOADS_DIR + sep + req.files[i].originalname);
-      }
-    }
-  }
 };
 
 
@@ -254,7 +244,7 @@ export const extractZipFile = async (file, destination, newFolder, oldFolder, as
 };
 
 
-export const hierarchyModel = (pathInfos, configFolder) => {
+export function hierarchyModel(pathInfos, configFolder){
   const pattern = /\\/g;
   configFolder = configFolder.replace(pattern, '/');
   const model = pathInfos.reduce((hier, pathInfo) => {
@@ -280,7 +270,7 @@ export const hierarchyModel = (pathInfos, configFolder) => {
   }, {});
 
   return model;
-};
+}
 
 export const validateRequest = (requiredKeys = [], receivedKeys = []): boolean => {
   let invalidKeyFound = false;

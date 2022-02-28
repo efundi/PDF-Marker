@@ -12,7 +12,7 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
-import {mergeMap, Observable, of, Subscription, tap, throwError} from 'rxjs';
+import {from, mergeMap, Observable, of, Subscription, tap, throwError} from 'rxjs';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
@@ -28,6 +28,8 @@ import {
 import {AssignmentMarkingSessionService, ZoomChangeEvent} from './assignment-marking-session.service';
 import {AssignmentMarkingPageComponent} from '../assignment-marking-page/assignment-marking-page.component';
 import {IRubric} from '@shared/info-objects/rubric.class';
+import {PdfmUtilsService} from '../../services/pdfm-utils.service';
+import {BusyService} from '../../services/busy.service';
 
 
 GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
@@ -47,10 +49,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   constructor(private renderer: Renderer2,
               private assignmentService: AssignmentService,
+              private busyService: BusyService,
               private el: ElementRef,
               private dialog: MatDialog,
               private resolver: ComponentFactoryResolver,
-              private route: ActivatedRoute,
+              private activatedRoute: ActivatedRoute,
               private router: Router,
               private appService: AppService,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) { }
@@ -70,8 +73,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   isPdfLoaded: boolean;
   currentPage = 1;
   assignmentSettings: AssignmentSettingsInfo;
-  totalMark = 0;
-  private selectedPdfSubscription: Subscription;
+  private paramsSubscription: Subscription;
   private colorChangeSubscription: Subscription;
   private zoomChangeSubscription: Subscription;
   marks: MarkInfo[][] | any[];
@@ -80,6 +82,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   rubric: IRubric;
   showRubric = false;
   showPdf = true;
+
+  private workspaceName: string;
+  private assignmentName: string;
+  private pdf: string;
 
 
   /**
@@ -100,22 +106,35 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadAssignment(pdfPath: string) {
+  private loadAssignment() {
     this.currentPage = 1;
-    this.loadPdf(pdfPath).then(() => {
-      this.getAssignmentProgress();
+    this.busyService.start();
+    this.assignmentService.getFile(this.pdf)
+      .pipe(
+        mergeMap((data) => this.loadPdf(data)),
+        mergeMap(() => this.loadAssignmentSettings()),
+        mergeMap(() => this.loadMarks())
+      ).subscribe({
+      next: (settings: AssignmentSettingsInfo) => {
+        this.appService.initializeScrollPosition();
+        this.isPdfLoaded = true;
+        this.busyService.stop();
+      },
+      error: (error) => {
+        console.log(error);
+        this.isPdfLoaded = false;
+        this.busyService.stop();
+        this.router.navigate(['/marker']);
+      }
     });
   }
 
   ngOnInit() {
-    if (isNil(this.assignmentService.getSelectedPdfURL())) {
-      this.router.navigate(['/marker']);
-    } else {
-      this.loadAssignment(this.assignmentService.getSelectedPdfURL());
-    }
-
-    this.selectedPdfSubscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfPath => {
-      this.loadAssignment(pdfPath);
+    this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
+      this.workspaceName = params['workspaceName'];
+      this.assignmentName = params['assignmentName'];
+      this.pdf = params['pdf'];
+      this.loadAssignment();
     });
 
     this.colorChangeSubscription = this.assignmentMarkingSessionService.colourChanged.subscribe((colour) => {
@@ -128,11 +147,13 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
 
-  private loadPdf(path: string): Promise<PDFDocumentProxy> {
-    return getDocument(path).promise.then((pdf) => {
+  private loadPdf(data: Uint8Array): Observable<PDFDocumentProxy> {
+    const promise = getDocument(data).promise.then((pdf) => {
       this.pdfDocument = pdf;
       return pdf;
     });
+
+    return from(promise);
   }
 
   /**
@@ -158,14 +179,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   private loadAssignmentSettings(): Observable<AssignmentSettingsInfo> {
-    let observable: Observable<AssignmentSettingsInfo>;
-    if (!!this.assignmentService.getAssignmentSettingsInfo()) {
-      observable = of(this.assignmentService.getAssignmentSettingsInfo());
-    } else {
-      observable = this.assignmentService.getAssignmentSettings();
-    }
-
-    return observable.pipe(
+    return this.assignmentService.getAssignmentSettings(this.workspaceName, this.assignmentName).pipe(
       tap((assignmentSettings) => {
         this.assignmentSettings = assignmentSettings;
         if (this.assignmentSettings.rubric) {
@@ -178,34 +192,12 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   private loadMarks(): Observable<any> {
-    return this.assignmentService.getSavedMarks()
+    return this.assignmentService.getSavedMarks(PdfmUtilsService.dirname(this.pdf, 2))
       .pipe(
         tap((marks) => {
           this.marks = this.setupMark(marks);
         })
       );
-  }
-
-  private getAssignmentProgress() {
-    this.isPdfLoaded = false;
-    this.appService.isLoading$.next(true);
-
-    this.loadAssignmentSettings()
-      .pipe(
-        mergeMap(() => this.loadMarks())
-      )
-      .subscribe({
-        next: (settings: AssignmentSettingsInfo) => {
-          this.appService.initializeScrollPosition();
-          this.isPdfLoaded = true;
-        },
-        error: (error) => {
-          console.log(error);
-        },
-        complete: () => {
-          this.appService.isLoading$.next(false);
-        }
-      });
   }
 
   private onColourChanged(colour: string) {
@@ -252,15 +244,14 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   onAssignmentSettings(settings: AssignmentSettingsInfo) {
-    this.appService.isLoading$.next(true);
-    this.assignmentService.assignmentSettings(settings).subscribe({
+    this.busyService.start();
+    this.assignmentService.updateAssignmentSettings(settings, this.workspaceName, this.assignmentName).subscribe({
       next: (assignmentSettings: AssignmentSettingsInfo) => {
         this.assignmentSettings = assignmentSettings;
-        this.assignmentService.setAssignmentSettings(assignmentSettings);
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       },
       error: (error) => {
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       }}
     );
   }
@@ -283,18 +274,40 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   saveMarks(marks: MarkInfo[][] = null): Observable<any> {
     const originalMarks = cloneDeep(this.marks);
     const markDetails = marks || this.marks;
-    this.appService.isLoading$.next(true);
-    return this.assignmentService.saveMarks(markDetails, this.totalMark)
+    this.busyService.start();
+    return this.assignmentService.saveMarks(PdfmUtilsService.dirname(this.pdf, 2), markDetails)
       .pipe(
         map(() => {
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
           this.marks = this.setupMark(markDetails);
           this.appService.openSnackBar(true, 'Saved');
         })
       )
       .pipe(
         catchError((error) => {
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
+          this.marks = originalMarks;
+          this.appService.openSnackBar(false, 'Unable to save');
+          return throwError(error);
+        })
+      );
+  }
+
+  saveRubricMarks(marks: any[]): Observable<any> {
+    const originalMarks = cloneDeep(this.marks);
+    const markDetails = marks || this.marks;
+    this.busyService.start();
+    return this.assignmentService.saveRubricMarks(PdfmUtilsService.dirname(this.pdf, 2), this.rubric.name, markDetails)
+      .pipe(
+        map(() => {
+          this.busyService.stop();
+          this.marks = this.setupMark(markDetails);
+          this.appService.openSnackBar(true, 'Saved');
+        })
+      )
+      .pipe(
+        catchError((error) => {
+          this.busyService.stop();
           this.marks = originalMarks;
           this.appService.openSnackBar(false, 'Unable to save');
           return throwError(error);
@@ -346,7 +359,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     config.disableClose = true;
 
     config.data = {
-      assignmentPath: this.assignmentService.getSelectedPdfLocation(),
+      assignmentPath: this.pdf,
       marks: this.marks,
       defaultTick: this.defaultFullMark,
       incorrectTick: this.defaultIncorrectMark
@@ -373,12 +386,13 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.selectedPdfSubscription.unsubscribe();
+    this.paramsSubscription.unsubscribe();
     this.colorChangeSubscription.unsubscribe();
 
     if (this.pdfDocument) {
       this.pdfDocument.cleanup();
     }
+    this.assignmentService.selectSubmission(null);
   }
 
   onSectionChange($event: string) {

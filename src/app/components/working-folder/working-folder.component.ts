@@ -9,6 +9,7 @@ import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {WorkspaceService} from '../../services/workspace.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
+import {BusyService} from '../../services/busy.service';
 
 @Component({
   selector: 'pdf-marker-working-folder',
@@ -17,7 +18,6 @@ import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 })
 export class WorkingFolderComponent implements OnInit {
 
-  isLoading$ = this.appService.isLoading$;
   // settingsLMSSelected = "Sakai";
   // lmsChoices: string[] = ['Sakai'];
   createFolderForm: FormGroup;
@@ -31,26 +31,22 @@ export class WorkingFolderComponent implements OnInit {
               private appService: AppService,
               private alertService: AlertService,
               private assignmentService: AssignmentService,
+              private busyService: BusyService,
               private workspaceService: WorkspaceService) {
+
+    this.initForm();
   }
 
   ngOnInit() {
-    this.isLoading$.next(true);
-    this.initForm();
-    this.settingsService.getConfigurations().subscribe(configurations => {
-      // this.createFolderForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath : null);
-      this.isLoading$.next(false);
-    }, error => {
-      this.isLoading$.next(false);
-    });
+    this.busyService.start();
     this.workspaceService.getWorkspaces().subscribe({
       next: (workspaces) => {
         this.populateWorkspaces(workspaces);
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       },
       error: (error) => {
         this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       }
     });
   }
@@ -90,22 +86,23 @@ export class WorkingFolderComponent implements OnInit {
       return;
     }
     // Call Service to handle rest calls... also use interceptors
-    this.isLoading$.next(true);
+    this.busyService.start();
     this.workspaceService.createWorkingFolder(this.createFolderForm.value.workingFolders).subscribe((response) => {
       this.workspaceService.getWorkspaces().subscribe(data => {
         this.populateWorkspaces(data);
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
         this.appService.openSnackBar(true, 'Workspace created');
         this.createFolderForm.reset();
         this.refreshSideBar();
       });
     }, error => {
-      this.isLoading$.next(false);
+      this.appService.openSnackBar(false, error);
+      this.busyService.stop();
     });
   }
 
   deleteFolder(item: string) {
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.workspaceService.deleteWorkspaceCheck(item).subscribe((hasWorkspaceAssignments: boolean) => {
       const config = new MatDialogConfig();
       config.width = '400px';
@@ -118,6 +115,8 @@ export class WorkingFolderComponent implements OnInit {
       const shouldDeleteFn = (shouldDelete: boolean) => {
         if (shouldDelete) {
           this.deleteFolderImpl(item, shouldDelete);
+        } else {
+          this.busyService.stop();
         }
       };
 
@@ -125,18 +124,18 @@ export class WorkingFolderComponent implements OnInit {
 
     }, error => {
       this.appService.openSnackBar(false, 'Unable to delete workspace');
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     });
   }
 
   refreshSideBar() {
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.assignmentService.getAssignments().subscribe((assignments) => {
       this.assignmentService.update(assignments);
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
       this.appService.openSnackBar(true, 'Refreshed list');
     }, error => {
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
       this.appService.openSnackBar(false, 'Could not refresh list');
     });
   }
@@ -145,12 +144,12 @@ export class WorkingFolderComponent implements OnInit {
     // const newData = { folder, confirmation};
     this.workspaceService.deleteWorkspace(folder).subscribe((folders: string[]) => {
       this.populateWorkspaces(folders);
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
       this.appService.openSnackBar(true, 'Workspace deleted');
       this.refreshSideBar();
     }, error => {
       this.appService.openSnackBar(false, 'Unable to delete workspace');
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     });
   }
 }

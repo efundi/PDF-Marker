@@ -1,7 +1,7 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {SakaiService} from '../../services/sakai.service';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
@@ -15,7 +15,9 @@ import {FormBuilder} from '@angular/forms';
 // import * as path from 'path';
 // import {sep} from 'path';
 import {AssignmentWorkspaceManageModalComponent} from '../assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
-import {firstValueFrom, Subscription} from 'rxjs';
+import {firstValueFrom, Observable, Subscription, tap, throwError} from 'rxjs';
+import {catchError} from "rxjs/operators";
+import {BusyService} from "../../services/busy.service";
 
 export interface WorkspaceDetails {
   assignmentTitle: string;
@@ -60,27 +62,26 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
               private sakaiService: SakaiService,
               private router: Router,
               private appService: AppService,
-              private alertService: AlertService,
-              private settingsService: SettingsService) {
+              private busyService: BusyService,
+              private activatedRoute: ActivatedRoute) {
   }
 
   ngOnInit() {
     this.initForm();
-    this.subscription = this.assignmentService.onWorkspaceSourceChange.subscribe((selectedWorkspace) => {
-      // let selectedWorkspace = this.assignmentService.selectedWorkspace;
-
-      if (selectedWorkspace !== null) {
-        // this.appService.isLoading$.next(true);
-        this.hierarchyModel = selectedWorkspace;
-        return this.generateDataFromModel();
-        // this.appService.isLoading$.next(false);
+    this.busyService.start();
+    this.subscription = this.activatedRoute.params.subscribe({
+      next: (params) => {
+        const workspaceName = params['workspaceName'];
+        this.hierarchyModel = this.assignmentService.getWorkspaceHierarchy(workspaceName);
+        this.generateDataFromModel();
+        this.busyService.stop();
+      },
+      error: (error) => {
+        console.log(error);
+        this.appService.openSnackBar(false, 'Unable to read selected workspace');
+        this.busyService.stop()
       }
-    }, error => {
-      console.log(error);
-      this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(false, 'Unable to read selected workspace');
     });
-    // this.appService.isLoading$.next(false);
   }
 
   private initForm() {
@@ -113,13 +114,13 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
         edited = true;
       }
       if (edited) {
-        this.appService.isLoading$.next(true);
+        this.busyService.start();
         this.assignmentService.getAssignments().subscribe((assignments) => {
           this.assignmentService.update(assignments);
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
           this.appService.openSnackBar(true, 'Refreshed list');
         }, error => {
-          this.appService.isLoading$.next(false);
+          this.busyService.stop();
           this.appService.openSnackBar(false, 'Could not refresh list');
         });
 
@@ -127,18 +128,18 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
     });
   }
 
-  getAssignmentSettings(assignmentName: string): Promise<AssignmentSettingsInfo> {
-    this.appService.isLoading$.next(true);
-    return firstValueFrom(this.assignmentService.getAssignmentSettings(this.workspaceName, assignmentName))
-      .then((assignmentSettings) => {
-        this.assignmentService.setSelectedAssignment(assignmentSettings);
-        this.appService.isLoading$.next(false);
+  getAssignmentSettings(assignmentName: string): Observable<AssignmentSettingsInfo> {
+    this.busyService.start();
+    return this.assignmentService.getAssignmentSettings(this.workspaceName, assignmentName).pipe(
+      tap((assignmentSettings) => {
+        // this.assignmentService.setSelectedAssignment(updateAssignmentSettings);
+        this.busyService.stop();
         return assignmentSettings;
+      }), catchError((error) => {
+        this.busyService.stop();
+        return throwError(error);
       })
-      .catch(() => {
-        this.appService.isLoading$.next(false);
-        return null;
-      });
+    );
   }
 
   private generateDataFromModel() {
@@ -167,10 +168,9 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
             workspaceRow.marked = count;
             workspaceRow.notMarked = workspaceRow.submissionCount - workspaceRow.marked;
           });
-          // Type
-          this.getAssignmentSettings(assignmentName).then((assignmentSettings) => {
-            const assignmentSettingsInfo = assignmentSettings;
-            workspaceRow.type = assignmentSettingsInfo.rubric ? 'Rubric' : 'Manual';
+          // Type TODO here is an async issue, these calls will still be busy when already added to the workspaceRows array
+          this.getAssignmentSettings(assignmentName).subscribe((assignmentSettings) => {
+            workspaceRow.type = assignmentSettings.rubric ? 'Rubric' : 'Manual';
 
           });
           workspaceRow.currentWorkspace =  this.workspaceName;
@@ -191,12 +191,11 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
         }
       }
       this.assignmentPageSizeOptions = range;
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
     }
   }
 
   ngOnDestroy(): void {
-    this.assignmentService.setSelectedWorkspace(null);
     if (this.subscription) {
       this.subscription.unsubscribe();
     }

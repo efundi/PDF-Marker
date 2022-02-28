@@ -8,6 +8,7 @@ import {fromIpcResponse} from './ipc.utils';
 import {AppVersionInfo} from '@shared/info-objects/app-version.info';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {FileFilterInfo} from '@shared/info-objects/file-filter.info';
+import {BusyService} from './busy.service';
 
 export type ComponentType<T> = new (...args: any[]) => T;
 
@@ -18,17 +19,15 @@ export class AppService {
 
   private applicationApi: ApplicationIpcService;
 
-  isLoading$: Subject<boolean> = new Subject<boolean>();
-
-  isLoading = this.isLoading$.asObservable();
-
   private containerElement: any;
 
   public readonly client_id: string = 'PDF_MARKER';
 
   private readonly appName: string = 'PDF-MARKER';
 
-  constructor(private dialog: MatDialog, private snackBar: MatSnackBar) {
+  constructor(private dialog: MatDialog,
+              private snackBar: MatSnackBar,
+              private busyService: BusyService) {
     // this.isLoading$.next(false);
 
     this.applicationApi = (window as any).applicationApi;
@@ -72,7 +71,7 @@ export class AppService {
   }
 
   createDialog(component: ComponentType<any>, config: MatDialogConfig, callback: any = () => {}) {
-    this.isLoading$.next(true);
+    this.busyService.start();
     const dialogConfig: MatDialogConfig = config;
     if (!dialogConfig.disableClose) {
       dialogConfig.disableClose = false;
@@ -80,7 +79,7 @@ export class AppService {
     dialogConfig.autoFocus = true;
 
     const dialog = this.dialog.open(component, dialogConfig);
-    dialog.afterOpened().subscribe(() => this.isLoading$.next(false));
+    dialog.afterOpened().subscribe(() => this.busyService.stop());
     if (typeof callback === 'function') {
       dialog.afterClosed().subscribe(callback);
     }

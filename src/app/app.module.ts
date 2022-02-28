@@ -69,7 +69,7 @@ import {RubricViewModalComponent} from './components/rubric-view-modal/rubric-vi
 import {ImportService} from './services/import.service';
 import {SettingsService} from './services/settings.service';
 import {MatDialogModule} from "@angular/material/dialog";
-import {MatSnackBarModule} from "@angular/material/snack-bar";
+import {MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule} from "@angular/material/snack-bar";
 import {MatSidenavModule} from "@angular/material/sidenav";
 import {MatMenuModule} from "@angular/material/menu";
 import {HttpClientModule} from "@angular/common/http";
@@ -77,6 +77,7 @@ import {MatPaginatorModule} from "@angular/material/paginator";
 import {MatProgressBarModule} from "@angular/material/progress-bar";
 import {MatTableModule} from "@angular/material/table";
 import {MatCheckboxModule} from "@angular/material/checkbox";
+import {DragDropModule} from "@angular/cdk/drag-drop";
 
 @NgModule({
   declarations: [
@@ -144,7 +145,8 @@ import {MatCheckboxModule} from "@angular/material/checkbox";
     MatOptionModule,
     MatSelectModule,
     MatRadioModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    DragDropModule
   ],
   providers: [
     ZipService,
@@ -154,6 +156,7 @@ import {MatCheckboxModule} from "@angular/material/checkbox";
     AssignmentService,
     SettingsService,
     ImportService,
+    { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
   ],
   bootstrap: [AppComponent]
 })

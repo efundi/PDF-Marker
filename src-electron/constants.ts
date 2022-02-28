@@ -35,3 +35,4 @@ export const COULD_NOT_READ_WORKSPACE_LIST = 'Could not read list of working fol
 export const NOT_PROVIDED_COMMENT = 'Comment must be provided!';
 
 export const HIGHTLIGHT_HEIGHT = 20;
+export const STUDENT_DIRECTORY_REGEX = /(.*)\((.+)\)/;

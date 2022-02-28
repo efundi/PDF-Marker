@@ -2,7 +2,7 @@ import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {SakaiService} from '../../services/sakai.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Subscription} from 'rxjs';
+import {forkJoin, Observable, Subscription, tap} from 'rxjs';
 import {AppService} from '../../services/app.service';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
@@ -23,6 +23,8 @@ import {SelectionModel} from '@angular/cdk/collections';
 import {ShareAssignments} from '@shared/info-objects/share-assignments';
 import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
+import {PdfmUtilsService} from '../../services/pdfm-utils.service';
+import {BusyService} from "../../services/busy.service";
 
 export interface AssignmentDetails {
   index?: number;
@@ -46,10 +48,8 @@ export interface AssignmentDetails {
   styleUrls: ['./assignment-overview.component.scss']
 })
 export class AssignmentOverviewComponent implements OnInit, OnDestroy {
-  private hierarchyModel;
   displayedColumns: string[] = ['select', 'studentName', 'assignment', 'grade', 'status'];
   dataSource: MatTableDataSource<AssignmentDetails>;
-  assignmentName = 'Assignment Name';
   assignmentsLength;
   assignmentPageSizeOptions: number[];
   readonly pageSize: number = 10;
@@ -74,7 +74,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   selectedRubric: string = null;
   rubrics: IRubricName[] = [];
   rubricForm: FormGroup;
-  workspace: string;
+
+  private workspaceName: string;
+  assignmentName: string;
 
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
@@ -84,49 +86,57 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
               private alertService: AlertService,
               private settingsService: SettingsService,
               private importService: ImportService,
+              private busyService: BusyService,
               private rubricService: RubricService,
               private fb: FormBuilder) { }
 
+
+  private loadRubrics(): Observable<IRubricName[]> {
+    return this.rubricService.getRubricNames()
+      .pipe(
+        tap((rubrics) => {
+          const data: IRubricName = {name: null, inUse: false};
+          rubrics.unshift(data);
+          this.rubrics = rubrics;
+        })
+      );
+  }
+
+  private loadSettings(): Observable<SettingInfo> {
+    return this.settingsService.getConfigurations()
+      .pipe(
+        tap(settings => {
+          this.settings = settings;
+          if (settings.defaultPath && settings.lmsSelection) {
+            this.isSettings = true;
+          }
+        })
+      );
+  }
+
   ngOnInit() {
+    this.busyService.start();
     this.initForm();
-    this.activatedRoute.params.subscribe(params => {
-      const id = params['workspaceName'];
-      if (id) {
-        this.workspace = id;
-      }
+
+    forkJoin([
+      this.loadRubrics(),
+      this.loadSettings()
+    ]).subscribe({
+      complete: () => this.busyService.stop(),
+      error: () => this.busyService.stop()
     });
-    this.subscription = this.assignmentService.onAssignmentSourceChange.subscribe((selectedAssignment) => {
-      if (selectedAssignment !== null) {
-        this.hierarchyModel = selectedAssignment;
-        this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '');
-      }
+
+
+    this.subscription = this.activatedRoute.params.subscribe((params) => {
+
+      this.workspaceName = params['workspaceName'];
+      this.assignmentName = params['id'];
+      this.getAssignmentSettings();
     }, error => {
-      this.appService.isLoading$.next(false);
+      this.busyService.stop();
       this.appService.openSnackBar(false, 'Unable to read selected assignment');
     });
 
-    this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
-      const data: IRubricName = {name: null, inUse: false};
-      rubrics.unshift(data);
-      this.rubrics = rubrics;
-    });
-
-    this.settingsService.getConfigurations().subscribe((configurations: SettingInfo) => {
-      if (configurations.defaultPath && configurations.lmsSelection) {
-        this.settings = configurations;
-        this.isSettings = true;
-        if (!this.hierarchyModel && !!this.assignmentService.getSelectedAssignment()) {
-          this.hierarchyModel = this.assignmentService.getSelectedAssignment();
-          this.getAssignmentSettings((Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '');
-        } else {
-          this.router.navigate(['/marker']);
-        }
-      }
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to read application settings');
-      this.appService.isLoading$.next(false);
-    });
   }
 
   private initForm() {
@@ -137,48 +147,61 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     this.onRubricChange();
   }
 
-  private getAssignmentSettings(assignmentName: string) {
-    this.assignmentService.getAssignmentSettings(this.workspace, assignmentName).subscribe((assignmentSettings: AssignmentSettingsInfo) => {
-      this.assignmentSettings = assignmentSettings;
-      this.isCreated = this.assignmentSettings.isCreated;
-      if (this.assignmentSettings.rubric) {
-        this.selectedRubric = this.assignmentSettings.rubric.name;
-        this.rubricForm.controls.rubric.setValue(this.assignmentSettings.rubric.name);
-        this.isRubric = true;
-      } else {
-        this.selectedRubric = null;
-        this.rubricForm.controls.rubric.setValue(this.selectedRubric);
-        this.isRubric = false;
-      }
-      this.getGrades(this.workspace, assignmentName);
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to read assignment settings');
-      this.appService.isLoading$.next(false);
-    });
+  private getAssignmentSettings() {
+    this.busyService.start();
+    this.assignmentService.getAssignmentSettings(this.workspaceName, this.assignmentName)
+      .subscribe({
+        next: (assignmentSettings: AssignmentSettingsInfo) => {
+          this.assignmentSettings = assignmentSettings;
+          this.isCreated = this.assignmentSettings.isCreated;
+          if (this.assignmentSettings.rubric) {
+            this.selectedRubric = this.assignmentSettings.rubric.name;
+            this.rubricForm.controls.rubric.setValue(this.assignmentSettings.rubric.name);
+            this.isRubric = true;
+          } else {
+            this.selectedRubric = null;
+            this.rubricForm.controls.rubric.setValue(this.selectedRubric);
+            this.isRubric = false;
+          }
+          this.getGrades(this.workspaceName, this.assignmentName);
+          this.busyService.stop();
+        },
+        error:  (error) => {
+          this.appService.openSnackBar(false, 'Unable to read assignment settings');
+          this.busyService.stop();
+        }
+      });
   }
 
   private getGrades(workspace: string, assignmentName: string) {
-    this.assignmentService.getAssignmentGrades(workspace, assignmentName).subscribe((grades: any[]) => {
-      this.assignmentGrades = grades;
-      if (this.assignmentGrades.length > 0) {
-        const keys = Object.keys(grades[0]);
-        if (keys.length > 0) {
-          this.assignmentHeader = keys[0];
-          this.generateDataFromModel();
+    this.busyService.start();
+    this.assignmentService.getAssignmentGrades(workspace, assignmentName).subscribe({
+      next: (grades: any[]) => {
+        this.assignmentGrades = grades;
+        if (this.assignmentGrades.length > 0) {
+          const keys = Object.keys(grades[0]);
+          if (keys.length > 0) {
+            this.assignmentHeader = keys[0];
+            this.generateDataFromModel();
+          }
         }
+        this.busyService.stop();
+      },
+      error:  (error) => {
+        this.appService.openSnackBar(false, 'Unable to read assignment grades file');
+        this.busyService.stop();
       }
-    }, error => {
-      this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(false, 'Unable to read assignment grades file');
     });
   }
 
   private generateDataFromModel() {
     const values: AssignmentDetails[] = [];
-    this.assignmentName = (Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '';
-    if (this.hierarchyModel[this.assignmentName]) {
+    const hierarchyModel = this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentName);
+
+
+    if (hierarchyModel[this.assignmentName]) {
       let index = 0;
-      Object.keys(this.hierarchyModel[this.assignmentName]).forEach(key => {
+      Object.keys(hierarchyModel[this.assignmentName]).forEach(key => {
         if (this.regEx.test(key) && this.sakaiService.getAssignmentRootFiles().indexOf(key) === -1) {
           const value: AssignmentDetails = {
             index: index++,
@@ -190,12 +213,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
             status: ''
           };
           const matches = this.regEx.exec(key);
+          const pdf = hierarchyModel[this.assignmentName][key][this.submissionFolder] ? Object.keys(hierarchyModel[this.assignmentName][key][this.submissionFolder])[0] : '';
           value.studentName = matches[1];
           value.studentNumber = matches[2];
-          value.assignment = this.hierarchyModel[this.assignmentName][key][this.submissionFolder] ? Object.keys(this.hierarchyModel[this.assignmentName][key][this.submissionFolder])[0] : '';
-          const gradesInfo = this.assignmentGrades.find(grade => grade[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
+          value.assignment = pdf;
+
+          const gradesInfo = this.assignmentGrades
+            .find(grade => grade[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
           value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5 : 0);
-          value.path = (value.assignment) ? this.assignmentName + '/' + key + '/' + this.submissionFolder + '/' + value.assignment : '';
+          value.path = PdfmUtilsService.buildFilePath(this.workspaceName, this.assignmentName, key, this.submissionFolder, pdf);
           value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7 : 'N/A');
           values.push(value);
         }
@@ -214,7 +240,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         }
       }
       this.assignmentPageSizeOptions = range;
-      this.appService.isLoading$.next(false);
     } else {
       this.router.navigate([RoutesEnum.MARKER]);
     }
@@ -228,17 +253,18 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     });
   }
 
-  onSelectedPdf(pdfFileLocation: string) {
-    this.appService.isLoading$.next(true);
-    if (this.workspace !== undefined) {
-      pdfFileLocation = this.workspace + '/' + pdfFileLocation;
-    }
-    this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
-      this.assignmentService.configure(pdfFileLocation, blobData);
-    }, error => {
-      this.appService.isLoading$.next(false);
-      this.appService.openSnackBar(false, 'Unable to read file');
+  onSelectedPdf(element: any) {
+    this.assignmentService.selectSubmission({
+      workspaceName: PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
+      assignmentName: this.assignmentName,
+      pdfPath: element.path
     });
+
+    this.router.navigate([
+      RoutesEnum.ASSIGNMENT_MARKER,
+      PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
+      this.assignmentName,
+      element.path]);
   }
 
   onFinalizeAndExport(event) {
@@ -264,20 +290,21 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
     const shouldFinalizeAndExportFn = (shouldFinalizeAndExport: boolean) => {
       if (shouldFinalizeAndExport) {
-        this.appService.isLoading$.next(true);
+        this.busyService.start();
         if (!(this.isNullOrUndefined(this.assignmentSettings.rubric))) {
-          this.assignmentService.finalizeAndExportRubric(this.workspace, this.assignmentName, this.assignmentSettings.rubric).subscribe((data: Uint8Array) => {
-            this.onSuccessfulExport(data);
-          }, (responseError) => {
-            this.alertService.error(responseError);
-            this.appService.isLoading$.next(false);
-          });
+          this.assignmentService.finalizeAndExportRubric(this.workspaceName, this.assignmentName, this.assignmentSettings.rubric)
+            .subscribe((data: Uint8Array) => {
+              this.onSuccessfulExport(data);
+            }, (responseError) => {
+              this.alertService.error(responseError);
+              this.busyService.stop();
+            });
         } else {
-          this.assignmentService.finalizeAndExport(this.workspace, this.assignmentName).subscribe((blob: Uint8Array) => {
+          this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName).subscribe((blob: Uint8Array) => {
             this.onSuccessfulExport(blob);
           }, (responseError) => {
             this.alertService.error(responseError);
-            this.appService.isLoading$.next(false);
+            this.busyService.stop();
           });
         }
       }
@@ -288,20 +315,21 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   private onSuccessfulExport(blob: Uint8Array) {
     this.alertService.clear();
     const fileName: string = this.assignmentName;
-    this.appService.saveFile({ filename: fileName, buffer: blob, name: 'Zip File', extension: ['zip']}).subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-      this.appService.isLoading$.next(false);
-      if (appSelectedPathInfo.selectedPath) {
-        this.alertService.success(`Successfully exported ${fileName}. You can now upload it to ${this.settings.lmsSelection}.`);
-      } else if (appSelectedPathInfo.error) {
-        this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
-      }
-    });
+    this.appService.saveFile({ filename: fileName, buffer: blob, name: 'Zip File', extension: ['zip']})
+      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+        this.busyService.stop();
+        if (appSelectedPathInfo.selectedPath) {
+          this.alertService.success(`Successfully exported ${fileName}. You can now upload it to ${this.settings.lmsSelection}.`);
+        } else if (appSelectedPathInfo.error) {
+          this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
+        }
+      });
 
   }
 
   manageStudents() {
-    if (this.workspace) {
-      this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD, this.assignmentName, this.workspace]);
+    if (this.workspaceName) {
+      this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD, this.assignmentName, this.workspaceName]);
     } else {
       this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD, this.assignmentName]);
     }
@@ -312,11 +340,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       // console.log(data);
       this.rubricService.getRubric(this.assignmentSettings.rubric.name).subscribe((rubric: IRubric) => {
         this.openRubricModalDialog(rubric, this.assignmentSettings);
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
         this.appService.openSnackBar(true, 'Rubric View Opened');
       }, error => {
         this.appService.openSnackBar(false, 'Rubric View Failed');
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       });
     }
   }
@@ -334,17 +362,13 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
     const dialogRef = this.appService.createDialog(RubricViewModalComponent, config);
     dialogRef.afterClosed().subscribe(result => {
-      this.getAssignmentSettings(this.assignmentName);
+      this.getAssignmentSettings();
     });
   }
 
   ngOnDestroy(): void {
     if (!this.subscription.closed) {
       this.subscription.unsubscribe();
-    }
-
-    if (this.router.url.endsWith(RoutesEnum.ASSIGNMENT_UPLOAD)) {
-      this.assignmentService.setSelectedAssignment(null);
     }
   }
 
@@ -376,7 +400,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   share() {
     const shareRequest: ShareAssignments = {
       assignmentName: this.assignmentName,
-      workspaceFolder: this.workspace,
+      workspaceFolder: this.workspaceName,
       submissions : this.selection.selected.map((selection) => {
         return {
           studentName: selection.studentName,
@@ -385,17 +409,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       })
     };
 
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.assignmentService.shareExport(shareRequest).subscribe({
       next: (data) => {
-          this.onSuccessfulShareExport(data);
+        this.onSuccessfulShareExport(data);
+        this.busyService.stop();
       },
       error: (error) => {
         this.alertService.error(error);
-        this.appService.isLoading$.next(false);
-      },
-      complete: () => {
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
       }
     });
   }
@@ -405,7 +427,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
     const fileName: string = this.assignmentName + '_share.zip';
     this.appService.saveFile({ filename: fileName, buffer: data, name: 'Zip File', extension: ['zip']})
       .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
         if (appSelectedPathInfo.selectedPath) {
           this.alertService.success(`Successfully exported ${fileName}.`);
         } else if (appSelectedPathInfo.error) {

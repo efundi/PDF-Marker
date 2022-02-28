@@ -1,5 +1,5 @@
 import {Component, Input, OnChanges, OnDestroy, OnInit} from '@angular/core';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {AssignmentService} from '../../services/assignment.service';
 import {AppService} from '../../services/app.service';
 import {Subscription} from 'rxjs';
@@ -7,6 +7,7 @@ import {RoutesEnum} from '../../utils/routes.enum';
 import {ZipService} from '../../services/zip.service';
 import {WorkspaceService} from '../../services/workspace.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
+import {BusyService} from "../../services/busy.service";
 
 @Component({
   selector: 'pdf-marker-file-explorer',
@@ -33,6 +34,7 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
 
   @Input()
   filePath: string = undefined;
+  selectedPdfPath: string = undefined;
 
   @Input()
   parent: string = undefined;
@@ -40,39 +42,31 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
   @Input()
   scrollToElement: HTMLElement;
 
-  isFileSelected: boolean;
-
   isWorkspaceFolder: boolean;
 
   workspaceList: string[];
 
   constructor(private router: Router,
+              public activatedRoute: ActivatedRoute,
               public assignmentService: AssignmentService,
               private workspaceService: WorkspaceService,
+              private busyService: BusyService,
               private appService: AppService,
               private zipService: ZipService) { }
 
   ngOnInit() {
+    this.selectedPdfPath = this.filePath;
     if (this.assignmentRootFolder) {
-      this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfFile => {
-        if (this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + '/')) {
-          this.filePath = this.assignmentService.getSelectedPdfLocation();
+      this.assignmentService.selectedSubmissionChanged.subscribe((selectedSubmission) => {
+        if (selectedSubmission) {
+          this.selectedPdfPath = selectedSubmission.pdfPath;
+          this.filePath = selectedSubmission.pdfPath;
         } else {
-          this.isFileSelected = false;
-          this.filePath = undefined;
+          // this.filePath = null;
         }
+        // Ignore if current selected submission changes to null, else it collapses the whole tree
       });
     }
-    // this.subscription = this.workspaceService.dialogResultSource$.subscribe(
-    //   dialogResult => {
-    //     if (dialogResult && dialogResult.workspaceName && dialogResult.workspaceName !== dialogResult.prevWorkspaceName) {
-    //       console.log(dialogResult.prevWorkspaceName);
-    //       console.log(dialogResult.workspaceName);
-    //     }
-    //     if (dialogResult && dialogResult.movedAssignments && dialogResult.movedAssignments.length > 0) {
-    //       console.log(dialogResult.movedAssignments);
-    //     }
-    //   });
   }
 
   ngOnDestroy() {
@@ -83,6 +77,7 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
 
   onAssignment(objectName, hierarchyModel, $event) {
 
+    this.busyService.start();
     this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
       this.workspaceList = workspaces;
       const folderOrFileKeys = Object.keys(hierarchyModel);
@@ -100,34 +95,19 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
         }
       }
       if (!this.isAssignmentRoot(objectName, hierarchyModel) && isWorkspace) {
-        this.appService.isLoading$.next(true);
-        this.assignmentService.setSelectedWorkspace(hierarchyModel);
-        // if (this.router.url !== RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW)
-        this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW]);
+        this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW, objectName]).then(() => this.busyService.stop());
         $event.stopImmediatePropagation();
       } else if (this.isAssignmentRoot(objectName, hierarchyModel)) {
-
-        // if (this.router.url !== RoutesEnum.ASSIGNMENT_OVERVIEW) {
         if (this.parent !== undefined) {
-          this.appService.isLoading$.next(true);
-          if (folderOrFileKeys.length > 1) {
-            const arr = Object.entries(hierarchyModel).find(x => x[0] === objectName);
-            const obj1 = Object.fromEntries(new Map([arr]));
-            this.assignmentService.setSelectedAssignment(obj1);
-          } else {
-            this.assignmentService.setSelectedAssignment(hierarchyModel);
-          }
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.parent]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, objectName, this.parent]).then(() => this.busyService.stop());
         } else {
-          this.appService.isLoading$.next(true);
-          this.assignmentService.setSelectedAssignment(hierarchyModel);
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, objectName]).then(() => this.busyService.stop());
         }
-        // }
         $event.stopImmediatePropagation();
+      } else {
+        this.busyService.stop();
       }
     });
-    this.appService.isLoading$.next(false);
   }
 
   isAssignmentRoot(objectName: string, hierarchyModel: object): boolean {
@@ -142,23 +122,19 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
   scrollToFile() {
     this.scrollToElement.scrollIntoView({ block: 'start', behavior: 'smooth'});
     this.filePath = undefined;
-    this.isFileSelected = true;
   }
 
-  isSelected() {
-    return ((JSON.stringify(this.hierarchyModel) === JSON.stringify(this.assignmentService.getSelectedAssignment())) && this.router.url === RoutesEnum.ASSIGNMENT_OVERVIEW);
-  }
-
-  onSelectedPdf(pdfFileLocation: string) {
-    if (this.router.url !== RoutesEnum.ASSIGNMENT_MARKER || this.assignmentService.getSelectedPdfLocation() !== pdfFileLocation) {
-      console.log(pdfFileLocation);
-      this.assignmentService.getFile(pdfFileLocation).subscribe(blobData => {
-        this.assignmentService.configure(pdfFileLocation, blobData);
-      }, error => {
-        this.appService.isLoading$.next(false);
-        this.appService.openSnackBar(false, 'Unable to read file');
-      });
-    }
+  onSelectedPdf(hierarchiralModel: any) {
+    const assignmentPath = PdfmUtilsService.dirname(hierarchiralModel.path, 3);
+    const workspacePath = PdfmUtilsService.dirname(hierarchiralModel.path, 4);
+    const assignmentName = PdfmUtilsService.basename(assignmentPath);
+    const workspaceName = PdfmUtilsService.defaultWorkspaceName(workspacePath);
+    this.assignmentService.selectSubmission({
+      workspaceName,
+      assignmentName,
+      pdfPath: hierarchiralModel.path
+    });
+    this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, hierarchiralModel.path]);
   }
 
   checkIfWorkspace(hierarchyModel) {

@@ -68,7 +68,7 @@ export const annotatePdfFile = async (filePath: string, marks: MarkInfo[][] = []
               page: pageCount - 1,
               rect: [
                 (coords.x * COORD_CONSTANT), // x1
-                pdfPage.getHeight() - (coords.y * COORD_CONSTANT) - HIGHTLIGHT_HEIGHT, // y1
+                pdfPage.getHeight() - (coords.y * COORD_CONSTANT) - (HIGHTLIGHT_HEIGHT * COORD_CONSTANT), // y1
                 (coords.x  + coords.width) * COORD_CONSTANT, // x2
                 pdfPage.getHeight() - (coords.y * COORD_CONSTANT) // y2
               ],

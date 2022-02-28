@@ -17,6 +17,9 @@ import {ImportInfo} from '@shared/info-objects/import.info';
 import {SakaiConstants} from '@shared/constants/sakai.constants';
 import {isNil} from 'lodash';
 import { PdfmConstants } from '@shared/constants/pdfm.constants';
+import {BusyService} from "../../services/busy.service";
+import {forkJoin, Observable, tap, throwError} from "rxjs";
+import {catchError} from "rxjs/operators";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -67,39 +70,51 @@ export class ImportComponent implements OnInit {
               private appService: AppService,
               private importService: ImportService,
               private rubricService: RubricService,
+              private busyService: BusyService,
               private assignmentService: AssignmentService,
               private workspaceService: WorkspaceService) { }
 
   ngOnInit() {
-
-    this.appService.isLoading$.next(true);
-    this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
-      this.rubrics = rubrics;
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
-    });
-    this.appService.isLoading$.next(false);
-    this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
-      if (workspaces) {
-        this.workspaces = [...workspaces];
-        this.workspaces = this.workspaces.map(item => {
-          return PdfmUtilsService.basename(item);
-        });
-      }
-      this.workspaces.unshift(PdfmConstants.DEFAULT_WORKSPACE);
-      if (this.workspaces.length <= 1) {
-        this.importForm.controls.workspaceFolder.setValue(PdfmConstants.DEFAULT_WORKSPACE);
-      }
-      this.appService.isLoading$.next(false);
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to retrieve workspaces');
-      this.appService.isLoading$.next(false);
-    });
-
+    this.busyService.start();
     this.initForm();
+    forkJoin([
+      this.loadRubrics(),
+      this.loadWorkspaces()
+    ]).subscribe({
+      error: (reason) => {
+        this.appService.openSnackBar(false, reason);
+        this.busyService.stop();
+      },
+      next: () => {
+        this.busyService.stop();
+      }
+    });
+  }
 
-    this.appService.isLoading$.next(false);
+  private loadWorkspaces(): Observable<string[]> {
+    return this.workspaceService.getWorkspaces()
+      .pipe(
+        catchError(error => throwError(() => 'Unable to retrieve workspaces')),
+        tap((workspaces) => {
+          if (workspaces) {
+            this.workspaces = [...workspaces];
+            this.workspaces = this.workspaces.map(item => {
+              return PdfmUtilsService.basename(item);
+            });
+          }
+          this.workspaces.unshift(PdfmConstants.DEFAULT_WORKSPACE);
+          if (this.workspaces.length <= 1) {
+            this.importForm.controls.workspaceFolder.setValue(PdfmConstants.DEFAULT_WORKSPACE);
+          }
+        })
+      );
+  }
+
+  private loadRubrics(): Observable<IRubricName[]> {
+    return this.rubricService.getRubricNames().pipe(
+      catchError(error => throwError(() => 'Unable to retrieve rubrics')),
+      tap((rubrics: IRubricName[]) => this.rubrics = rubrics)
+    );
   }
 
   compareCategoryObjects(object1: any, object2: any) {
@@ -118,11 +133,12 @@ export class ImportComponent implements OnInit {
   }
 
   async selectFile() {
+    this.busyService.start();
     this.appService.getFile({ name: 'Zip Files', extension: ['zip'] })
       .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        this.showLoading(false);
+        this.busyService.stop();
         if (appSelectedPathInfo.selectedPath) {
-          this.showLoading(true);
+          this.busyService.start();
           this.actualFilePath = appSelectedPathInfo.selectedPath;
         }
 
@@ -149,17 +165,17 @@ export class ImportComponent implements OnInit {
           this.clearError();
         }
         this.isFileLoaded = true;
-        this.showLoading(false);
+        this.busyService.stop();
       }, error => {
         this.showErrorMessage(error);
-        this.showLoading(false);
+        this.busyService.stop();
       });
     } else  if (this.selectedType === 'Generic') {
       this.isValidFormat = true;
       this.isFileLoaded = true;
-      this.showLoading(false);
+      this.busyService.stop();
     }  else {
-      this.showLoading(false);
+      this.busyService.stop();
     }
   }
 
@@ -191,7 +207,7 @@ export class ImportComponent implements OnInit {
   }
 
   onPreview() {
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.importService.getZipEntries(this.actualFilePath)
       .subscribe((zipInfor) => {
         const value = this.zipService.getZipModel(zipInfor);
@@ -243,18 +259,16 @@ export class ImportComponent implements OnInit {
       assignmentName: assignmentName,
       assignmentType: this.selectedType
     };
-    this.appService.isLoading$.next(true);
+    this.busyService.start();
     this.importService.importAssignmentFile(importData).subscribe((msg) => {
 
-        this.appService.isLoading$.next(false);
+        this.busyService.stop();
         this.alertService.success(msg);
         this.resetForm();
       }
-      , error => this.appService.isLoading$.next(false));
+      , error => this.busyService.stop());
   }
-  private showLoading(isLoading: boolean) {
-    this.appService.isLoading$.next(isLoading);
-  }
+
 
   private showErrorMessage(errorMessage: string) {
     this.alertService.error(errorMessage);
