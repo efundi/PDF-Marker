@@ -39,7 +39,7 @@ export class PdfmUtilsService {
    * @example basename('/home/johndoe/github/my-package/webpack.config.js') = "/home/johndoe/github/my-package"
    * @example basename('C:\\Users\\johndoe\\github\\my-package\\webpack.config.js') = "C:\\Users\\johndoe\\github\\my-package\\"
    */
-  public static dirname(path: string): string{
+  public static dirname(path: string, levels = 1): string {
     let separator = '/';
 
     const windowsSeparator = '\\';
@@ -47,8 +47,17 @@ export class PdfmUtilsService {
     if (path.includes(windowsSeparator)) {
       separator = windowsSeparator;
     }
-
-    return path.slice(0, path.lastIndexOf(separator));
+    const lastIndex = path.lastIndexOf(separator);
+    if (lastIndex < 0) {
+      // There is no more parents
+      return undefined;
+    }
+    const dirname = path.slice(0, lastIndex);
+    if (levels > 1) {
+      return PdfmUtilsService.dirname(dirname, --levels);
+    } else {
+      return dirname;
+    }
   }
 
   public static defaultWorkspaceName(workspaceName?: string): string{
@@ -59,10 +68,10 @@ export class PdfmUtilsService {
   }
 
   public static buildFilePath(workspaceName: string, assignmentName: string, ...paths: string[]): string{
-    let finalPath;
+    let finalPath = assignmentName + '/' + paths.join('/');
     if (!isNil(workspaceName) && workspaceName !== PdfmConstants.DEFAULT_WORKSPACE){
-      finalPath = workspaceName + '/';
+      finalPath = workspaceName + '/' + finalPath;
     }
-    return assignmentName + '/' + paths.join('/');
+    return finalPath;
   }
 }

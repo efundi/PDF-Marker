@@ -20,7 +20,6 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
 
-    // this.workspaces = this.workspaceService.getWorkspaces();
     this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
        this.workspaces = workspaces;
     });

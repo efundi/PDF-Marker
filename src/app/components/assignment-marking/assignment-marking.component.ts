@@ -84,7 +84,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   private workspaceName: string;
   private assignmentName: string;
-  private student: string;
   private pdf: string;
 
 
@@ -109,7 +108,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private loadAssignment() {
     this.currentPage = 1;
     this.appService.isLoading$.next(true);
-    // TODO fix location
     this.assignmentService.getFile(this.pdf)
       .pipe(
         mergeMap((data) => this.loadPdf(data)),
@@ -133,7 +131,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
       this.workspaceName = params['workspaceName'];
       this.assignmentName = params['assignmentName'];
-      this.student = params['student'];
       this.pdf = params['pdf'];
       this.loadAssignment();
     });
@@ -193,7 +190,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   private loadMarks(): Observable<any> {
-    return this.assignmentService.getSavedMarks(this.workspaceName, this.assignmentName)
+    return this.assignmentService.getSavedMarks(PdfmUtilsService.dirname(this.pdf, 2))
       .pipe(
         tap((marks) => {
           this.marks = this.setupMark(marks);
@@ -276,7 +273,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const originalMarks = cloneDeep(this.marks);
     const markDetails = marks || this.marks;
     this.appService.isLoading$.next(true);
-    return this.assignmentService.saveMarks(PdfmUtilsService.dirname(this.pdf), markDetails, this.totalMark)
+    return this.assignmentService.saveMarks(PdfmUtilsService.dirname(this.pdf, 2), markDetails, this.totalMark)
       .pipe(
         map(() => {
           this.appService.isLoading$.next(false);
@@ -393,6 +390,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     if (this.pdfDocument) {
       this.pdfDocument.cleanup();
     }
+    this.assignmentService.selectSubmission(null);
   }
 
   onSectionChange($event: string) {

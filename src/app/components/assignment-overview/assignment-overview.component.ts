@@ -225,14 +225,16 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   }
 
   onSelectedPdf(element: any) {
-
-
+    this.assignmentService.selectSubmission({
+      workspaceName: PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
+      assignmentName: this.assignmentName,
+      pdfPath: element.path
+    });
 
     this.router.navigate([
       RoutesEnum.ASSIGNMENT_MARKER,
       PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
       this.assignmentName,
-      'TODO Student',
       element.path]);
   }
 

@@ -27,7 +27,7 @@ const routes: Routes = [
   { path: 'marker/assignment/overview/:id/:workspaceName', component: AssignmentOverviewComponent },
   { path: 'marker/assignment/workspaceOverview/:workspaceName', component: AssignmentWorkspaceOverviewComponent },
   { path: 'marker/assignment/workingFolder', component: WorkingFolderComponent },
-  { path: 'marker/assignment/marking/:workspaceName/:assignmentName/:student/:pdf', component: AssignmentMarkingComponent },
+  { path: 'marker/assignment/marking/:workspaceName/:assignmentName/:pdf', component: AssignmentMarkingComponent },
   { path: 'marker/assignment/rubric', component: RubricImportComponent },
   { path: 'marker/assignment/comments', component: GenericCommentsComponent },
   { path: '**', redirectTo: '', pathMatch: 'full'}

@@ -1,5 +1,5 @@
 import {Component, Input, OnChanges, OnDestroy, OnInit} from '@angular/core';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {AssignmentService} from '../../services/assignment.service';
 import {AppService} from '../../services/app.service';
 import {Subscription} from 'rxjs';
@@ -40,13 +40,12 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
   @Input()
   scrollToElement: HTMLElement;
 
-  isFileSelected: boolean;
-
   isWorkspaceFolder: boolean;
 
   workspaceList: string[];
 
   constructor(private router: Router,
+              public activatedRoute: ActivatedRoute,
               public assignmentService: AssignmentService,
               private workspaceService: WorkspaceService,
               private appService: AppService,
@@ -54,15 +53,12 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
 
   ngOnInit() {
     if (this.assignmentRootFolder) {
-      // TODO need to fix this
-      // this.subscription = this.assignmentService.selectedPdfURLChanged().subscribe(pdfFile => {
-      //   if (this.assignmentService.getSelectedPdfLocation().startsWith(this.hierarchyModelKeys[0] + '/')) {
-      //     this.filePath = this.assignmentService.getSelectedPdfLocation();
-      //   } else {
-      //     this.isFileSelected = false;
-      //     this.filePath = undefined;
-      //   }
-      // });
+      this.assignmentService.selectedSubmissionChanged.subscribe((selectedSubmission) => {
+        if (selectedSubmission) {
+          this.filePath = selectedSubmission.pdfPath;
+        }
+        // Ignore if current selected submission changes to null, else it collapses the whole tree
+      });
     }
   }
 
@@ -120,14 +116,19 @@ export class FileExplorerComponent implements OnInit, OnChanges, OnDestroy  {
 
   scrollToFile() {
     this.scrollToElement.scrollIntoView({ block: 'start', behavior: 'smooth'});
-    this.filePath = undefined;
-    this.isFileSelected = true;
   }
 
   onSelectedPdf(hierarchiralModel: any) {
-    const workspaceName = "todoworkspace";
-    const assignmentName = "todoassignmentName";
-    this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, 'TODO Student', hierarchiralModel.path]);
+    const assignmentPath = PdfmUtilsService.dirname(hierarchiralModel.path, 3);
+    const workspacePath = PdfmUtilsService.dirname(hierarchiralModel.path, 4);
+    const assignmentName = PdfmUtilsService.basename(assignmentPath);
+    const workspaceName = PdfmUtilsService.defaultWorkspaceName(workspacePath);
+    this.assignmentService.selectSubmission({
+      workspaceName,
+      assignmentName,
+      pdfPath: hierarchiralModel.path
+    });
+    this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, hierarchiralModel.path]);
   }
 
   checkIfWorkspace(hierarchyModel) {

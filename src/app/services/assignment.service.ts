@@ -1,8 +1,6 @@
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, Observable, ReplaySubject, Subject} from 'rxjs';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
-import {MimeTypesEnum} from '../utils/mime.types.enum';
-import {RoutesEnum} from '../utils/routes.enum';
 import {Router} from '@angular/router';
 import {AppService} from './app.service';
 import {ZipService} from './zip.service';
@@ -14,7 +12,8 @@ import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info'
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {fromIpcResponse} from './ipc.utils';
 import {PdfmConstants} from '@shared/constants/pdfm.constants';
-import {find, isNil} from 'lodash';
+import {find, isEqual, isNil} from 'lodash';
+import {SelectedSubmission} from "../info-objects/selected-submission";
 
 @Injectable({
   providedIn: 'root'
@@ -23,8 +22,9 @@ export class AssignmentService {
 
   private assignmentsHierarchy: any[];
   private assignmentListSource$ = new ReplaySubject<any[]>(1);
+  private selectedSubmission = new ReplaySubject<SelectedSubmission>(1);
   assignmentListChanged: Observable<any[]>;
-  private selectedWorkspace: object;
+  selectedSubmissionChanged: Observable<SelectedSubmission>;
 
   private assignmentApi: AssignmentIpcService;
 
@@ -34,6 +34,7 @@ export class AssignmentService {
 
     this.assignmentApi = (window as any).assignmentApi;
     this.assignmentListChanged = this.assignmentListSource$.asObservable();
+    this.selectedSubmissionChanged = this.selectedSubmission.asObservable();
     this.getAssignments().subscribe(assignments => {
       this.assignmentsHierarchy = assignments;
       this.assignmentListSource$.next(assignments);
@@ -43,6 +44,10 @@ export class AssignmentService {
 
   private findInTree(hierachy: any, key: string): any {
     return find(hierachy, (element) => element.hasOwnProperty(key));
+  }
+
+  selectSubmission(selectedSubmission: SelectedSubmission): void {
+    this.selectedSubmission.next(selectedSubmission);
   }
 
   getWorkspaceHierarchy(workspaceName: string): any {
@@ -99,10 +104,6 @@ export class AssignmentService {
     this.assignmentsHierarchy = assignmentsHierarchy;
   }
 
-  getSelectedWorkspace(): object {
-    return this.selectedWorkspace;
-  }
-
   saveMarks(location: string, marks: MarkInfo[][], totalMark: number = 0): Observable<any> {
     return fromIpcResponse(this.assignmentApi.saveMarks(location, marks, totalMark));
   }
@@ -111,8 +112,8 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.saveRubricMarks(location, rubricName, marks));
   }
 
-  getSavedMarks(workspaceName: string, assignmentName: string): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.getMarks(workspaceName, assignmentName));
+  getSavedMarks(location: string): Observable<any> {
+    return fromIpcResponse(this.assignmentApi.getMarks(location));
   }
 
   shareExport(shareRequest: ShareAssignments): Observable<Uint8Array> {

@@ -15,7 +15,7 @@ export interface AssignmentIpcService {
   finalizeAssignmentRubric(workspaceFolder: string, assignmentName: string, rubricName: string): Promise<IpcResponse<Uint8Array>>;
   getAssignmentSettings(workspaceName: string, location: string): Promise<IpcResponse<any>>;
   getAssignmentGlobalSettings(location: string): Promise<IpcResponse<any>>;
-  getMarks(workspaceName: string, assignmentName: string): Promise<IpcResponse<any>>;
+  getMarks(location: string): Promise<IpcResponse<any>>;
   getGrades(workspaceName: string, assignmentName: string): Promise<IpcResponse<any>>;
   updateAssignmentSettings(updatedSettings: any, workspaceName: string, assignmentName: string): Promise<IpcResponse<any>>;
   shareExport(shareRequest: ShareAssignments): Promise<IpcResponse<any>>;

@@ -5,6 +5,7 @@ import {filter, map} from 'rxjs/operators';
 import {AppService} from '../../services/app.service';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {AppVersionInfo} from '@shared/info-objects/app-version.info';
+import {Subscription} from "rxjs";
 
 @Component({
   selector: 'pdf-marker-home',
@@ -15,7 +16,6 @@ import {AppVersionInfo} from '@shared/info-objects/app-version.info';
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly title = 'PDF Marker';
   version: AppVersionInfo;
-  // isLoading$ = this.appService.isLoading$;
   isLoading$: boolean;
   breadcrumbs: any;
   isMarkingPage: boolean;
@@ -23,11 +23,12 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('content', {static: false})
   content: ElementRef;
+  private subscription: Subscription;
 
   constructor(private router: Router,
               private activatedRoute: ActivatedRoute,
               private appService: AppService) {
-    this.appService.isLoading.subscribe(isloading => {
+    this.subscription = this.appService.isLoading.subscribe(isloading => {
       // console.log('Pre: ' + this.isLoading$);
       this.isLoading$ = isloading;
       // console.log('Post: ' + this.isLoading$);
@@ -81,6 +82,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
 }

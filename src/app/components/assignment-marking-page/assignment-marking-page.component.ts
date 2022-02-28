@@ -276,8 +276,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   ngAfterViewInit() {
 
     this.appService.isLoading$.next(true);
-
-    // TODO an improvement here could be to wait until the page is in view before attempting to render it
     this.pdf.getPage(this.pageIndex + 1).then((page) => {
       this.page = page;
       this.resizePage();
