@@ -467,7 +467,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       next: () => {
         this.isEdit = false;
         if (PdfmUtilsService.isDefaultWorkspace(this.workspaceName)) {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId]);
         } else {
           this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
         }

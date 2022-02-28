@@ -295,7 +295,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const originalMarks = cloneDeep(this.marks);
     const markDetails = marks || this.marks;
     this.appService.isLoading$.next(true);
-    return this.assignmentService.saveRubricMarks(PdfmUtilsService.dirname(this.pdf), this.rubric.name, markDetails)
+    return this.assignmentService.saveRubricMarks(PdfmUtilsService.dirname(this.pdf, 2), this.rubric.name, markDetails)
       .pipe(
         map(() => {
           this.appService.isLoading$.next(false);
