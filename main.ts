@@ -258,6 +258,7 @@ try {
 
 
 } catch (e) {
+  console.error(e);
   // Catch Error
   // throw e;
 }
