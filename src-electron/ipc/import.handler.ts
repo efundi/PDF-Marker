@@ -90,7 +90,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
 
           return getWorkingDirectory(req.workspace).then((workingDirectory) => {
             return extractZipFile(req.file, workingDirectory + sep, newFolder, renameOld, req.assignmentName, req.assignmentType).then(() => {
-              return writeAssignmentSettings(req.workspace, assignmentDirectoryName, JSON.stringify(settings)).then(() => {
+              return writeAssignmentSettings(req.workspace, assignmentDirectoryName, settings).then(() => {
                 if (!isNil(rubricName)) {
                   rubrics[rubricIndex].inUse = true;
                   return writeRubricFile(rubrics).then(() => {
