@@ -216,8 +216,6 @@ try {
     ipcMain.handle('app:getFolder', toIpcResponse(getFolder));
     ipcMain.handle('app:getFile', toIpcResponse(getFile));
     ipcMain.handle('app:openExternalLink', toIpcResponse(openExternalLink));
-    ipcMain.handle('open_external_link', toIpcResponse(openExternalLink));
-
 
   });
 
