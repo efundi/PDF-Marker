@@ -10,7 +10,7 @@ import {getConfig} from './config.handler';
 import {getRubrics, writeRubricFile} from './rubric.handler';
 import {EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, NOT_PROVIDED_RUBRIC} from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
-import {deleteFolderRecursive, extractZipFile, isFolder} from '../utils';
+import {deleteFolderRecursive, extractAssignmentZipFile, isFolder} from '../utils';
 
 import JSZip from 'jszip';
 import {getWorkingDirectory, writeAssignmentSettings} from './workspace.handler';
@@ -89,7 +89,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
           }
 
           return getWorkingDirectory(req.workspace).then((workingDirectory) => {
-            return extractZipFile(req.file, workingDirectory + sep, newFolder, renameOld, req.assignmentName, req.assignmentType).then(() => {
+            return extractAssignmentZipFile(req.file, workingDirectory + sep, newFolder, renameOld, req.assignmentName, req.assignmentType).then(() => {
               return writeAssignmentSettings(req.workspace, assignmentDirectoryName, settings).then(() => {
                 if (!isNil(rubricName)) {
                   rubrics[rubricIndex].inUse = true;

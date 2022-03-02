@@ -22,8 +22,8 @@ import {RubricService} from '../../services/rubric.service';
 import {isNil} from 'lodash';
 import {PdfmConstants} from '@shared/constants/pdfm.constants';
 import {forkJoin, mergeMap, Observable, tap, throwError} from 'rxjs';
-import {BusyService} from "../../services/busy.service";
-import {catchError} from "rxjs/operators";
+import {BusyService} from '../../services/busy.service';
+import {catchError} from 'rxjs/operators';
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -139,7 +139,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   }
 
-  private loadWorkspaces(): Observable<string[]>{
+  private loadWorkspaces(): Observable<string[]> {
     return this.workspaceService.getWorkspaces().pipe(
       catchError(() => throwError(() => 'Unable to retrieve workspaces')),
       tap((workspaces: string[]) => {
@@ -157,7 +157,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     );
   }
 
-  private loadRubrics(): Observable<IRubricName[]>{
+  private loadRubrics(): Observable<IRubricName[]> {
     return this.rubricService.getRubricNames().pipe(
       catchError(() => throwError(() => 'Unable to retrieve rubrics')),
       tap((rubrics) => this.rubrics = rubrics)
@@ -192,16 +192,11 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private populateStudentDetails(studentDetails: AssignmentDetails[]) {
-    const fields = ['studentId', 'studentName', 'studentSurname', 'studentSubmission'];
     for (let i = 0; i < studentDetails.length; i++) {
       const studentFormGroup: FormGroup = this.newFormGroupRowFromData(studentDetails[i]);
       (this.fc.studentRow as FormArray).push(studentFormGroup);
       this.studentFiles.push(new File([''], studentDetails[i].assignment));
     }
-  }
-
-  private disableField(formGroup: FormGroup, fieldName: string) {
-    formGroup.get(fieldName).disable();
   }
 
   private disableFields(formGroup: FormGroup, fields: string[]) {
@@ -476,7 +471,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         } else {
           this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, createAssignmentInfo.assignmentName, createAssignmentInfo.workspace]);
         }
-        this.busyService.stop()
+        this.busyService.stop();
       },
       error: (error) => {
         this.appService.openSnackBar(false, error);

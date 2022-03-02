@@ -89,7 +89,7 @@ export function getAssignments(): Promise<any> {
 }
 
 
-export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: MarkInfo[][] = []): Promise<any> {
+export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: MarkInfo[][] = []): Promise<string> {
 
   let totalMark = 0;
   if (!isNil(marks)) {
@@ -124,7 +124,7 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: Ma
   return saveToMarks(location, marks, totalMark);
 }
 
-function saveToMarks(studentLocation: string, marks: MarkInfo[][] | number[], totalMark: number): Promise<any>{
+function saveToMarks(studentLocation: string, marks: MarkInfo[][] | number[], totalMark: number): Promise<string> {
 
   return getConfig().then((config) => {
     // console.log("Path Recieved: " + req.body.location);

@@ -112,7 +112,13 @@ export function isFolder(curPath: string) {
 
 
 
-export const extractZipFile = async (file, destination, newFolder, oldFolder, assignmentName, assignmentType) => {
+export const extractAssignmentZipFile = async (
+  file: string,
+  destination: string,
+  newFolder: string,
+  oldFolder: string,
+  assignmentName: string,
+  assignmentType: string) => {
   // TODO Should we validate the zip structure based on assignment type?
   if (assignmentType === 'Generic') {
     let skippedFirst = 1;
