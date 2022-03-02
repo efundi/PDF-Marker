@@ -7,6 +7,7 @@ import {existsSync, mkdirSync, readdirSync, renameSync, writeFileSync} from 'fs'
 import {IpcMainInvokeEvent, shell} from 'electron';
 import {moveSync} from 'fs-extra';
 import {PdfmConstants} from '@shared/constants/pdfm.constants';
+import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 
 export function getWorkingDirectory(workspaceName: string): Promise<string> {
   return getConfig().then((config) => {
@@ -24,7 +25,7 @@ export function getAssignmentDirectory(workspaceName: string, assignmentName: st
   });
 }
 
-export function writeAssignmentSettings(workspaceName: string, assignmentName: string, settings: any): Promise<any> {
+export function writeAssignmentSettings(workspaceName: string, assignmentName: string, settings: AssignmentSettingsInfo): Promise<AssignmentSettingsInfo> {
   return getAssignmentDirectory(workspaceName, assignmentName).then((workingDirectory) => {
     return writeFile(workingDirectory + sep + SETTING_FILE, JSON.stringify(settings));
   }).then(() => settings);

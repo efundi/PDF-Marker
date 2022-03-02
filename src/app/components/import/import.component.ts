@@ -72,11 +72,13 @@ export class ImportComponent implements OnInit {
               private rubricService: RubricService,
               private busyService: BusyService,
               private assignmentService: AssignmentService,
-              private workspaceService: WorkspaceService) { }
+              private workspaceService: WorkspaceService) {
+
+    this.initForm();
+  }
 
   ngOnInit() {
     this.busyService.start();
-    this.initForm();
     forkJoin([
       this.loadRubrics(),
       this.loadWorkspaces()

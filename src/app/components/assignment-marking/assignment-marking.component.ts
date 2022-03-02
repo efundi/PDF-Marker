@@ -115,7 +115,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         mergeMap(() => this.loadAssignmentSettings()),
         mergeMap(() => this.loadMarks())
       ).subscribe({
-      next: (settings: AssignmentSettingsInfo) => {
+      next: () => {
         this.appService.initializeScrollPosition();
         this.isPdfLoaded = true;
         this.busyService.stop();
@@ -160,7 +160,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
    * Make sure the array of marks has marks for each page
    * @private
    */
-  private setupMark(marks: MarkInfo[][] | any[]): MarkInfo[][] {
+  private setupMark(marks: MarkInfo[][] | number[]): MarkInfo[][] | number[] {
 
     if (isNil(this.assignmentSettings.rubric)) {
       const numPages = this.pdfDocument.numPages;
@@ -191,7 +191,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     );
   }
 
-  private loadMarks(): Observable<any> {
+  private loadMarks(): Observable<MarkInfo[][] | number[]> {
     return this.assignmentService.getSavedMarks(PdfmUtilsService.dirname(this.pdf, 2))
       .pipe(
         tap((marks) => {

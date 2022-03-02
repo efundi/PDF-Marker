@@ -50,8 +50,7 @@ const logger = require('electron-log');
 
 function createWindow() {
 
-  const electronScreen = screen;
-  const size = electronScreen.getPrimaryDisplay().workAreaSize;
+  const size = screen.getPrimaryDisplay().workAreaSize;
 
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -72,13 +71,12 @@ function createWindow() {
     // require('electron-reload')(__dirname, {
     //   electron: require(`${__dirname}/node_modules/electron`)
     // });
-    mainWindow.loadURL('http://localhost:4200');
+    mainWindow.loadURL('http://localhost:4200').then(() => {
+      mainWindow.webContents.openDevTools();
+    });
+
   } else {
     mainWindow.loadFile(path.join(__dirname, 'dist/browser/index.html'));
-  }
-
-  if (serve) {
-    mainWindow.webContents.openDevTools();
   }
 
   // Emitted when the window is closed.
@@ -87,6 +85,19 @@ function createWindow() {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null;
+  });
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    autoUpdater.checkForUpdatesAndNotify();
+  });
+
+
+  mainWindow.webContents.setWindowOpenHandler((details: HandlerDetails) => {
+    // For now we assume all links are external
+    shell.openExternal(details.url);
+    return {
+      action: 'deny'
+    };
   });
 }
 
@@ -147,18 +158,7 @@ try {
     }
     createWindow();
 
-    mainWindow.webContents.on('did-finish-load', () => {
-      autoUpdater.checkForUpdatesAndNotify();
-    });
 
-
-    mainWindow.webContents.setWindowOpenHandler((details: HandlerDetails) => {
-      // For now we assume all links are external
-      shell.openExternal(details.url);
-      return {
-        action: 'deny'
-      };
-    });
 
     // Assignment API
     ipcMain.handle('assignments:get', toIpcResponse(getAssignments));
@@ -217,7 +217,6 @@ try {
     ipcMain.handle('app:getFile', toIpcResponse(getFile));
     ipcMain.handle('app:openExternalLink', toIpcResponse(openExternalLink));
 
-
   });
 
   // Quit when all windows are closed.
@@ -258,6 +257,7 @@ try {
 
 
 } catch (e) {
+  console.error(e);
   // Catch Error
   // throw e;
 }

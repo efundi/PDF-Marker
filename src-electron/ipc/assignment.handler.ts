@@ -2,14 +2,15 @@ import {
   accessSync,
   constants,
   existsSync,
+  lstatSync,
   mkdirSync,
+  mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync,
   statSync,
   unlinkSync,
-  writeFileSync,
-  rmSync,
-  mkdtempSync, lstatSync
+  writeFileSync
 } from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
@@ -28,19 +29,19 @@ import {
   COULD_NOT_READ_RUBRIC_LIST,
   FEEDBACK_FOLDER,
   GRADES_FILE,
-  INVALID_PATH_PROVIDED,
   INVALID_RUBRIC_JSON_FILE,
   INVALID_STUDENT_FOLDER,
   MARK_FILE,
   NOT_PROVIDED_RUBRIC,
   RUBRICS_FILE,
-  SETTING_FILE, STUDENT_DIRECTORY_REGEX,
+  SETTING_FILE,
+  STUDENT_DIRECTORY_REGEX,
   SUBMISSION_FOLDER
 } from '../constants';
 import * as path from 'path';
 import {basename, dirname, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
-import {access, readFile} from 'fs/promises';
+import {readFile} from 'fs/promises';
 import {find, forEach, isNil} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
@@ -88,10 +89,10 @@ export function getAssignments(): Promise<any> {
 }
 
 
-export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: any[] = []): Promise<any> {
+export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: MarkInfo[][] = []): Promise<string> {
 
   let totalMark = 0;
-  if (!isNullOrUndefined(marks)) {
+  if (!isNil(marks)) {
     const pages = Object.keys(marks);
     const commentsData = existsSync(CONFIG_DIR + COMMENTS_FILE) ? readFileSync(CONFIG_DIR + COMMENTS_FILE) : null;
     const comments: IComment[] = isNullOrUndefined(commentsData) ? null : JSON.parse(commentsData.toString());
@@ -123,7 +124,7 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: an
   return saveToMarks(location, marks, totalMark);
 }
 
-function saveToMarks(studentLocation: string, marks: any, totalMark: number): Promise<any>{
+function saveToMarks(studentLocation: string, marks: MarkInfo[][] | number[], totalMark: number): Promise<string> {
 
   return getConfig().then((config) => {
     // console.log("Path Recieved: " + req.body.location);
@@ -177,7 +178,7 @@ function saveToMarks(studentLocation: string, marks: any, totalMark: number): Pr
 
 
 
-export function saveRubricMarks(event: IpcMainInvokeEvent, location: string, rubricName: string, marks: any[] = []): Promise<any> {
+export function saveRubricMarks(event: IpcMainInvokeEvent, location: string, rubricName: string, marks: number[] = []): Promise<any> {
 
   rubricName = rubricName.trim();
   const assignmentDirectory = dirname(location);
@@ -185,7 +186,7 @@ export function saveRubricMarks(event: IpcMainInvokeEvent, location: string, rub
     return getAssignmentSettingsAt(config.defaultPath + sep + assignmentDirectory)
       .then((assignmentSettingsInfo) => {
 
-        if (isNullOrUndefined(assignmentSettingsInfo.rubric)) {
+        if (isNil(assignmentSettingsInfo.rubric)) {
           return Promise.reject('Assignment\'s settings does not contain a rubric!');
         } else if (assignmentSettingsInfo.rubric.name !== rubricName) {
           return Promise.reject('Assignment\'s settings rubric does not match provided!');
@@ -205,7 +206,7 @@ export function saveRubricMarks(event: IpcMainInvokeEvent, location: string, rub
 
 
 
-export function getMarks(event: IpcMainInvokeEvent, studentFolder: string): Promise<MarkInfo[]> {
+export function getMarks(event: IpcMainInvokeEvent, studentFolder: string): Promise<MarkInfo[] | number[]> {
   return getConfig().then((config) => {
     studentFolder = config.defaultPath + sep + studentFolder.replace(/\//g, sep);
     console.log('studentFolder: ' + studentFolder);
@@ -349,15 +350,13 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
         // writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
         const files = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**');
         files.sort((a, b) => (a > b) ? 1 : -1);
-        const folderModel = hierarchyModel(files, config.defaultPath);
-        return folderModel;
+        return hierarchyModel(files, config.defaultPath);
       } else {
         writeFileSync(config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + GRADES_FILE, csvString);
         // writeFileSync(config.defaultPath + sep + req.body.workspace + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
         const files = glob.sync(config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + '/**');
         files.sort((a, b) => (a > b) ? 1 : -1);
-        const folderModel = hierarchyModel(files, config.defaultPath + sep + updateRequest.workspace);
-        return folderModel;
+        return hierarchyModel(files, config.defaultPath + sep + updateRequest.workspace);
       }
 
     });

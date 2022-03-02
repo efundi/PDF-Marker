@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable, ReplaySubject, Subject} from 'rxjs';
+import {Observable, ReplaySubject} from 'rxjs';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {Router} from '@angular/router';
 import {AppService} from './app.service';
@@ -12,8 +12,8 @@ import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info'
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {fromIpcResponse} from './ipc.utils';
 import {PdfmConstants} from '@shared/constants/pdfm.constants';
-import {find, isEqual, isNil} from 'lodash';
-import {SelectedSubmission} from "../info-objects/selected-submission";
+import {find, isNil} from 'lodash';
+import {SelectedSubmission} from '../info-objects/selected-submission';
 
 @Injectable({
   providedIn: 'root'
@@ -112,7 +112,7 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.saveRubricMarks(location, rubricName, marks));
   }
 
-  getSavedMarks(location: string): Observable<any> {
+  getSavedMarks(location: string): Observable<MarkInfo[][] | number[]> {
     return fromIpcResponse(this.assignmentApi.getMarks(location));
   }
 

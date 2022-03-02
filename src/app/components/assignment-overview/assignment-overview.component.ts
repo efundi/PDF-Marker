@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {SakaiService} from '../../services/sakai.service';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -25,6 +25,7 @@ import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from "../../services/busy.service";
+import {MatSort} from "@angular/material/sort";
 
 export interface AssignmentDetails {
   index?: number;
@@ -47,7 +48,7 @@ export interface AssignmentDetails {
   templateUrl: './assignment-overview.component.html',
   styleUrls: ['./assignment-overview.component.scss']
 })
-export class AssignmentOverviewComponent implements OnInit, OnDestroy {
+export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
   displayedColumns: string[] = ['select', 'studentName', 'assignment', 'grade', 'status'];
   dataSource: MatTableDataSource<AssignmentDetails>;
   assignmentsLength;
@@ -62,6 +63,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
   @ViewChild(MatPaginator, {static: true})
   paginator: MatPaginator;
+
+  @ViewChild(MatSort)
+  sort: MatSort;
+
 
   readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
@@ -78,6 +83,12 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
   private workspaceName: string;
   assignmentName: string;
 
+  /**
+   * Promise that will resolve when the data is loaded
+   */
+  dataSourcePromise: Promise<any>;
+  dataSourceResolve;
+
   constructor(private assignmentService: AssignmentService,
               private sakaiService: SakaiService,
               private router: Router,
@@ -88,7 +99,12 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
               private importService: ImportService,
               private busyService: BusyService,
               private rubricService: RubricService,
-              private fb: FormBuilder) { }
+              private fb: FormBuilder) {
+
+    this.dataSourcePromise = new Promise<any>((r) => {
+      this.dataSourceResolve = r;
+    });
+  }
 
 
   private loadRubrics(): Observable<IRubricName[]> {
@@ -122,7 +138,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
       this.loadRubrics(),
       this.loadSettings()
     ]).subscribe({
-      complete: () => this.busyService.stop(),
+      complete: () => {
+        this.busyService.stop();
+      },
       error: () => this.busyService.stop()
     });
 
@@ -227,7 +245,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         }
       });
       this.dataSource = new MatTableDataSource(values);
-      this.dataSource.paginator = this.paginator;
       this.assignmentsLength = values.length;
       const range = [];
       let i = 0;
@@ -240,6 +257,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
         }
       }
       this.assignmentPageSizeOptions = range;
+
+      this.dataSourceResolve();
     } else {
       this.router.navigate([RoutesEnum.MARKER]);
     }
@@ -424,6 +443,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
 
   private onSuccessfulShareExport(data: Uint8Array) {
     this.alertService.clear();
+    this.busyService.start();
     const fileName: string = this.assignmentName + '_share.zip';
     this.appService.saveFile({ filename: fileName, buffer: data, name: 'Zip File', extension: ['zip']})
       .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
@@ -434,5 +454,12 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy {
           this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
         }
       });
+  }
+
+  ngAfterViewInit() {
+    this.dataSourcePromise.then(() => {
+      this.dataSource.sort = this.sort;
+      this.dataSource.paginator = this.paginator;
+    });
   }
 }
