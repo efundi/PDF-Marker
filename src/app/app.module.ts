@@ -5,11 +5,9 @@ import {AppComponent} from './app.component';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {ZipService} from './services/zip.service';
 import {AlertService} from './services/alert.service';
-import {SakaiService} from './services/sakai.service';
 import {AppService} from './services/app.service';
 import {HeaderComponent} from './components/header/header.component';
 import {MenuComponent} from './components/menu/menu.component';
-import {FileExplorerComponent} from './components/file-explorer/file-explorer.component';
 import {FileExplorerModalComponent} from './components/file-explorer-modal/file-explorer-modal.component';
 import {AlertComponent} from './components/alert/alert.component';
 import {SideNavigationComponent} from './components/side-navigation/side-navigation.component';
@@ -79,13 +77,14 @@ import {MatTableModule} from '@angular/material/table';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import {MatSortModule} from '@angular/material/sort';
+import {CdkTreeModule} from '@angular/cdk/tree';
+import {MatTreeModule} from '@angular/material/tree';
 
 @NgModule({
   declarations: [
     AppComponent,
     HeaderComponent,
     MenuComponent,
-    FileExplorerComponent,
     FileExplorerModalComponent,
     AlertComponent,
     AssignmentListComponent,
@@ -148,12 +147,13 @@ import {MatSortModule} from '@angular/material/sort';
     MatRadioModule,
     MatSortModule,
     MatProgressSpinnerModule,
-    DragDropModule
+    MatTreeModule,
+    DragDropModule,
+    CdkTreeModule
   ],
   providers: [
     ZipService,
     AlertService,
-    SakaiService,
     AppService,
     AssignmentService,
     SettingsService,

@@ -13,7 +13,7 @@
     <ng-container matColumnDef="assignmentTitle">
       <th mat-header-cell *matHeaderCellDef> Assignment Name</th>
       <td mat-cell *matCellDef="let element">
-        <p class="pdf-marker-workspace-overview-assignment-name">{{element.assignmentTitle}}</p>
+        <p class="pdf-marker-workspace-overview-assignment-name" (click)="openAssignmentOverview(element)">{{element.assignmentTitle}}</p>
       </td>
     </ng-container>
 

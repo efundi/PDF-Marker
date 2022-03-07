@@ -1,13 +1,40 @@
-.pdf-modal-container {
+.mat-dialog-title {
   display: flex;
   align-items: center;
-  position: sticky;
-  top:  0;
-  left: 0;
-  padding-top: 24px;
   background: #fff;
+  margin-bottom: 0;
+}
 
-  h3 {
-    margin: 0;
-  }
+.mat-dialog-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: #F5F5F5;
+}
+
+.mat-dialog-content::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: var(--pdf-marker-primary);
+}
+
+
+.example-tree-invisible {
+  display: none;
+}
+
+.example-tree ul,
+.example-tree li {
+  margin-top: 0;
+  margin-bottom: 0;
+  list-style-type: none;
+}
+.example-tree-node {
+  display: block;
+}
+
+.example-tree-node .example-tree-node {
+  padding-left: 25px;
+}
+
+.tree-container{
+  overflow: auto;
 }

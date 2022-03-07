@@ -1,6 +1,6 @@
 import {BrowserWindow, dialog, IpcMainInvokeEvent} from 'electron';
 import {isBlank, isJson, joinError} from '../utils';
-import {IRubric, IRubricName, SelectedRubric} from '../../src/shared/info-objects/rubric.class';
+import {IRubric, IRubricName, SelectedRubric} from '@shared/info-objects/rubric.class';
 import {existsSync, readFileSync} from 'fs';
 import {mkdir, readFile, writeFile} from 'fs/promises';
 import {isNil, noop} from 'lodash';
@@ -13,11 +13,11 @@ import {
   INVALID_RUBRIC_JSON_FILE,
   NOT_CONFIGURED_CONFIG_DIRECTORY,
   RUBRICS_FILE,
-  SETTING_FILE
 } from '../constants';
 import * as glob from 'glob';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {getConfig} from './config.handler';
+import {SETTING_FILE} from '@shared/constants/constants';
 
 const excelParser = new (require('simple-excel-to-json').XlsParser)();
 

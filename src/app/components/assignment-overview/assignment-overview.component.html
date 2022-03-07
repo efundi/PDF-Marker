@@ -59,34 +59,41 @@
     </ng-container>
 
     <ng-container matColumnDef="studentName">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Student Name </th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="studentName"> Student Name </th>
       <td mat-cell *matCellDef="let element">
-        <p class="pdf-marker-assignment-overview-student-name">{{element.studentName}}</p>
+        <p class="pdf-marker-assignment-overview-student-name">{{element.studentSurname}}, {{element.studentName}}</p>
         <p class="pdf-marker-assignment-overview-student-number">{{element.studentNumber}}</p>
       </td>
     </ng-container>
 
     <!-- Assignment Column -->
     <ng-container matColumnDef="assignment">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Assignment </th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="assignment"> Assignment </th>
       <td mat-cell *matCellDef="let element"><span class="pdf-marker-assignment-overview-select-assignment" *ngIf="element?.assignment" (click)="onSelectedPdf(element)"><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<p>{{element.assignment}}</p></span></td>
     </ng-container>
 
     <!-- Feedback Column -->
     <ng-container matColumnDef="feedback">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header> Feedback </th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="feedback"> Feedback </th>
       <td mat-cell *matCellDef="let element"><span *ngIf="element?.feedback"><mat-icon class="assignment">description</mat-icon>&nbsp;&nbsp;<span class="pdf-marker-assignment-overview-edit">{{element.feedback}}</span><mat-icon class="assignment-edit">create</mat-icon></span></td>
     </ng-container>
 
     <!-- Grade Column -->
+    <ng-container matColumnDef="date">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="date"> Date Modified </th>
+      <td mat-cell *matCellDef="let element"><span [class.pdf-marker-assignment-overview-assignment-grade]="element?.date">{{ (element.date) ? element.date:'--' }}</span></td>
+    </ng-container>
+
+    <!-- Grade Column -->
     <ng-container matColumnDef="grade">
-      <th mat-header-cell *matHeaderCellDef class="pdf-marker-assignment-overview-assignment-grade-header"  mat-sort-header> Grade </th>
-      <td mat-cell *matCellDef="let element" class="pdf-marker-assignment-overview-assignment-grade-data"><span [class.pdf-marker-assignment-overview-assignment-grade]="element?.grade">{{ (element.grade) ? element.grade:'--' }}</span></td>
+      <th mat-header-cell *matHeaderCellDef class="pdf-marker-assignment-overview-assignment-grade-header"  mat-sort-header="grade"> Grade </th>
+      <td mat-cell *matCellDef="let element" class="pdf-marker-assignment-overview-assignment-grade-data">
+        <span class="pdf-marker-assignment-overview-assignment-grade">{{ (element.grade) ? element.grade:'--' }}</span></td>
     </ng-container>
 
     <!-- Submission Status -->
     <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef  mat-sort-header> Status </th>
+      <th mat-header-cell *matHeaderCellDef  mat-sort-header="status"> Status </th>
       <td mat-cell *matCellDef="let element"><span class="pdf-marker-assignment-overview-assignment-status" [class.pdf-marker-assignment-overview-assignment-status-on-time]="element?.status === 'On time'" [class.pdf-marker-assignment-overview-assignment-status-late]="element?.status === 'Late'" [class.pdf-marker-assignment-overview-assignment-status-unknown]="element?.status === 'Unknown'">{{ element.status }}</span></td>
     </ng-container>
 

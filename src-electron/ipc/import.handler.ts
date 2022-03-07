@@ -15,7 +15,22 @@ import {deleteFolderRecursive, extractAssignmentZipFile, isFolder} from '../util
 import JSZip from 'jszip';
 import {getWorkingDirectory, writeAssignmentSettings} from './workspace.handler';
 import {SakaiConstants} from '@shared/constants/sakai.constants';
-import {ZipInfo} from '@shared/info-objects/zip.info';
+import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
+
+
+function existingFolders(workspace: string): Promise<string[]> {
+  return getWorkingDirectory(workspace).then((workingDirectory) => {
+    const fileListing = glob.sync(workingDirectory + '/*');
+
+    const folders = [];
+    fileListing.forEach(folder => {
+      if (isFolder(folder)) {
+        folders.push(basename(folder));
+      }
+    });
+    return folders;
+  });
+}
 
 export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<any> {
 
@@ -33,24 +48,16 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
 
 
   return Promise.all([
-    getConfig(),
+    existingFolders(req.workspace),
     readFile(req.file),
     getRubrics()
   ]).then((results) => {
-    const config = results[0];
+    const folders = results[0];
     const zipFile: Buffer = results[1];
     const rubrics: IRubric[] = results[2];
     const rubricIndex = rubrics.findIndex(r => r.name === rubricName);
 
-    const folders = glob.sync(config.defaultPath + '/*');
 
-    let folderCount = 0;
-    folders.forEach(folder => {
-      if (isFolder(folder)) {
-        folders[folderCount] = basename(folder);
-        folderCount++;
-      }
-    });
 
     return new JSZip().loadAsync(zipFile)
       .then(async (zipObject) => {
@@ -121,26 +128,32 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
 
 
 
-export function getZipEntries(event: IpcMainInvokeEvent, file: string): Promise<ZipInfo[]> {
+export function getZipEntries(event: IpcMainInvokeEvent, file: string): Promise<TreeNode[]> {
   return readFile(file).then((data) => {
     return new JSZip().loadAsync(data)
       .then((zip) => {
-        const zipEntries: ZipInfo[] = [];
+        const treeNodes: TreeNode[] = [];
         zip.forEach((relativePath, zipEntry) => {
           if (!zipEntry.dir) {
-            zipEntries.push({
-              dir: zipEntry.dir,
-              comment: zipEntry.comment,
-              date: zipEntry.date,
-              name: zipEntry.name,
-              dosPermissions: zipEntry.dosPermissions,
-              unixPermissions: zipEntry.unixPermissions
+
+            let nodes = treeNodes;
+            const splits = zipEntry.name.split('/');
+            splits.forEach((item, index) => {
+              let node = findTreeNode(item, nodes);
+              if (isNil(node)) {
+                node = {
+                  name: item,
+                  type: (index + 1) < splits.length ? TreeNodeType.ASSIGNMENT : TreeNodeType.FILE,
+                  children: [],
+                  dateModified: zipEntry.date,
+                };
+                nodes.push(node);
+              }
+              nodes = node.children;
             });
           }
         });
-
-        zipEntries.sort((a, b) => (a.name > b.name) ? 1 : -1);
-        return zipEntries;
+        return treeNodes;
       });
   })
     .catch((e) => Promise.reject(e));

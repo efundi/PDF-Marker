@@ -13,12 +13,12 @@ import {
   writeFileSync
 } from 'fs';
 import {access, writeFile} from 'fs/promises';
-import {FEEDBACK_FOLDER, GRADES_FILE, SUBMISSION_FOLDER, UPLOADS_DIR} from './constants';
 import {dirname, extname, sep} from 'path';
 import {PDFDocument} from 'pdf-lib';
 import {noop} from 'rxjs';
 import {IpcResponse} from '@shared/ipc/ipc-response';
 import {IpcMainInvokeEvent} from 'electron';
+import {FEEDBACK_FOLDER, GRADES_FILE, SUBMISSION_FOLDER} from '@shared/constants/constants';
 
 declare type IpcHandler<T> = (event: IpcMainInvokeEvent, ...args: any[]) => Promise<T>;
 
@@ -248,35 +248,6 @@ export const extractAssignmentZipFile = async (
       })).promise();
   }
 };
-
-
-export function hierarchyModel(pathInfos, configFolder){
-  const pattern = /\\/g;
-  configFolder = configFolder.replace(pattern, '/');
-  const model = pathInfos.reduce((hier, pathInfo) => {
-    const stat = statSync(pathInfo);
-    const path = pathInfo.replace(configFolder + '/', '');
-    let pathObject: any = hier;
-    const pathSplit = path.split('/');
-    path.split('/').forEach((item) => {
-      if (!pathObject[item]) {
-        pathObject[item] = {};
-      }
-      pathObject = pathObject[item];
-    });
-
-    if (stat.isFile()) {
-      pathObject.path = path;
-      pathObject.basename = path.split('/').pop();
-      if (pathSplit.indexOf(SUBMISSION_FOLDER) > -1) {
-        pathObject.isPdf = true;
-      }
-    }
-    return hier;
-  }, {});
-
-  return model;
-}
 
 export const validateRequest = (requiredKeys = [], receivedKeys = []): boolean => {
   let invalidKeyFound = false;

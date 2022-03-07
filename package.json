@@ -1,6 +1,6 @@
 {
   "name": "pdf-marker",
-  "version": "3.0.0-beta.7",
+  "version": "3.0.0-beta.8",
   "description": "PDF Marker",
   "homepage": "https://github.com/efundi/PDF-Marker",
   "main": "main.js",
@@ -63,6 +63,7 @@
     "json-2-csv": "^3.5.7",
     "jszip": "^3.2.2",
     "lodash": "^4.17.21",
+    "moment": "^2.29.1",
     "ngx-color-picker": "^11.0.0",
     "ngx-filesaver": "^8.1.0",
     "pdf-lib": "^1.4.0",
@@ -84,6 +85,7 @@
     "@types/jasmine": "~3.3.8",
     "@types/jasminewd2": "~2.0.3",
     "@types/lodash": "^4.14.178",
+    "@types/moment": "^2.13.0",
     "@types/node": "^16.11.21",
     "codelyzer": "^6.0.2",
     "electron": "^17.1.0",

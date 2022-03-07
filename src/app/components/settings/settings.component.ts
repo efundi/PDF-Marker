@@ -6,6 +6,7 @@ import {AlertService} from '../../services/alert.service';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {AssignmentService} from '../../services/assignment.service';
 import {BusyService} from '../../services/busy.service';
+import {mergeMap} from 'rxjs';
 
 @Component({
   selector: 'pdf-marker-settings',
@@ -51,13 +52,13 @@ export class SettingsComponent implements OnInit {
 
   setWorkingDirectory(event) {
     this.appService.getFolder()
-    .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-      if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
-        this.settingsForm.controls.defaultPath.setValue((appSelectedPathInfo.selectedPath) ? appSelectedPathInfo.selectedPath : null);
-      } else if (appSelectedPathInfo.error) {
-        this.alertService.error(appSelectedPathInfo.error.message);
- }
-    });
+      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+        if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
+          this.settingsForm.controls.defaultPath.setValue((appSelectedPathInfo.selectedPath) ? appSelectedPathInfo.selectedPath : null);
+        } else if (appSelectedPathInfo.error) {
+          this.alertService.error(appSelectedPathInfo.error.message);
+        }
+      });
   }
 
   onSubmit(event) {
@@ -69,15 +70,16 @@ export class SettingsComponent implements OnInit {
     this.settingsForm.controls.defaultPath.setValue(this.removeTrailingSlashes(this.settingsForm.controls.defaultPath.value));
     // Call Service to handle rest calls... also use interceptors
     this.busyService.start();
-    this.settingsService.saveConfigurations(this.settingsForm.value).subscribe((response) => {
-      this.assignmentService.getAssignments().subscribe(assignments => {
-        this.assignmentService.update(assignments);
+    this.settingsService.saveConfigurations(this.settingsForm.value)
+      .pipe(
+        mergeMap(() => this.assignmentService.refreshWorkspaces())
+      )
+      .subscribe(() => {
+        this.appService.openSnackBar(true, 'Successfully updated settings!');
+        this.busyService.stop();
+      }, error => {
+        this.busyService.stop();
       });
-      this.appService.openSnackBar(true, 'Successfully updated settings!');
-      this.busyService.stop();
-    }, error => {
-      this.busyService.stop();
-    });
   }
 
 

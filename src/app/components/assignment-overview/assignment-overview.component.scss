@@ -51,7 +51,6 @@ table {
     /*border: 1px solid #888;*/
     padding: 4px 10px;
     border-radius: 8px;
-    text-align: center;
     display: inline-block;
   }
 
@@ -81,7 +80,8 @@ table {
   }
 
   .pdf-marker-assignment-overview-assignment-grade-header {
-    text-align: center;
+    min-width: 8rem;
+    width: 8rem;
   }
 
   .pdf-marker-assignment-overview-select-assignment {
@@ -93,7 +93,7 @@ table {
   }
 
   .pdf-marker-assignment-overview-assignment-grade-data {
-    text-align: center;
+    text-align: left;
   }
 
   .mat-icon.assignment-edit {

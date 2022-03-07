@@ -1,31 +1,49 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {AppService} from '../../services/app.service';
 import {BusyService} from '../../services/busy.service';
+import {Subscription} from "rxjs";
+import {AssignmentListComponent} from "../assignment-list/assignment-list.component";
 
 @Component({
   selector: 'pdf-marker-side-navigation',
   templateUrl: './side-navigation.component.html',
   styleUrls: ['./side-navigation.component.scss']
 })
-export class SideNavigationComponent implements OnInit {
+export class SideNavigationComponent implements OnInit, OnDestroy {
+
+  loadingWorkspaces = false;
+  private loadingWorkspacesSubscription: Subscription;
+
+  @ViewChild(AssignmentListComponent)
+  private assignmentListComponent: AssignmentListComponent
 
   constructor(private assignmentService: AssignmentService,
               private appService: AppService,
               private busyService: BusyService) { }
 
   ngOnInit() {
+    this.loadingWorkspacesSubscription = this.assignmentService.workspaceListLoading.subscribe((loading) => {
+      this.loadingWorkspaces = loading;
+    });
+  }
+
+  ngOnDestroy() {
+    this.loadingWorkspacesSubscription.unsubscribe();
   }
 
   onRefresh(event) {
     this.busyService.start();
-    this.assignmentService.getAssignments().subscribe((assignments) => {
-      this.assignmentService.update(assignments);
+    this.assignmentService.refreshWorkspaces().subscribe((assignments) => {
       this.busyService.stop();
       this.appService.openSnackBar(true, 'Refreshed list');
     }, error => {
       this.busyService.stop();
       this.appService.openSnackBar(false, 'Could not refresh list');
     });
+  }
+
+  collapseAll($event: MouseEvent) {
+    this.assignmentListComponent.collapseAll();
   }
 }

@@ -33,61 +33,9 @@ table {
   }
 
   .pdf-marker-workspace-overview-assignment-name {
+    cursor: pointer;
     font-weight: 500;
     color: #2B72A1 !important;
-  }
-
-  .pdf-marker-assignment-overview-student-number {
-    font-weight: 400;
-  }
-
-  .pdf-marker-assignment-overview-assignment-grade {
-    /*border: 1px solid #888;*/
-    padding: 4px 10px;
-    border-radius: 8px;
-    text-align: center;
-    display: inline-block;
-  }
-
-  .pdf-marker-assignment-overview-assignment-status {
-    color: #fff;
-    border-radius: 12px;
-    padding: 5px;
-    font-size: 11px;
-    font-weight: 400;
-    width: 40px;
-    display: inline-block;
-  }
-
-  .pdf-marker-assignment-overview-assignment-status-on-time {
-    background: #1db954;
-    border: 1px solid #1db954;
-  }
-
-  .pdf-marker-assignment-overview-assignment-status-late {
-    background: #a94442;
-    border: 1px solid #a94442;
-  }
-
-  .pdf-marker-assignment-overview-assignment-status-unknown {
-    background: #2b72a1;
-    border: 1px solid #2b72a1;
-  }
-
-  .pdf-marker-assignment-overview-assignment-grade-header {
-    text-align: center;
-  }
-
-  .pdf-marker-assignment-overview-select-assignment {
-    cursor: pointer;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    word-break: break-word;
-  }
-
-  .pdf-marker-assignment-overview-assignment-grade-data {
-    text-align: center;
   }
 
   .mat-icon.assignment-edit {

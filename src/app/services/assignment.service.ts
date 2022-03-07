@@ -1,9 +1,6 @@
 import {Injectable} from '@angular/core';
-import {Observable, ReplaySubject} from 'rxjs';
+import {first, map, mergeMap, Observable, ReplaySubject, tap} from 'rxjs';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
-import {Router} from '@angular/router';
-import {AppService} from './app.service';
-import {ZipService} from './zip.service';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {ShareAssignments} from '@shared/info-objects/share-assignments';
 import {AssignmentIpcService} from '@shared/ipc/assignment.ipc-service';
@@ -11,60 +8,77 @@ import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {fromIpcResponse} from './ipc.utils';
-import {PdfmConstants} from '@shared/constants/pdfm.constants';
 import {find, isNil} from 'lodash';
 import {SelectedSubmission} from '../info-objects/selected-submission';
+import {
+  findTreeNode,
+  StudentSubmission,
+  TreeNodeType,
+  Workspace,
+  WorkspaceAssignment,
+  WorkspaceFile
+} from '@shared/info-objects/workspace';
+import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AssignmentService {
 
-  private assignmentsHierarchy: any[];
-  private assignmentListSource$ = new ReplaySubject<any[]>(1);
+  workspaceList = new ReplaySubject<Workspace[]>(1);
+  workspaceListLoading = new ReplaySubject<boolean>(1);
   private selectedSubmission = new ReplaySubject<SelectedSubmission>(1);
-  assignmentListChanged: Observable<any[]>;
   selectedSubmissionChanged: Observable<SelectedSubmission>;
 
   private assignmentApi: AssignmentIpcService;
 
-  constructor(private router: Router,
-              private appService: AppService,
-              private zipService: ZipService) {
+  constructor() {
 
     this.assignmentApi = (window as any).assignmentApi;
-    this.assignmentListChanged = this.assignmentListSource$.asObservable();
     this.selectedSubmissionChanged = this.selectedSubmission.asObservable();
-    this.getAssignments().subscribe(assignments => {
-      this.assignmentsHierarchy = assignments;
-      this.assignmentListSource$.next(assignments);
-    }, error => {
-    });
-  }
-
-  private findInTree(hierachy: any, key: string): any {
-    return find(hierachy, (element) => element.hasOwnProperty(key));
+    this.refreshWorkspaces().subscribe();
   }
 
   selectSubmission(selectedSubmission: SelectedSubmission): void {
     this.selectedSubmission.next(selectedSubmission);
   }
 
-  getWorkspaceHierarchy(workspaceName: string): any {
-    return this.findInTree(this.assignmentsHierarchy, workspaceName);
-  }
-
-  getAssignmentHierarchy(workspaceName: string, assignmentName: string): any {
-    if (isNil(workspaceName) || workspaceName === PdfmConstants.DEFAULT_WORKSPACE) {
-      return this.findInTree(this.assignmentsHierarchy, assignmentName);
-    } else {
-      const workspace = this.findInTree(this.assignmentsHierarchy, workspaceName);
-      return this.findInTree(workspace, assignmentName);
+  getWorkspaceHierarchy(workspaceName: string): Observable<Workspace> {
+    if (isNil(workspaceName)) {
+      workspaceName = DEFAULT_WORKSPACE;
     }
+    return this.workspaceList.pipe(
+      first(),
+      map((workspaces) => {
+        return find(workspaces, {name: workspaceName});
+      })
+    );
   }
 
-  getAssignments(): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.getAssignments());
+  getAssignmentHierarchy(workspaceName: string, assignmentName: string): Observable<WorkspaceAssignment> {
+    return this.getWorkspaceHierarchy(workspaceName)
+      .pipe(
+        map((workspace) => {
+          if (isNil(workspace)) {
+            return null;
+          }
+          return find(workspace.children, {name: assignmentName});
+        })
+      );
+  }
+
+  /**
+   * Refresh workspaces from cache
+   */
+  refreshWorkspaces(): Observable<Workspace[]> {
+    this.workspaceListLoading.next(true);
+    return fromIpcResponse(this.assignmentApi.getAssignments())
+      .pipe(
+        tap((workspaces) => {
+          this.workspaceList.next(workspaces);
+          this.workspaceListLoading.next(false);
+        })
+      );
   }
 
   updateAssignmentSettings(updatedSettings: AssignmentSettingsInfo, workspaceName: string, assignmentName: string): Observable<any> {
@@ -83,33 +97,51 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.getPdfFile(pdfFileLocation));
   }
 
-  update(assignments: object[]) {
-    const assignmentsHierarchy = [];
-    assignments.forEach(folderOrFile => {
-      const folderOrFileKeys = Object.keys(folderOrFile);
-      if (folderOrFileKeys.length > 0) {
-        const assignmentName: string = folderOrFileKeys[0];
-        if (assignmentName) {
-          if (this.zipService.isValidAssignmentObject(folderOrFile[assignmentName])) {
-            assignmentsHierarchy.push(folderOrFile);
-          } else {
-            // workspace folder??
-            assignmentsHierarchy.push(folderOrFile);
+  private updateMarksFileTimestamp(workspace: string, location: string): Observable<any> {
+      return this.workspaceList.pipe(
+        first(),
+        tap((workspaces) => {
 
+          if (!location.startsWith(workspace)) {
+            location = workspace + '/' + location;
           }
-        }
-      }
-    });
-    this.assignmentListSource$.next(assignmentsHierarchy);
-    this.assignmentsHierarchy = assignmentsHierarchy;
+          const studentSubmission: StudentSubmission = findTreeNode(location, workspaces) as StudentSubmission;
+          let marksFile: WorkspaceFile = studentSubmission.children.find(c => c.name === MARK_FILE) as WorkspaceFile;
+          if (isNil(marksFile)) {
+            marksFile = {
+              type: TreeNodeType.FILE,
+              children: [],
+              name: '.marks.json',
+              dateModified: new Date()
+            };
+            studentSubmission.children.push(marksFile);
+          } else {
+            marksFile.dateModified = new Date();
+          }
+        })
+      );
   }
 
-  saveMarks(location: string, marks: MarkInfo[][]): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.saveMarks(location, marks));
+  saveMarks(workspace: string, location: string, marks: MarkInfo[][]): Observable<any> {
+    return fromIpcResponse(this.assignmentApi.saveMarks(location, marks))
+      .pipe(
+        mergeMap((response) => {
+          // After saving the marks we need to update the workspace list to contain the new modified date
+          return this.updateMarksFileTimestamp(workspace, location)
+            .pipe(map(() => response));
+        }),
+      );
   }
 
-  saveRubricMarks(location: string, rubricName: string = '', marks: any[]): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.saveRubricMarks(location, rubricName, marks));
+  saveRubricMarks(workspace, location: string, rubricName: string = '', marks: any[]): Observable<any> {
+    return fromIpcResponse(this.assignmentApi.saveRubricMarks(location, rubricName, marks))
+      .pipe(
+        mergeMap((response) => {
+          // After saving the marks we need to update the workspace list to contain the new modified date
+          return this.updateMarksFileTimestamp(workspace, location)
+            .pipe(map(() => response));
+        }),
+      );
   }
 
   getSavedMarks(location: string): Observable<MarkInfo[][] | number[]> {

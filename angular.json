@@ -39,8 +39,7 @@
             "scripts": [
             ],
             "buildOptimizer": false,
-            "sourceMap": true,
-            "optimization": false
+            "sourceMap": true
           },
           "configurations": {
             "production": {
@@ -104,8 +103,7 @@
             "styles": [
               "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
               "src/styles.scss"
-            ],
-            "scripts": []
+            ]
           }
         },
         "lint": {
