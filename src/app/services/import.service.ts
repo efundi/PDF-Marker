@@ -3,7 +3,7 @@ import {ImportInfo} from '@shared/info-objects/import.info';
 import {fromIpcResponse} from './ipc.utils';
 import {ImportIpcService} from '@shared/ipc/import.ipc-service';
 import {Observable} from 'rxjs';
-import {ZipInfo} from '@shared/info-objects/zip.info';
+import {TreeNode} from "@shared/info-objects/workspace";
 
 @Injectable({
   providedIn: 'root'
@@ -24,7 +24,7 @@ export class ImportService {
     return fromIpcResponse(this.importService.isValidSakaiZip(filePath));
   }
 
-  getZipEntries(filePath: string): Observable<ZipInfo[]> {
+  getZipEntries(filePath: string): Observable<TreeNode[]> {
     return fromIpcResponse(this.importService.getZipEntries(filePath));
   }
 

@@ -1,6 +1,5 @@
 import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
-import {SakaiService} from '../../services/sakai.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {forkJoin, Observable, Subscription, tap} from 'rxjs';
 import {AppService} from '../../services/app.service';
@@ -24,13 +23,20 @@ import {ShareAssignments} from '@shared/info-objects/share-assignments';
 import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
-import {BusyService} from "../../services/busy.service";
-import {MatSort} from "@angular/material/sort";
+import {BusyService} from '../../services/busy.service';
+import {MatSort} from '@angular/material/sort';
+import {filter, find, isNil} from 'lodash';
+import {StudentSubmission, TreeNodeType} from '@shared/info-objects/workspace';
+import * as _moment from 'moment';
+import {MARK_FILE, SUBMISSION_FOLDER} from '@shared/constants/constants';
+const moment = _moment;
 
 export interface AssignmentDetails {
   index?: number;
 
   studentName: string;
+
+  studentSurname: string;
 
   studentNumber: string;
 
@@ -41,6 +47,8 @@ export interface AssignmentDetails {
   path?: string;
 
   status?: string;
+
+  date?: string;
 }
 
 @Component({
@@ -49,14 +57,13 @@ export interface AssignmentDetails {
   styleUrls: ['./assignment-overview.component.scss']
 })
 export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
-  displayedColumns: string[] = ['select', 'studentName', 'assignment', 'grade', 'status'];
+  displayedColumns: string[] = ['select', 'studentName', 'assignment', 'grade', 'date', 'status'];
   dataSource: MatTableDataSource<AssignmentDetails>;
   assignmentsLength;
   assignmentPageSizeOptions: number[];
   readonly pageSize: number = 10;
   private assignmentGrades: any[] = [];
   private assignmentHeader: string;
-  private readonly submissionFolder = 'Submission attachment(s)';
 
   selection = new SelectionModel<AssignmentDetails>(true, []);
 
@@ -90,7 +97,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   dataSourceResolve;
 
   constructor(private assignmentService: AssignmentService,
-              private sakaiService: SakaiService,
               private router: Router,
               private activatedRoute: ActivatedRoute,
               private appService: AppService,
@@ -214,35 +220,38 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   private generateDataFromModel() {
     const values: AssignmentDetails[] = [];
-    const hierarchyModel = this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentName);
+    this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentName).subscribe((workspaceAssignment) => {
 
-
-    if (hierarchyModel[this.assignmentName]) {
+    if (!isNil(workspaceAssignment)) {
       let index = 0;
-      Object.keys(hierarchyModel[this.assignmentName]).forEach(key => {
-        if (this.regEx.test(key) && this.sakaiService.getAssignmentRootFiles().indexOf(key) === -1) {
+      filter(workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmission) => {
+
+
           const value: AssignmentDetails = {
             index: index++,
-            studentName: '',
-            studentNumber: '',
+            studentName: workspaceSubmission.studentName,
+            studentSurname: workspaceSubmission.studentSurname,
+            studentNumber: workspaceSubmission.studentId,
             assignment: '',
             grade: 0,
             path: null,
-            status: ''
+            status: '',
           };
-          const matches = this.regEx.exec(key);
-          const pdf = hierarchyModel[this.assignmentName][key][this.submissionFolder] ? Object.keys(hierarchyModel[this.assignmentName][key][this.submissionFolder])[0] : '';
-          value.studentName = matches[1];
-          value.studentNumber = matches[2];
-          value.assignment = pdf;
+        const submissionDirectory = find(workspaceSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
+        const marksFile = find(workspaceSubmission.children, (c => c.name === MARK_FILE));
+        if (marksFile) {
+          value.date = moment(marksFile.dateModified).format('YYYY-MM-DD HH:MM:ss');
+        }
+
+        const pdf = (submissionDirectory && submissionDirectory.children.length > 0) ? submissionDirectory.children[0].name : '';
+        value.assignment = pdf;
 
           const gradesInfo = this.assignmentGrades
             .find(grade => grade[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
           value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5 : 0);
-          value.path = PdfmUtilsService.buildFilePath(this.workspaceName, this.assignmentName, key, this.submissionFolder, pdf);
+          value.path = PdfmUtilsService.buildFilePath(this.workspaceName, this.assignmentName, workspaceSubmission.name, SUBMISSION_FOLDER, pdf);
           value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7 : 'N/A');
           values.push(value);
-        }
       });
       this.dataSource = new MatTableDataSource(values);
       this.assignmentsLength = values.length;
@@ -262,6 +271,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     } else {
       this.router.navigate([RoutesEnum.MARKER]);
     }
+    });
   }
 
   onRubricChange() {
@@ -336,12 +346,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     const fileName: string = this.assignmentName;
     this.appService.saveFile({ filename: fileName, buffer: blob, name: 'Zip File', extension: ['zip']})
       .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        this.busyService.stop();
         if (appSelectedPathInfo.selectedPath) {
           this.alertService.success(`Successfully exported ${fileName}. You can now upload it to ${this.settings.lmsSelection}.`);
         } else if (appSelectedPathInfo.error) {
           this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
         }
+
+        this.assignmentService.refreshWorkspaces().subscribe(() => {
+          this.busyService.stop();
+        });
       });
 
   }

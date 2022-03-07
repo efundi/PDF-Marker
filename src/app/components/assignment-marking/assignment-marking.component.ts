@@ -107,6 +107,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   private loadAssignment() {
+    this.isPdfLoaded = false;
+    this.rubric = null;
+    this.showRubric = false;
+    this.showPdf = true;
     this.currentPage = 1;
     this.busyService.start();
     this.assignmentService.getFile(this.pdf)
@@ -171,6 +175,13 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       times(numPages, (index) => {
         if (isNil(marks[index])) {
           marks[index] = [];
+        }
+      });
+    } else {
+      const numCriterias = this.assignmentSettings.rubric.criterias.length;
+      times(numCriterias, (index) => {
+        if (isNil(marks[index])) {
+          marks[index] = null;
         }
       });
     }
@@ -275,7 +286,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const originalMarks = cloneDeep(this.marks);
     const markDetails = marks || this.marks;
     this.busyService.start();
-    return this.assignmentService.saveMarks(PdfmUtilsService.dirname(this.pdf, 2), markDetails)
+    return this.assignmentService.saveMarks(this.workspaceName, PdfmUtilsService.dirname(this.pdf, 2), markDetails)
       .pipe(
         map(() => {
           this.busyService.stop();
@@ -297,7 +308,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     const originalMarks = cloneDeep(this.marks);
     const markDetails = marks || this.marks;
     this.busyService.start();
-    return this.assignmentService.saveRubricMarks(PdfmUtilsService.dirname(this.pdf, 2), this.rubric.name, markDetails)
+    return this.assignmentService.saveRubricMarks(this.workspaceName, PdfmUtilsService.dirname(this.pdf, 2), this.rubric.name, markDetails)
       .pipe(
         map(() => {
           this.busyService.stop();

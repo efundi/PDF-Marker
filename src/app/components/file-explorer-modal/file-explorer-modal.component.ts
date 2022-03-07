@@ -1,5 +1,10 @@
 import {Component, Inject, OnInit} from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {FlatTreeControl} from '@angular/cdk/tree';
+import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
+import {TreeNode} from '@shared/info-objects/workspace';
+import {DisplayTreeNode} from '../assignment-list/assignment-list.component';
+import {PDFM_FILE_SORT} from "@shared/constants/constants";
 
 @Component({
   selector: 'pdf-marker-file-explorer-modal',
@@ -9,15 +14,30 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 export class FileExplorerModalComponent implements OnInit {
 
   filename: string;
-  hierarchyModel;
-  hierarchyModelKeys;
+  treeControl = new FlatTreeControl<DisplayTreeNode>(node => node.level, node => node.children.length > 0);
 
+  treeFlattener = new MatTreeFlattener(
+    FileExplorerModalComponent.transformer,
+    node => node.level,
+    node => node.children.length > 0,
+    node => node.children
+  );
+
+
+  dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
+
+  private static transformer = (node: DisplayTreeNode, level: number) => {
+    node.level = level;
+    node.children.sort(PDFM_FILE_SORT);
+    return node;
+  }
   constructor(private dialogRef: MatDialogRef<FileExplorerModalComponent>,
               @Inject(MAT_DIALOG_DATA) data) {
-      this.hierarchyModel = data.hierarchyModel;
-      this.hierarchyModelKeys = data.hierarchyModelKeys;
       this.filename = data.filename;
+      this.dataSource.data = data.treeNodes;
   }
+
+  hasChild = (_: number, node: TreeNode) => node.children.length > 0;
 
   ngOnInit() {
   }

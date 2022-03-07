@@ -4,10 +4,11 @@ import {ShareAssignments} from '../info-objects/share-assignments';
 import {IRubric} from '../info-objects/rubric.class';
 import {IpcResponse} from './ipc-response';
 import {MarkInfo} from "@shared/info-objects/mark.info";
+import {Workspace} from '@shared/info-objects/workspace';
 
 export interface AssignmentIpcService {
 
-  getAssignments(): Promise<IpcResponse<any>>;
+  getAssignments(): Promise<IpcResponse<Workspace[]>>;
   createAssignment(createAssignmentInfo: CreateAssignmentInfo): Promise<IpcResponse<any>>;
   updateAssignment(updateRequest: UpdateAssignment): Promise<IpcResponse<any>>;
   saveMarks(location: string, marks: MarkInfo[][]): Promise<IpcResponse<any>>;

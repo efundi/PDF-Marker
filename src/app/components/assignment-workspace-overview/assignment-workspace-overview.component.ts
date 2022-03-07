@@ -1,23 +1,20 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
-import {SakaiService} from '../../services/sakai.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
-import {AlertService} from '../../services/alert.service';
-import {SettingsService} from '../../services/settings.service';
-import {SettingInfo} from '@shared/info-objects/setting.info';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
-import {FormBuilder} from '@angular/forms';
-// import * as fs from 'fs';
-// import * as path from 'path';
-// import {sep} from 'path';
-import {AssignmentWorkspaceManageModalComponent} from '../assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
-import {firstValueFrom, Observable, Subscription, tap, throwError} from 'rxjs';
-import {catchError} from "rxjs/operators";
-import {BusyService} from "../../services/busy.service";
+import {
+  AssignmentWorkspaceManageModalComponent
+} from '../assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
+import {Observable, Subscription, tap, throwError} from 'rxjs';
+import {catchError} from 'rxjs/operators';
+import {BusyService} from '../../services/busy.service';
+import {TreeNodeType, Workspace} from '@shared/info-objects/workspace';
+import {PdfmUtilsService} from "../../services/pdfm-utils.service";
+import {RoutesEnum} from "../../utils/routes.enum";
 
 export interface WorkspaceDetails {
   assignmentTitle: string;
@@ -40,17 +37,14 @@ export interface WorkspaceDetails {
   styleUrls: ['./assignment-workspace-overview.component.scss']
 })
 export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
-  private hierarchyModel;
   displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'progress', 'type'];
   dataSource: MatTableDataSource<WorkspaceDetails>;
   workspaceRows: WorkspaceDetails[] = [];
   workspaceName = 'Workspace Name';
-  private assignmentGrades: any[] = [];
   assignmentsLength;
   assignmentPageSizeOptions: number[];
   readonly pageSize: number = 10;
-  private assignmentsInFolder: any[] = [];
-  private assignmentHeader: string;
+  private workspace: Workspace;
   subscription: Subscription;
 
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
@@ -59,7 +53,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   isCreated: boolean;
 
   constructor(private assignmentService: AssignmentService,
-              private sakaiService: SakaiService,
               private router: Router,
               private appService: AppService,
               private busyService: BusyService,
@@ -67,24 +60,22 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.initForm();
-    this.busyService.start();
     this.subscription = this.activatedRoute.params.subscribe({
       next: (params) => {
+        this.busyService.start();
         const workspaceName = params['workspaceName'];
-        this.hierarchyModel = this.assignmentService.getWorkspaceHierarchy(workspaceName);
-        this.generateDataFromModel();
-        this.busyService.stop();
+        this.assignmentService.getWorkspaceHierarchy(workspaceName).subscribe((workspace) => {
+          this.workspace = workspace;
+          this.generateDataFromModel();
+          this.busyService.stop();
+        });
       },
       error: (error) => {
         console.log(error);
         this.appService.openSnackBar(false, 'Unable to read selected workspace');
-        this.busyService.stop()
+        this.busyService.stop();
       }
     });
-  }
-
-  private initForm() {
   }
 
   manageFolders(event) {
@@ -95,7 +86,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
     config.data = {
       workspaceName: this.workspaceName,
       assignments: this.dataSource.data,
-      hierarchyModel: this.hierarchyModel
+      workspace: this.workspace
     };
 
 
@@ -115,8 +106,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       }
       if (edited) {
         this.busyService.start();
-        this.assignmentService.getAssignments().subscribe((assignments) => {
-          this.assignmentService.update(assignments);
+        this.assignmentService.refreshWorkspaces().subscribe(() => {
           this.busyService.stop();
           this.appService.openSnackBar(true, 'Refreshed list');
         }, error => {
@@ -145,59 +135,62 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   private generateDataFromModel() {
     // let workspaceRows: WorkspaceDetails[] = [];
     this.workspaceRows = [];
-    this.workspaceName = (Object.keys(this.hierarchyModel).length) ? Object.keys(this.hierarchyModel)[0] : '';
-    if (this.hierarchyModel[this.workspaceName]) {
-      Object.keys(this.hierarchyModel[this.workspaceName]).forEach(assignmentName => {
-        if (assignmentName) {
-          const workspaceRow: WorkspaceDetails = {
-            assignmentTitle: '',
-            submissionCount: 0,
-            marked: 0,
-            notMarked: 0,
-            type: '',
-            currentWorkspace: ''
-          };
-          // Assignment Name
-          workspaceRow.assignmentTitle = assignmentName;
-          // Submissions Count
-          const assignmentFiles = Object.keys(this.hierarchyModel[this.workspaceName][assignmentName])
-            .filter(x => this.sakaiService.getAssignmentRootFiles().indexOf(x) === -1);
-          workspaceRow.submissionCount = assignmentFiles.length;
-          // Marked/Not Marked
-          this.assignmentService.getMarkedAssignmentsCount(this.workspaceName , assignmentName).subscribe((count) => {
-            workspaceRow.marked = count;
-            workspaceRow.notMarked = workspaceRow.submissionCount - workspaceRow.marked;
-          });
-          // Type TODO here is an async issue, these calls will still be busy when already added to the workspaceRows array
-          this.getAssignmentSettings(assignmentName).subscribe((assignmentSettings) => {
-            workspaceRow.type = assignmentSettings.rubric ? 'Rubric' : 'Manual';
-
-          });
-          workspaceRow.currentWorkspace =  this.workspaceName;
-          this.workspaceRows.push(workspaceRow);
-        }
+    this.workspaceName = this.workspace.name;
+    this.workspace.children.forEach(workspaceAssignment => {
+      const workspaceRow: WorkspaceDetails = {
+        assignmentTitle: '',
+        submissionCount: 0,
+        marked: 0,
+        notMarked: 0,
+        type: '',
+        currentWorkspace: ''
+      };
+      // Assignment Name
+      workspaceRow.assignmentTitle = workspaceAssignment.name;
+      // Submissions Count
+      const assignmentFiles = workspaceAssignment.children.filter(c => c.type === TreeNodeType.SUBMISSION);
+      workspaceRow.submissionCount = assignmentFiles.length;
+      // Marked/Not Marked
+      this.assignmentService.getMarkedAssignmentsCount(this.workspaceName , workspaceAssignment.name).subscribe((count) => {
+        workspaceRow.marked = count;
+        workspaceRow.notMarked = workspaceRow.submissionCount - workspaceRow.marked;
       });
-      this.dataSource = new MatTableDataSource(this.workspaceRows);
-      this.dataSource.paginator = this.paginator;
-      this.assignmentsLength = this.workspaceRows.length;
-      const range = [];
-      let i = 0;
-      while (i <= this.assignmentsLength) {
-        i += this.pageSize;
-        range.push(i);
+      // Type TODO here is an async issue, these calls will still be busy when already added to the workspaceRows array
+      this.getAssignmentSettings(workspaceAssignment.name).subscribe((assignmentSettings) => {
+        workspaceRow.type = assignmentSettings.rubric ? 'Rubric' : 'Manual';
 
-        if (i > this.assignmentsLength) {
-          break;
-        }
+      });
+      workspaceRow.currentWorkspace =  this.workspaceName;
+      this.workspaceRows.push(workspaceRow);
+    });
+    this.dataSource = new MatTableDataSource(this.workspaceRows);
+    this.dataSource.paginator = this.paginator;
+    this.assignmentsLength = this.workspaceRows.length;
+    const range = [];
+    let i = 0;
+    while (i <= this.assignmentsLength) {
+      i += this.pageSize;
+      range.push(i);
+
+      if (i > this.assignmentsLength) {
+        break;
       }
-      this.assignmentPageSizeOptions = range;
-      this.busyService.stop();
     }
+    this.assignmentPageSizeOptions = range;
   }
 
   ngOnDestroy(): void {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
+  }
+
+  openAssignmentOverview(element: WorkspaceDetails) {
+    if (PdfmUtilsService.isDefaultWorkspace(element.currentWorkspace)) {
+      this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, element.assignmentTitle]);
+    } else {
+      this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, element.assignmentTitle, element.currentWorkspace]);
+    }
+
   }
 }

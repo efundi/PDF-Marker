@@ -130,8 +130,7 @@ export class WorkingFolderComponent implements OnInit {
 
   refreshSideBar() {
     this.busyService.start();
-    this.assignmentService.getAssignments().subscribe((assignments) => {
-      this.assignmentService.update(assignments);
+    this.assignmentService.refreshWorkspaces().subscribe((assignments) => {
       this.busyService.stop();
       this.appService.openSnackBar(true, 'Refreshed list');
     }, error => {

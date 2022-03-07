@@ -4,7 +4,6 @@ import {ZipService} from '../../services/zip.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {FileExplorerModalComponent} from '../file-explorer-modal/file-explorer-modal.component';
 import {AlertService} from '../../services/alert.service';
-import {SakaiService} from '../../services/sakai.service';
 import {AppService} from '../../services/app.service';
 import {ImportService} from '../../services/import.service';
 import {AssignmentService} from '../../services/assignment.service';
@@ -15,11 +14,10 @@ import {IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {ImportInfo} from '@shared/info-objects/import.info';
 import {SakaiConstants} from '@shared/constants/sakai.constants';
-import {isNil} from 'lodash';
-import { PdfmConstants } from '@shared/constants/pdfm.constants';
-import {BusyService} from "../../services/busy.service";
-import {forkJoin, Observable, tap, throwError} from "rxjs";
-import {catchError} from "rxjs/operators";
+import {BusyService} from '../../services/busy.service';
+import {forkJoin, Observable, tap, throwError} from 'rxjs';
+import {catchError} from 'rxjs/operators';
+import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 
 @Component({
   selector: 'pdf-marker-import',
@@ -33,10 +31,6 @@ export class ImportComponent implements OnInit {
   readonly isAssignmentName: boolean = true;
 
   readonly noRubricDefaultValue: boolean = false;
-
-  private hierarchyModel;
-
-  private hierarchyModelKeys;
 
   isFileLoaded = false;
 
@@ -66,7 +60,6 @@ export class ImportComponent implements OnInit {
               private zipService: ZipService,
               private dialog: MatDialog,
               private alertService: AlertService,
-              private sakaiService: SakaiService,
               private appService: AppService,
               private importService: ImportService,
               private rubricService: RubricService,
@@ -104,9 +97,9 @@ export class ImportComponent implements OnInit {
               return PdfmUtilsService.basename(item);
             });
           }
-          this.workspaces.unshift(PdfmConstants.DEFAULT_WORKSPACE);
+          this.workspaces.unshift(DEFAULT_WORKSPACE);
           if (this.workspaces.length <= 1) {
-            this.importForm.controls.workspaceFolder.setValue(PdfmConstants.DEFAULT_WORKSPACE);
+            this.importForm.controls.workspaceFolder.setValue(DEFAULT_WORKSPACE);
           }
         })
       );
@@ -211,30 +204,25 @@ export class ImportComponent implements OnInit {
   onPreview() {
     this.busyService.start();
     this.importService.getZipEntries(this.actualFilePath)
-      .subscribe((zipInfor) => {
-        const value = this.zipService.getZipModel(zipInfor);
-        if (!isNil(value)) {
-          this.hierarchyModel = value;
-          this.hierarchyModelKeys = Object.keys(this.hierarchyModel);
+      .subscribe((treeNodes) => {
 
-          const config = new MatDialogConfig();
-          config.height = '400px';
-          config.width = '600px';
+        this.busyService.stop();
+        const config = new MatDialogConfig();
+        // config.height = '400px';
+        // config.width = '600px';
 
-          config.data = {
-            hierarchyModel: this.hierarchyModel,
-            hierarchyModelKeys : this.hierarchyModelKeys,
-            filename: this.hierarchyModelKeys[0]
-          };
+        config.data = {
+          treeNodes,
+          filename : treeNodes[0].name
+        };
 
-          const isModalOpenedFn = () => {
-            this.isModalOpened = !this.isModalOpened;
-          };
+        const isModalOpenedFn = () => {
+          this.isModalOpened = !this.isModalOpened;
+        };
 
-          const reference = this.appService.createDialog(FileExplorerModalComponent, config, isModalOpenedFn);
-          reference.beforeClosed().subscribe(() => {
-          });
-        }
+        const reference = this.appService.createDialog(FileExplorerModalComponent, config, isModalOpenedFn);
+        reference.beforeClosed().subscribe(() => {
+        });
       });
     this.isModalOpened = !this.isModalOpened;
   }
@@ -290,8 +278,6 @@ export class ImportComponent implements OnInit {
     this.fc.noRubric.setValue(this.noRubricDefaultValue);
     this.fc.rubric.enable();
     this.initForm();
-    this.assignmentService.getAssignments().subscribe(assignments => {
-      this.assignmentService.update(assignments);
-    });
+    this.assignmentService.refreshWorkspaces().subscribe();
   }
 }

@@ -3,10 +3,35 @@ mat-action-list {
     color: #a94442 !important;
   }
 }
+.mat-icon-button {
+  width: 25px;
+}
 
 .pdf-marker-empty {
   font-family: 'opensans-light', Helvetica, Roboto, "Helvetica Neue", sans-serif;
   display: inline-block;
   margin-top: 15px;
   margin-left: 30px;
+}
+
+.file-name-selected {
+  background-color: #ddd;
+  color: #888;
+  width:100%;
+}
+
+.directory:hover {
+  cursor:pointer;
+  background: #DDDDDD;
+  border-radius: 7px;
+  //display: inline-block;
+  padding-right: 5px;
+}
+
+//.example-tree-node .example-tree-node {
+//  padding-left: 25px;
+//}
+
+mat-tree{
+  user-select: none;
 }

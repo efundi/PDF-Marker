@@ -6,8 +6,8 @@ import {AppService} from '../../services/app.service';
 import {AssignmentService} from '../../services/assignment.service';
 import {WorkspaceDetails} from '../assignment-workspace-overview/assignment-workspace-overview.component';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
-import { PdfmConstants } from '@shared/constants/pdfm.constants';
-import {BusyService} from "../../services/busy.service";
+import {BusyService} from '../../services/busy.service';
+import {DEFAULT_WORKSPACE} from "@shared/constants/constants";
 
 export interface WorkspaceDialogResult {
   prevWorkspaceName: string;
@@ -15,7 +15,7 @@ export interface WorkspaceDialogResult {
   workspaceName: string;
 
   movedAssignments: any[];
-};
+}
 
 
 @Component({
@@ -68,8 +68,8 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
         this.workspaceList.splice(foundIndex, 1);
         this.workspaceNameList.splice(foundIndex, 1);
       }
-      this.workspaceList.unshift(PdfmConstants.DEFAULT_WORKSPACE);
-      this.workspaceNameList.unshift(PdfmConstants.DEFAULT_WORKSPACE);
+      this.workspaceList.unshift(DEFAULT_WORKSPACE);
+      this.workspaceNameList.unshift(DEFAULT_WORKSPACE);
     });
   }
 
@@ -105,14 +105,14 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
     if (this.manageForm.valid) {
       const newName = this.manageForm.controls.workspaceName.value;
       this.workspaceService.updateWorkspaceName(this.data.workspaceName, newName).subscribe((workspaceName: string) => {
-        this.appService.openSnackBar(true, "Successfully updated workspace name");
+        this.appService.openSnackBar(true, 'Successfully updated workspace name');
         this.data.workspaceName = workspaceName;
         this.workspaceName = workspaceName;
         this.busyService.stop();
       }, error => {
         this.busyService.stop();
         console.log(error);
-        this.appService.openSnackBar(false, "Unable to update workspace name");
+        this.appService.openSnackBar(false, 'Unable to update workspace name');
       });
     }
     this.isEditing = false;
@@ -139,7 +139,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
       }
       if (folder && newFolder && (assignments && assignments.length > 0)) {
         this.workspaceService.moveWorkspaceAssignments(folder, newFolder, assignments).subscribe((workspaceName: string) => {
-          this.appService.openSnackBar(true, "Successfully moved selected assignments");
+          this.appService.openSnackBar(true, 'Successfully moved selected assignments');
           this.busyService.stop();
           if (assignments && assignments.length > 0) {
 

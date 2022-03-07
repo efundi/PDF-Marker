@@ -21,7 +21,6 @@ export class RubricViewMarkingComponent implements OnInit {
   }
 
   buildRubricForMarking(rubric: IRubric) {
-    console.log('InBuild for Marking' + this.rubricMarking);
     this.rubricName = rubric.name;
     this.rubricBlocks = rubric.criterias;
   }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import {isNil} from "lodash";
-import {PdfmConstants} from "@shared/constants/pdfm.constants";
+import {isNil} from 'lodash';
+import {DEFAULT_WORKSPACE} from "@shared/constants/constants";
 
 @Injectable({
   providedIn: 'root'
@@ -60,20 +60,20 @@ export class PdfmUtilsService {
     }
   }
 
-  public static isDefaultWorkspace(workspaceName: string): boolean{
-    return isNil(workspaceName) || workspaceName === PdfmConstants.DEFAULT_WORKSPACE;
+  public static isDefaultWorkspace(workspaceName: string): boolean {
+    return isNil(workspaceName) || workspaceName === DEFAULT_WORKSPACE;
   }
 
-  public static defaultWorkspaceName(workspaceName?: string): string{
+  public static defaultWorkspaceName(workspaceName?: string): string {
     if (isNil(workspaceName)) {
-      return PdfmConstants.DEFAULT_WORKSPACE;
+      return DEFAULT_WORKSPACE;
     }
     return workspaceName;
   }
 
-  public static buildFilePath(workspaceName: string, assignmentName: string, ...paths: string[]): string{
+  public static buildFilePath(workspaceName: string, assignmentName: string, ...paths: string[]): string {
     let finalPath = assignmentName + '/' + paths.join('/');
-    if (!isNil(workspaceName) && workspaceName !== PdfmConstants.DEFAULT_WORKSPACE){
+    if (!isNil(workspaceName) && workspaceName !== DEFAULT_WORKSPACE) {
       finalPath = workspaceName + '/' + finalPath;
     }
     return finalPath;

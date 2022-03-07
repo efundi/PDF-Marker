@@ -1,12 +1,8 @@
 import {sep} from 'path';
 
 export const CONFIG_FILE = 'config.json';
-export const SETTING_FILE = '.settings.json';
-export const MARK_FILE = '.marks.json';
-export const GRADES_FILE = 'grades.csv';
+
 export const RUBRICS_FILE = 'rubrics.json';
-export const SUBMISSION_FOLDER = 'Submission attachment(s)';
-export const FEEDBACK_FOLDER = 'Feedback Attachment(s)';
 export const APP_DATA_DIR = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME +
   '/Library/Preferences' : process.env.HOME + '/.local/share');
 export const CONFIG_DIR = APP_DATA_DIR + sep + 'pdf-config' + sep;
@@ -35,4 +31,4 @@ export const COULD_NOT_READ_WORKSPACE_LIST = 'Could not read list of working fol
 export const NOT_PROVIDED_COMMENT = 'Comment must be provided!';
 
 export const HIGHTLIGHT_HEIGHT = 20;
-export const STUDENT_DIRECTORY_REGEX = /(.*)\((.+)\)/;
+export const STUDENT_DIRECTORY_REGEX = /(.*), (.*)\((.+)\)/;

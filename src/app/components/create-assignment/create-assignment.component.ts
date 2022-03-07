@@ -10,20 +10,22 @@ import {MimeTypesEnum} from '../../utils/mime.types.enum';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {AssignmentDetails} from '../assignment-overview/assignment-overview.component';
-import {SakaiService} from '../../services/sakai.service';
 import {MatDialogConfig} from '@angular/material/dialog';
-import {YesAndNoConfirmationDialogComponent} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {
+  YesAndNoConfirmationDialogComponent
+} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {WorkspaceService} from '../../services/workspace.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {UpdateAssignment, UpdateAssignmentStudentDetails} from '@shared/info-objects/update-assignment';
 import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-assignment.info';
 import {RubricService} from '../../services/rubric.service';
-import {isNil} from 'lodash';
-import {PdfmConstants} from '@shared/constants/pdfm.constants';
+import {find, isNil} from 'lodash';
 import {forkJoin, mergeMap, Observable, tap, throwError} from 'rxjs';
 import {BusyService} from '../../services/busy.service';
 import {catchError} from 'rxjs/operators';
+import {StudentSubmission, TreeNodeType} from '@shared/info-objects/workspace';
+import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -77,8 +79,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
               private router: Router,
               private activatedRoute: ActivatedRoute,
               private importService: ImportService,
-              private rubricService: RubricService,
-              private sakaiService: SakaiService) {}
+              private rubricService: RubricService) {}
 
   ngOnInit() {
     this.initForm();
@@ -93,7 +94,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         this.isEdit = true;
         this.fc.assignmentName.setValue(this.assignmentId);
         if (isNil(this.workspaceName)) {
-          this.workspaceName = PdfmConstants.DEFAULT_WORKSPACE;
+          this.workspaceName = DEFAULT_WORKSPACE;
         }
         this.fc.workspaceFolder.setValue(this.workspaceName);
         fields.push('workspaceFolder');
@@ -149,9 +150,9 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
             return PdfmUtilsService.basename(item);
           });
         }
-        this.workspaces.unshift(PdfmConstants.DEFAULT_WORKSPACE);
+        this.workspaces.unshift(DEFAULT_WORKSPACE);
         if (this.workspaces.length <= 1) {
-          this.createAssignmentForm.controls.workspaceFolder.setValue(PdfmConstants.DEFAULT_WORKSPACE);
+          this.createAssignmentForm.controls.workspaceFolder.setValue(DEFAULT_WORKSPACE);
         }
       })
     );
@@ -166,29 +167,25 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
 
   private generateStudentDetailsFromModel() {
-    const hierarchyModel = this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentId);
-
-    const values: AssignmentDetails[] = [];
-    if (hierarchyModel[this.assignmentId]) {
-      Object.keys(hierarchyModel[this.assignmentId]).forEach(key => {
-        if (this.regEx.test(key) && this.sakaiService.getAssignmentRootFiles().indexOf(key) === -1) {
+    this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentId).subscribe((workspaceAssignment) => {
+      const values: AssignmentDetails[] = [];
+      if (!isNil(workspaceAssignment)) {
+        workspaceAssignment.children.filter((c => c.type === TreeNodeType.SUBMISSION)).forEach((studentSubmission: StudentSubmission) => {
           const value: AssignmentDetails = {
-            studentName: '',
-            studentNumber: '',
-            assignment: '',
+            studentName: studentSubmission.studentName,
+            studentSurname: studentSubmission.studentSurname,
+            studentNumber: studentSubmission.studentId,
+            assignment: null,
           };
-          const matches = this.regEx.exec(key);
-          value.studentName = matches[1];
-          value.studentNumber = matches[2];
-          value.assignment = hierarchyModel[this.assignmentId][key][this.submissionFolder] ? Object.keys(hierarchyModel[this.assignmentId][key][this.submissionFolder])[0] : '';
+          const submissionDirectory = find(studentSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
+          value.assignment = (submissionDirectory && submissionDirectory.children.length > 0) ? submissionDirectory.children[0].name : '';
           values.push(value);
-        }
-      });
-
-      this.populateStudentDetails(values);
-    } else {
-      this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD]);
-    }
+        });
+        this.populateStudentDetails(values);
+      } else {
+        this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD]);
+      }
+    });
   }
 
   private populateStudentDetails(studentDetails: AssignmentDetails[]) {
@@ -230,12 +227,11 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private newFormGroupRowFromData(data: AssignmentDetails): FormGroup {
-    const studentNameSplit = data.studentName.split(',');
     this.populateSavedState(data);
     return this.fb.group({
       studentId: [data.studentNumber, [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
-      studentName: [(studentNameSplit.length === 2) ? studentNameSplit[1].trim() : 'N/A', Validators.required],
-      studentSurname: [(studentNameSplit.length === 2) ? studentNameSplit[0].trim() : 'N/A', Validators.required],
+      studentName: [data.studentName, Validators.required],
+      studentSurname: [data.studentSurname, Validators.required],
       studentSubmission: [data.assignment],
       studentSubmissionText: [data.assignment],
       readonly: [true],
@@ -248,8 +244,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
     const studentDetails = {
       studentId: data.studentNumber,
-      studentName: (studentNameSplit.length === 2) ? studentNameSplit[1].trim() : 'N/A',
-      studentSurname: (studentNameSplit.length === 2) ? studentNameSplit[0].trim() : 'N/A',
+      studentName: data.studentName,
+      studentSurname: data.studentSurname,
       studentSubmission: data.assignment,
       shouldDelete: false
     };
@@ -462,8 +458,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     this.busyService.start();
     this.assignmentService.createAssignment(createAssignmentInfo)
       .pipe(
-        mergeMap(() => this.assignmentService.getAssignments()),
-        tap((assignments) => this.assignmentService.update(assignments))
+        mergeMap(() => this.assignmentService.refreshWorkspaces()),
       ).subscribe({
       next: () => {
         if (PdfmUtilsService.isDefaultWorkspace(createAssignmentInfo.workspace)) {
@@ -483,8 +478,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   private performUpdate(updateAssignment: UpdateAssignment) {
     this.assignmentService.updateAssignment(updateAssignment)
       .pipe(
-        mergeMap(() => this.assignmentService.getAssignments()),
-        tap((assignments) => this.assignmentService.update(assignments))
+        mergeMap(() => this.assignmentService.refreshWorkspaces()),
       ).subscribe({
       next: () => {
         this.isEdit = false;
