@@ -16,13 +16,13 @@ import * as glob from 'glob';
 import {getConfig} from './config.handler';
 import {checkAccess, deleteFolderRecursive, isFolder, isJson, isNullOrUndefined, writeToFile} from '../utils';
 import {
-  COMMENTS_FILE,
   CONFIG_DIR,
   COULD_NOT_READ_RUBRIC_LIST,
   INVALID_RUBRIC_JSON_FILE,
   INVALID_STUDENT_FOLDER,
   NOT_PROVIDED_RUBRIC,
   RUBRICS_FILE,
+  STUDENT_DIRECTORY_NO_NAME_REGEX,
   STUDENT_DIRECTORY_REGEX,
 } from '../constants';
 import * as path from 'path';
@@ -119,14 +119,34 @@ function loadAssignmentContents(directoryFullPath: string): Promise<WorkspaceAss
           });
         } else {
           // It must be a submission
-          const matches = STUDENT_DIRECTORY_REGEX.exec(file);
+          let studentId: string;
+          let studentName: string;
+          let studentSurname: string;
+
+          let matches = STUDENT_DIRECTORY_REGEX.exec(file);
+          if (matches !== null) {
+            studentId = matches[3];
+            studentName =  matches[2];
+            studentSurname = matches[1];
+          }
+
+          if (matches === null){
+            matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(file);
+            studentId = matches[2];
+            studentSurname =  matches[1];
+          }
+
+          if (matches === null) {
+            return Promise.reject(`Student directory not in expected format '${file}'`);
+          }
+
           const submission: StudentSubmission = {
             dateModified: null,
             type: TreeNodeType.SUBMISSION,
             name: file,
-            studentId: matches[3],
-            studentName: matches[2],
-            studentSurname: matches[1],
+            studentId,
+            studentName,
+            studentSurname,
             children: [],
           };
           assignment.children.push(submission);
@@ -213,6 +233,9 @@ function loadWorkspaces(): Promise<Workspace[]> {
       });
       return Promise.all(promises).then(() => {
         return sortBy(workspaces, 'name');
+      }, (error) => {
+        console.error(error);
+        return Promise.reject(error);
       });
     });
   });

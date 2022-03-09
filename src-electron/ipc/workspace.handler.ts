@@ -2,14 +2,12 @@ import {forEach, isNil} from 'lodash';
 import {getConfig, updateConfigFile} from './config.handler';
 import {basename, sep} from 'path';
 import {writeFile} from 'fs/promises';
-import {COMMENTS_FILE, CONFIG_DIR, CONFIG_FILE} from '../constants';
+import {CONFIG_DIR, CONFIG_FILE} from '../constants';
 import {existsSync, mkdirSync, readdirSync, renameSync, writeFileSync} from 'fs';
 import {IpcMainInvokeEvent, shell} from 'electron';
-import {moveSync, readFile} from 'fs-extra';
+import {moveSync} from 'fs-extra';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {DEFAULT_WORKSPACE, SETTING_FILE} from '@shared/constants/constants';
-import {Comment} from '@angular/compiler';
-import {isJson} from '../utils';
 
 export function getWorkingDirectory(workspaceName: string): Promise<string> {
   return getConfig().then((config) => {

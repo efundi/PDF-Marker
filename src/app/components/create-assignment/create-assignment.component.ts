@@ -469,7 +469,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         this.busyService.stop();
       },
       error: (error) => {
-        this.appService.openSnackBar(false, error);
         this.busyService.stop();
       }
     });
@@ -489,7 +488,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        this.appService.openSnackBar(false, error);
         this.busyService.stop();
       }
     });

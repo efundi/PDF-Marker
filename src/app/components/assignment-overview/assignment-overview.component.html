@@ -61,7 +61,7 @@
     <ng-container matColumnDef="studentName">
       <th mat-header-cell *matHeaderCellDef mat-sort-header="studentName"> Student Name </th>
       <td mat-cell *matCellDef="let element">
-        <p class="pdf-marker-assignment-overview-student-name">{{element.studentSurname}}, {{element.studentName}}</p>
+        <p class="pdf-marker-assignment-overview-student-name">{{element.studentSurname}}{{element.studentName ? ', ' + element.studentSurname : ''}}</p>
         <p class="pdf-marker-assignment-overview-student-number">{{element.studentNumber}}</p>
       </td>
     </ng-container>

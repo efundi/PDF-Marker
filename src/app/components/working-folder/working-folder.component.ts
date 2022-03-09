@@ -135,7 +135,6 @@ export class WorkingFolderComponent implements OnInit {
       this.appService.openSnackBar(true, 'Refreshed list');
     }, error => {
       this.busyService.stop();
-      this.appService.openSnackBar(false, 'Could not refresh list');
     });
   }
 
