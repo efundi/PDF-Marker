@@ -18,14 +18,19 @@ import {MarkingCommentModalComponent} from '../marking-comment-modal/marking-com
 import {AppService} from '../../services/app.service';
 import {AssignmentMarkingComponent} from '../assignment-marking/assignment-marking.component';
 import {MarkInfo} from '@shared/info-objects/mark.info';
-import {Observable, Subscription} from 'rxjs';
+import {firstValueFrom, Observable, Subscription} from 'rxjs';
 import {cloneDeep, isNil} from 'lodash';
 import {AssignmentMarkingSessionService} from '../assignment-marking/assignment-marking-session.service';
 import {IconInfo} from '../../info-objects/icon.info';
 import {MarkTypeHighlightComponent} from '../mark-type-highlight/mark-type-highlight.component';
 import {PageViewport} from 'pdfjs-dist/types/web/interfaces';
 import {ScrollVisibilityDirective} from '../../directives/scroll-visibility.directive';
-import {BusyService} from "../../services/busy.service";
+import {BusyService} from '../../services/busy.service';
+import {PageSettings, SubmissionType} from "@shared/info-objects/submission.info";
+import {
+  YesAndNoConfirmationDialogComponent
+} from "../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
+import {MatDialogConfig} from "@angular/material/dialog";
 
 const eventBus = new EventBus();
 
@@ -66,6 +71,11 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
    */
   @Input()
   marks: MarkInfo[] = [];
+  /**
+   * Markers for this page
+   */
+  @Input()
+  pageSettings: PageSettings;
 
   /**
    * Reference to the annotation layer
@@ -184,8 +194,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       },
       iconName: this.assignmentMarkingSessionService.icon.icon,
       iconType: this.assignmentMarkingSessionService.icon.type,
-      colour,
-      pageNumber: this.pageIndex + 1,
+      colour
     };
 
     if (mark.iconType === IconTypeEnum.FULL_MARK) {
@@ -215,7 +224,10 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     const zoom = this.assignmentMarkingSessionService.zoom;
 
     // Get the viewport at the current zoom * PDF scale constant
-    this.viewport = this.page.getViewport({ scale: (zoom * PDF_SCALE_CONSTANT) });
+    this.viewport = this.page.getViewport({
+      scale: (zoom * PDF_SCALE_CONSTANT),
+      rotation: this.pageSettings.rotation
+    });
 
     // Support HiDPI-screens by setting the width applying DPI Scaling
     this.renderer.setAttribute(this.pdfCanvas.nativeElement, 'width', Math.floor(this.viewport.width * DPI_SCALE) + '');
@@ -280,6 +292,12 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     this.busyService.start();
     this.pdf.getPage(this.pageIndex + 1).then((page) => {
       this.page = page;
+
+      if (isNil(this.pageSettings.rotation)) {
+        // If no rotation has been set by the user, use the PDF page rotation
+        this.pageSettings.rotation = this.page.rotate;
+      }
+
       this.resizePage();
     }).then(() => {
       this.busyService.stop();
@@ -367,7 +385,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       iconName: this.assignmentMarkingSessionService.icon.icon,
       iconType: this.assignmentMarkingSessionService.icon.type,
       colour: this.highlighter.nativeElement.style.background,
-      pageNumber: this.pageIndex + 1,
       totalMark: 0,
       comment: null
     };
@@ -455,5 +472,79 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
 
   scrollIntoView() {
     this.elementRef.nativeElement.scrollIntoView({behavior: 'smooth', block: 'start', inline: 'start'});
+  }
+
+
+  /**
+   * Prompt to warn the user that marks will be removed when rotation the page
+   * @private
+   */
+  private promptMarksRemove(): Promise<boolean> {
+
+    if (this.assignmentMarkingComponent.submissionInfo.type === SubmissionType.RUBRIC) {
+      return Promise.resolve(true);
+    }
+
+    if(this.marks.length === 0){
+      return Promise.resolve(true);
+    }
+
+    const config = new MatDialogConfig();
+    config.width = '400px';
+    config.maxWidth = '400px';
+    config.data = {
+      title: 'Rotate page',
+      message: 'Rotating the page will cause marks to be removed',
+    };
+    let resolve;
+    const promise = new Promise<boolean>((r) => resolve = r);
+
+    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, resolve);
+
+    return promise.then((remove) => {
+      if (!remove) {
+        return Promise.reject();
+      }
+      return firstValueFrom(this.assignmentMarkingComponent.savePageMarks(this.pageIndex, []));
+    });
+  }
+
+
+
+  public rotateClockwise() {
+    this.promptMarksRemove().then(() => {
+      const settings = cloneDeep(this.pageSettings);
+      if (settings.rotation === 270) {
+        settings.rotation = 0;
+      } else {
+        settings.rotation = settings.rotation + 90;
+      }
+      this.assignmentMarkingComponent.savePageSettings(this.pageIndex, settings).subscribe(() => {
+        this.pageSettings = settings;
+        this.resizePage();
+        this.renderPage();
+      });
+    }, (err) => {
+      console.error(err);
+    });
+
+  }
+
+  public rotateCounterClockwise() {
+    this.promptMarksRemove().then(() => {
+      const settings = cloneDeep(this.pageSettings);
+      if (settings.rotation === 0) {
+        settings.rotation = 270;
+      } else {
+        settings.rotation = settings.rotation - 90;
+      }
+      this.assignmentMarkingComponent.savePageSettings(this.pageIndex, settings).subscribe(() => {
+        this.pageSettings = settings;
+        this.resizePage();
+        this.renderPage();
+      });
+    }, (err) => {
+      console.error(err)
+    });
   }
 }

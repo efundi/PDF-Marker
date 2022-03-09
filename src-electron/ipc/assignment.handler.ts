@@ -14,14 +14,7 @@ import {
 } from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
-import {
-  checkAccess,
-  deleteFolderRecursive,
-  isFolder,
-  isJson,
-  isNullOrUndefined,
-  writeToFile
-} from '../utils';
+import {checkAccess, deleteFolderRecursive, isFolder, isJson, isNullOrUndefined, writeToFile} from '../utils';
 import {
   COMMENTS_FILE,
   CONFIG_DIR,
@@ -35,7 +28,7 @@ import {
 import * as path from 'path';
 import {basename, dirname, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
-import {readFile, stat} from 'fs/promises';
+import {readFile, stat, writeFile} from 'fs/promises';
 import {find, isNil, map, sortBy} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
@@ -43,7 +36,6 @@ import {PDFDocument} from 'pdf-lib';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-assignment.info';
 import {annotatePdfFile} from '../pdf/marking-annotations';
-import {IComment} from '@shared/info-objects/comment.class';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {annotatePdfRubric} from '../pdf/rubric-annotations';
@@ -54,7 +46,7 @@ import {getAssignmentDirectory} from './workspace.handler';
 import {
   FeedbackAttachments,
   StudentSubmission,
-  SubmissionAttachments, TreeNode,
+  SubmissionAttachments,
   TreeNodeType,
   Workspace,
   WorkspaceAssignment,
@@ -63,12 +55,20 @@ import {
 import {
   DEFAULT_WORKSPACE,
   FEEDBACK_FOLDER,
-  SUBMISSION_FOLDER,
-  SETTING_FILE,
-  MARK_FILE,
   GRADES_FILE,
-  PDFM_FILE_SORT
+  MARK_FILE,
+  PDFM_FILE_SORT,
+  SETTING_FILE,
+  SUBMISSION_FOLDER
 } from '@shared/constants/constants';
+import {
+  MarkingSubmissionInfo,
+  RubricSubmissionInfo,
+  SubmissionInfo,
+  SubmissionInfoVersion,
+  SubmissionType
+} from "@shared/info-objects/submission.info";
+import {getComments, updateCommentsFile} from "./comment.handler";
 
 const zipDir = require('zip-dir');
 
@@ -219,49 +219,76 @@ function loadWorkspaces(): Promise<Workspace[]> {
 }
 
 
-export function saveMarks(event: IpcMainInvokeEvent, location: string, marks: MarkInfo[][] = []): Promise<string> {
+export function saveMarks(event: IpcMainInvokeEvent, location: string, submissionInfo: SubmissionInfo): Promise<string> {
 
-  let totalMark = 0;
-  if (!isNil(marks)) {
-    const pages = Object.keys(marks);
-    const commentsData = existsSync(CONFIG_DIR + COMMENTS_FILE) ? readFileSync(CONFIG_DIR + COMMENTS_FILE) : null;
-    const comments: IComment[] = isNullOrUndefined(commentsData) ? null : JSON.parse(commentsData.toString());
-    let commentbool = false;
-    pages.forEach(page => {
-      if (Array.isArray(marks[page])) {
-        for (let i = 0; i < marks[page].length; i++) {
-          totalMark += (marks[page][i] && marks[page][i].totalMark) ? marks[page][i].totalMark : 0;
-          if (existsSync(CONFIG_DIR + COMMENTS_FILE)) {
+
+  if (submissionInfo.type === SubmissionType.MARK){
+
+    const marksPerPage = submissionInfo.marks as MarkInfo[][];
+
+    return getComments().then((comments) => {
+      let updateComments = false;
+      let totalMark = 0;
+      marksPerPage.forEach((pageMarks) => {
+        if (Array.isArray(pageMarks)) {
+          for (let i = 0; i < pageMarks.length; i++) {
+            totalMark += (pageMarks[i] && pageMarks[i].totalMark) ? pageMarks[i].totalMark : 0;
+
             comments.forEach(comment => {
-              if (marks[page][i].comment && marks[page][i].comment.includes(comment.title) && !comment.inUse) {
-                commentbool = true;
+              // Try and mark a comment as in use
+              if (pageMarks[i].comment && pageMarks[i].comment.includes(comment.title) && !comment.inUse) {
+                updateComments = true;
                 comment.inUse = true;
               }
             });
           }
         }
-      }
-    });
-    if (commentbool) {
-      try {
-        writeFileSync(CONFIG_DIR + COMMENTS_FILE, JSON.stringify(comments));
-      } catch (e) {
-        return Promise.reject();
-      }
-    }
-  }
+      });
 
-  return saveToMarks(location, marks, totalMark);
+      let promise: Promise<any> = Promise.resolve();
+      if (updateComments) {
+        promise = promise.then(() => updateCommentsFile(comments));
+      }
+
+      return promise.then(() => saveToMarks(location, submissionInfo, totalMark));
+    });
+  } else if (submissionInfo.type === SubmissionType.RUBRIC) {
+    const assignmentDirectory = dirname(location);
+    return getConfig().then((config) => {
+      return getAssignmentSettingsAt(config.defaultPath + sep + assignmentDirectory)
+        .then((assignmentSettingsInfo) => {
+
+          if (isNil(assignmentSettingsInfo.rubric)) {
+            return Promise.reject('Assignment\'s settings does not contain a rubric!');
+          }
+          let totalMark = 0;
+          const marks = submissionInfo.marks as number[];
+          marks.forEach((levelIndex: number, index: number) => {
+            if (levelIndex !== null) {
+              totalMark += parseFloat('' + assignmentSettingsInfo.rubric.criterias[index].levels[levelIndex].score);
+            }
+          });
+          return saveToMarks(location, submissionInfo, totalMark);
+        });
+    });
+  } else {
+    return Promise.reject('Unknown submission info type');
+  }
 }
 
-function saveToMarks(studentLocation: string, marks: MarkInfo[][] | number[], totalMark: number): Promise<string> {
+function saveSubmissionInfo(studentLocation: string, submissionInfo: SubmissionInfo): Promise<SubmissionInfo>{
+  return writeFile(studentLocation + sep + MARK_FILE, JSON.stringify(submissionInfo))
+    .then(() => submissionInfo, () => Promise.reject('Failed to save student marks!'));
+}
+
+function saveToMarks(studentLocation: string, marks: SubmissionInfo, totalMark: number): Promise<string> {
 
   return getConfig().then((config) => {
     // console.log("Path Recieved: " + req.body.location);
     const studentFolder = config.defaultPath + sep + studentLocation.replace(/\//g, sep);
     return checkAccess(studentFolder).then(() => {
 
-      return writeToFile(studentFolder + sep + MARK_FILE, new Uint8Array(Buffer.from(JSON.stringify(marks))), null, 'Failed to save student marks!').then(() => {
+      return saveSubmissionInfo(studentFolder, marks).then(() => {
         const assignmentFolder = dirname(studentFolder);
         console.log('assignmentFolder: ' + assignmentFolder);
 
@@ -306,51 +333,77 @@ function saveToMarks(studentLocation: string, marks: MarkInfo[][] | number[], to
   });
 }
 
+function convertMarks(marks: any, studentFolderFullPath: string): Promise<SubmissionInfo> {
 
+  let submissionInfo: SubmissionInfo;
+  if (marks.version !== SubmissionInfoVersion) {
 
-export function saveRubricMarks(event: IpcMainInvokeEvent, location: string, rubricName: string, marks: number[] = []): Promise<any> {
+    return getAssignmentSettingsAt(dirname(studentFolderFullPath)).then((assignmentSettings) => {
 
-  rubricName = rubricName.trim();
-  const assignmentDirectory = dirname(location);
-  return getConfig().then((config) => {
-    return getAssignmentSettingsAt(config.defaultPath + sep + assignmentDirectory)
-      .then((assignmentSettingsInfo) => {
-
-        if (isNil(assignmentSettingsInfo.rubric)) {
-          return Promise.reject('Assignment\'s settings does not contain a rubric!');
-        } else if (assignmentSettingsInfo.rubric.name !== rubricName) {
-          return Promise.reject('Assignment\'s settings rubric does not match provided!');
+      let promise: Promise<any> = Promise.resolve();
+      if (!marks.hasOwnProperty('version')) {
+        // This is the original .marks.json convert it to version 1
+        if (assignmentSettings.rubric) {
+          const rubricSubmissionInfo = new RubricSubmissionInfo(1);
+          rubricSubmissionInfo.marks = marks;
+          submissionInfo = rubricSubmissionInfo;
+        } else {
+          const markingSubmissionInfo = new MarkingSubmissionInfo(1);
+          markingSubmissionInfo.marks = marks;
+          submissionInfo = markingSubmissionInfo;
         }
-        let totalMark = 0;
-        marks.forEach((levelIndex: number, index: number) => {
-          if (levelIndex !== null) {
-            totalMark += parseFloat('' + assignmentSettingsInfo.rubric.criterias[index].levels[levelIndex].score);
-          }
-        });
-        return saveToMarks(location, marks, totalMark);
-      });
-  });
+        promise = promise.then(() => saveSubmissionInfo(studentFolderFullPath, submissionInfo));
+      }
+      /*
+       if (marks.version === 1) {
+         // Convert to from v 1 to version 2
+         submissionInfo = upgradedV2;
+          promise = promise.then(() => saveSubmissionInfo(studentFolder, submissionInfo));
+       }
+
+       if (marks.version === 2) {
+         // Convert to from v 2 to version 3
+         submissionInfo = upgradedV3;
+          promise = promise.then(() => saveSubmissionInfo(studentFolder, submissionInfo));
+       }
+       */
+
+
+      return promise;
+    });
+
+
+  }
+
+
+  return Promise.resolve(marks);
 }
 
 
-
-
-
-export function getMarks(event: IpcMainInvokeEvent, studentFolder: string): Promise<MarkInfo[] | number[]> {
+export function loadMarks(studentFolder: string): Promise<SubmissionInfo>{
   return getConfig().then((config) => {
     studentFolder = config.defaultPath + sep + studentFolder.replace(/\//g, sep);
-    console.log('studentFolder: ' + studentFolder);
-
-    return readFile(studentFolder + sep + MARK_FILE).then((data) => {
-      if (!isJson(data)) {
-        return [];
-      } else {
-        return JSON.parse(data.toString());
-      }
-    }, (err) => {
-      return [];
-    });
+    return loadMarksAt(studentFolder);
   });
+}
+export function loadMarksAt(studentFolderFull: string): Promise<SubmissionInfo>{
+  return readFile(studentFolderFull + sep + MARK_FILE).then((data) => {
+    if (!isJson(data)) {
+      return [];
+    } else {
+      const marks = JSON.parse(data.toString());
+      if (marks.version !== SubmissionInfoVersion) {
+        return convertMarks(marks, studentFolderFull);
+      }
+      return marks;
+    }
+  }, (err) => {
+    return convertMarks([], studentFolderFull);
+  });
+}
+
+export function getMarks(event: IpcMainInvokeEvent, studentFolder: string): Promise<SubmissionInfo> {
+  return loadMarks(studentFolder);
 }
 
 
@@ -715,54 +768,44 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
               try {
                 accessSync(submission, constants.F_OK);
                 const studentFolder = dirname(dirname(submission));
-
-                let marks: MarkInfo[][] = [];
-                let marksData;
-                try {
-                  marksData = readFileSync(studentFolder + sep + MARK_FILE);
-                } catch (e) {
-                  marks = [];
-                }
-
-                if (isJson(marksData)) {
-                  marks = JSON.parse(marksData.toString());
-                }
-
-                if (marks.length > 0) {
-                  const ext = path.extname(submission);
-                  let fileName = path.basename(submission, ext);
-                  return annotatePdfFile(submission, marks).then(async (data) => {
-                    fileName += '_MARK';
-                    writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
-                    unlinkSync(submission);
-                    accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
-                    let changed = false;
-                    let assignmentHeader;
-                    for (let i = 0; i < gradesJSON.length; i++) {
-                      if (i === 0) {
-                        const gradeKeys = Object.keys(gradesJSON[i]);
-                        if (gradeKeys.length > 0) {
-                          assignmentHeader = gradeKeys[0];
+                return loadMarksAt(studentFolder).then((submissionInfo: MarkingSubmissionInfo) => {
+                  if (submissionInfo.marks.length > 0) {
+                    const ext = path.extname(submission);
+                    let fileName = path.basename(submission, ext);
+                    return annotatePdfFile(submission, submissionInfo).then(async (data) => {
+                      fileName += '_MARK';
+                      writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
+                      unlinkSync(submission);
+                      accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
+                      let changed = false;
+                      let assignmentHeader;
+                      for (let i = 0; i < gradesJSON.length; i++) {
+                        if (i === 0) {
+                          const gradeKeys = Object.keys(gradesJSON[i]);
+                          if (gradeKeys.length > 0) {
+                            assignmentHeader = gradeKeys[0];
+                          }
+                        } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
+                          gradesJSON[i].field5 = data.totalMark;
+                          changed = true;
                         }
-                      } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
-                        gradesJSON[i].field5 = data.totalMark;
-                        changed = true;
                       }
-                    }
-                    if (changed) {
-                      return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
-                        .then(csv => {
-                          writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
-                        }, () => {
-                          return Promise.reject( 'Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
-                        });
-                    } else {
-                      return Promise.reject('Failed to save mark');
-                    }
-                  }, (error) => {
-                    return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
-                  });
-                }
+                      if (changed) {
+                        return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
+                          .then(csv => {
+                            writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
+                          }, () => {
+                            return Promise.reject( 'Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
+                          });
+                      } else {
+                        return Promise.reject('Failed to save mark');
+                      }
+                    }, (error) => {
+                      return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
+                    });
+                  }
+                });
+
               } catch (e) {
                 return Promise.reject(e.message);
               }

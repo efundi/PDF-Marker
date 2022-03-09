@@ -70,7 +70,7 @@ export class RubricComponent implements OnInit, OnChanges {
       }
       this.getTotalMark();
       // call assignmentService
-      this.assignmentMarkingComponent.saveRubricMarks(marks).subscribe();
+      this.assignmentMarkingComponent.saveMarks(marks).subscribe();
     }
   }
 

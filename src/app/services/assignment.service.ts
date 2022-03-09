@@ -19,6 +19,7 @@ import {
   WorkspaceFile
 } from '@shared/info-objects/workspace';
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
+import {MarkingSubmissionInfo, RubricSubmissionInfo, SubmissionInfo} from "@shared/info-objects/submission.info";
 
 @Injectable({
   providedIn: 'root'
@@ -122,7 +123,7 @@ export class AssignmentService {
       );
   }
 
-  saveMarks(workspace: string, location: string, marks: MarkInfo[][]): Observable<any> {
+  saveMarks(workspace: string, location: string, marks: SubmissionInfo): Observable<any> {
     return fromIpcResponse(this.assignmentApi.saveMarks(location, marks))
       .pipe(
         mergeMap((response) => {
@@ -133,18 +134,7 @@ export class AssignmentService {
       );
   }
 
-  saveRubricMarks(workspace, location: string, rubricName: string = '', marks: any[]): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.saveRubricMarks(location, rubricName, marks))
-      .pipe(
-        mergeMap((response) => {
-          // After saving the marks we need to update the workspace list to contain the new modified date
-          return this.updateMarksFileTimestamp(workspace, location)
-            .pipe(map(() => response));
-        }),
-      );
-  }
-
-  getSavedMarks(location: string): Observable<MarkInfo[][] | number[]> {
+  getSavedMarks(location: string): Observable<SubmissionInfo> {
     return fromIpcResponse(this.assignmentApi.getMarks(location));
   }
 

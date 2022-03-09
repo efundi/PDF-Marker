@@ -71,7 +71,6 @@ export class AppService {
   }
 
   createDialog(component: ComponentType<any>, config: MatDialogConfig, callback: any = () => {}) {
-    this.busyService.start();
     const dialogConfig: MatDialogConfig = config;
     if (!dialogConfig.disableClose) {
       dialogConfig.disableClose = false;
@@ -79,7 +78,6 @@ export class AppService {
     dialogConfig.autoFocus = true;
 
     const dialog = this.dialog.open(component, dialogConfig);
-    dialog.afterOpened().subscribe(() => this.busyService.stop());
     if (typeof callback === 'function') {
       dialog.afterClosed().subscribe(callback);
     }

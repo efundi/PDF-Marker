@@ -11,7 +11,6 @@ export interface MarkInfo {
   iconType?: string;
   totalMark?: number;
   colour?: string;
-  pageNumber?: number;
   sectionLabel?: string;
   comment?: string;
 }

@@ -96,6 +96,25 @@
       </mat-form-field>
     </div>
   </form>
+
+  <button
+    matTooltip="Rotate Clockwise"
+    mat-button
+    mat-icon-button
+    (click)="onControl($event, 'rotate-cw')"
+    class="rotate-buttons rotate-clockwise">
+    <mat-icon class="rotate-icons">rotate_right</mat-icon>
+  </button>
+  <button
+    matTooltip="Rotate Counter-Clockwise"
+    mat-button
+    mat-icon-button
+    (click)="onControl($event, 'rotate-ccw')"
+    class="rotate-buttons rotate-cclockwise">
+    <mat-icon class="rotate-icons">rotate_left</mat-icon>
+  </button>
+
+
   <span class="pdf-marker-fill-space"></span>
   <button
     [disabled]="!containsRubric"
