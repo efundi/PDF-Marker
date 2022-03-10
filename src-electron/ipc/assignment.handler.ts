@@ -21,7 +21,7 @@ import {
   INVALID_RUBRIC_JSON_FILE,
   INVALID_STUDENT_FOLDER,
   NOT_PROVIDED_RUBRIC,
-  RUBRICS_FILE,
+  RUBRICS_FILE, STUDENT_DIRECTORY_ID_REGEX,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
   STUDENT_DIRECTORY_REGEX,
 } from '../constants';
@@ -69,6 +69,7 @@ import {
   SubmissionType
 } from "@shared/info-objects/submission.info";
 import {getComments, updateCommentsFile} from "./comment.handler";
+import {promise} from "protractor";
 
 const zipDir = require('zip-dir');
 
@@ -128,12 +129,12 @@ function loadAssignmentContents(directoryFullPath: string): Promise<WorkspaceAss
             studentId = matches[3];
             studentName =  matches[2];
             studentSurname = matches[1];
-          }
-
-          if (matches === null){
+          } else {
             matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(file);
-            studentId = matches[2];
-            studentSurname =  matches[1];
+            if (matches !== null) {
+              studentId = matches[2];
+              studentSurname =  matches[1];
+            }
           }
 
           if (matches === null) {
@@ -244,7 +245,6 @@ function loadWorkspaces(): Promise<Workspace[]> {
 
 export function saveMarks(event: IpcMainInvokeEvent, location: string, submissionInfo: SubmissionInfo): Promise<string> {
 
-
   if (submissionInfo.type === SubmissionType.MARK){
 
     const marksPerPage = submissionInfo.marks as MarkInfo[][];
@@ -317,14 +317,18 @@ function saveToMarks(studentLocation: string, marks: SubmissionInfo, totalMark: 
 
         return checkAccess(assignmentFolder + sep + GRADES_FILE).then(() => {
 
-          const pathSplit = studentFolder.split(sep);
-          const matches = STUDENT_DIRECTORY_REGEX.exec(pathSplit[pathSplit.length - 1]);
-          const studentNumber = matches[3] + '';
+          const studentDirectoryName = basename(studentFolder);
+          const matches = STUDENT_DIRECTORY_ID_REGEX.exec(studentDirectoryName);
+          const studentNumber = matches[1] + '';
 
           return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
             .then((gradesJSON) => {
               let changed = false;
               let assignmentHeader;
+              if (gradesJSON.length < 3 || Object.keys(gradesJSON[2]).length < 4) {
+                return Promise.reject('grades.csv file appears to be corrupt');
+              }
+
               for (let i = 0; i < gradesJSON.length; i++) {
                 if (i === 0) {
                   const keys = Object.keys(gradesJSON[i]);
@@ -345,7 +349,7 @@ function saveToMarks(studentLocation: string, marks: SubmissionInfo, totalMark: 
               if (changed) {
                 // more logic to save new JSON to CSV
               } else {
-                return Promise.reject('Failed to save mark');
+                return Promise.reject(`Could not find student ${studentNumber} in grades.csv`);
               }
             }, reason => {
               return Promise.reject( reason);
