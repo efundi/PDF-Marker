@@ -338,16 +338,17 @@ function saveToMarks(studentLocation: string, marks: SubmissionInfo, totalMark: 
                 } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === studentNumber.toUpperCase()) {
                   gradesJSON[i].field5 = totalMark;
                   changed = true;
-                  return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false}).then((csv) => {
-                    return writeToFile(assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!');
-                  }, () => {
-                    return Promise.reject('Failed to convert json to csv!');
-                  });
+
                 }
               }
 
               if (changed) {
                 // more logic to save new JSON to CSV
+                return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false}).then((csv) => {
+                  return writeToFile(assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!');
+                }, () => {
+                  return Promise.reject('Failed to convert json to csv!');
+                });
               } else {
                 return Promise.reject(`Could not find student ${studentNumber} in grades.csv`);
               }
