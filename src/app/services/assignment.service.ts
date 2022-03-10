@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {first, map, mergeMap, Observable, ReplaySubject, tap} from 'rxjs';
+import {first, map, mergeMap, Observable, ReplaySubject, tap, throwError} from 'rxjs';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {ShareAssignments} from '@shared/info-objects/share-assignments';
@@ -19,6 +19,9 @@ import {
   WorkspaceFile
 } from '@shared/info-objects/workspace';
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
+import {MarkingSubmissionInfo, RubricSubmissionInfo, SubmissionInfo} from "@shared/info-objects/submission.info";
+import {catchError} from "rxjs/operators";
+import {AppService} from "./app.service";
 
 @Injectable({
   providedIn: 'root'
@@ -32,7 +35,7 @@ export class AssignmentService {
 
   private assignmentApi: AssignmentIpcService;
 
-  constructor() {
+  constructor(private appService: AppService) {
 
     this.assignmentApi = (window as any).assignmentApi;
     this.selectedSubmissionChanged = this.selectedSubmission.asObservable();
@@ -74,6 +77,13 @@ export class AssignmentService {
     this.workspaceListLoading.next(true);
     return fromIpcResponse(this.assignmentApi.getAssignments())
       .pipe(
+        catchError((error) => {
+
+          this.appService.openSnackBar(false, 'Could not refresh list. ' + error);
+          this.workspaceList.next([]);
+          this.workspaceListLoading.next(false);
+          return throwError(() => error);
+        }),
         tap((workspaces) => {
           this.workspaceList.next(workspaces);
           this.workspaceListLoading.next(false);
@@ -122,7 +132,7 @@ export class AssignmentService {
       );
   }
 
-  saveMarks(workspace: string, location: string, marks: MarkInfo[][]): Observable<any> {
+  saveMarks(workspace: string, location: string, marks: SubmissionInfo): Observable<any> {
     return fromIpcResponse(this.assignmentApi.saveMarks(location, marks))
       .pipe(
         mergeMap((response) => {
@@ -133,18 +143,7 @@ export class AssignmentService {
       );
   }
 
-  saveRubricMarks(workspace, location: string, rubricName: string = '', marks: any[]): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.saveRubricMarks(location, rubricName, marks))
-      .pipe(
-        mergeMap((response) => {
-          // After saving the marks we need to update the workspace list to contain the new modified date
-          return this.updateMarksFileTimestamp(workspace, location)
-            .pipe(map(() => response));
-        }),
-      );
-  }
-
-  getSavedMarks(location: string): Observable<MarkInfo[][] | number[]> {
+  getSavedMarks(location: string): Observable<SubmissionInfo> {
     return fromIpcResponse(this.assignmentApi.getMarks(location));
   }
 

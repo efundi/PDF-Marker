@@ -26,6 +26,29 @@ mat-toolbar {
     line-height: normal;
   }
 
+  .rotate-buttons {
+    height: 30px;
+    width: auto;
+    padding: 4px;
+    border: 2px solid #6F6F6F;
+    line-height: normal;
+
+    &.rotate-clockwise {
+      margin-left: 0.5rem;
+    }
+
+    .rotate-icons {
+      height: auto;
+      width: auto;
+      font-size: 16px;
+      font-weight: bolder;
+      color: #6F6F6F;
+      line-height: normal;
+    }
+
+  }
+
+
   form {
     input {
       text-align: center;
@@ -110,3 +133,4 @@ mat-toolbar {
 .zoom-select-popup{
   max-height: unset !important;
 }
+

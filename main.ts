@@ -14,7 +14,6 @@ import {
   getPdfFile,
   rubricUpdate,
   saveMarks,
-  saveRubricMarks,
   shareExport,
   updateAssignment,
   updateAssignmentSettings
@@ -165,7 +164,6 @@ try {
     ipcMain.handle('assignments:update', toIpcResponse(updateAssignment));
     ipcMain.handle('assignments:create', toIpcResponse(createAssignment));
     ipcMain.handle('assignments:saveMarks', toIpcResponse(saveMarks));
-    ipcMain.handle('assignments:saveRubricMarks', toIpcResponse(saveRubricMarks));
     ipcMain.handle('assignments:finalizeAssignment', toIpcResponse(finalizeAssignment));
     ipcMain.handle('assignments:finalizeAssignmentRubric', toIpcResponse(finalizeAssignmentRubric));
     ipcMain.handle('assignments:getAssignmentSettings', toIpcResponse(getAssignmentSettings));

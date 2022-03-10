@@ -30,6 +30,12 @@ import {AssignmentMarkingPageComponent} from '../assignment-marking-page/assignm
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
+import {
+  MarkingSubmissionInfo,
+  PageSettings,
+  RubricSubmissionInfo,
+  SubmissionInfo
+} from "@shared/info-objects/submission.info";
 
 
 GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
@@ -76,7 +82,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private paramsSubscription: Subscription;
   private colorChangeSubscription: Subscription;
   private zoomChangeSubscription: Subscription;
-  marks: MarkInfo[][] | any[];
+  submissionInfo: SubmissionInfo;
   readonly defaultFullMark = 1;
   readonly defaultIncorrectMark = 0;
   rubric: IRubric;
@@ -164,29 +170,37 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
    * Make sure the array of marks has marks for each page
    * @private
    */
-  private setupMark(marks: MarkInfo[][] | number[]): MarkInfo[][] | number[] {
+  private setupMark(submissionInfo: SubmissionInfo): SubmissionInfo {
+    const numPages = this.pdfDocument.numPages;
+    times(numPages, (index) => {
+      if (isNil(submissionInfo.pageSettings[index])) {
+        submissionInfo.pageSettings[index] = {
+          rotation: null // The page will set the default rotation from the PDF itself
+        };
+      }
+    });
 
     if (isNil(this.assignmentSettings.rubric)) {
-      const numPages = this.pdfDocument.numPages;
-      if (marks.length < numPages) {
-        marks.length = numPages;
+
+      if (submissionInfo.marks.length < numPages) {
+        submissionInfo.marks.length = numPages;
       }
 
       times(numPages, (index) => {
-        if (isNil(marks[index])) {
-          marks[index] = [];
+        if (isNil(submissionInfo.marks[index])) {
+          submissionInfo.marks[index] = [];
         }
       });
     } else {
       const numCriterias = this.assignmentSettings.rubric.criterias.length;
       times(numCriterias, (index) => {
-        if (isNil(marks[index])) {
-          marks[index] = null;
+        if (isNil(submissionInfo.marks[index])) {
+          submissionInfo.marks[index] = null;
         }
       });
     }
 
-    return marks;
+    return submissionInfo;
   }
 
   private loadAssignmentSettings(): Observable<AssignmentSettingsInfo> {
@@ -202,11 +216,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     );
   }
 
-  private loadMarks(): Observable<MarkInfo[][] | number[]> {
+  private loadMarks(): Observable<SubmissionInfo> {
     return this.assignmentService.getSavedMarks(PdfmUtilsService.dirname(this.pdf, 2))
       .pipe(
         tap((marks) => {
-          this.marks = this.setupMark(marks);
+          this.submissionInfo = this.setupMark(marks);
         })
       );
   }
@@ -249,6 +263,12 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         this.showRubric = true;
         this.showPdf = false;
         break;
+      case 'rotate-cw' :
+        this.pdfPages.get(this.currentPage - 1).rotateClockwise();
+        break;
+      case 'rotate-ccw':
+        this.pdfPages.get(this.currentPage - 1).rotateCounterClockwise();
+        break;
       default         :   console.log('No control \'' + control + '\' found!');
         break;
     }
@@ -267,6 +287,32 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     );
   }
 
+  savePageSettings(pageIndex: number, pageSettings: PageSettings): Observable<any>{
+    const originalSubmissionInfo = cloneDeep(this.submissionInfo);
+    const markDetails = {
+      ...this.submissionInfo,
+      pageSettings: [].concat(this.submissionInfo.pageSettings)
+    } as SubmissionInfo;
+    markDetails.pageSettings[pageIndex] = pageSettings;
+    this.busyService.start();
+    return this.assignmentService.saveMarks(this.workspaceName, PdfmUtilsService.dirname(this.pdf, 2), markDetails)
+      .pipe(
+        map(() => {
+          this.busyService.stop();
+          this.submissionInfo = this.setupMark(markDetails);
+          this.appService.openSnackBar(true, 'Saved');
+        })
+      )
+      .pipe(
+        catchError((error) => {
+          this.busyService.stop();
+          this.submissionInfo = originalSubmissionInfo;
+          this.appService.openSnackBar(false, 'Unable to save');
+          return throwError(error);
+        })
+      );
+  }
+
 
   /**
    * Save the marks for the specified page index
@@ -274,7 +320,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
    * @param marks
    */
   savePageMarks(pageIndex: number, marks: MarkInfo[]): Observable<any> {
-    const marksToSave = cloneDeep(this.marks);
+    const marksToSave = cloneDeep(this.submissionInfo.marks) as MarkInfo[][];
     marksToSave[pageIndex] = marks;
     return this.saveMarks(marksToSave);
   }
@@ -282,44 +328,25 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   /**
    * Saves the marks and returns an observable if the save succeeded
    */
-  saveMarks(marks: MarkInfo[][] = null): Observable<any> {
-    const originalMarks = cloneDeep(this.marks);
-    const markDetails = marks || this.marks;
+  saveMarks(marks?: MarkInfo[][] | number[]): Observable<any> {
+    const originalMarks = cloneDeep(this.submissionInfo);
+    const markDetails = {
+      ...this.submissionInfo,
+      marks: marks || this.submissionInfo.marks
+    } as MarkingSubmissionInfo;
     this.busyService.start();
     return this.assignmentService.saveMarks(this.workspaceName, PdfmUtilsService.dirname(this.pdf, 2), markDetails)
       .pipe(
         map(() => {
           this.busyService.stop();
-          this.marks = this.setupMark(markDetails);
+          this.submissionInfo = this.setupMark(markDetails);
           this.appService.openSnackBar(true, 'Saved');
         })
       )
       .pipe(
         catchError((error) => {
           this.busyService.stop();
-          this.marks = originalMarks;
-          this.appService.openSnackBar(false, 'Unable to save');
-          return throwError(error);
-        })
-      );
-  }
-
-  saveRubricMarks(marks: any[]): Observable<any> {
-    const originalMarks = cloneDeep(this.marks);
-    const markDetails = marks || this.marks;
-    this.busyService.start();
-    return this.assignmentService.saveRubricMarks(this.workspaceName, PdfmUtilsService.dirname(this.pdf, 2), this.rubric.name, markDetails)
-      .pipe(
-        map(() => {
-          this.busyService.stop();
-          this.marks = this.setupMark(markDetails);
-          this.appService.openSnackBar(true, 'Saved');
-        })
-      )
-      .pipe(
-        catchError((error) => {
-          this.busyService.stop();
-          this.marks = originalMarks;
+          this.submissionInfo = originalMarks;
           this.appService.openSnackBar(false, 'Unable to save');
           return throwError(error);
         })
@@ -330,7 +357,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
    * Clear all marks
    */
   clearMarks() {
-    if (this.marks.length > 0) {
+    if (this.submissionInfo.marks.length > 0) {
       const title = 'Confirm';
       const message = 'Are you sure you want to delete all marks and comments for this assignment?';
       this.openYesNoConfirmationDialog(title, message);
@@ -371,7 +398,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     config.data = {
       assignmentPath: this.pdf,
-      marks: this.marks,
+      marks: this.submissionInfo,
       defaultTick: this.defaultFullMark,
       incorrectTick: this.defaultIncorrectMark
     };

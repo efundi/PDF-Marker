@@ -37,9 +37,8 @@ export class SideNavigationComponent implements OnInit, OnDestroy {
     this.assignmentService.refreshWorkspaces().subscribe((assignments) => {
       this.busyService.stop();
       this.appService.openSnackBar(true, 'Refreshed list');
-    }, error => {
+    }, () => {
       this.busyService.stop();
-      this.appService.openSnackBar(false, 'Could not refresh list');
     });
   }
 

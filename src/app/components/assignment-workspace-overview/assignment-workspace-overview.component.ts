@@ -111,7 +111,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
           this.appService.openSnackBar(true, 'Refreshed list');
         }, error => {
           this.busyService.stop();
-          this.appService.openSnackBar(false, 'Could not refresh list');
         });
 
       }
@@ -158,7 +157,9 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       // Type TODO here is an async issue, these calls will still be busy when already added to the workspaceRows array
       this.getAssignmentSettings(workspaceAssignment.name).subscribe((assignmentSettings) => {
         workspaceRow.type = assignmentSettings.rubric ? 'Rubric' : 'Manual';
-
+      }, (error) => {
+        workspaceRow.type = 'Unknown';
+        console.error('Unable to load assignment settings for \'' + workspaceAssignment.name + '\'. This directory should probably be removed');
       });
       workspaceRow.currentWorkspace =  this.workspaceName;
       this.workspaceRows.push(workspaceRow);

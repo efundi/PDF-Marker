@@ -14,6 +14,7 @@ import {ConfigIpcService} from './src/shared/ipc/config.ipc-service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {ApplicationIpcService} from './src/shared/ipc/application.ipc-service';
 import {getMarkedAssignmentsCount} from "./src-electron/ipc/assignment.handler";
+import {SubmissionInfo} from "./src/shared/info-objects/submission.info";
 
 contextBridge.exposeInMainWorld('updateApi', {
   onUpdateAvailable: (callback) => {
@@ -37,8 +38,7 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   getAssignments: () => ipcRenderer.invoke('assignments:get'),
   createAssignment: (createAssignmentInfo: CreateAssignmentInfo) => ipcRenderer.invoke('assignments:create', createAssignmentInfo),
   updateAssignment: (updateRequest: UpdateAssignment) => ipcRenderer.invoke('assignments:update', updateRequest),
-  saveMarks: (location: string, marks: any[]) => ipcRenderer.invoke('assignments:saveMarks', location, marks),
-  saveRubricMarks: (location: string, rubricName: string, marks: any[]) => ipcRenderer.invoke('assignments:saveRubricMarks', location, rubricName, marks),
+  saveMarks: (location: string, submissionInfo: SubmissionInfo) => ipcRenderer.invoke('assignments:saveMarks', location, submissionInfo),
   getAssignmentSettings: (workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:getAssignmentSettings', workspaceName, assignmentName),
   getAssignmentGlobalSettings: (location: string) => ipcRenderer.invoke('assignments:getAssignmentGlobalSettings', location),
   updateAssignmentSettings: (updatedSettings: any, workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:updateAssignmentSettings', updatedSettings, workspaceName, assignmentName),

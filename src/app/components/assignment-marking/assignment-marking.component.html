@@ -23,7 +23,8 @@
       #pdfPage
       *ngFor="let item of repeatPerPage(); let pageIndex = index"
       [pageIndex]="pageIndex"
-      [marks]="marks[pageIndex]"
+      [marks]="submissionInfo.marks[pageIndex]"
+      [pageSettings]="submissionInfo.pageSettings[pageIndex]"
       [pdf]="pdfDocument">
     </pdf-marker-assignment-marking-page>
   </div>
@@ -32,7 +33,7 @@
     <pdf-marker-rubric-view-marking
       style="margin: 1rem"
       [rubricMarking]="rubric"
-      [rubricSelections]="marks">
+      [rubricSelections]="submissionInfo">
     </pdf-marker-rubric-view-marking>
   </div>
 
