@@ -84,33 +84,34 @@ function rotate(coord: MarkCoordinate, angle: number, width: number, height: num
 }
 
 function rotateHighlight(coord: MarkCoordinate, angle: number, width: number, height: number): number[] {
+  const highlightHeight = (HIGHTLIGHT_HEIGHT * COORD_CONSTANT);
   if (angle === 90) {
     return [
-      /*x1 */ Math.round(coord.y),
-      /*y1 */ Math.round(coord.x - HIGHTLIGHT_HEIGHT),
-      /*x2 */ Math.round(coord.y + coord.width),
-      /*y2 */ Math.round(coord.x),
+      /*x1 */ coord.y,
+      /*y1 */ coord.x  + coord.width,
+      /*x2 */ coord.y + highlightHeight,
+      /*y2 */ coord.x,
     ];
   } else if (angle === 180) {
     return [
-      /*x1 */ Math.round(width - coord.x),
-      /*y1 */ Math.round(coord.y - HIGHTLIGHT_HEIGHT),
-      /*x2 */ Math.round(width - coord.x + coord.width),
-      /*y2 */ Math.round(coord.y)
+      /*x1 */ width - coord.x,
+      /*y1 */ coord.y,
+      /*x2 */ width - coord.x - coord.width,
+      /*y2 */ coord.y + highlightHeight
     ];
   } else if (angle === 270) {
     return [
-      /*x1 */ Math.round(width - coord.y),
-      /*y1 */ Math.round(height - coord.x - HIGHTLIGHT_HEIGHT),
-      /*x2 */ Math.round(width -  coord.y + coord.width),
-      /*y2 */ Math.round(height - coord.x)
+      /*x1 */ width - coord.y,
+      /*y1 */ height - coord.x,
+      /*x2 */ width - coord.y - highlightHeight,
+      /*y2 */ height - coord.x - coord.width
     ];
   } else {
     return [
-      /*x1 */ Math.round(coord.x),
-      /*y1 */ Math.round(height - coord.y - HIGHTLIGHT_HEIGHT),
-      /*x2 */ Math.round(coord.x + coord.width),
-      /*y2 */ Math.round(height - coord.y)
+      /*x1 */ coord.x,
+      /*y1 */ height - coord.y - highlightHeight,
+      /*x2 */ coord.x + coord.width,
+      /*y2 */ height - coord.y
     ];
   }
 }
@@ -148,9 +149,6 @@ function addAnnotations(session: AnnotationSession, marks: MarkInfo[][] = []): P
             const CIRCLE_DIAMETER = (CIRCLE_SIZE * 2);
             annotationFactory.createTextAnnotation({
               page: pageIndex,
-              annotationFlags: {
-                noRotate: true,
-              },
               rect: [
                 /*x1 */ coords.x + CIRCLE_DIAMETER,
                 /*y1 */ coords.y - CIRCLE_DIAMETER,
@@ -165,9 +163,6 @@ function addAnnotations(session: AnnotationSession, marks: MarkInfo[][] = []): P
             const colorComponents = mark.colour.match(/(\d\.?)+/g);
             const annot = annotationFactory.createHighlightAnnotation({
               page: pageIndex,
-              annotationFlags: {
-                noRotate: true,
-              },
               rect: rotateHighlight(coords, pdfPage.getRotation().angle, pdfPage.getWidth(), pdfPage.getHeight()),
               color: {r: +colorComponents[0], g: +colorComponents[1], b: +colorComponents[2]},
               opacity: +colorComponents[3],

@@ -7,7 +7,7 @@ import {AssignmentService} from '../../services/assignment.service';
 import {WorkspaceDetails} from '../assignment-workspace-overview/assignment-workspace-overview.component';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
-import {DEFAULT_WORKSPACE} from "@shared/constants/constants";
+import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 
 export interface WorkspaceDialogResult {
   prevWorkspaceName: string;
@@ -27,15 +27,18 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
   manageForm: FormGroup;
 
+  /**
+   * Flag if we can rename this folder
+   * Default Workspace cannot be renamed
+   */
+  canRenameFolder = false;
   isEditing: boolean;
 
   workspaceName: string;
   prevWorkspaceName: string;
   assignments: WorkspaceDetails[] = [];
   returnSelectedAssignments: any[] = [];
-  workspaceList: string[];
   workspaceNameList: string[];
-  newWorkspaceName: string;
 
   selectedOptions: string[] = [];
   movedAssignments: string[] = [];
@@ -47,29 +50,30 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
               private busyService: BusyService,
               private workspaceService: WorkspaceService,
               @Inject(MAT_DIALOG_DATA) public data: any) {
+
+    this.initForm();
   }
 
 
   ngOnInit() {
     // this.returnSelectedAssignments = [];
     this.isEditing = false;
-    this.initForm();
     this.workspaceName = this.data.workspaceName;
     this.prevWorkspaceName = this.data.workspaceName;
+    this.canRenameFolder = DEFAULT_WORKSPACE !== this.workspaceName;
     this.assignments = this.data.assignments;
     this.manageForm.controls.workspaceName.setValue(this.data.workspaceName);
+    if (!this.canRenameFolder) {
+      this.manageForm.controls.workspaceName.disable();
+    }
     this.workspaceService.getWorkspaces().subscribe((workspaces: string[]) => {
       if (workspaces) {
-        this.workspaceList = workspaces;
         this.workspaceNameList = workspaces.map(item => {
           return PdfmUtilsService.basename(item);
         });
         const foundIndex = this.workspaceNameList.findIndex(x => x === this.data.workspaceName);
-        this.workspaceList.splice(foundIndex, 1);
         this.workspaceNameList.splice(foundIndex, 1);
       }
-      this.workspaceList.unshift(DEFAULT_WORKSPACE);
-      this.workspaceNameList.unshift(DEFAULT_WORKSPACE);
     });
   }
 

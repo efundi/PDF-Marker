@@ -240,7 +240,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         const submissionDirectory = find(workspaceSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
         const marksFile = find(workspaceSubmission.children, (c => c.name === MARK_FILE));
         if (marksFile) {
-          value.date = moment(marksFile.dateModified).format('YYYY-MM-DD HH:MM:ss');
+          value.date = moment(marksFile.dateModified).format('YYYY-MM-DD HH:mm:ss');
         }
 
         const pdf = (submissionDirectory && submissionDirectory.children.length > 0) ? submissionDirectory.children[0].name : '';

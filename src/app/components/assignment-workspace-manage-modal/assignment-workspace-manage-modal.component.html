@@ -11,7 +11,7 @@
     <mat-form-field>
       <input [readonly]="!isEditing" formControlName="workspaceName" id="workspaceName" type="text" matInput required
              [autocomplete]="false">
-      <button *ngIf="!isEditing" type="button" matSuffix mat-icon-button matTooltip="Edit" (click)="onEdit($event)">
+      <button *ngIf="canRenameFolder && !isEditing" type="button" matSuffix mat-icon-button matTooltip="Edit" (click)="onEdit($event)">
         <mat-icon>edit</mat-icon>
       </button>
       <button *ngIf="isEditing" type="button" matSuffix mat-icon-button matTooltip="Save" (click)="saveWorkspaceName($event)">

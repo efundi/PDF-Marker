@@ -125,16 +125,12 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
 
     this.assignmentService.selectedSubmissionChanged.subscribe((selectedSubmission) => {
       if (selectedSubmission) {
-        const searchNodes: DisplayTreeNode[] = [];
-        this.treeNodes.forEach(workspace => {
-          if (workspace.name === DEFAULT_WORKSPACE) {
-            // Default workspace items are placed at the root
-            searchNodes.push(...workspace.children);
-          } else {
-            searchNodes.push(workspace);
-          }
-        });
-        const treeNodes: DisplayTreeNode[] = findTreeNodes(selectedSubmission.pdfPath, searchNodes) as DisplayTreeNode[];
+        let treePath = selectedSubmission.pdfPath;
+        if(selectedSubmission.workspaceName === DEFAULT_WORKSPACE){
+          treePath = DEFAULT_WORKSPACE + '/' + treePath;
+        }
+
+        const treeNodes: DisplayTreeNode[] = findTreeNodes(treePath, this.treeNodes) as DisplayTreeNode[];
         treeNodes.forEach((treeNode) => this.treeControl.expand(treeNode));
         this.activeNode = treeNodes[treeNodes.length - 1];
         setTimeout(() => {

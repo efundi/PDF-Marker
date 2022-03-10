@@ -347,7 +347,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         catchError((error) => {
           this.busyService.stop();
           this.submissionInfo = originalMarks;
-          this.appService.openSnackBar(false, 'Unable to save');
+          this.appService.openSnackBar(false, error);
           return throwError(error);
         })
       );
