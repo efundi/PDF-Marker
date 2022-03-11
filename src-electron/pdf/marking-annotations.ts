@@ -14,6 +14,7 @@ const getRgbScale = (rgbValue: number): number => {
 const COORD_CONSTANT = (72 / 96);
 // Size of a mark circle
 const CIRCLE_SIZE = 10;
+const CIRCLE_DIAMETER = (CIRCLE_SIZE * 2);
 
 interface AnnotationSession {
   data: Uint8Array;
@@ -88,22 +89,22 @@ function rotateHighlight(coord: MarkCoordinate, angle: number, width: number, he
   if (angle === 90) {
     return [
       /*x1 */ coord.y,
-      /*y1 */ coord.x  + coord.width,
+      /*y1 */ coord.x,
       /*x2 */ coord.y + highlightHeight,
-      /*y2 */ coord.x,
+      /*y2 */ coord.x + coord.width,
     ];
   } else if (angle === 180) {
     return [
+      /*x2 */ width - coord.x - coord.width,
+      /*y2 */ coord.y + highlightHeight,
       /*x1 */ width - coord.x,
       /*y1 */ coord.y,
-      /*x2 */ width - coord.x - coord.width,
-      /*y2 */ coord.y + highlightHeight
     ];
   } else if (angle === 270) {
     return [
-      /*x1 */ width - coord.y,
+      /*x1 */ width - coord.y - highlightHeight,
       /*y1 */ height - coord.x,
-      /*x2 */ width - coord.y - highlightHeight,
+      /*x2 */ width - coord.y,
       /*y2 */ height - coord.x - coord.width
     ];
   } else {
@@ -111,6 +112,38 @@ function rotateHighlight(coord: MarkCoordinate, angle: number, width: number, he
       /*x1 */ coord.x,
       /*y1 */ height - coord.y - highlightHeight,
       /*x2 */ coord.x + coord.width,
+      /*y2 */ height - coord.y
+    ];
+  }
+}
+
+function rotateCircle(coord: MarkCoordinate, angle: number, width: number, height: number): number[] {
+  if (angle === 90) {
+    return [
+      /*x1 */ coord.y,
+      /*y1 */ coord.x,
+      /*x2 */ coord.y + CIRCLE_DIAMETER,
+      /*y2 */ coord.x + CIRCLE_DIAMETER,
+    ];
+  } else if (angle === 180) {
+    return [
+      /*x2 */ width - coord.x - CIRCLE_DIAMETER,
+      /*y2 */ coord.y + CIRCLE_DIAMETER,
+      /*x1 */ width - coord.x,
+      /*y1 */ coord.y,
+    ];
+  } else if (angle === 270) {
+    return [
+      /*x1 */ width - coord.y - CIRCLE_DIAMETER,
+      /*y1 */ height - coord.x,
+      /*x2 */ width - coord.y,
+      /*y2 */ height - coord.x - CIRCLE_DIAMETER
+    ];
+  } else {
+    return [
+      /*x1 */ coord.x,
+      /*y1 */ height - coord.y - CIRCLE_DIAMETER,
+      /*x2 */ coord.x + CIRCLE_DIAMETER,
       /*y2 */ height - coord.y
     ];
   }
@@ -144,17 +177,10 @@ function addAnnotations(session: AnnotationSession, marks: MarkInfo[][] = []): P
           let coords = transform(mark.coordinates);
           if (mark.iconType === IconTypeEnum.NUMBER) {
 
-            coords = rotate(coords, pdfPage.getRotation().angle, pdfPage.getWidth(), pdfPage.getHeight());
             session.totalMark += (mark.totalMark) ? mark.totalMark : 0;
-            const CIRCLE_DIAMETER = (CIRCLE_SIZE * 2);
-            annotationFactory.createTextAnnotation({
+            const annot = annotationFactory.createTextAnnotation({
               page: pageIndex,
-              rect: [
-                /*x1 */ coords.x + CIRCLE_DIAMETER,
-                /*y1 */ coords.y - CIRCLE_DIAMETER,
-                /*x2 */ coords.x + CIRCLE_DIAMETER * 2,
-                /*y2 */ coords.y // y2
-              ],
+              rect: rotateCircle(coords, pdfPage.getRotation().angle, pdfPage.getWidth(), pdfPage.getHeight()),
               contents: mark.comment,
               author: mark.sectionLabel + ' = ' + mark.totalMark
             });
