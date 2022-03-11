@@ -72,7 +72,9 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
           return PdfmUtilsService.basename(item);
         });
         const foundIndex = this.workspaceNameList.findIndex(x => x === this.data.workspaceName);
-        this.workspaceNameList.splice(foundIndex, 1);
+        if (foundIndex >= 0) {
+          this.workspaceNameList.splice(foundIndex, 1);
+        }
       }
     });
   }
@@ -87,9 +89,6 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
     if (workspace !== this.prevWorkspaceName) {
       returnVar.workspaceName = workspace;
     }
-    const assignments = this.manageForm.get('selectedAssignments').value;
-
-    // if (assignments && assignments.length > 0) {
     if (this.returnSelectedAssignments && this.returnSelectedAssignments.length > 0) {
       returnVar.movedAssignments = [...this.returnSelectedAssignments];
     }
@@ -151,8 +150,6 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
               this.returnSelectedAssignments.push(assignment);
               const foundIndex = this.assignments.findIndex(x => x.assignmentTitle === assignment.assignmentTitle);
               this.assignments.splice(foundIndex, 1);
-              const newassignments = this.assignments.filter((_, i) => i !== foundIndex);
-
               this.manageForm.get('selectedAssignments').patchValue('');
             });
           }

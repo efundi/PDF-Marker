@@ -145,12 +145,10 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       catchError(() => throwError(() => 'Unable to retrieve workspaces')),
       tap((workspaces: string[]) => {
         if (workspaces) {
-          this.workspaces = [...workspaces];
-          this.workspaces = this.workspaces.map(item => {
+          this.workspaces = workspaces.map(item => {
             return PdfmUtilsService.basename(item);
           });
         }
-        this.workspaces.unshift(DEFAULT_WORKSPACE);
         if (this.workspaces.length <= 1) {
           this.createAssignmentForm.controls.workspaceFolder.setValue(DEFAULT_WORKSPACE);
         }

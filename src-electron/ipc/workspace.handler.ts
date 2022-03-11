@@ -85,21 +85,20 @@ export function moveWorkspaceAssignments(
   workspaceName: string,
   assignments: any[] = []): Promise<any> {
   return getConfig().then((config) => {
-    const loc = currentWorkspaceName.replace(/\//g, sep);
-    const isDefault = workspaceName === DEFAULT_WORKSPACE;
-    const loc2 = workspaceName.replace(/\//g, sep);
+    const currentDirectory = currentWorkspaceName.replace(/\//g, sep);
+    const newDirectory = workspaceName.replace(/\//g, sep);
+    const currentIsDefault = currentWorkspaceName === DEFAULT_WORKSPACE;
+    const newIsDefault = workspaceName === DEFAULT_WORKSPACE;
 
-    const workspacePath = config.defaultPath + sep + loc;
-    const newWorkspacePath = isDefault ? config.defaultPath : config.defaultPath + sep + loc2;
+    const workspacePath = currentIsDefault ? config.defaultPath :  config.defaultPath + sep + currentDirectory;
+    const newWorkspacePath = newIsDefault ? config.defaultPath : config.defaultPath + sep + newDirectory;
     let error = null;
     forEach(assignments, (assignment) => {
       const assignmentPath = workspacePath + sep + assignment.assignmentTitle;
       const newAssignmentPath = newWorkspacePath + sep + assignment.assignmentTitle;
       if (!existsSync(newAssignmentPath)) {
         try {
-          const src = assignmentPath;
-          const dest = newAssignmentPath;
-          moveSync(src, dest);
+          moveSync(assignmentPath, newAssignmentPath);
         } catch (e) {
           console.log(e);
           error = e.message;
@@ -121,7 +120,7 @@ export function moveWorkspaceAssignments(
 
 export function getWorkspaces(): Promise<any> {
   return getConfig().then((config) => {
-    return config.folders || [];
+    return [DEFAULT_WORKSPACE].concat(config.folders || []);
   });
 }
 
