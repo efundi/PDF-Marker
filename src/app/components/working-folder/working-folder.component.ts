@@ -10,6 +10,8 @@ import {YesAndNoConfirmationDialogComponent} from '../yes-and-no-confirmation-di
 import {WorkspaceService} from '../../services/workspace.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
+import {DEFAULT_WORKSPACE} from "@shared/constants/constants";
+import {filter} from "lodash";
 
 @Component({
   selector: 'pdf-marker-working-folder',
@@ -56,8 +58,8 @@ export class WorkingFolderComponent implements OnInit {
   private populateWorkspaces(folders: string[]) {
     const values: any[] = [];
     if (folders) {
-      this.folders = folders;
-      this.folderNameList = folders.map(item => {
+      this.folders = filter(folders, (f) => f !== DEFAULT_WORKSPACE);
+      this.folderNameList = this.folders.map(item => {
         return PdfmUtilsService.basename(item);
       });
       this.folderNameList.forEach(folder => {
@@ -73,7 +75,7 @@ export class WorkingFolderComponent implements OnInit {
 
   private initForm() {
     this.createFolderForm = this.fb.group({
-      workingFolders: [null, [Validators.required, Validators.pattern('^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$')]]
+      workspaceName: [null, [Validators.required, Validators.pattern('^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$')]]
     });
   }
 
@@ -87,7 +89,7 @@ export class WorkingFolderComponent implements OnInit {
     }
     // Call Service to handle rest calls... also use interceptors
     this.busyService.start();
-    this.workspaceService.createWorkingFolder(this.createFolderForm.value.workingFolders).subscribe((response) => {
+    this.workspaceService.createWorkingFolder(this.createFolderForm.value.workspaceName).subscribe((response) => {
       this.workspaceService.getWorkspaces().subscribe(data => {
         this.populateWorkspaces(data);
         this.busyService.stop();
