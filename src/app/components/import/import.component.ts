@@ -206,9 +206,6 @@ export class ImportComponent implements OnInit {
 
         this.busyService.stop();
         const config = new MatDialogConfig();
-        // config.height = '400px';
-        // config.width = '600px';
-
         config.data = {
           treeNodes,
           filename : treeNodes[0].name

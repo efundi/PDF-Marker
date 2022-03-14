@@ -20,7 +20,7 @@ export interface AssignmentIpcService {
   getGrades(workspaceName: string, assignmentName: string): Promise<IpcResponse<any>>;
   updateAssignmentSettings(updatedSettings: any, workspaceName: string, assignmentName: string): Promise<IpcResponse<any>>;
   shareExport(shareRequest: ShareAssignments): Promise<IpcResponse<any>>;
-  rubricUpdate(rubricName: string, assignmentName: string): Promise<IpcResponse<IRubric>>;
+  updateAssignmentRubric(workspaceName: string, assignmentName: string, rubricName: string): Promise<IpcResponse<IRubric>>;
   getMarkedAssignmentsCount(workspaceName: string, assignmentName): Promise<IpcResponse<number>>;
   getPdfFile(location: string): Promise<IpcResponse<Uint8Array>>;
 }

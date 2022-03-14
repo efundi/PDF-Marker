@@ -69,7 +69,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   }
 
 
-  async selectFile() {
+  selectFile() {
     this.alertService.clear();
     this.rubricService.selectRubricFile()
       .subscribe({
@@ -129,7 +129,6 @@ export class RubricImportComponent implements OnInit, OnDestroy {
               });
           });
 
-          this.busyService.start();
           reader.readAsArrayBuffer(blob);
         }).catch(error => {
           this.alertService.error(error.message);

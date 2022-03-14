@@ -289,10 +289,7 @@ export function deleteRubric(event: IpcMainInvokeEvent, rubricName: string): Pro
 }
 
 
-
-
-export function getRubric(event: IpcMainInvokeEvent, rubricName: string): Promise<IRubric> {
-
+export function findRubric(rubricName: string): Promise<IRubric> {
   return getRubrics().then((rubrics) => {
     const rubric = rubrics.find(r => r.name.toLowerCase() === rubricName.toLowerCase());
 
@@ -302,4 +299,8 @@ export function getRubric(event: IpcMainInvokeEvent, rubricName: string): Promis
 
     return rubric;
   });
+}
+
+export function getRubric(event: IpcMainInvokeEvent, rubricName: string): Promise<IRubric> {
+  return findRubric(rubricName);
 }

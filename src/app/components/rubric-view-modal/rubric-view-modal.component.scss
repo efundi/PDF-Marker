@@ -67,10 +67,26 @@ h5 {
 
 
 .pdf-marker-rubric-container {
-  padding-top: 20px;
-
   .mat-form-field {
     flex: 1;
     flex-grow: unset;
   }
+}
+
+.mat-dialog-title {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  margin-bottom: 0;
+}
+
+.mat-dialog-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: #F5F5F5;
+}
+
+.mat-dialog-content::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: var(--pdf-marker-primary);
 }
