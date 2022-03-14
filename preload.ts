@@ -47,7 +47,7 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   getMarks: (location: string) => ipcRenderer.invoke('assignments:getMarks', location),
   getGrades: (workspaceFolder: string, assignmentName: string) => ipcRenderer.invoke('assignments:getGrades', workspaceFolder, assignmentName),
   shareExport: (shareRequest: ShareAssignments) => ipcRenderer.invoke('assignments:shareExport', shareRequest),
-  rubricUpdate: (rubricName: string, assignmentName: string) => ipcRenderer.invoke('assignments:rubricUpdate', rubricName, assignmentName),
+  updateAssignmentRubric: (workspaceName: string, assignmentName: string, rubricName: string, ) => ipcRenderer.invoke('assignments:updateAssignmentRubric', workspaceName, assignmentName, rubricName),
   getPdfFile: (location: string) => ipcRenderer.invoke('assignments:getPdfFile', location),
   getMarkedAssignmentsCount: (workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:getMarkedAssignmentsCount', workspaceName, assignmentName),
 } as AssignmentIpcService);

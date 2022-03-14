@@ -1,5 +1,8 @@
-<h4>{{rubric?.name}}</h4>
-<div class="rubricScoreDiv"><p>{{ (isMarkingRubricPage) ? "Total: " + totalTally +" / " + maxScore :""}} </p></div>
+
+<h4 class="rubricName">{{rubric?.name}}</h4>
+
+<div><p>Total: {{ (isMarkingRubricPage) ? totalTally +" / " :""}} {{maxScore}}</p></div>
+
 <div class="table-responsive">
   <table style="border: 1px solid #d3d3d3;">
     <pdf-marker-rubric-criteria
@@ -11,4 +14,3 @@
     </pdf-marker-rubric-criteria>
   </table>
 </div>
-<div class="rubricScoreDiv"><p>{{ (isMarkingRubricPage) ? "" : "Total: "+ maxScore }}</p></div>

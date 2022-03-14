@@ -369,14 +369,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   viewRubric() {
     if (this.assignmentSettings.rubric.name != null) {
-      // console.log(data);
       this.rubricService.getRubric(this.assignmentSettings.rubric.name).subscribe((rubric: IRubric) => {
         this.openRubricModalDialog(rubric, this.assignmentSettings);
-        this.busyService.stop();
-        this.appService.openSnackBar(true, 'Rubric View Opened');
       }, error => {
         this.appService.openSnackBar(false, 'Rubric View Failed');
-        this.busyService.stop();
       });
     }
   }
@@ -384,12 +380,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   private openRubricModalDialog(rubric: IRubric, assignmentSettingsInfo: AssignmentSettingsInfo) {
     const config = new MatDialogConfig();
     config.disableClose = false;
-    config.width = '1500px';
-    config.height = '750px';
     config.data = {
       rubric: rubric,
       assignmentSettingsInfo: assignmentSettingsInfo,
-      assignmentName: this.assignmentName
+      assignmentName: this.assignmentName,
+      workspaceName: this.workspaceName
     };
 
     const dialogRef = this.appService.createDialog(RubricViewModalComponent, config);

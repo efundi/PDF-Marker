@@ -12,7 +12,7 @@ import {
   getMarkedAssignmentsCount,
   getMarks,
   getPdfFile,
-  rubricUpdate,
+  updateAssignmentRubric,
   saveMarks,
   shareExport,
   updateAssignment,
@@ -172,7 +172,7 @@ try {
     ipcMain.handle('assignments:shareExport', toIpcResponse(shareExport));
     ipcMain.handle('assignments:getMarks', toIpcResponse(getMarks));
     ipcMain.handle('assignments:getGrades', toIpcResponse(getGrades));
-    ipcMain.handle('assignments:rubricUpdate', toIpcResponse(rubricUpdate));
+    ipcMain.handle('assignments:updateAssignmentRubric', toIpcResponse(updateAssignmentRubric));
     ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
     ipcMain.handle('assignments:getMarkedAssignmentsCount', toIpcResponse(getMarkedAssignmentsCount));
 

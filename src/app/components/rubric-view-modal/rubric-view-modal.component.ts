@@ -1,4 +1,4 @@
-import {Component, ElementRef, Inject, Input, OnInit, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AppService} from '../../services/app.service';
 import {MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef} from '@angular/material/dialog';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
@@ -12,7 +12,8 @@ import {
 } from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
-import {BusyService} from "../../services/busy.service";
+import {BusyService} from '../../services/busy.service';
+import {isNil, map} from 'lodash';
 
 
 @Component({
@@ -20,119 +21,92 @@ import {BusyService} from "../../services/busy.service";
   templateUrl: './rubric-view-modal.component.html',
   styleUrls: ['./rubric-view-modal.component.scss'],
 })
-export class RubricViewModalComponent implements OnInit {
+export class RubricViewModalComponent implements OnInit, OnDestroy {
 
   rubricName: string;
-  @Input() rubricMarking: IRubric;
-  rubricMarkingSub: Subscription;
-  @Input() assignmentSettingsInfo: AssignmentSettingsInfo;
+
+  /**
+   * The original rubric given to this modal
+   * @private
+   */
+  private originalRubric: IRubric;
+
+  currentRubric: IRubric;
+
+  private formSubscription: Subscription;
+  @Input()
+  assignmentSettingsInfo: AssignmentSettingsInfo;
   rubricForm: FormGroup;
-  rubrics: IRubricName[] = [];
-  private previouslyEmitted: string;
-  private selectedRubric: string = null;
+  rubricsNames: string[] = [];
   private assignmentName = 'No Assignment';
   isRubric: boolean;
   overviewPage: boolean;
-  // @ts-ignore
-  @ViewChild('rubricContainer') rubricContainer: ElementRef;
-
-
-  constructor(private appService: AppService, private dialogRef: MatDialogRef<RubricViewModalComponent>, private settingsService: SettingsService,
+  constructor(private appService: AppService,
+              private dialogRef: MatDialogRef<RubricViewModalComponent>,
+              private settingsService: SettingsService,
               private importService: ImportService,
               private rubricService: RubricService,
               private fb: FormBuilder, private assignmentService: AssignmentService,
               private busyService: BusyService,
-              @Inject(MAT_DIALOG_DATA) config) {
+              @Inject(MAT_DIALOG_DATA)  private config) {
 
     if (config != null) {
       if (config.assignmentSettingsInfo != null) {
         this.assignmentSettingsInfo = config.assignmentSettingsInfo;
-        this.rubricMarking = config.assignmentSettingsInfo.rubric;
+        this.originalRubric = config.assignmentSettingsInfo.rubric;
+        this.currentRubric = config.assignmentSettingsInfo.rubric;
         this.assignmentName = config.assignmentName;
         this.overviewPage = true;
 
 
       } else {
         if (config.rubric != null) {
-          this.rubricMarking = config.rubric;
+          this.originalRubric = config.rubric;
+          this.currentRubric = config.rubric;
         }
       }
     }
+    this.initForm();
   }
 
 
+  ngOnDestroy() {
+    this.formSubscription.unsubscribe();
+  }
+
   ngOnInit() {
-    this.initForm();
+
+    this.formSubscription = this.rubricForm.controls.rubricName.valueChanges.subscribe(rubricName => this.onRubricChange(rubricName));
+
     if (this.overviewPage) {
-      this.rubricForm.controls.rubric.setValue(this.assignmentSettingsInfo.rubric.name);
-      // this.previouslyEmitted = this.assignmentSettingsInfo.rubric.name;
-      this.selectedRubric = this.assignmentSettingsInfo.rubric.name;
+
       this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
-        this.rubrics = rubrics;
+        this.rubricsNames = map(rubrics, 'name');
+        this.rubricForm.reset({
+          rubricName: this.assignmentSettingsInfo.rubric.name
+        }, {emitEvent: false});
       });
     }
 
   }
 
   private initForm() {
-    if (this.previouslyEmitted === null) {
-      this.rubricForm = this.fb.group({
-        rubric: [null]
-      });
-    } else {
-      this.rubricForm = this.fb.group({
-        rubric: [null]
-      });
-    }
-    this.onRubricChange();
+    this.rubricForm = this.fb.group({
+      rubricName: [null]
+    });
   }
 
   onClose() {
     this.dialogRef.close();
   }
 
-  onRubricChange() {
-    this.rubricForm.valueChanges.subscribe(value => {
-      console.log(value.rubric !== this.previouslyEmitted && value.rubric !== this.selectedRubric);
-      if (value.rubric !== this.previouslyEmitted && value.rubric !== this.selectedRubric) {
-        this.previouslyEmitted = value.rubric;
-        this.rubricMarkingSub = this.rubricService.getRubric(value.rubric).subscribe((rubric: IRubric) => {
-          this.rubricMarking = rubric;
-          this.selectedRubric = rubric.name;
-        });
-      }
+  private onRubricChange(rubricName: string) {
+    this.rubricService.getRubric(rubricName).subscribe((rubric: IRubric) => {
+      this.currentRubric = rubric;
     });
   }
 
   saveRubricChangeClick() {
-    this.confirmWithUser();
-  }
-
-  saveRubricChange() {
-
-    this.busyService.start();
-    this.assignmentService.updateAssignmentRubric(this.selectedRubric, this.assignmentName).subscribe((rubric: IRubric) => {
-      this.selectedRubric = (rubric) ? rubric.name : null;
-      this.isRubric = !this.isNullOrUndefined(this.selectedRubric);
-      this.appService.openSnackBar(true, 'Successfully updated rubric');
-      this.busyService.stop();
-    }, error => {
-      this.busyService.stop();
-      this.appService.openSnackBar(false, 'Unable to update rubric');
-    });
-    this.dialogRef.close();
-  }
-
-  onCancel() {
-    this.dialogRef.close();
-  }
-
-  private isNullOrUndefined = (object: any): boolean => {
-    return (object === null || object === undefined);
-  }
-
-
-  private confirmWithUser() {
     const config = new MatDialogConfig();
     config.width = '400px';
     config.maxWidth = '400px';
@@ -143,14 +117,32 @@ export class RubricViewModalComponent implements OnInit {
     const shouldChangeRubricFn = (shouldChangeRubric: boolean) => {
       if (shouldChangeRubric) {
         this.saveRubricChange();
-      } else {
-        this.rubricForm.controls.rubric.setValue(this.selectedRubric);
-        this.isRubric = true;
       }
-      this.previouslyEmitted = undefined;
     };
 
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldChangeRubricFn);
+  }
+
+  saveRubricChange() {
+
+    this.busyService.start();
+    this.assignmentService.updateAssignmentRubric(
+      this.config.workspaceName,
+      this.assignmentName,
+      this.rubricForm.value.rubricName)
+      .subscribe((rubric: IRubric) => {
+        this.appService.openSnackBar(true, 'Successfully updated rubric');
+        this.busyService.stop();
+      }, error => {
+        console.log(error);
+        this.busyService.stop();
+        this.appService.openSnackBar(false, 'Unable to update rubric');
+      });
+    this.dialogRef.close();
+  }
+
+  onCancel() {
+    this.dialogRef.close();
   }
 
 }

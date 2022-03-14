@@ -155,7 +155,7 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.finalizeAssignment(workspaceName, assignmentName));
   }
 
-  finalizeAndExportRubric(workspaceName: string = null, assignmentName: string, assignmentRubric: IRubric): Observable<Uint8Array> {
+  finalizeAndExportRubric(workspaceName: string, assignmentName: string, assignmentRubric: IRubric): Observable<Uint8Array> {
     return fromIpcResponse(this.assignmentApi.finalizeAssignmentRubric(workspaceName, assignmentName, assignmentRubric.name));
   }
 
@@ -167,8 +167,8 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.updateAssignment(updateAssignmentInfo));
   }
 
-  updateAssignmentRubric(rubric: string, assignmentName: string): Observable<IRubric> {
-    return fromIpcResponse(this.assignmentApi.rubricUpdate(rubric, assignmentName));
+  updateAssignmentRubric(workspaceName: string, assignmentName: string, rubricName: string): Observable<IRubric> {
+    return fromIpcResponse(this.assignmentApi.updateAssignmentRubric(workspaceName, assignmentName, rubricName));
   }
 
   getMarkedAssignmentsCount(workspaceName: string, assignmentName): Observable<number> {

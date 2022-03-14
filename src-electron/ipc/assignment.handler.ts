@@ -70,6 +70,8 @@ import {
 } from "@shared/info-objects/submission.info";
 import {getComments, updateCommentsFile} from "./comment.handler";
 import {promise} from "protractor";
+import {findRubric} from "./rubric.handler";
+import {SettingInfo} from "@shared/info-objects/setting.info";
 
 const zipDir = require('zip-dir');
 
@@ -1053,94 +1055,67 @@ export function shareExport(event: IpcMainInvokeEvent, shareRequest: ShareAssign
 
 
 
-export function rubricUpdate(event: IpcMainInvokeEvent, rubricName: string, assignmentName: string): Promise<IRubric> {
+export function updateAssignmentRubric(
+  event: IpcMainInvokeEvent,
+  workspaceName: string,
+  assignmentName: string,
+  rubricName: string): Promise<IRubric> {
 
-  if (existsSync(CONFIG_DIR + RUBRICS_FILE)) {
-    return readFile(CONFIG_DIR + RUBRICS_FILE).then( (data) => {
-      if (!isJson(data)) {
-        return Promise.reject({message: INVALID_RUBRIC_JSON_FILE});
-      }
-      const rubrics: IRubric[] = JSON.parse(data.toString());
-      let rubric: IRubric;
-      if (Array.isArray(rubrics)) {
-        if (rubricName) {
-          let indexFound = -1;
 
-          for (let i = 0; i < rubrics.length; i++) {
-            if (rubrics[i].name.toLowerCase() === rubricName.toLowerCase()) {
-              indexFound = i;
-              break;
-            }
-          }
+  return Promise.all([
+    findRubric(rubricName),
+    getAssignmentDirectory(workspaceName, assignmentName)
+  ]).then((results) => {
 
-          if (indexFound === -1) {
-            return Promise.reject({message: 'Could not find rubric'});
-          }
+    const rubric: IRubric = results[0];
+    const assignmentDirectory: string = results[1];
 
-          rubric = rubrics[indexFound];
-        } else {
-          rubric = null;
-        }
+    // Remove all marks files
+    const markFiles = glob.sync(assignmentDirectory + sep + '/**/' + MARK_FILE);
+    markFiles.forEach(markFile => {
+      unlinkSync(markFile);
+    });
 
-        return getConfig().then((config) => {
-          try {
-            const markFiles = glob.sync(config.defaultPath + sep + assignmentName + sep + '/**/' + MARK_FILE);
-            markFiles.forEach(markFile => {
-              unlinkSync(markFile);
-            });
-            return readFile( config.defaultPath + sep + assignmentName + sep + SETTING_FILE).then( (assignmentSettingsBuffer) => {
-              if (!isJson(assignmentSettingsBuffer)) {
-                return Promise.reject('invalid assignment settings');
+    return getAssignmentSettingsFor(workspaceName, assignmentName)
+      .then((originalSettings) => {
+        originalSettings.rubric = rubric;
+        return writeAssignmentSettingsFor(originalSettings, workspaceName, assignmentName);
+      }).then(() => {
+        return checkAccess(assignmentDirectory + sep + GRADES_FILE).then(() => {
+          return csvtojson({noheader: true, trim: false}).fromFile(assignmentDirectory + sep + GRADES_FILE)
+            .then((gradesJSON) => {
+              let changed = false;
+              let assignmentHeader;
+              for (let i = 0; i < gradesJSON.length; i++) {
+                if (i === 0) {
+                  const keys = Object.keys(gradesJSON[i]);
+                  if (keys.length > 0) {
+                    assignmentHeader = keys[0];
+                  }
+                } else if (i > 1) {
+                  gradesJSON[i].field5 = 0;
+                  changed = true;
+                }
               }
 
-              const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
-              assignmentSettingsInfo.rubric = rubric;
-
-              return writeToFile( config.defaultPath + sep + assignmentName + sep + SETTING_FILE,
-                JSON.stringify(assignmentSettingsInfo), null, null).then(() => {
-
-                return checkAccess(config.defaultPath + sep + assignmentName + sep + GRADES_FILE).then(() => {
-                  return csvtojson({noheader: true, trim: false}).fromFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE)
-                    .then((gradesJSON) => {
-                      let changed = false;
-                      let assignmentHeader;
-                      for (let i = 0; i < gradesJSON.length; i++) {
-                        if (i === 0) {
-                          const keys = Object.keys(gradesJSON[i]);
-                          if (keys.length > 0) {
-                            assignmentHeader = keys[0];
-                          }
-                        } else if (i > 1) {
-                          gradesJSON[i].field5 = 0;
-                          changed = true;
-                        }
-                      }
-
-                      if (changed) {
-                        return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false}).then( ( csv) => {
-                          return writeToFile(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!').then(() => {
-                            return assignmentSettingsInfo.rubric;
-                          });
-                        }, (err) => {
-                          return Promise.reject('Failed to convert json to csv!');
-                        });
-                      } else {
-                        return Promise.reject('Failed to save mark');
-                      }
-                    }, reason => {
-                      return Promise.reject( reason);
-                    });
+              if (changed) {
+                return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false}).then( ( csv) => {
+                  return writeToFile(assignmentDirectory + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!').then(() => {
+                    return rubric;
+                  });
+                }, (err) => {
+                  return Promise.reject('Failed to convert json to csv!');
                 });
-              });
+              } else {
+                return Promise.reject('Failed to save mark');
+              }
+            }, reason => {
+              return Promise.reject( reason);
             });
-          } catch (e) {
-            return Promise.reject(e.message);
-          }
         });
-      }
-    });
-  }
-  return Promise.reject({message: COULD_NOT_READ_RUBRIC_LIST});
+      });
+
+  });
 }
 
 
