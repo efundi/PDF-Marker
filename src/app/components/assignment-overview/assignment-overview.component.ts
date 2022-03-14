@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {forkJoin, Observable, Subscription, tap} from 'rxjs';
+import {forkJoin, Observable, ReplaySubject, Subscription, tap} from 'rxjs';
 import {AppService} from '../../services/app.service';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
@@ -25,7 +25,7 @@ import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
 import {MatSort} from '@angular/material/sort';
-import {filter, find, isNil} from 'lodash';
+import {filter, find, isNil, sortBy} from 'lodash';
 import {StudentSubmission, TreeNodeType} from '@shared/info-objects/workspace';
 import * as _moment from 'moment';
 import {MARK_FILE, SUBMISSION_FOLDER} from '@shared/constants/constants';
@@ -33,7 +33,7 @@ const moment = _moment;
 
 export interface AssignmentDetails {
   index?: number;
-
+  fullName?: string;
   studentName: string;
 
   studentSurname: string;
@@ -57,8 +57,8 @@ export interface AssignmentDetails {
   styleUrls: ['./assignment-overview.component.scss']
 })
 export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
-  displayedColumns: string[] = ['select', 'studentName', 'assignment', 'grade', 'date', 'status'];
-  dataSource: MatTableDataSource<AssignmentDetails>;
+  displayedColumns: string[] = ['select', 'fullName', 'assignment', 'grade', 'date', 'status'];
+  dataSource = new MatTableDataSource([]);
   assignmentsLength;
   assignmentPageSizeOptions: number[];
   readonly pageSize: number = 10;
@@ -71,12 +71,13 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   @ViewChild(MatPaginator, {static: true})
   paginator: MatPaginator;
 
-  @ViewChild(MatSort)
+  @ViewChild(MatSort, {static: true})
   sort: MatSort;
 
 
   readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
+  private rubricSubscription: Subscription;
   private settings: SettingInfo;
   private assignmentSettings: AssignmentSettingsInfo;
   private previouslyEmitted: string;
@@ -90,12 +91,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   private workspaceName: string;
   assignmentName: string;
 
-  /**
-   * Promise that will resolve when the data is loaded
-   */
-  dataSourcePromise: Promise<any>;
-  dataSourceResolve;
-
   constructor(private assignmentService: AssignmentService,
               private router: Router,
               private activatedRoute: ActivatedRoute,
@@ -106,10 +101,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
               private busyService: BusyService,
               private rubricService: RubricService,
               private fb: FormBuilder) {
-
-    this.dataSourcePromise = new Promise<any>((r) => {
-      this.dataSourceResolve = r;
-    });
   }
 
 
@@ -150,17 +141,18 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       error: () => this.busyService.stop()
     });
 
+    this.subscription = this.activatedRoute.params.subscribe({
+      next: (params) => {
 
-    this.subscription = this.activatedRoute.params.subscribe((params) => {
-
-      this.workspaceName = params['workspaceName'];
-      this.assignmentName = params['id'];
-      this.getAssignmentSettings();
-    }, error => {
-      this.busyService.stop();
-      this.appService.openSnackBar(false, 'Unable to read selected assignment');
+        this.workspaceName = params['workspaceName'];
+        this.assignmentName = params['id'];
+        this.getAssignmentSettings();
+      },
+      error: () => {
+        this.busyService.stop();
+        this.appService.openSnackBar(false, 'Unable to read selected assignment');
+      }
     });
-
   }
 
   private initForm() {
@@ -168,7 +160,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       rubric: [null]
     });
 
-    this.onRubricChange();
+
+    this.rubricSubscription = this.rubricForm.valueChanges.subscribe(value => this.onRubricChange(value));
   }
 
   private getAssignmentSettings() {
@@ -222,13 +215,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     const values: AssignmentDetails[] = [];
     this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentName).subscribe((workspaceAssignment) => {
 
-    if (!isNil(workspaceAssignment)) {
-      let index = 0;
-      filter(workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmission) => {
+      if (!isNil(workspaceAssignment)) {
+        let index = 0;
+        filter(workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmission) => {
 
+          const fullName = workspaceSubmission.studentSurname + (isNil(workspaceSubmission.studentName) ? '' : ', ' + workspaceSubmission.studentName);
 
           const value: AssignmentDetails = {
             index: index++,
+            fullName,
             studentName: workspaceSubmission.studentName,
             studentSurname: workspaceSubmission.studentSurname,
             studentNumber: workspaceSubmission.studentId,
@@ -237,14 +232,14 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
             path: null,
             status: '',
           };
-        const submissionDirectory = find(workspaceSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
-        const marksFile = find(workspaceSubmission.children, (c => c.name === MARK_FILE));
-        if (marksFile) {
-          value.date = moment(marksFile.dateModified).format('YYYY-MM-DD HH:mm:ss');
-        }
+          const submissionDirectory = find(workspaceSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
+          const marksFile = find(workspaceSubmission.children, (c => c.name === MARK_FILE));
+          if (marksFile) {
+            value.date = moment(marksFile.dateModified).format('YYYY-MM-DD HH:mm:ss');
+          }
 
-        const pdf = (submissionDirectory && submissionDirectory.children.length > 0) ? submissionDirectory.children[0].name : '';
-        value.assignment = pdf;
+          const pdf = (submissionDirectory && submissionDirectory.children.length > 0) ? submissionDirectory.children[0].name : '';
+          value.assignment = pdf;
 
           const gradesInfo = this.assignmentGrades
             .find(grade => grade[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
@@ -252,34 +247,30 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           value.path = PdfmUtilsService.buildFilePath(this.workspaceName, this.assignmentName, workspaceSubmission.name, SUBMISSION_FOLDER, pdf);
           value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7 : 'N/A');
           values.push(value);
-      });
-      this.dataSource = new MatTableDataSource(values);
-      this.assignmentsLength = values.length;
-      const range = [];
-      let i = 0;
-      while (i <= this.assignmentsLength) {
-        i += this.pageSize;
-        range.push(i);
+        });
+        this.dataSource.data = sortBy(values, 'fullName');
+        this.assignmentsLength = values.length;
+        const range = [];
+        let i = 0;
+        while (i <= this.assignmentsLength) {
+          i += this.pageSize;
+          range.push(i);
 
-        if (i > this.assignmentsLength) {
-          break;
+          if (i > this.assignmentsLength) {
+            break;
+          }
         }
+        this.assignmentPageSizeOptions = range;
+      } else {
+        this.router.navigate([RoutesEnum.MARKER]);
       }
-      this.assignmentPageSizeOptions = range;
-
-      this.dataSourceResolve();
-    } else {
-      this.router.navigate([RoutesEnum.MARKER]);
-    }
     });
   }
 
-  onRubricChange() {
-    this.rubricForm.valueChanges.subscribe(value => {
-      if (value.rubric !== this.previouslyEmitted && value.rubric !== this.selectedRubric) {
-        this.previouslyEmitted = value.rubric;
-      }
-    });
+  onRubricChange(value) {
+    if (value.rubric !== this.previouslyEmitted && value.rubric !== this.selectedRubric) {
+      this.previouslyEmitted = value.rubric;
+    }
   }
 
   onSelectedPdf(element: any) {
@@ -304,10 +295,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     this.openYesNoConfirmationDialog(null, 'Are you sure you want to finalise and zip this assignment?');
   }
 
-  private isNullOrUndefined = (object: any): boolean => {
-    return (object === null || object === undefined);
-  }
-
   private openYesNoConfirmationDialog(title: string = 'Confirm', message: string) {
     const config = new MatDialogConfig();
     config.width = '400px';
@@ -320,20 +307,26 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     const shouldFinalizeAndExportFn = (shouldFinalizeAndExport: boolean) => {
       if (shouldFinalizeAndExport) {
         this.busyService.start();
-        if (!(this.isNullOrUndefined(this.assignmentSettings.rubric))) {
+        if (!isNil(this.assignmentSettings.rubric)) {
           this.assignmentService.finalizeAndExportRubric(this.workspaceName, this.assignmentName, this.assignmentSettings.rubric)
-            .subscribe((data: Uint8Array) => {
-              this.onSuccessfulExport(data);
-            }, (responseError) => {
-              this.alertService.error(responseError);
-              this.busyService.stop();
+            .subscribe({
+              next: (data: Uint8Array) => {
+                this.onSuccessfulExport(data);
+              },
+              error: (responseError) => {
+                this.alertService.error(responseError);
+                this.busyService.stop();
+              }
             });
         } else {
-          this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName).subscribe((blob: Uint8Array) => {
-            this.onSuccessfulExport(blob);
-          }, (responseError) => {
-            this.alertService.error(responseError);
-            this.busyService.stop();
+          this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName).subscribe({
+            next: (blob: Uint8Array) => {
+              this.onSuccessfulExport(blob);
+            },
+            error: (responseError) => {
+              this.alertService.error(responseError);
+              this.busyService.stop();
+            }
           });
         }
       }
@@ -369,10 +362,13 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   viewRubric() {
     if (this.assignmentSettings.rubric.name != null) {
-      this.rubricService.getRubric(this.assignmentSettings.rubric.name).subscribe((rubric: IRubric) => {
-        this.openRubricModalDialog(rubric, this.assignmentSettings);
-      }, error => {
-        this.appService.openSnackBar(false, 'Rubric View Failed');
+      this.rubricService.getRubric(this.assignmentSettings.rubric.name).subscribe({
+        next: (rubric: IRubric) => {
+          this.openRubricModalDialog(rubric, this.assignmentSettings);
+        },
+        error: (error) => {
+          this.appService.openSnackBar(false, 'Rubric View Failed');
+        }
       });
     }
   }
@@ -394,9 +390,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   ngOnDestroy(): void {
-    if (!this.subscription.closed) {
-      this.subscription.unsubscribe();
-    }
+    this.subscription.unsubscribe();
+    this.rubricSubscription.unsubscribe()
   }
 
   /** Whether the number of selected elements matches the total number of rows. */
@@ -465,9 +460,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   ngAfterViewInit() {
-    this.dataSourcePromise.then(() => {
-      this.dataSource.sort = this.sort;
-      this.dataSource.paginator = this.paginator;
-    });
+    this.sort.sort(this.sort.sortables.get('fullName'));
+    this.dataSource.sort = this.sort;
+    this.dataSource.paginator = this.paginator;
   }
 }

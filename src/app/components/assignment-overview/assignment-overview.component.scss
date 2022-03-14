@@ -27,17 +27,6 @@ table {
     width: 2rem;
     min-width: 2rem;
   }
-
-  tr {
-    th:last-child {
-      text-align: center;
-    }
-
-    td:last-child {
-      text-align: center;
-    }
-  }
-
   .pdf-marker-assignment-overview-student-name {
     cursor: pointer;
     font-weight: 500;
@@ -48,11 +37,9 @@ table {
     font-weight: 400;
   }
 
-  .pdf-marker-assignment-overview-assignment-grade {
-    /*border: 1px solid #888;*/
+  .pdf-marker-assignment-overview-assignment-grade,
+  .pdf-marker-assignment-overview-assignment-date{
     padding: 4px 10px;
-    border-radius: 8px;
-    display: inline-block;
   }
 
   .pdf-marker-assignment-overview-assignment-status {
