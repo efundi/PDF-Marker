@@ -7,7 +7,7 @@
   (cdkDragEnded)="onDragEnded($event)">
 
 
-  <div class="mark-icon-container">
+  <div class="mark-icon-container" [class.hasMark]="mark.totalMark != null">
     <form [formGroup]="iconForm">
       <mat-icon
         *ngIf="mark.iconType !== iconTypeEnum.NUMBER && mark.iconType !== iconTypeEnum.HALF_MARK"
@@ -15,20 +15,25 @@
         {{ mark.iconName }}
       </mat-icon>
       <mat-icon
-        *ngIf="mark.iconType === iconTypeEnum.HALF_MARK" [svgIcon]="mark.iconName"
+        *ngIf="mark.iconType === iconTypeEnum.HALF_MARK"
+        [svgIcon]="mark.iconName"
         [style.color]="mark.colour"
         [style.stroke]="mark.colour"
         [style.stroke-width]="0">
       </mat-icon>
-      <ng-container *ngIf="mark.iconType === iconTypeEnum.NUMBER">
+      <div
+        *ngIf="mark.iconType === iconTypeEnum.NUMBER"
+        class="comment-circle"
+        [style.background]="mark.totalMark == null ? 'transparent' : mark.colour">
         <input
           class="mark-input"
-          [style.background]="mark.colour"
           type="text"
           formControlName="totalMark"
           (mouseleave)="onTotalMarkChange($event)"/>
-        <mat-icon *ngIf="mark.comment" class="pdf-marker-special-icon-attach">attach_file</mat-icon>
-      </ng-container>
+        <mat-icon
+          [style.color]="mark.totalMark == null ? mark.colour : 'var(--pdf-marker-secondary)'"
+          class="pdf-marker-special-icon-attach">comment</mat-icon>
+      </div>
     </form>
   </div>
 

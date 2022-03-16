@@ -141,13 +141,15 @@ export class MarkTypeHighlightComponent implements OnInit, AfterViewInit, OnDest
     };
 
     const handleCommentFN = (formData: any) => {
-      const updateMark = cloneDeep(this.mark);
-      updateMark.sectionLabel = formData.sectionLabel;
-      updateMark.comment = formData.markingComment;
-      this.assignmentMarkingPageComponent.onMarkChanged(this.index, updateMark).subscribe(() => {
-        this.mark.sectionLabel = updateMark.sectionLabel;
-        this.mark.comment = updateMark.comment;
-      });
+      if (formData && !formData.removeIcon) {
+        const updateMark = cloneDeep(this.mark);
+        updateMark.sectionLabel = formData.sectionLabel;
+        updateMark.comment = formData.markingComment;
+        this.assignmentMarkingPageComponent.onMarkChanged(this.index, updateMark).subscribe(() => {
+          this.mark.sectionLabel = updateMark.sectionLabel;
+          this.mark.comment = updateMark.comment;
+        });
+      }
     };
     this.appService.createDialog(MarkingHighlightModalComponent, config, handleCommentFN);
   }

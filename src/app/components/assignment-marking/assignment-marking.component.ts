@@ -12,7 +12,7 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
-import {from, mergeMap, Observable, of, Subscription, tap, throwError} from 'rxjs';
+import {from, mergeMap, Observable, Subscription, tap, throwError} from 'rxjs';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
@@ -30,12 +30,7 @@ import {AssignmentMarkingPageComponent} from '../assignment-marking-page/assignm
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
-import {
-  MarkingSubmissionInfo,
-  PageSettings,
-  RubricSubmissionInfo,
-  SubmissionInfo
-} from "@shared/info-objects/submission.info";
+import {MarkingSubmissionInfo, PageSettings, SubmissionInfo} from '@shared/info-objects/submission.info';
 
 
 GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
@@ -287,7 +282,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     );
   }
 
-  savePageSettings(pageIndex: number, pageSettings: PageSettings): Observable<any>{
+  savePageSettings(pageIndex: number, pageSettings: PageSettings): Observable<any> {
     const originalSubmissionInfo = cloneDeep(this.submissionInfo);
     const markDetails = {
       ...this.submissionInfo,
@@ -405,14 +400,13 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.appService.createDialog(FinaliseMarkingComponent, config);
   }
 
-  openNewMarkingCommentModal(title: string = 'Marking Comment', message: string) {
+  openNewMarkingCommentModal(): MatDialogConfig {
     const config = new MatDialogConfig();
     config.width = '400px';
     config.maxWidth = '500px';
     config.disableClose = true;
     config.data = {
-      title: title,
-      message: message,
+      comment: null
     };
 
     return config;

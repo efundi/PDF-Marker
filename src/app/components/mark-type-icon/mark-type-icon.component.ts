@@ -201,26 +201,30 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
     config.width = '400px';
     config.maxWidth = '500px';
     config.data = {
-      markingComment: this.mark.comment,
-      sectionLabel: this.mark.sectionLabel,
-      totalMark: this.mark.totalMark,
+      comment : {
+        markingComment: this.mark.comment,
+        sectionLabel: this.mark.sectionLabel,
+        totalMark: this.mark.totalMark,
+      }
     };
 
     const handleCommentFN = (formData: any) => {
-      const updateMark = cloneDeep(this.mark);
-      updateMark.totalMark = formData.totalMark;
-      updateMark.sectionLabel = formData.sectionLabel;
-      updateMark.comment = formData.markingComment;
+      if (formData) {
+        const updateMark = cloneDeep(this.mark);
+        updateMark.totalMark = formData.totalMark;
+        updateMark.sectionLabel = formData.sectionLabel;
+        updateMark.comment = formData.markingComment;
 
-      if (this.iconForm) {
-        this.iconForm.controls.totalMark.setValue(this.mark.totalMark);
-      }
+        if (this.iconForm) {
+          this.iconForm.controls.totalMark.setValue(this.mark.totalMark);
+        }
 
-      this.assignmentMarkingPageComponent.onMarkChanged(this.index, updateMark).subscribe(() => {
+        this.assignmentMarkingPageComponent.onMarkChanged(this.index, updateMark).subscribe(() => {
           this.mark.totalMark = updateMark.totalMark;
           this.mark.sectionLabel = updateMark.sectionLabel;
           this.mark.comment = updateMark.comment;
-      });
+        });
+      }
     };
     this.appService.createDialog(MarkingCommentModalComponent, config, handleCommentFN);
   }

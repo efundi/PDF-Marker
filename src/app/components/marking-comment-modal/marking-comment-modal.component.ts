@@ -1,104 +1,116 @@
-import {Component, Inject, OnInit} from '@angular/core';
+import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {AppService} from '../../services/app.service';
 import {IComment} from '@shared/info-objects/comment.class';
 import {CommentService} from '../../services/comment.service';
 import {MatSelectChange} from '@angular/material/select';
+import {Subscription} from 'rxjs';
+import {isNil} from 'lodash';
 
 @Component({
   selector: 'pdf-marker-marking-comment-modal',
   templateUrl: './marking-comment-modal.component.html',
   styleUrls: ['./marking-comment-modal.component.scss']
 })
-export class MarkingCommentModalComponent implements OnInit {
+export class MarkingCommentModalComponent implements OnInit, OnDestroy {
 
   commentForm: FormGroup;
-  private title: string;
 
-  private message: string;
-
-  private sectionLabel: string;
-
-  private markingComment: string;
-
-  readonly yes: boolean = true;
-
-  readonly no: boolean = false;
-
-  private totalMark: number = undefined;
-
-  private  markingCommentObj: any;
+  private formSubscription: Subscription;
 
   genericComments: IComment[] = [];
 
   commentCaretPos = 0;
 
+  commentTypes = [
+    'Assess',
+    'Comment Only'
+  ];
+
   constructor(private appService: AppService,
               private dialogRef: MatDialogRef<MarkingCommentModalComponent>,
-              @Inject(MAT_DIALOG_DATA) config,
+              @Inject(MAT_DIALOG_DATA) private config,
               private fb: FormBuilder,
               private commentService: CommentService) {
 
     this.initForm();
+  }
 
-    this.title = config.title;
-    this.message = config.message;
-    if (config.markingComment) {
-      this.markingComment = config.markingComment;
-      this.commentForm.controls.markingComment.setValue(config.markingComment);
-    }
-    if (config.sectionLabel) {
-      this.sectionLabel = config.sectionLabel;
-      this.commentForm.controls.sectionLabel.setValue(config.sectionLabel);
-    }
-    if (config.totalMark) {
-      this.totalMark = config.totalMark;
-      this.commentForm.controls.totalMark.setValue(config.totalMark);
-    }
-
+  ngOnInit() {
     this.commentService.getCommentDetails().subscribe((comments: IComment[]) => {
       this.genericComments = comments;
     });
 
-    this.markingCommentObj = {
-      sectionLabel: this.commentForm.controls.sectionLabel.value,
-      totalMark: this.commentForm.controls.totalMark.value,
-      markingComment: this.commentForm.controls.markingComment.value,
-      genericComment: this.commentForm.controls.genericComment.value
+    const model: any = {
+      commentType : 'Assess'
     };
+
+    if (!isNil(this.config.comment)) {
+      const commentObj = this.config.comment;
+      if (commentObj.markingComment) {
+        model.markingComment = commentObj.markingComment;
+      }
+      if (commentObj.sectionLabel) {
+        model.sectionLabel = commentObj.sectionLabel;
+      }
+      if (isNil(commentObj.totalMark)) {
+        model.commentType = 'Comment Only';
+
+      } else {
+        model.totalMark = commentObj.totalMark;
+      }
+    }
+
+    this.toggleTotalMark(model.commentType === 'Assess');
+    this.commentForm.reset(model);
   }
 
-  ngOnInit() {
-
-  }
   private initForm() {
-      this.commentForm = this.fb.group({
-        sectionLabel: new FormControl(null, Validators.required),
-        genericComment: new FormControl(null),
-        markingComment: new FormControl(null),
-        totalMark: new FormControl(null, Validators.required)
-      });
+    this.commentForm = this.fb.group({
+      commentType: new FormControl(null, Validators.required),
+      sectionLabel: new FormControl(null, Validators.required),
+      genericComment: new FormControl(null),
+      markingComment: new FormControl(null),
+    });
+
+    this.formSubscription = this.commentForm.controls.commentType.valueChanges.subscribe((commentType) => {
+      this.toggleTotalMark(commentType === 'Assess');
+    });
+  }
+
+  ngOnDestroy() {
+    this.formSubscription.unsubscribe();
+  }
+
+  private toggleTotalMark(show: boolean) {
+    if (show) {
+      this.commentForm.addControl('totalMark', new FormControl(null, Validators.required));
+    } else {
+      this.commentForm.removeControl('totalMark');
+    }
+    this.commentForm.updateValueAndValidity();
   }
 
   onCancel($event: MouseEvent) {
     if (this.commentForm.valid) {
-      this.dialogRef.close(this.markingCommentObj);
+      this.dialogRef.close(null);
     } else {
       const markingRemove = {removeIcon: true};
       this.dialogRef.close(markingRemove);
-      }
+    }
   }
 
   onSubmit($event: MouseEvent) {
     if (this.commentForm.valid) {
-      this.markingCommentObj = {
-        sectionLabel: this.commentForm.controls.sectionLabel.value,
-        totalMark: this.commentForm.controls.totalMark.value,
-        markingComment: this.commentForm.controls.markingComment.value,
-        genericComment: this.commentForm.controls.genericComment.value
+      const formValue = this.commentForm.value;
+      const markingCommentObj = {
+        sectionLabel: formValue.sectionLabel,
+        totalMark: formValue.totalMark,
+        markingComment: formValue.markingComment,
+        genericComment: formValue.genericComment
       };
-      this.dialogRef.close(this.markingCommentObj);
+      this.dialogRef.close(markingCommentObj);
     }
   }
 

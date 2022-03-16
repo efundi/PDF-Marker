@@ -5,18 +5,6 @@
   margin-bottom: 0;
 }
 
-.mat-dialog-content::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  background: #F5F5F5;
-}
-
-.mat-dialog-content::-webkit-scrollbar-thumb {
-  border-radius: 10px;
-  background: var(--pdf-marker-primary);
-}
-
-
 .example-tree-invisible {
   display: none;
 }

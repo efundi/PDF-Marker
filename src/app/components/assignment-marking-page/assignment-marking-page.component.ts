@@ -204,14 +204,16 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     } else if (mark.iconType === IconTypeEnum.CROSS) {
       mark.totalMark = this.assignmentMarkingComponent.defaultIncorrectMark;
     } else if (mark.iconType === IconTypeEnum.NUMBER) {
-      const config = this.assignmentMarkingComponent.openNewMarkingCommentModal('Marking Comment', '');
+      const config = this.assignmentMarkingComponent.openNewMarkingCommentModal();
       const handelCommentFN = (formData: any) => {
-        mark.totalMark = formData.totalMark;
-        mark.sectionLabel = formData.sectionLabel;
-        mark.comment = formData.markingComment;
-        const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
-        updatedMarks.push(mark);
-        this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe();
+        if (formData && !formData.removeIcon) {
+          mark.totalMark = formData.totalMark;
+          mark.sectionLabel = formData.sectionLabel;
+          mark.comment = formData.markingComment;
+          const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
+          updatedMarks.push(mark);
+          this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe();
+        }
       };
       this.appService.createDialog(MarkingCommentModalComponent, config, handelCommentFN);
     }
