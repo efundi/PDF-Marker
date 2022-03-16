@@ -122,7 +122,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
               .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
                 this.busyService.stop();
                 if (appSelectedPathInfo.selectedPath) {
-                  this.alertService.success(`File saved to downloads folder`);
+                  this.alertService.success(`Rubric template file downloaded`);
                 } else if (appSelectedPathInfo.error) {
                   this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
                 }
@@ -229,7 +229,6 @@ export class RubricImportComponent implements OnInit, OnDestroy {
     const config = new MatDialogConfig();
     config.disableClose = false;
     config.width = '1500px';
-    config.height = '750px';
     config.data = {
       rubric
     };
