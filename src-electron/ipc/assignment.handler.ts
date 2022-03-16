@@ -831,6 +831,7 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
                         return Promise.reject('Failed to save mark');
                       }
                     }, (error) => {
+                      console.log(error);
                       return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
                     });
                   }

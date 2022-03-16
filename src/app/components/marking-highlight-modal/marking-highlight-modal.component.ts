@@ -1,10 +1,11 @@
-import {Component, Inject, OnInit} from '@angular/core';
+import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {IComment} from '@shared/info-objects/comment.class';
 import {AppService} from '../../services/app.service';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {CommentService} from '../../services/comment.service';
 import {MatSelectChange} from '@angular/material/select';
+import {isNil} from "lodash";
 
 @Component({
   selector: 'pdf-marker-marking-highlight-modal',
@@ -15,21 +16,10 @@ export class MarkingHighlightModalComponent implements OnInit {
 
 
   commentForm: FormGroup;
-  private title: string;
-
-  private message: string;
 
   private sectionLabel: string;
 
   private markingComment: string;
-
-  readonly yes: boolean = true;
-
-  readonly no: boolean = false;
-
-  private totalMark: number = undefined;
-
-  private  markingCommentObj: any;
 
   genericComments: IComment[] = [];
 
@@ -37,41 +27,33 @@ export class MarkingHighlightModalComponent implements OnInit {
 
   constructor(private appService: AppService,
               private dialogRef: MatDialogRef<MarkingHighlightModalComponent>,
-              @Inject(MAT_DIALOG_DATA) config,
+              @Inject(MAT_DIALOG_DATA) private config,
               private fb: FormBuilder,
               private commentService: CommentService) {
 
     this.initForm();
 
-    this.title = config.title;
-    this.message = config.message;
-    if (config.markingComment) {
-      this.markingComment = config.markingComment;
-      this.commentForm.controls.markingComment.setValue(config.markingComment);
-    }
-    if (config.sectionLabel) {
-      this.sectionLabel = config.sectionLabel;
-      this.commentForm.controls.sectionLabel.setValue(config.sectionLabel);
-    }
-    if (config.totalMark) {
-      this.totalMark = config.totalMark;
-      this.commentForm.controls.totalMark.setValue(config.totalMark);
-    }
 
+  }
+
+  ngOnInit() {
     this.commentService.getCommentDetails().subscribe((comments: IComment[]) => {
       this.genericComments = comments;
     });
 
-    this.markingCommentObj = {
-      sectionLabel: this.commentForm.controls.sectionLabel.value,
-      totalMark: 0,
-      markingComment: this.commentForm.controls.markingComment.value,
-      genericComment: this.commentForm.controls.genericComment.value
-    };
-  }
+    const model: any = {};
 
-  ngOnInit() {
+    if (!isNil(this.config.comment)) {
+      const commentObj = this.config.comment;
+      if (commentObj.markingComment) {
+        model.markingComment = commentObj.markingComment;
+      }
+      if (commentObj.sectionLabel) {
+        model.sectionLabel = commentObj.sectionLabel;
+      }
+    }
 
+    this.commentForm.reset(model);
   }
   private initForm() {
     this.commentForm = this.fb.group({
@@ -83,7 +65,7 @@ export class MarkingHighlightModalComponent implements OnInit {
 
   onCancel($event: MouseEvent) {
     if (this.commentForm.valid) {
-      this.dialogRef.close(this.markingCommentObj);
+      this.dialogRef.close(null);
     } else {
       const markingRemove = {removeIcon: true};
       this.dialogRef.close(markingRemove);
@@ -92,13 +74,14 @@ export class MarkingHighlightModalComponent implements OnInit {
 
   onSubmit($event: MouseEvent) {
     if (this.commentForm.valid) {
-      this.markingCommentObj = {
-        sectionLabel: this.commentForm.controls.sectionLabel.value,
+      const formValue = this.commentForm.value;
+      const markingCommentObj = {
+        sectionLabel: formValue.sectionLabel,
         totalMark: 0,
-        markingComment: this.commentForm.controls.markingComment.value,
-        genericComment: this.commentForm.controls.genericComment.value
+        markingComment: formValue.markingComment,
+        genericComment: formValue.genericComment
       };
-      this.dialogRef.close(this.markingCommentObj);
+      this.dialogRef.close(markingCommentObj);
     }
   }
 
