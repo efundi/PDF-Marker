@@ -1,4 +1,4 @@
-import {Component, ElementRef, Inject, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, Inject, Input, OnDestroy, OnInit} from '@angular/core';
 import {AppService} from '../../services/app.service';
 import {MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef} from '@angular/material/dialog';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
@@ -13,7 +13,7 @@ import {
 import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {BusyService} from '../../services/busy.service';
-import {isNil, map} from 'lodash';
+import {map} from 'lodash';
 
 
 @Component({

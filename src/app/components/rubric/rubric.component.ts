@@ -32,12 +32,11 @@ export class RubricComponent implements OnInit, OnChanges {
   }
 
   ngOnInit() {
-    this.getHighestScore(this.rubric);
-    this.getTotalMark();
     this.isMarkingRubricPage = isArray(this.rubricSelections);
   }
 
   getHighestScore(rubric: IRubric) {
+    let maxScore = 0;
     this.rubric.criterias.forEach((value, index) => {
       let curHighest = -1;
       value.levels.forEach((value1, index1, array) => {
@@ -45,8 +44,9 @@ export class RubricComponent implements OnInit, OnChanges {
           curHighest = value1.score;
         }
       });
-      this.maxScore = this.maxScore + parseFloat(curHighest.toString());
+      maxScore = maxScore + parseFloat(curHighest.toString());
     });
+    this.maxScore = maxScore;
   }
 
   getTotalMark() {
@@ -69,7 +69,6 @@ export class RubricComponent implements OnInit, OnChanges {
         marks[criteriaIndex] = criteriaLevelIndex;
       }
       this.getTotalMark();
-      // call assignmentService
       this.assignmentMarkingComponent.saveMarks(marks).subscribe();
     }
   }
@@ -83,14 +82,7 @@ export class RubricComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    /*changes.rubricSelections.currentValue.forEach((criteriaIndex, index) => {
-      this.rubricSelections[index] = (this.rubricSelections[index] === null) ? null:this.rubricSelections[index];
-    });
-    changes.rubric.currentValue.criterias.forEach((criteria: IRubricCriteria, index) => {
-      this.rubricSelections[index] = (this.rubricSelections[index] === null) ? null:this.rubricSelections[index];
-      if(this.rubricSelections[index])
-        this.totalTally += (this.rubricSelections[index] === null) ? 0:parseFloat("" + this.rubric.criterias[index].levels[this.rubricSelections[index]].score);
-    })*/
+    this.getHighestScore(this.rubric);
     this.getTotalMark();
   }
 
