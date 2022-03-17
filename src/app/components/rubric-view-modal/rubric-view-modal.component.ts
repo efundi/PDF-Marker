@@ -46,7 +46,8 @@ export class RubricViewModalComponent implements OnInit, OnDestroy {
               private settingsService: SettingsService,
               private importService: ImportService,
               private rubricService: RubricService,
-              private fb: FormBuilder, private assignmentService: AssignmentService,
+              private fb: FormBuilder,
+              private assignmentService: AssignmentService,
               private busyService: BusyService,
               @Inject(MAT_DIALOG_DATA)  private config) {
 

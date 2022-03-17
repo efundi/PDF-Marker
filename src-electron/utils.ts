@@ -147,7 +147,7 @@ export const extractAssignmentZipFile = async (
             const fileName = entry.path;
             console.log('### - File Name: ' + fileName);
             // Submission Test (2)/Bob_Johnson_AA223556_This_is_my_assignment.pdf
-            const tempDetails = fileName.substring((fileName.indexOf('/') + 1));
+            const tempDetails = fileName.substring((fileName.indexOf(sep) + 1));
 
             const splitArray = tempDetails.split('_');
 

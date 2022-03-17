@@ -391,7 +391,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
-    this.rubricSubscription.unsubscribe()
+    this.rubricSubscription.unsubscribe();
   }
 
   /** Whether the number of selected elements matches the total number of rows. */

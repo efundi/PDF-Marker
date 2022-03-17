@@ -3,9 +3,6 @@ import {NgModule} from '@angular/core';
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {ZipService} from './services/zip.service';
-import {AlertService} from './services/alert.service';
-import {AppService} from './services/app.service';
 import {HeaderComponent} from './components/header/header.component';
 import {MenuComponent} from './components/menu/menu.component';
 import {FileExplorerModalComponent} from './components/file-explorer-modal/file-explorer-modal.component';
@@ -37,7 +34,6 @@ import {MatOptionModule} from '@angular/material/core';
 import {MatSelectModule} from '@angular/material/select';
 import {MatRadioModule} from '@angular/material/radio';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
-import {AssignmentService} from './services/assignment.service';
 import {
   AssignmentWorkspaceManageModalComponent
 } from './components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
@@ -64,8 +60,6 @@ import {ColorPickerModule} from 'ngx-color-picker';
 import {RxReactiveFormsModule} from '@rxweb/reactive-form-validators';
 import {HomeComponent} from './components/home/home.component';
 import {RubricViewModalComponent} from './components/rubric-view-modal/rubric-view-modal.component';
-import {ImportService} from './services/import.service';
-import {SettingsService} from './services/settings.service';
 import {MatDialogModule} from '@angular/material/dialog';
 import {MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule} from '@angular/material/snack-bar';
 import {MatSidenavModule} from '@angular/material/sidenav';
@@ -152,12 +146,6 @@ import {MatTreeModule} from '@angular/material/tree';
     CdkTreeModule
   ],
   providers: [
-    ZipService,
-    AlertService,
-    AppService,
-    AssignmentService,
-    SettingsService,
-    ImportService,
     { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
   ],
   bootstrap: [AppComponent]
