@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable, Subject} from 'rxjs';
+import {Observable} from 'rxjs';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {SnackBarComponent} from '../components/snack-bar/snack-bar.component';
 import {MatSnackBar, MatSnackBarRef} from '@angular/material/snack-bar';
@@ -8,7 +8,6 @@ import {fromIpcResponse} from './ipc.utils';
 import {AppVersionInfo} from '@shared/info-objects/app-version.info';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {FileFilterInfo} from '@shared/info-objects/file-filter.info';
-import {BusyService} from './busy.service';
 
 export type ComponentType<T> = new (...args: any[]) => T;
 
@@ -26,8 +25,7 @@ export class AppService {
   private readonly appName: string = 'PDF-MARKER';
 
   constructor(private dialog: MatDialog,
-              private snackBar: MatSnackBar,
-              private busyService: BusyService) {
+              private snackBar: MatSnackBar) {
     // this.isLoading$.next(false);
 
     this.applicationApi = (window as any).applicationApi;
