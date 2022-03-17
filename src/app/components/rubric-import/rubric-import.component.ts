@@ -1,18 +1,19 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewContainerRef} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {AlertService} from '../../services/alert.service';
 import {AppService} from '../../services/app.service';
 import {ImportService} from '../../services/import.service';
-import {MimeTypesEnum} from '../../utils/mime.types.enum';
-import {YesAndNoConfirmationDialogComponent} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {
+  YesAndNoConfirmationDialogComponent
+} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {RubricViewModalComponent} from '../rubric-view-modal/rubric-view-modal.component';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {Subscription} from 'rxjs';
 import {IRubric, IRubricName, SelectedRubric} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
-import {BusyService} from "../../services/busy.service";
+import {BusyService} from '../../services/busy.service';
 
 @Component({
   selector: 'pdf-marker-rubric-import',
@@ -33,14 +34,13 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
   subscription: Subscription;
 
-  readonly MimeTypesEnum = MimeTypesEnum;
-
   constructor(private fb: FormBuilder,
               private alertService: AlertService,
               private appService: AppService,
               private importService: ImportService,
               private busyService: BusyService,
-              private rubricService: RubricService) {
+              private rubricService: RubricService,
+              private viewContainerRef: ViewContainerRef) {
 
     this.initForm();
   }
@@ -228,6 +228,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   private openRubricModalDialog(rubric: IRubric) {
     const config = new MatDialogConfig();
     config.disableClose = false;
+    config.viewContainerRef = this.viewContainerRef;
     config.width = '1500px';
     config.data = {
       rubric

@@ -8,7 +8,6 @@ import {
   mkdirSync,
   readdirSync,
   rmdirSync,
-  statSync,
   unlinkSync,
   writeFileSync
 } from 'fs';
@@ -132,12 +131,9 @@ export const extractAssignmentZipFile = async (
         const isSet = true;
         if (entry.type === 'File') {
           const content = await entry.buffer();
-          // console.log("### - File Name First : " + entry.path);
           entry.path = entry.path.replace(oldFolder, newFolder);
 
           const directory = dirname(destination + entry.path.replace('/', sep));
-          // const extension = extname(destination + entry.path.replace('/', sep)).substring(1);
-
 
           if (!existsSync(directory)) {
             mkdirSync(directory, {recursive: true});
@@ -145,33 +141,25 @@ export const extractAssignmentZipFile = async (
           try {
             const pdfDoc = await PDFDocument.load(content);
             const fileName = entry.path;
-            console.log('### - File Name: ' + fileName);
-            // Submission Test (2)/Bob_Johnson_AA223556_This_is_my_assignment.pdf
-            const tempDetails = fileName.substring((fileName.indexOf('/') + 1));
-
+            const tempDetails = fileName.substring((fileName.indexOf(sep) + 1));
             const splitArray = tempDetails.split('_');
 
             const studentName = splitArray[1];
             const studentSurname = splitArray[0];
             const studentID = splitArray[2];
-            // tempDetails = tempDetails.subentry.path.indexOf(SUBMISSION_FOLDER) !== -1 && extension === 'pdf'string((tempDetails.indexOf(studentID))+1,tempDetails.length);
             const studentDirectory = studentSurname + ', ' + studentName + ' (' + studentID + ')';
             const csvData = `${studentID.toUpperCase()},${studentID.toUpperCase()},${studentSurname.toUpperCase()},${studentName.toUpperCase()},,,\n`;
             csvString = csvString + csvData;
             dir = directory;
-            console.log('####');
-            console.log(directory);
-            mkdirSync(directory + '/' + studentDirectory, {recursive: true});
-            mkdirSync(directory + '/' + studentDirectory + '/' + FEEDBACK_FOLDER, {recursive: true});
-            mkdirSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER, {recursive: true});
+            mkdirSync(directory + sep + studentDirectory, {recursive: true});
+            mkdirSync(directory + sep + studentDirectory + sep + FEEDBACK_FOLDER, {recursive: true});
+            mkdirSync(directory + sep + studentDirectory + sep + SUBMISSION_FOLDER, {recursive: true});
             if (!existsSync(directory + GRADES_FILE) && skippedFirst === 1) {
               const headers = `'${asnTitle}','SCORE_GRADE_TYPE'\n`;
               const csvFullString = headers + `''\n` + subheaders;
-              console.log(directory + GRADES_FILE);
               skippedFirst++;
               await writeFileSync(directory + sep + GRADES_FILE, csvFullString, {flag: 'a'});
               await writeFileSync(directory + sep + GRADES_FILE, csvString, {flag: 'a'});
-              console.log('create file');
             } else {
               skippedFirst++;
               await writeFileSync(directory + sep + GRADES_FILE, csvString, {flag: 'a'});
@@ -183,27 +171,20 @@ export const extractAssignmentZipFile = async (
             const pdfBytes = await pdfDoc.save();
             writeFileSync(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + '/' + tempDetails, pdfBytes);
           } catch (exception) {
-            console.log(exception);
+            console.error(exception);
           }
         } else {
           entry.path = entry.path.replace(oldFolder, newFolder);
           const directory = destination + entry.path.replace('/', sep);
-          // const directory = pathinfo(destination + entry.path.replace('/', sep), 1);
           if (!existsSync(directory)) {
             mkdirSync(directory, {recursive: true});
           }
-          console.log('####');
-          console.log(directory);
           if (!(existsSync(directory + GRADES_FILE))) {
-            const headers = `{asnTitle}','SCORE_GRADE_TYPE'\n`;
+            const headers = `'${asnTitle}','SCORE_GRADE_TYPE'\n`;
             const csvFullString = headers + `''\n` + subheaders;
-            //  csvFullString = csvFullString + csvString;
-            // console.log(csvFullString);
-            console.log(directory + GRADES_FILE);
             skippedFirst++;
             await writeFileSync(directory + GRADES_FILE, csvFullString, {flag: 'a'});
             await writeFileSync(directory + GRADES_FILE, csvString, {flag: 'a'});
-            console.log('create file');
           } else {
             skippedFirst++;
             await writeFileSync(directory + GRADES_FILE, csvString, {flag: 'a'});
@@ -235,7 +216,7 @@ export const extractAssignmentZipFile = async (
               await writeFileSync(destination + entry.path.replace('/', sep), content);
             }
           } catch (exception) {
-            console.log(exception);
+            console.error(exception);
           }
         } else {
           entry.path = entry.path.replace(oldFolder, newFolder);

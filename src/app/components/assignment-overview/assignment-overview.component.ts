@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {forkJoin, Observable, ReplaySubject, Subscription, tap} from 'rxjs';
@@ -100,7 +100,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
               private importService: ImportService,
               private busyService: BusyService,
               private rubricService: RubricService,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private viewContainerRef: ViewContainerRef) {
   }
 
 
@@ -376,6 +377,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   private openRubricModalDialog(rubric: IRubric, assignmentSettingsInfo: AssignmentSettingsInfo) {
     const config = new MatDialogConfig();
     config.disableClose = false;
+    config.viewContainerRef = this.viewContainerRef;
     config.data = {
       rubric: rubric,
       assignmentSettingsInfo: assignmentSettingsInfo,
@@ -391,7 +393,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
-    this.rubricSubscription.unsubscribe()
+    this.rubricSubscription.unsubscribe();
   }
 
   /** Whether the number of selected elements matches the total number of rows. */

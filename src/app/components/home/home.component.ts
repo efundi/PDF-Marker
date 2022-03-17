@@ -24,6 +24,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('content', {static: false})
   content: ElementRef;
+
   private subscription: Subscription;
 
   constructor(private router: Router,

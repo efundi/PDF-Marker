@@ -1094,7 +1094,7 @@ export function updateAssignmentRubric(
                     assignmentHeader = keys[0];
                   }
                 } else if (i > 1) {
-                  gradesJSON[i].field5 = 0;
+                  gradesJSON[i].field5 = '';
                   changed = true;
                 }
               }
