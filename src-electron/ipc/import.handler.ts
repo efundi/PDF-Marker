@@ -74,9 +74,9 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
           const oldPath = entryPath[0];
           let foundCount = 0;
           for (let i = 0; i < folders.length; i++) {
-            if (oldPath.toLowerCase() + '/' === folders[i].toLowerCase() + '/') {
+            if (oldPath.toLowerCase() === folders[i].toLowerCase()) {
               foundCount++;
-            } else if ((oldPath.toLowerCase() + ' (' + (foundCount + 1) + ')' + '/') === folders[i].toLowerCase() + '/') {
+            } else if ((oldPath.toLowerCase() + ' (' + (foundCount + 1) + ')') === folders[i].toLowerCase()) {
               foundCount++;
             }
           }
@@ -91,7 +91,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
           if (foundCount !== 0) {
             // If existing assignment directory exists, setup renames to extract the file
             assignmentDirectoryName = oldPath + ' (' + (foundCount + 1) + ')';
-            newFolder = oldPath + ' (' + (foundCount + 1) + ')' + sep;
+            newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
             renameOld = oldPath + '/';
           }
 
