@@ -1,6 +1,7 @@
 <mat-toolbar>
   <ng-container *ngFor="let iconData of markIcons">
     <button
+      color="primary"
       [disabled]="containsRubric"
       *ngIf="iconData.icon !== 'halfTick' && iconData.icon !== 'brush'"
       [matTooltip]="iconData.toolTip"
@@ -11,6 +12,7 @@
       <mat-icon [class.pdf-icon-disabled]="containsRubric">{{ iconData.icon }}</mat-icon>
     </button>
     <button
+      color="primary"
       [disabled]="containsRubric"
       *ngIf="iconData.icon === 'halfTick' && iconData.icon !== 'brush'"
       [matTooltip]="iconData.toolTip"
@@ -27,6 +29,7 @@
       *ngIf="iconData.icon === 'brush'"
       class="pdf-marker-assignment-marking-settings-highlighter">
       <button
+        color="primary"
         [disabled]="containsRubric"
         [matTooltip]="iconData.toolTip"
         (click)="onIconClick(iconData, $event)"
@@ -48,6 +51,7 @@
     </div>
   </ng-container>
   <button
+    color="primary"
     [disabled]="containsRubric"
     matTooltip="Preview Marks"
     mat-button
@@ -57,6 +61,7 @@
   </button>
   <span class="pdf-marker-fill-space"></span>
   <button
+    color="primary"
     matTooltip="Prev"
     mat-button
     mat-icon-button
@@ -67,6 +72,7 @@
     <mat-icon class="pdf-marker-icons-pdf-nav-icons" [class.pdf-marker-icons-pdf-nav-icons-disabled]="currentPage == 1">arrow_upward</mat-icon>
   </button>
   <button
+    color="primary"
     matTooltip="Next"
     mat-button
     mat-icon-button
@@ -117,6 +123,7 @@
 
   <span class="pdf-marker-fill-space"></span>
   <button
+    color="primary"
     [disabled]="!containsRubric"
     matTooltip="Display PDF Only"
     mat-button
@@ -124,6 +131,7 @@
     (click)="onControl($event, 'showPDF')">
     <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-expand-left"></mat-icon></button>
   <button
+    color="primary"
     [disabled]="!containsRubric"
     matTooltip="Shared View"
     mat-button
@@ -132,6 +140,7 @@
     <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-default"></mat-icon>
   </button>
   <button
+    color="primary"
     [disabled]="!containsRubric"
     matTooltip="Display Rubric Only"
     mat-button
@@ -164,6 +173,7 @@
     </span>
   </div>&nbsp;&nbsp;
   <button
+    color="primary"
     matTooltip="Clear All"
     mat-button
     mat-icon-button
