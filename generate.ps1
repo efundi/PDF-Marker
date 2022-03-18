@@ -1,3 +1,4 @@
+# powershell -ExecutionPolicy Bypass -File .\generate.ps1
 param ([int]$c=10, $a="Assignment1", $f="submission.pdf")
 
 $STUDENT_COUNT=${c}
@@ -15,6 +16,5 @@ for ( $count=1; $count -le $STUDENT_COUNT; $count++ ){
 	Copy-Item -Path ${SOURCE_FILE} -Destination "${ASSIGNMENT_NAME}/Student${count}_Surname${count}_s${count}_submission.pdf"
 }
 
-
 Compress-Archive -Path ${ASSIGNMENT_NAME}\* -DestinationPath ".\${ASSIGNMENT_NAME}.zip"
-Remove-Item -recurse ${ASSIGNMENT_NAME} 
+Remove-Item -recurse ${ASSIGNMENT_NAME}
