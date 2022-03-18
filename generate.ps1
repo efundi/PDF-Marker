@@ -16,5 +16,5 @@ for ( $count=1; $count -le $STUDENT_COUNT; $count++ ){
 	Copy-Item -Path ${SOURCE_FILE} -Destination "${ASSIGNMENT_NAME}/Student${count}_Surname${count}_s${count}_submission.pdf"
 }
 
-Compress-Archive -Path ${ASSIGNMENT_NAME}\* -DestinationPath ".\${ASSIGNMENT_NAME}.zip"
+Compress-Archive -Path ${ASSIGNMENT_NAME} -DestinationPath ".\${ASSIGNMENT_NAME}.zip"
 Remove-Item -recurse ${ASSIGNMENT_NAME}
