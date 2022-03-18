@@ -1,6 +1,7 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
+import {isNil} from "lodash";
 
 @Component({
   selector: 'pdf-marker-finalise-marking',
@@ -27,7 +28,7 @@ export class FinaliseMarkingComponent implements OnInit {
               @Inject(MAT_DIALOG_DATA) config) {
     if (config.assignmentPath) {
       const assignmentPathSplit = config.assignmentPath.split('/');
-      if (assignmentPathSplit.length == 4) {
+      if (assignmentPathSplit.length === 4) {
         const studentDetails = assignmentPathSplit[1];
         if (this.regEx.test(studentDetails)) {
           this.studentDetails = studentDetails;
@@ -36,10 +37,10 @@ export class FinaliseMarkingComponent implements OnInit {
 
       console.log(config);
 
-      const pagesArray = Object.keys(config.marks);
+      const pagesArray = Object.keys(config.submissionInfo.marks);
       pagesArray.forEach(page => {
-        if (Array.isArray(config.marks[page])) {
-          config.marks[page].forEach(mark => {
+        if (Array.isArray(config.submissionInfo.marks[page])) {
+          config.submissionInfo.marks[page].forEach(mark => {
             switch (mark.iconType) {
               case IconTypeEnum.FULL_MARK:
                 this.generalMarks += config.defaultTick;
@@ -51,9 +52,11 @@ export class FinaliseMarkingComponent implements OnInit {
                 this.generalMarks += config.incorrectTick;
                 break;
               case IconTypeEnum.NUMBER:
-                this.totalCommentorNumberMarks.push(mark);
-                this.numberCommentMarks += mark.totalMark;
-                this.sectionLabel = config.sectionLabel;
+                if (!isNil(mark.totalMark)) {
+                  this.totalCommentorNumberMarks.push(mark);
+                  this.numberCommentMarks += mark.totalMark;
+                  this.sectionLabel = config.sectionLabel;
+                }
                 break;
               default:
                 break;

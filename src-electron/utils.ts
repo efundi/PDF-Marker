@@ -141,7 +141,7 @@ export const extractAssignmentZipFile = async (
           try {
             const pdfDoc = await PDFDocument.load(content);
             const fileName = entry.path;
-            const tempDetails = fileName.substring((fileName.indexOf(sep) + 1));
+            const tempDetails = fileName.substring((fileName.indexOf('/') + 1));
             const splitArray = tempDetails.split('_');
 
             const studentName = splitArray[1];

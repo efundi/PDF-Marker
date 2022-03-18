@@ -18,3 +18,19 @@
 .pdf-marker-yes-and-no-confirmation-dialog-no {
   background: #BD362F;
 }
+
+.markType-radio-group {
+  display: flex;
+  flex-direction: row;
+  margin: 3px 0 15px 0;
+  align-items: flex-start;
+
+  .mat-radio-button{
+    margin-right: 10px;
+  }
+}
+
+label.mark-type{
+  color: rgba(0,0,0,.54);
+  font-size: 12px;
+}
