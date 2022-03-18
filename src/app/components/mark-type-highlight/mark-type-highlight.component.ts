@@ -135,9 +135,10 @@ export class MarkTypeHighlightComponent implements OnInit, AfterViewInit, OnDest
     config.width = '400px';
     config.maxWidth = '500px';
     config.data = {
-      markingComment: this.mark.comment,
-      sectionLabel: this.mark.sectionLabel,
-      totalMark: this.mark.totalMark,
+      comment : {
+        markingComment: this.mark.comment,
+        sectionLabel: this.mark.sectionLabel
+      }
     };
 
     const handleCommentFN = (formData: any) => {
