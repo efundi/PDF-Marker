@@ -134,12 +134,13 @@ export class RubricViewModalComponent implements OnInit, OnDestroy {
       .subscribe((rubric: IRubric) => {
         this.appService.openSnackBar(true, 'Successfully updated rubric');
         this.busyService.stop();
+        this.dialogRef.close();
       }, error => {
         console.log(error);
         this.busyService.stop();
         this.appService.openSnackBar(false, 'Unable to update rubric');
+        this.dialogRef.close();
       });
-    this.dialogRef.close();
   }
 
   onCancel() {
