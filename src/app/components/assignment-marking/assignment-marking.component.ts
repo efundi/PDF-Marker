@@ -393,7 +393,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     config.data = {
       assignmentPath: this.pdf,
-      marks: this.submissionInfo,
+      submissionInfo: this.submissionInfo,
       defaultTick: this.defaultFullMark,
       incorrectTick: this.defaultIncorrectMark
     };

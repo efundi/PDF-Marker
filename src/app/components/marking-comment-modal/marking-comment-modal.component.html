@@ -20,16 +20,18 @@
     </div>
 
     <div>
-      <mat-form-field>
-        <mat-label>Comment Type:</mat-label>
-        <mat-select formControlName="commentType">
-          <mat-option
-            *ngFor="let commentType of commentTypes"
-            [value]="commentType">
-            {{commentType}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+      <label class="mark-type" id="markType">Mark Type *</label>
+      <mat-radio-group
+        aria-labelledby="markType"
+        class="markType-radio-group"
+        formControlName="commentType">
+        <mat-radio-button
+          color=""
+          class="example-radio-button"
+          *ngFor="let commentType of commentTypes" [value]="commentType">
+          {{commentType}}
+        </mat-radio-button>
+      </mat-radio-group>
     </div>
 
     <div *ngIf="commentForm.controls.totalMark">

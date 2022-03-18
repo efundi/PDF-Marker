@@ -180,7 +180,9 @@ function addAnnotations(session: AnnotationSession, marks: MarkInfo[][] = []): P
               contents: mark.comment || ' ', // TODO check the popup goes missing
               author: sectionText
             });
-            session.sectionMarks.push(sectionText);
+            if (!isNil(mark.totalMark)) {
+              session.sectionMarks.push(sectionText);
+            }
             annotationsAdded = true;
           } else if (mark.iconType === IconTypeEnum.HIGHLIGHT) {
             const colorComponents = mark.colour.match(/(\d\.?)+/g);
@@ -204,8 +206,8 @@ function addAnnotations(session: AnnotationSession, marks: MarkInfo[][] = []): P
                 b: +colorComponents[2]
               },
               opacity: +colorComponents[3],
-              contents: mark.comment || ' ',
-              author: mark.sectionLabel || ' '
+              contents: mark.comment || (mark.sectionLabel ? ' ' : ''),
+              author: mark.sectionLabel || ''
             });
 
             annot.createDefaultAppearanceStream();
@@ -397,7 +399,9 @@ function addResultsPage(session: AnnotationSession, pdfDoc: PDFDocument) {
   resultsPage.drawText('Total = ' + session.totalMark, {x: xPosition, y, size: MARK_FONT_SIZE});
 }
 
-export function annotatePdfFile(filePath: string, submissionInfo: MarkingSubmissionInfo): Promise<{ pdfBytes: Uint8Array, totalMark: number }> {
+export function annotatePdfFile(
+  filePath: string,
+  submissionInfo: MarkingSubmissionInfo): Promise<{ pdfBytes: Uint8Array, totalMark: number }> {
   return readFile(filePath)
     .then((data) => {
       const session: AnnotationSession = {
