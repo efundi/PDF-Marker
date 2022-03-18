@@ -4,7 +4,7 @@
     <mat-tree-node *matTreeNodeDef="let node" class="file" [matTreeNodePadding]="node.level" matTreeNodePaddingIndent="25">
       <!-- use a disabled button to provide padding for tree leaf -->
       <div style="display: flex; flex-direction: row">
-        <button mat-icon-button>
+        <button mat-icon-button color="primary">
           <mat-icon class="file">{{node.icon}} </mat-icon>
         </button>
         <div
@@ -19,7 +19,8 @@
            style="cursor:pointer;"
            (click)="onNodeClicked($event, node)"
            (dblclick)="treeControl.toggle(node)">
-        <button mat-icon-button [attr.aria-label]="'Toggle ' + node.name" matTreeNodeToggle>
+        <button
+          color="primary" mat-icon-button [attr.aria-label]="'Toggle ' + node.name" matTreeNodeToggle>
           <mat-icon class="mat-icon-rtl-mirror"
             [class.material-icons-outlined]="!treeControl.isExpanded(node)">
             {{treeControl.isExpanded(node) ? node.iconOpen : node.icon}}

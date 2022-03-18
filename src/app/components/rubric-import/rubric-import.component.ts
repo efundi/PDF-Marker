@@ -144,6 +144,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   deleteRubric(item: IRubric) {
     this.busyService.start();
     this.rubricService.deleteRubricCheck(item.name).subscribe((inUse: boolean) => {
+      this.busyService.stop();
       if (inUse) {
         const config = new MatDialogConfig();
         config.width = '400px';
@@ -169,6 +170,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   }
 
   private deleteRubricImpl(rubricName: string) {
+    this.busyService.start();
     this.rubricService.deleteRubric(rubricName).subscribe((rubrics: IRubric[]) => {
       this.populateRubrics(rubrics);
       this.busyService.stop();
