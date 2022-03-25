@@ -37,6 +37,39 @@ $pdfm-primary-pallete: (
   )
 );
 
+$pdfm-accent-pallete: (
+  50: #f0e6f0,
+  100: #dbbfdb,
+  200: #c596c4,
+  300: #ad6fac,
+  400: #9b549a,
+  500: #8a3e8a,
+  600: #7f3983,
+  700: #6f327a,
+  800: #612d70,
+  900: #47245c,
+  A100: #ffffff,
+  A200: #eeeeee,
+  A400: #bdbdbd,
+  A700: #616161,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $dark-primary-text,
+    400: $dark-primary-text,
+    500: $light-primary-text,
+    600: $light-primary-text,
+    700: $light-primary-text,
+    800: $light-primary-text,
+    900: $light-primary-text,
+    A100: $dark-primary-text,
+    A200: $dark-primary-text,
+    A400: $dark-primary-text,
+    A700: $light-primary-text,
+  )
+);
+
 
 
 $my-app-primary: mat.define-palette($pdfm-primary-pallete);
@@ -56,44 +89,6 @@ $my-app-theme: mat.define-light-theme(
 @include mat.all-component-themes($my-app-theme);
 /* You can add global styles to this file, and also import other style files */
 /*Fonts*/
-@font-face {
-  font-family: 'opensans-light';
-  src: url(../fonts/OpenSans-Light.ttf) format("truetype");
-  font-weight:300;
-}
-
-@font-face {
-  font-family: 'opensans-light-italic';
-  font-style: italic;
-  src: url(../fonts/OpenSans-LightItalic.ttf) format("truetype");
-  font-weight:300;
-}
-
-@font-face {
-  font-family: 'opensans-regular';
-  src: url(../fonts/OpenSans-Regular.ttf) format("truetype");
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: 'opensans-regular-italic';
-  font-style: italic;
-  src: url(../fonts/OpenSans-RegularItalic.ttf) format("truetype");
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: 'opensans-semi-bold';
-  src: url(../fonts/OpenSans-SemiBold.ttf) format("truetype");
-  font-weight: 600;
-}
-
-@font-face {
-  font-family: 'opensans-semi-bold-italic';
-  font-style: italic;
-  src: url(../fonts/OpenSans-SemiBoldItalic.ttf) format("truetype");
-  font-weight: 600;
-}
 
 @font-face {
   font-family: 'Material Icons';
@@ -268,10 +263,6 @@ button {
     //display: table;
     //width: 95%;
   }
-
-  mat-toolbar {
-    font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
-  }
 }
 
 .table-responsive {
@@ -342,10 +333,6 @@ pdf-marker-file-explorer-modal {
 
 .mat-expansion-indicator {
   display: none !important;
-}
-
-.errorMessages{
-  font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
 }
 
 .alert {

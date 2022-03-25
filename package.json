@@ -53,7 +53,7 @@
     "@angular/platform-browser": "~13.3.0",
     "@angular/platform-browser-dynamic": "~13.3.0",
     "@angular/router": "~13.3.0",
-    "@rxweb/reactive-form-validators": "^1.9.7",
+    "@rxweb/reactive-form-validators": "^2.1.6",
     "annotpdf": "^1.0.15",
     "csvtojson": "2.0.0",
     "electron-log": "^4.4.6",
