@@ -71,6 +71,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
   selectFile() {
     this.alertService.clear();
+    this.busyService.start();
     this.rubricService.selectRubricFile()
       .subscribe({
         next: (selectedRubric) => {

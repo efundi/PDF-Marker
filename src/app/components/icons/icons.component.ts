@@ -162,6 +162,8 @@ export class IconsComponent implements OnInit, OnChanges, OnDestroy {
 
       if (this.selecetedIcon.type === IconTypeEnum.HIGHLIGHT) {
         this.highlightToolColor = this.selectedHighlightColour;
+      } else {
+        this.highlightToolColor = null;
       }
     }
   }
