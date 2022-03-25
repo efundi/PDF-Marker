@@ -49,6 +49,8 @@ export interface AssignmentDetails {
   status?: string;
 
   date?: string;
+
+  submissionDirectoryName?: string;
 }
 
 @Component({
@@ -223,6 +225,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           const fullName = workspaceSubmission.studentSurname + (isNil(workspaceSubmission.studentName) ? '' : ', ' + workspaceSubmission.studentName);
 
           const value: AssignmentDetails = {
+            submissionDirectoryName: workspaceSubmission.name,
             index: index++,
             fullName,
             studentName: workspaceSubmission.studentName,
@@ -427,6 +430,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       workspaceFolder: this.workspaceName,
       submissions : this.selection.selected.map((selection) => {
         return {
+          directoryName: selection.submissionDirectoryName,
           studentName: selection.studentName,
           studentNumber: selection.studentNumber
         };

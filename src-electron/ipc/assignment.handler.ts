@@ -823,7 +823,7 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
                       if (changed) {
                         return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
                           .then(csv => {
-                            writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
+                            return writeFile(assignmentFolder + sep + GRADES_FILE, csv);
                           }, () => {
                             return Promise.reject( 'Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
                           });
@@ -910,6 +910,7 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
                     const ext = path.extname(submission);
                     const fileName = path.basename(submission, ext) + '_MARK';
                     writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
+                    unlinkSync(submission);
                     accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
                     let changed = false;
                     let assignmentHeader;
@@ -928,7 +929,7 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
                     if (changed) {
                       return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
                         .then(csv => {
-                          writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
+                          return writeFile(assignmentFolder + sep + GRADES_FILE, csv);
                         })
                         .catch(() => {
                           return Promise.reject('Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
@@ -979,57 +980,55 @@ function cleanupTemp(tmpDir: string) {
 export function shareExport(event: IpcMainInvokeEvent, shareRequest: ShareAssignments): Promise<any> {
 
   try {
-    return getConfig().then(async (config) => {
-      const assignmentName = shareRequest.assignmentName.replace(/\//g, sep);
-      let workspaceFolder = '';
-      if (shareRequest.workspaceFolder) {
-        workspaceFolder = shareRequest.workspaceFolder.replace(/\//g, sep);
-      }
-      const originalAssignmentDirectory = (workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder + sep + assignmentName : config.defaultPath + sep + assignmentName;
-      const gradesJSON = await csvtojson({
+
+    return getAssignmentDirectory(shareRequest.workspaceFolder, shareRequest.assignmentName).then((originalAssignmentDirectory) => {
+
+      return csvtojson({
         noheader: true,
         trim: false
-      }).fromFile(originalAssignmentDirectory + sep + GRADES_FILE);
-      let tmpDir;
-      // Create a temp directory to construct files to zip
-      tmpDir = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
+      }).fromFile(originalAssignmentDirectory + sep + GRADES_FILE).then((gradesJSON) => {
+        let tmpDir;
+        // Create a temp directory to construct files to zip
+        tmpDir = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
 
-      const tempAssignmentDirectory = tmpDir + sep + assignmentName;
-      mkdirSync(tempAssignmentDirectory);
+        const tempAssignmentDirectory = tmpDir + sep + shareRequest.assignmentName;
+        mkdirSync(tempAssignmentDirectory);
 
-      // Now copy each submission
-      shareRequest.submissions.forEach((submission) => {
-        const submissionDirectoryName = submission.studentName + '(' + submission.studentNumber + ')';
-        copySync(originalAssignmentDirectory + sep + submissionDirectoryName, tempAssignmentDirectory + sep + submissionDirectoryName);
-      });
-
-      const shareGradesJson = [
-        gradesJSON[0],
-        gradesJSON[1],
-        gradesJSON[2],
-      ];
-      for (let i = 3; i < gradesJSON.length; i++) {
-        const gradesStudentId = gradesJSON[i].field2;
-        const shouldExport = !isNil(find(shareRequest.submissions, (student) => student.studentNumber.toUpperCase() === gradesStudentId.toUpperCase()));
-        if (shouldExport) {
-          shareGradesJson.push(gradesJSON[i]);
-        }
-      }
-
-      return json2csvAsync(shareGradesJson, {emptyFieldValue: '', prependHeader: false})
-        .then(csv => {
-          writeFileSync(tempAssignmentDirectory + sep + GRADES_FILE, csv);
-        })
-        .then(() => {
-          return zipDir(tmpDir);
-        })
-        .then((buffer) => {
-          cleanupTemp(tmpDir);
-          return buffer;
-        }, (error) => {
-          cleanupTemp(tmpDir);
-          return Promise.reject(error.message);
+        // Now copy each submission
+        shareRequest.submissions.forEach((submission) => {
+          const submissionDirectoryName = submission.directoryName;
+          copySync(originalAssignmentDirectory + sep + submissionDirectoryName, tempAssignmentDirectory + sep + submissionDirectoryName);
         });
+
+        const shareGradesJson = [
+          gradesJSON[0],
+          gradesJSON[1],
+          gradesJSON[2],
+        ];
+        for (let i = 3; i < gradesJSON.length; i++) {
+          const gradesStudentId = gradesJSON[i].field2;
+          const studentPredicate = (student) => student.studentNumber.toUpperCase() === gradesStudentId.toUpperCase();
+          const shouldExport = !isNil(find(shareRequest.submissions, studentPredicate));
+          if (shouldExport) {
+            shareGradesJson.push(gradesJSON[i]);
+          }
+        }
+
+        return json2csvAsync(shareGradesJson, {emptyFieldValue: '', prependHeader: false})
+          .then(csv => {
+            return writeFile(tempAssignmentDirectory + sep + GRADES_FILE, csv);
+          })
+          .then(() => {
+            return zipDir(tmpDir);
+          })
+          .then((buffer) => {
+            cleanupTemp(tmpDir);
+            return buffer;
+          }, (error) => {
+            cleanupTemp(tmpDir);
+            return Promise.reject(error.message);
+          });
+      });
     });
   } catch (e) {
     console.error(e);

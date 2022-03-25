@@ -8,15 +8,13 @@ mat-toolbar {
     cursor: pointer;
 
     .pdf-marker-title {
-      /*font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif;*/
       font-weight: 800;
     }
 
     #pdf-marker-version {
-      font-family: 'opensans-light', Helvetica, Roboto, "Helvetica Neue", sans-serif;
       font-size: 10px;
       vertical-align: super;
-      font-weight: bolder;
+      font-weight: normal;
     }
 
     img {

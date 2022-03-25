@@ -10,8 +10,8 @@ import {
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import {AnnotationLayer, LinkTarget, PDFDocumentProxy, PDFPageProxy,} from 'pdfjs-dist';
-import {EventBus, PDFLinkService} from 'pdfjs-dist/web/pdf_viewer';
+import {AnnotationLayer, PDFDocumentProxy, PDFPageProxy} from 'pdfjs-dist';
+import {EventBus, LinkTarget, PDFLinkService} from 'pdfjs-dist/web/pdf_viewer';
 import {MarkTypeIconComponent} from '../mark-type-icon/mark-type-icon.component';
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
 import {MarkingCommentModalComponent} from '../marking-comment-modal/marking-comment-modal.component';
@@ -26,11 +26,11 @@ import {MarkTypeHighlightComponent} from '../mark-type-highlight/mark-type-highl
 import {PageViewport} from 'pdfjs-dist/types/web/interfaces';
 import {ScrollVisibilityDirective} from '../../directives/scroll-visibility.directive';
 import {BusyService} from '../../services/busy.service';
-import {PageSettings, SubmissionType} from "@shared/info-objects/submission.info";
+import {PageSettings, SubmissionType} from '@shared/info-objects/submission.info';
 import {
   YesAndNoConfirmationDialogComponent
-} from "../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component";
-import {MatDialogConfig} from "@angular/material/dialog";
+} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {MatDialogConfig} from '@angular/material/dialog';
 
 const eventBus = new EventBus();
 
@@ -487,7 +487,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       return Promise.resolve(true);
     }
 
-    if(this.marks.length === 0){
+    if (this.marks.length === 0) {
       return Promise.resolve(true);
     }
 
@@ -546,7 +546,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
         this.renderPage();
       });
     }, (err) => {
-      console.error(err)
+      console.error(err);
     });
   }
 }

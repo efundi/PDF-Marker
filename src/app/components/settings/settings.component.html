@@ -1,7 +1,7 @@
 <ng-container>
   <pdf-marker-alert></pdf-marker-alert>
   <form [formGroup]="settingsForm">
-    <h1><mat-icon>settings</mat-icon>&nbsp;Settings</h1>
+    <h1><mat-icon color="primary">settings</mat-icon>&nbsp;Settings</h1>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
     <mat-form-field floatLabel="always">
@@ -23,7 +23,7 @@
     </mat-form-field><br>
     <div class="pdf-spacer"></div>
     <div>
-      <button type="button" mat-raised-button color="" [disabled]="settingsForm.invalid" (click)="onSubmit($event)">Save</button>
+      <button type="button" mat-raised-button color="primary" [disabled]="settingsForm.invalid" (click)="onSubmit($event)">Save</button>
     </div>
   </form>
 </ng-container>

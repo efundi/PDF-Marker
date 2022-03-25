@@ -76,11 +76,11 @@ export class GenericCommentsComponent implements OnInit {
         this.populateComments(comments);
         this.appService.openSnackBar(true, 'Comment saved');
         this.genericCommentsForm.reset();
-        this.busyService.stop()
+        this.busyService.stop();
       },
       error: (error) => {
         this.appService.openSnackBar(false, 'Unable to save comment');
-        this.busyService.stop()
+        this.busyService.stop();
       },
     });
   }
@@ -95,6 +95,7 @@ export class GenericCommentsComponent implements OnInit {
       message: item.inUse ? 'This comment is in use, are your sure you want to delete it?' : 'Are you sure you want to delete this comment?'
     };
     const shouldDeleteFn = (shouldDelete: boolean) => {
+      this.busyService.stop();
       if (shouldDelete) {
         this.deleteCommentImpl(item.id);
       }
@@ -105,6 +106,7 @@ export class GenericCommentsComponent implements OnInit {
   }
 
   private deleteCommentImpl(id: string) {
+    this.busyService.start();
     this.commentsService.deleteComment(id).subscribe((comments: IComment[]) => {
       this.populateComments(comments);
       this.busyService.stop();

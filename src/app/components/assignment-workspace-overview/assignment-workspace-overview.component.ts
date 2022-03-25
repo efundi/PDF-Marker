@@ -82,7 +82,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
     const config = new MatDialogConfig();
     config.disableClose = true;
     config.width = '400px';
-    config.height = '500px';
+    // config.height = '500px';
     config.data = {
       workspaceName: this.workspaceName,
       assignments: this.dataSource.data,
@@ -93,8 +93,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
     const dialogRef = this.appService.createDialog(AssignmentWorkspaceManageModalComponent, config);
 
     dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed');
-      console.log(result);
       let edited = false;
       if (result && result.workspaceName && result.workspaceName !== this.workspaceName) {
         this.workspaceName = result.workspaceName;
@@ -121,7 +119,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
     this.busyService.start();
     return this.assignmentService.getAssignmentSettings(this.workspaceName, assignmentName).pipe(
       tap((assignmentSettings) => {
-        // this.assignmentService.setSelectedAssignment(updateAssignmentSettings);
         this.busyService.stop();
         return assignmentSettings;
       }), catchError((error) => {

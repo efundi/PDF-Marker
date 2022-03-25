@@ -13,8 +13,10 @@ New-Item -Path "." -Name $ASSIGNMENT_NAME -ItemType "directory"
 
 for ( $count=1; $count -le $STUDENT_COUNT; $count++ ){
 	Write-Host "${ASSIGNMENT_NAME}/Student${count}_Surname${count}_s${count}_submission.pdf"
-	Copy-Item -Path ${SOURCE_FILE} -Destination "${ASSIGNMENT_NAME}/Student${count}_Surname${count}_s${count}_submission.pdf"
+	Copy-Item -Path ${SOURCE_FILE} -Destination ${ASSIGNMENT_NAME}\Student${count}_Surname${count}_s${count}_submission.pdf
 }
 
-Compress-Archive -Path ${ASSIGNMENT_NAME} -DestinationPath ".\${ASSIGNMENT_NAME}.zip"
-Remove-Item -recurse ${ASSIGNMENT_NAME}
+# PowerShell bug - it creates broken zip files
+# https://github.com/MicrosoftDocs/PowerShell-Docs/issues/4975
+# Compress-Archive -Path ${ASSIGNMENT_NAME} -DestinationPath ".\${ASSIGNMENT_NAME}.zip"
+# Remove-Item -recurse ${ASSIGNMENT_NAME}
