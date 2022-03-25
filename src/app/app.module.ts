@@ -73,6 +73,7 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
 import {MatSortModule} from '@angular/material/sort';
 import {CdkTreeModule} from '@angular/cdk/tree';
 import {MatTreeModule} from '@angular/material/tree';
+import {A11yModule} from "@angular/cdk/a11y";
 
 @NgModule({
   declarations: [
@@ -143,7 +144,8 @@ import {MatTreeModule} from '@angular/material/tree';
     MatProgressSpinnerModule,
     MatTreeModule,
     DragDropModule,
-    CdkTreeModule
+    CdkTreeModule,
+    A11yModule
   ],
   providers: [
     { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },

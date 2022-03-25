@@ -823,7 +823,7 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
                       if (changed) {
                         return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
                           .then(csv => {
-                            writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
+                            return writeFile(assignmentFolder + sep + GRADES_FILE, csv);
                           }, () => {
                             return Promise.reject( 'Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
                           });
@@ -910,6 +910,7 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
                     const ext = path.extname(submission);
                     const fileName = path.basename(submission, ext) + '_MARK';
                     writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
+                    unlinkSync(submission);
                     accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
                     let changed = false;
                     let assignmentHeader;
@@ -928,7 +929,7 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
                     if (changed) {
                       return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
                         .then(csv => {
-                          writeFileSync(assignmentFolder + sep + GRADES_FILE, csv);
+                          return writeFile(assignmentFolder + sep + GRADES_FILE, csv);
                         })
                         .catch(() => {
                           return Promise.reject('Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');

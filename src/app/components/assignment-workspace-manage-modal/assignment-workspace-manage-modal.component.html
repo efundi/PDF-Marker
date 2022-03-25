@@ -1,10 +1,9 @@
-<ng-container autoscroll="true">
-  <div>
-    <h2 mat-dialog-title>Manage Workspace     <button class="close-button" type="button" mat-icon-button matTooltip="Close" (click)="onClose()">
-      <mat-icon>close</mat-icon>
-    </button></h2>
-
-  </div>
+<div mat-dialog-title>
+  <h3>Manage Workspace</h3>
+  <span class="pdf-marker-fill-space"></span>
+  <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
+</div>
+<mat-dialog-content>
   <form [formGroup]="manageForm">
     <mat-label class="pdf-marker-form-labels">Workspace name </mat-label>
     <div class="pdf-spacer"></div>
@@ -14,16 +13,17 @@
       <button *ngIf="canRenameFolder && !isEditing" type="button" matSuffix mat-icon-button matTooltip="Edit" (click)="onEdit($event)">
         <mat-icon>edit</mat-icon>
       </button>
-      <button *ngIf="isEditing" type="button" matSuffix mat-icon-button matTooltip="Save" (click)="saveWorkspaceName($event)">
+      <button *ngIf="isEditing"
+              color="primary" type="button" matSuffix mat-icon-button matTooltip="Save" (click)="saveWorkspaceName($event)">
         <mat-icon>done</mat-icon>
       </button>
-      <button *ngIf="isEditing" type="button" matSuffix  mat-icon-button matTooltip="Cancel" (click)="onCancel($event)">
+      <button *ngIf="isEditing" type="button" color="accent" matSuffix  mat-icon-button matTooltip="Cancel" (click)="onCancel($event)">
         <mat-icon>close</mat-icon>
       </button>
     </mat-form-field>
     <mat-selection-list formControlName="selectedAssignments" #selected>
-      <mat-label class="pdf-marker-form-labels">Assignment List</mat-label>
-      <mat-list-option *ngFor="let assignment of assignments" [value]="assignment">{{ assignment.assignmentTitle }}</mat-list-option>
+      <mat-label class="">Assignment List</mat-label>
+      <mat-list-option color="primary" *ngFor="let assignment of assignments" [value]="assignment">{{ assignment.assignmentTitle }}</mat-list-option>
     </mat-selection-list>
     <div class="pdf-spacer"></div>
     <mat-label class="pdf-marker-form-labels">Move selected assignments to&nbsp;</mat-label>
@@ -39,10 +39,17 @@
       </div>
 
       <div class="button-right-margin">
-        <button [disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value" type="button" matSuffix mat-icon-button matTooltip="Move" (click)="onMove($event)">
-          Move<mat-icon [class.pdf-icon-disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value" >content_copy</mat-icon>
+        <button
+          [disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value"
+          type="button"
+          color="primary"
+          matSuffix
+          mat-icon-button
+          matTooltip="Move"
+          (click)="onMove($event)">
+          Move&nbsp;<mat-icon [class.pdf-icon-disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value" >content_copy</mat-icon>
         </button>
       </div>
     </div>
   </form>
-</ng-container>
+</mat-dialog-content>

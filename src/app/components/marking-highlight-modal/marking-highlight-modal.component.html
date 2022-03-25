@@ -49,7 +49,7 @@
   </form>
 </mat-dialog-content>
 
-<mat-dialog-actions class="pdf-marker-yes-and-no-confirmation-dialog-actions">
-  <button type="button" class="pdf-marker-yes-and-no-confirmation-dialog-yes" mat-button color="" (click)="onSubmit($event)">Save</button>&nbsp;&nbsp;
-  <button type="button" class="pdf-marker-yes-and-no-confirmation-dialog-no" mat-button color="" (click)="onCancel($event)">Cancel</button>
+<mat-dialog-actions>
+  <button type="button" mat-button color="primary" (click)="onSubmit($event)">Save</button>&nbsp;&nbsp;
+  <button type="button" mat-button color="accent" (click)="onCancel($event)">Cancel</button>
 </mat-dialog-actions>

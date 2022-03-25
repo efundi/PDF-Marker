@@ -1,9 +1,8 @@
 <ng-container>
-  <div mat-dialog-title class="pdf-marker-yes-and-no-confirmation-dialog-title"><h2>{{ title }}</h2></div>
-  <div mat-dialog-content class="pdf-marker-yes-and-no-confirmation-dialog-content">{{ message }}</div>
-  <div class="pdf-spacer" style="border: 1px solid #F5F5F5"></div>
-  <div mat-dialog-actions class="pdf-marker-yes-and-no-confirmation-dialog-actions">
-    <button class="pdf-marker-yes-and-no-confirmation-dialog-actions-yes" mat-button (click)="onButtonClick(yes)" cdkFocusInitial>Yes</button>&nbsp;&nbsp;&nbsp;
-    <button class="pdf-marker-yes-and-no-confirmation-dialog-actions-no" mat-button (click)="onButtonClick(no)">No</button>
+  <div mat-dialog-title><h2>{{ title }}</h2></div>
+  <div mat-dialog-content>{{ message }}</div>
+  <div mat-dialog-actions >
+    <button color="primary" mat-button mat-raised-button (click)="onButtonClick(yes)" cdkTrapFocus>Yes</button>&nbsp;&nbsp;&nbsp;
+    <button color="accent" mat-button (click)="onButtonClick(no)">No</button>
   </div>
 </ng-container>

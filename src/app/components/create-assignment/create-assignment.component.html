@@ -1,7 +1,7 @@
 <pdf-marker-alert></pdf-marker-alert>
 <form [formGroup]="createAssignmentForm">
   <h1>
-    <mat-icon>picture_as_pdf</mat-icon>&nbsp;{{ title }}</h1>
+    <mat-icon color="primary">picture_as_pdf</mat-icon>&nbsp;{{ title }}</h1>
   <mat-divider></mat-divider>
   <div class="pdf-spacer"></div>
   <mat-form-field class="settings-halfWidth">
@@ -104,8 +104,12 @@
     </table>
   </div>
   <div class="pdf-marker-submit">
-    <button type="button" mat-raised-button [disabled]="createAssignmentForm.invalid || studentRow.invalid"
-            (click)="onSubmit($event)">Submit
+    <button
+      type="button"
+      color="primary"
+      mat-raised-button
+      [disabled]="createAssignmentForm.invalid || studentRow.invalid"
+      (click)="onSubmit($event)">Submit
     </button>
   </div>
 </form>

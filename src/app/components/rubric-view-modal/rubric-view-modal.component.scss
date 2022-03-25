@@ -2,70 +2,6 @@ table {
   width: 100%;
 }
 
-tr.example-detail-row {
-  height: 0;
-}
-
-.example-element-detail {
-  overflow: hidden;
-  display: flex;
-}
-
-.example-element-diagram {
-  min-width: 80px;
-  border: 2px solid black;
-  padding: 8px;
-  font-weight: lighter;
-  margin: 8px 0;
-  height: 104px;
-  width: 250px;
-}
-
-* {
-  font-size: .95em;
-}
-h5 {
-  text-align: center;
-  font-size: 1.1em;
-}
-
-
-.pdf-marker-yes-and-no-confirmation-dialog-yes {
-  background: #71C341;
-}
-
-.pdf-marker-yes-and-no-confirmation-dialog-no {
-  background: #BD362F;
-}
- .closeButton {
-   float: right;
- }
-.pdf-marker-yes-and-no-confirmation-dialog-content {
-  font-size: 16px;
-  font-family: 'opensans-light', Helvetica, Roboto, "Helvetica Neue", sans-serif;
-  text-align: justify;
-}
-
-.pdf-marker-yes-and-no-confirmation-dialog-actions {
-  button {
-    font-family: 'opensans-light', Helvetica, Roboto, "Helvetica Neue", sans-serif;
-    color: #fff;
-  }
-}
-
-.pdf-marker-yes-and-no-confirmation-dialog-yes {
-  background: #71C341;
-}
-
-.pdf-marker-yes-and-no-confirmation-dialog-no {
-  background: #BD362F;
-}
-
-.pdf-marker-form-labels {
-  font-weight: 500;
-}
-
-
 .pdf-marker-rubric-container {
   .mat-form-field {
     flex: 1;
@@ -78,15 +14,4 @@ h5 {
   align-items: center;
   background: #fff;
   margin-bottom: 0;
-}
-
-.mat-dialog-content::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  background: #F5F5F5;
-}
-
-.mat-dialog-content::-webkit-scrollbar-thumb {
-  border-radius: 10px;
-  background: var(--pdf-marker-primary);
 }
