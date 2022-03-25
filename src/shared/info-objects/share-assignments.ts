@@ -1,6 +1,7 @@
 export interface ShareAssignmentSubmission {
   studentName: string;
   studentNumber: string;
+  directoryName: string;
 }
 
 export interface ShareAssignments {
