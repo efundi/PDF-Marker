@@ -1,4 +1,4 @@
-import {PDFDocument, rgb, RotationTypes} from 'pdf-lib';
+import {PageSizes, PDFDocument, rgb, RotationTypes} from 'pdf-lib';
 import {isNullOrUndefinedOrEmpty} from '../utils';
 import {adjustPointsForResults} from './pdf-utils';
 import {IRubric} from '@shared/info-objects/rubric.class';
@@ -30,7 +30,8 @@ export function annotatePdfRubric(filePath: string, submissionInfo: RubricSubmis
     .then(pdfDoc => {
       rotatePages(pdfDoc, submissionInfo);
       let totalMark = 0;
-      let resultsPage = pdfDoc.addPage([1200.89, 595.28]);
+      const marksPageSize: [number, number] = [1200.89, 595.28];
+      let resultsPage = pdfDoc.addPage(marksPageSize);
       let yPosition: number = resultsPage.getHeight() - 15;
       let xPosition = 25;
       const headerSize = 14;
@@ -162,15 +163,16 @@ export function annotatePdfRubric(filePath: string, submissionInfo: RubricSubmis
           }
           // Rubric - loop for level descripotion -- end
         });
+
+        // check for max pages. Maybe use dimnesnsions rather?
+        if ((criteriaCount === 4) && (rubric.criterias.length > criteriaCount)) {
+          resultsPage = pdfDoc.addPage(marksPageSize);
+          yPosition = resultsPage.getHeight() - 15;
+          xPosition = 25;
+          criteriaCount = 0;
+        }
       });
-      // check for max pages. Maybe use dimnesnsions rather?
-      if ((criteriaCount === 4) && (rubric.criterias.length > criteriaCount)) {
-        pdfDoc.save();
-        resultsPage = pdfDoc.addPage([841.89, 595.28]);
-        yPosition = resultsPage.getHeight() - 15;
-        xPosition = 25;
-        criteriaCount = 0;
-      }
+
 
       return pdfDoc.save().then((data) => {
         return { pdfBytes: data, totalMark };
