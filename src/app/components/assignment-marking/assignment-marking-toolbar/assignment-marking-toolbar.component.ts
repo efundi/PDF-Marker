@@ -11,12 +11,12 @@ import {
   SimpleChanges
 } from '@angular/core';
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
-import {IconInfo} from '../../info-objects/icon.info';
+import {IconInfo} from '../../../info-objects/icon.info';
 import {
   AssignmentMarkingSessionService
-} from '../assignment-marking/assignment-marking-session.service';
+} from '../assignment-marking-session.service';
 import {Subscription} from 'rxjs';
-import {HIGHLIGHTER_OPTIONS, HighlighterColor} from '../../info-objects/highlighter-color';
+import {HIGHLIGHTER_OPTIONS, HighlighterColor} from '../../../info-objects/highlighter-color';
 
 export enum KEY_CODE {
   RIGHT_ARROW = 39,
@@ -24,11 +24,11 @@ export enum KEY_CODE {
 }
 
 @Component({
-  selector: 'pdf-marker-icons',
-  templateUrl: './icons.component.html',
-  styleUrls: ['./icons.component.scss']
+  selector: 'pdf-marker-assignment-marking-toolbar',
+  templateUrl: './assignment-marking-toolbar.component.html',
+  styleUrls: ['./assignment-marking-toolbar.component.scss']
 })
-export class IconsComponent implements OnInit, OnChanges, OnDestroy {
+export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnDestroy {
 
 
   @Output()

@@ -28,7 +28,7 @@ import {MatSort} from '@angular/material/sort';
 import {filter, find, isNil, sortBy} from 'lodash';
 import {StudentSubmission, TreeNodeType} from '@shared/info-objects/workspace';
 import * as _moment from 'moment';
-import {MARK_FILE, SUBMISSION_FOLDER} from '@shared/constants/constants';
+import {FEEDBACK_FOLDER, MARK_FILE, SUBMISSION_FOLDER} from '@shared/constants/constants';
 const moment = _moment;
 
 export interface AssignmentDetails {
@@ -49,6 +49,8 @@ export interface AssignmentDetails {
   status?: string;
 
   date?: string;
+
+  action?: 'view' | 'mark';
 
   submissionDirectoryName?: string;
 }
@@ -237,19 +239,31 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
             status: '',
           };
           const submissionDirectory = find(workspaceSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
+          const feedbackDirectory = find(workspaceSubmission.children, {type: TreeNodeType.FEEDBACK_DIRECTORY});
           const marksFile = find(workspaceSubmission.children, (c => c.name === MARK_FILE));
           if (marksFile) {
             value.date = moment(marksFile.dateModified).format('YYYY-MM-DD HH:mm:ss');
           }
 
-          const pdf = (submissionDirectory && submissionDirectory.children.length > 0) ? submissionDirectory.children[0].name : '';
+          let pdf = '';
+          let pdfPath = '';
+          let action;
+          if (submissionDirectory && submissionDirectory.children.length > 0) {
+            pdf = submissionDirectory.children[0].name;
+            pdfPath = PdfmUtilsService.buildFilePath(this.workspaceName, this.assignmentName, workspaceSubmission.name, SUBMISSION_FOLDER, pdf);
+            action = 'mark';
+          } else if (feedbackDirectory && feedbackDirectory.children.length > 0) {
+            pdf = feedbackDirectory.children[0].name;
+            pdfPath = PdfmUtilsService.buildFilePath(this.workspaceName, this.assignmentName, workspaceSubmission.name, FEEDBACK_FOLDER, pdf);
+            action = 'view';
+          }
           value.assignment = pdf;
-
           const gradesInfo = this.assignmentGrades
             .find(grade => grade[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
           value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5 : 0);
-          value.path = PdfmUtilsService.buildFilePath(this.workspaceName, this.assignmentName, workspaceSubmission.name, SUBMISSION_FOLDER, pdf);
+          value.path = pdfPath;
           value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7 : 'N/A');
+          value.action = action;
           values.push(value);
         });
         this.dataSource.data = sortBy(values, 'fullName');
@@ -277,18 +291,26 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
-  onSelectedPdf(element: any) {
+  onSelectedPdf(element: AssignmentDetails) {
     this.assignmentService.selectSubmission({
       workspaceName: PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
       assignmentName: this.assignmentName,
       pdfPath: element.path
     });
 
-    this.router.navigate([
-      RoutesEnum.ASSIGNMENT_MARKER,
-      PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
-      this.assignmentName,
-      element.path]);
+    if(element.action === 'mark') {
+      this.router.navigate([
+        RoutesEnum.ASSIGNMENT_MARKER,
+        PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
+        this.assignmentName,
+        element.path]);
+    } else {
+      this.router.navigate([
+        RoutesEnum.PDF_VIEWER,
+        PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
+        this.assignmentName,
+        element.path]);
+    }
   }
 
   onFinalizeAndExport(event) {

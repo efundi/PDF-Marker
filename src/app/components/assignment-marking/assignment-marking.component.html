@@ -1,11 +1,11 @@
 <div class="pdf-marker-assignment-marking-controls" *ngIf="isPdfLoaded">
-  <pdf-marker-icons
+  <pdf-marker-assignment-marking-toolbar
     [currentPage]="currentPage"
     (currentPageChange)="onPagedChanged($event)"
     [pages]="pdfDocument.numPages"
     [containsRubric]="!!rubric"
     (control)="onControl($event)">
-  </pdf-marker-icons>
+  </pdf-marker-assignment-marking-toolbar>
 </div>
 
 <div class="marking-container"
@@ -30,11 +30,11 @@
   </div>
 
   <div class="rubric-wrapper" *ngIf="isPdfLoaded && !!rubric" >
-    <pdf-marker-rubric-view-marking
+    <pdf-marker-rubric
       style="margin: 1rem"
-      [rubricMarking]="rubric"
+      [rubric]="rubric"
       [rubricSelections]="submissionInfo.marks">
-    </pdf-marker-rubric-view-marking>
+    </pdf-marker-rubric>
   </div>
 
 </div>

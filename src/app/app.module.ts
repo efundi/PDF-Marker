@@ -11,12 +11,9 @@ import {SideNavigationComponent} from './components/side-navigation/side-navigat
 import {
   YesAndNoConfirmationDialogComponent
 } from './components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
-import {MarkingCommentModalComponent} from './components/marking-comment-modal/marking-comment-modal.component';
 import {SnackBarComponent} from './components/snack-bar/snack-bar.component';
-import {RubricViewMarkingComponent} from './components/rubric-view-marking/rubric-view-marking.component';
 import {RubricCriteriaComponent} from './components/rubric-criteria/rubric-criteria.component';
 import {RubricComponent} from './components/rubric/rubric.component';
-import {MarkingHighlightModalComponent} from './components/marking-highlight-modal/marking-highlight-modal.component';
 import {AssignmentListComponent} from './components/assignment-list/assignment-list.component';
 import {
   RubricCriteriaLevelBlockComponent
@@ -43,17 +40,13 @@ import {
 import {CreateAssignmentComponent} from './components/create-assignment/create-assignment.component';
 import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-marking.component';
 import {GenericCommentsComponent} from './components/comments/comments.component';
-import {IconsComponent} from './components/icons/icons.component';
 import {RubricImportComponent} from './components/rubric-import/rubric-import.component';
 import {WorkingFolderComponent} from './components/working-folder/working-folder.component';
-import {AssignmentMarkingPageComponent} from './components/assignment-marking-page/assignment-marking-page.component';
 import {ScrollSpyDirective} from './directives/scroll-spy.directive';
-import {MarkTypeHighlightComponent} from './components/mark-type-highlight/mark-type-highlight.component';
 import {ScrollVisibilityDirective} from './directives/scroll-visibility.directive';
 import {AssignmentMarkingComponent} from './components/assignment-marking/assignment-marking.component';
 import {AssignmentOverviewComponent} from './components/assignment-overview/assignment-overview.component';
 import {ImportComponent} from './components/import/import.component';
-import {MarkTypeIconComponent} from './components/mark-type-icon/mark-type-icon.component';
 import {SettingsComponent} from './components/settings/settings.component';
 import {WelcomeComponent} from './components/welcome/welcome.component';
 import {ColorPickerModule} from 'ngx-color-picker';
@@ -73,7 +66,26 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
 import {MatSortModule} from '@angular/material/sort';
 import {CdkTreeModule} from '@angular/cdk/tree';
 import {MatTreeModule} from '@angular/material/tree';
-import {A11yModule} from "@angular/cdk/a11y";
+import {A11yModule} from '@angular/cdk/a11y';
+import {
+  AssignmentMarkingToolbarComponent
+} from './components/assignment-marking/assignment-marking-toolbar/assignment-marking-toolbar.component';
+import {
+  AssignmentMarkingPageComponent
+} from './components/assignment-marking/assignment-marking-page/assignment-marking-page.component';
+import {
+  MarkingHighlightModalComponent
+} from './components/assignment-marking/marking-highlight-modal/marking-highlight-modal.component';
+import {
+  MarkingCommentModalComponent
+} from './components/assignment-marking/marking-comment-modal/marking-comment-modal.component';
+import {MarkTypeIconComponent} from './components/assignment-marking/mark-type-icon/mark-type-icon.component';
+import {
+  MarkTypeHighlightComponent
+} from './components/assignment-marking/mark-type-highlight/mark-type-highlight.component';
+import { PdfViewerComponent } from './components/pdf-viewer/pdf-viewer.component';
+import { PdfViewerPageComponent } from './components/pdf-viewer/pdf-viewer-page/pdf-viewer-page.component';
+import { PdfViewerToolbarComponent } from './components/pdf-viewer/pdf-viewer-toolbar/pdf-viewer-toolbar.component';
 
 @NgModule({
   declarations: [
@@ -89,7 +101,8 @@ import {A11yModule} from "@angular/cdk/a11y";
     SnackBarComponent,
     RubricViewModalComponent,
     RubricCriteriaLevelBlockComponent,
-    RubricViewMarkingComponent,
+    AssignmentMarkingToolbarComponent,
+    AssignmentMarkingPageComponent,
     RubricCriteriaComponent,
     RubricComponent,
     MarkingHighlightModalComponent,
@@ -102,16 +115,17 @@ import {A11yModule} from "@angular/cdk/a11y";
     GenericCommentsComponent,
     HomeComponent,
     ImportComponent,
-    IconsComponent,
     MarkTypeIconComponent,
     RubricImportComponent,
     SettingsComponent,
     WelcomeComponent,
     WorkingFolderComponent,
-    AssignmentMarkingPageComponent,
     ScrollSpyDirective,
     MarkTypeHighlightComponent,
     ScrollVisibilityDirective,
+    PdfViewerComponent,
+    PdfViewerPageComponent,
+    PdfViewerToolbarComponent,
   ],
   imports: [
     HttpClientModule,

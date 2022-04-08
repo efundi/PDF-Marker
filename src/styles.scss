@@ -441,16 +441,36 @@ pdf-marker-rubric-criteria-level-block {
   right: 0;
   bottom: 0;
   overflow: hidden;
-  opacity: 0.2;
+  //opacity: 0.2;
   line-height: 1.0;
 }
 
 .annotation-layer > section {
-  color: transparent;
   position: absolute;
   white-space: pre;
-  cursor: text;
+  cursor: pointer;
   transform-origin: 0% 0%;
+
+  &.highlightAnnotation:before{
+    top: calc(8px / -1.33);// DPI / font size magic
+  }
+
+
+  &.squareAnnotation:before{
+    left: calc(25px / 1.33);
+    top: calc(12px / -1.33);
+  }
+
+  &:before{
+    content: 'comment';
+    font-family: "Material Icons";
+    height: calc(16px / 1.33); // DPI / font size magic
+    width: calc(16px / 1.33); // DPI / font size magic
+    font-size: calc(16px / 1.33); // DPI / font size magic
+    color: var(--pdf-marker-secondary);
+    position: absolute;
+
+  }
 }
 
 .annotation-layer > .linkAnnotation > a {
@@ -467,6 +487,32 @@ pdf-marker-rubric-criteria-level-block {
   }
 }
 
+.annotation-layer {
+  .popupWrapper{
+    width: 250px;
+    position: relative;
+    margin-left: 8px;
+    border: 1px solid #dedede;
+    border-radius: 5px;
+  }
+  .popup{
+    border-radius: 5px;
+    box-shadow: 0 7px 14px #3b415e1a, 0 3px 6px #00000012 !important;
+    padding: 7px;
+  }
+  h1 {
+    font-size: 1rem;
+    margin-top: 0;
+    white-space: pre-wrap;
+  }
+  .popupContent {
+    font-size: 0.7rem;
+    white-space: pre-wrap;
+  }
+  .popupDate {
+    display: none; // We don't fill dates
+  }
+}
 
 .highlight-menu{
   background: #3d3d3d;

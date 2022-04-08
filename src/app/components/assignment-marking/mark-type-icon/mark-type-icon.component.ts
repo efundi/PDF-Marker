@@ -2,7 +2,7 @@ import {Component, ElementRef, Input, OnDestroy, OnInit, Renderer2} from '@angul
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {MatDialogConfig} from '@angular/material/dialog';
-import {AppService} from '../../services/app.service';
+import {AppService} from '../../../services/app.service';
 import {
   MarkingCommentModalComponent
 } from '../marking-comment-modal/marking-comment-modal.component';
@@ -14,7 +14,7 @@ import {
 } from '../assignment-marking-page/assignment-marking-page.component';
 import {
   AssignmentMarkingSessionService
-} from '../assignment-marking/assignment-marking-session.service';
+} from '../assignment-marking-session.service';
 
 @Component({
   selector: 'pdf-marker-mark-type-icon',

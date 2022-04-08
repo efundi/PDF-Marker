@@ -91,5 +91,11 @@ export class AssignmentMarkingSessionService implements OnDestroy {
 
     this.iconChanged.complete();
     this.iconChanged.unsubscribe();
+
+    this.zoomChanged.complete();
+    this.zoomChanged.unsubscribe();
+
+    this.highlighterColourChanged.complete();
+    this.highlighterColourChanged.unsubscribe();
   }
 }
