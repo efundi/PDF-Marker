@@ -67,9 +67,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
             entry = zipEntry.name;
           }
         });
-        console.log('entry: ' + entry);
         const entryPath = entry.split('/');
-        console.log('entryPath: ' + entryPath);
         if (entryPath.length > 0) {
           const oldPath = entryPath[0];
           let foundCount = 0;

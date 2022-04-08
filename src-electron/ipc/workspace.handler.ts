@@ -49,7 +49,6 @@ export function createWorkingFolder(event: IpcMainInvokeEvent, workFolderName: s
       config.folders = [];
     }
     config.folders.push(fullPath);
-    console.log(config);
     return updateConfigFile(config).then(() => fullPath);
   });
 }
@@ -66,14 +65,12 @@ export function updateWorkspaceName(event: IpcMainInvokeEvent, workspaceName: st
     }
     try {
       renameSync(currPath, newPath);
-      console.log('Successfully renamed the directory.');
       const foundIndex = folders.findIndex(x => x === currPath);
       folders[foundIndex] = newPath;
       config.folders = folders;
       writeFileSync(CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
       return newPath;
     } catch (e) {
-      console.log(e);
       return Promise.reject(e.message);
     }
   });
@@ -103,7 +100,6 @@ export function moveWorkspaceAssignments(
         try {
           moveSync(assignmentPath, newAssignmentPath);
         } catch (e) {
-          console.log(e);
           error = e.message;
           return false; // Stop looping
         }

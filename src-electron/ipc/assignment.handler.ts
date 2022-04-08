@@ -309,13 +309,11 @@ function saveSubmissionInfo(studentLocation: string, submissionInfo: SubmissionI
 function saveToMarks(studentLocation: string, marks: SubmissionInfo, totalMark: number): Promise<string> {
 
   return getConfig().then((config) => {
-    // console.log("Path Recieved: " + req.body.location);
     const studentFolder = config.defaultPath + sep + studentLocation.replace(/\//g, sep);
     return checkAccess(studentFolder).then(() => {
 
       return saveSubmissionInfo(studentFolder, marks).then(() => {
         const assignmentFolder = dirname(studentFolder);
-        console.log('assignmentFolder: ' + assignmentFolder);
 
         return checkAccess(assignmentFolder + sep + GRADES_FILE).then(() => {
 
@@ -831,7 +829,6 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
                         return Promise.reject('Failed to save mark');
                       }
                     }, (error) => {
-                      console.log(error);
                       return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
                     });
                   }
