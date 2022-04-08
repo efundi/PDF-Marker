@@ -25,7 +25,10 @@ export function getAssignmentDirectory(workspaceName: string, assignmentName: st
   });
 }
 
-export function writeAssignmentSettings(workspaceName: string, assignmentName: string, settings: AssignmentSettingsInfo): Promise<AssignmentSettingsInfo> {
+export function writeAssignmentSettings(
+  workspaceName: string,
+  assignmentName: string,
+  settings: AssignmentSettingsInfo): Promise<AssignmentSettingsInfo> {
   return getAssignmentDirectory(workspaceName, assignmentName).then((workingDirectory) => {
     return writeFile(workingDirectory + sep + SETTING_FILE, JSON.stringify(settings));
   }).then(() => settings);
