@@ -88,7 +88,7 @@
         matInput
         type="text"
         formControlName="pageNumber"
-        (change)="onPageNumberChange()" [style.width]="(iconForm.get('pageNumber')?.value + '')?.length + 'ch'">
+        (change)="onPageNumberChange()" [style.width]="(pages + '')?.length + 1 + 'ch'">
       / {{ pages }}
     </div>
 

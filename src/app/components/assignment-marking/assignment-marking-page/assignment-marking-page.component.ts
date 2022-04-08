@@ -15,21 +15,21 @@ import {EventBus, LinkTarget, PDFLinkService} from 'pdfjs-dist/web/pdf_viewer';
 import {MarkTypeIconComponent} from '../mark-type-icon/mark-type-icon.component';
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
 import {MarkingCommentModalComponent} from '../marking-comment-modal/marking-comment-modal.component';
-import {AppService} from '../../services/app.service';
-import {AssignmentMarkingComponent} from '../assignment-marking/assignment-marking.component';
+import {AppService} from '../../../services/app.service';
+import {AssignmentMarkingComponent} from '../assignment-marking.component';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {firstValueFrom, Observable, Subscription} from 'rxjs';
 import {cloneDeep, isNil} from 'lodash';
-import {AssignmentMarkingSessionService} from '../assignment-marking/assignment-marking-session.service';
-import {IconInfo} from '../../info-objects/icon.info';
+import {AssignmentMarkingSessionService} from '../assignment-marking-session.service';
+import {IconInfo} from '../../../info-objects/icon.info';
 import {MarkTypeHighlightComponent} from '../mark-type-highlight/mark-type-highlight.component';
 import {PageViewport} from 'pdfjs-dist/types/web/interfaces';
-import {ScrollVisibilityDirective} from '../../directives/scroll-visibility.directive';
-import {BusyService} from '../../services/busy.service';
+import {ScrollVisibilityDirective} from '../../../directives/scroll-visibility.directive';
+import {BusyService} from '../../../services/busy.service';
 import {PageSettings, SubmissionType} from '@shared/info-objects/submission.info';
 import {
   YesAndNoConfirmationDialogComponent
-} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+} from '../../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {MatDialogConfig} from '@angular/material/dialog';
 
 const eventBus = new EventBus();

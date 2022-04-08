@@ -26,7 +26,7 @@ import {
   YesAndNoConfirmationDialogComponent
 } from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {AssignmentMarkingSessionService, ZoomChangeEvent} from './assignment-marking-session.service';
-import {AssignmentMarkingPageComponent} from '../assignment-marking-page/assignment-marking-page.component';
+import {AssignmentMarkingPageComponent} from './assignment-marking-page/assignment-marking-page.component';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
@@ -53,7 +53,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
               private busyService: BusyService,
               private el: ElementRef,
               private dialog: MatDialog,
-              private resolver: ComponentFactoryResolver,
               private activatedRoute: ActivatedRoute,
               private router: Router,
               private appService: AppService,

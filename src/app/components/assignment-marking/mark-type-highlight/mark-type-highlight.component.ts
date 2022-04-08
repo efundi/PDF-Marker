@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, Renderer2, ViewChild} from '@angular/core';
 import {
   AssignmentMarkingSessionService
-} from '../assignment-marking/assignment-marking-session.service';
+} from '../assignment-marking-session.service';
 import {Subscription} from 'rxjs';
 import {
   AssignmentMarkingPageComponent
@@ -9,11 +9,11 @@ import {
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {cloneDeep, find} from 'lodash';
 import {MatDialogConfig} from '@angular/material/dialog';
-import {AppService} from '../../services/app.service';
+import {AppService} from '../../../services/app.service';
 import {
   MarkingHighlightModalComponent
 } from '../marking-highlight-modal/marking-highlight-modal.component';
-import {HIGHLIGHTER_OPTIONS, HighlighterColor} from '../../info-objects/highlighter-color';
+import {HIGHLIGHTER_OPTIONS, HighlighterColor} from '../../../info-objects/highlighter-color';
 import {MatMenuTrigger} from '@angular/material/menu';
 
 

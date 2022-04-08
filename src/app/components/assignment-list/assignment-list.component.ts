@@ -8,7 +8,13 @@ import {RoutesEnum} from '../../utils/routes.enum';
 import {Router} from '@angular/router';
 import {MatTreeFlatDataSource, MatTreeFlattener, MatTreeNestedDataSource} from '@angular/material/tree';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
-import {DEFAULT_WORKSPACE, GRADES_FILE, PDFM_FILES_FILTER, SUBMISSION_FOLDER} from '@shared/constants/constants';
+import {
+  DEFAULT_WORKSPACE,
+  FEEDBACK_FOLDER,
+  GRADES_FILE,
+  PDFM_FILES_FILTER,
+  SUBMISSION_FOLDER
+} from '@shared/constants/constants';
 let treeId = 0;
 /**
  * Tree node that has a reference to the parent
@@ -150,7 +156,9 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     } else if (node.type === TreeNodeType.WORKSPACE) {
       this.openWorkspaceOverview(node);
     } else if (node.type === TreeNodeType.FILE && node.parent.type === TreeNodeType.SUBMISSIONS_DIRECTORY) {
-      this.openMarking(node);
+      this.openDocument(node, true);
+    } else if (node.type === TreeNodeType.FILE && node.parent.type === TreeNodeType.FEEDBACK_DIRECTORY) {
+      this.openDocument(node, false);
     }
   }
   private static transformer = (node: DisplayTreeNode, level: number) => {
@@ -170,20 +178,30 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW, node.name]);
   }
 
-  private openMarking(node: DisplayTreeNode): void {
+  private openDocument(node: DisplayTreeNode, marking: boolean): void {
 
     const submission = node.parent.parent;
     const assignment = submission.parent;
     const workspaceName = assignment.parent ? assignment.parent.name : DEFAULT_WORKSPACE;
 
     const assignmentName = assignment.name;
-    const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, SUBMISSION_FOLDER, node.name);
-    this.assignmentService.selectSubmission({
-      workspaceName,
-      assignmentName,
-      pdfPath
-    });
-    this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
+    if (marking) {
+      const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, SUBMISSION_FOLDER, node.name);
+      this.assignmentService.selectSubmission({
+        workspaceName,
+        assignmentName,
+        pdfPath
+      });
+      this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
+    } else {
+      const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, FEEDBACK_FOLDER, node.name);
+      this.assignmentService.selectSubmission({
+        workspaceName,
+        assignmentName,
+        pdfPath
+      });
+      this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);
+    }
   }
 
   ngOnDestroy() {

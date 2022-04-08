@@ -13,6 +13,7 @@ import {AssignmentOverviewComponent} from './components/assignment-overview/assi
 import {SettingsComponent} from './components/settings/settings.component';
 import {WorkingFolderComponent} from './components/working-folder/working-folder.component';
 import {RubricImportComponent} from './components/rubric-import/rubric-import.component';
+import {PdfViewerComponent} from "./components/pdf-viewer/pdf-viewer.component";
 
 
 const routes: Routes = [
@@ -28,6 +29,7 @@ const routes: Routes = [
   { path: 'marker/assignment/workspaceOverview/:workspaceName', component: AssignmentWorkspaceOverviewComponent },
   { path: 'marker/assignment/workingFolder', component: WorkingFolderComponent },
   { path: 'marker/assignment/marking/:workspaceName/:assignmentName/:pdf', component: AssignmentMarkingComponent },
+  { path: 'marker/assignment/viewer/:workspaceName/:assignmentName/:pdf', component: PdfViewerComponent },
   { path: 'marker/assignment/rubric', component: RubricImportComponent },
   { path: 'marker/assignment/comments', component: GenericCommentsComponent },
   { path: '**', redirectTo: '', pathMatch: 'full'}

@@ -1,0 +1,12 @@
+<div
+  scrollVisibility
+  (visibilityChanged)="onVisibilityChanged($event)"
+  scrollTarget=".pages-wrapper"
+  class="page-wrapper boundary pdf-marker-assignment-marking-container"
+  #pageWrapper>
+  <canvas #pdfCanvas> </canvas>
+  <div class="annotation-layer" #annotationLayer></div>
+  <div class="waiting" *ngIf="renderState !== 'RENDERED'">
+    <mat-spinner></mat-spinner>
+  </div>
+</div>

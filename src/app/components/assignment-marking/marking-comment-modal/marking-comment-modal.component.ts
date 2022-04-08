@@ -1,9 +1,9 @@
 import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
-import {AppService} from '../../services/app.service';
+import {AppService} from '../../../services/app.service';
 import {IComment} from '@shared/info-objects/comment.class';
-import {CommentService} from '../../services/comment.service';
+import {CommentService} from '../../../services/comment.service';
 import {MatSelectChange} from '@angular/material/select';
 import {Subscription} from 'rxjs';
 import {isNil} from 'lodash';

@@ -1,11 +1,11 @@
 import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {IComment} from '@shared/info-objects/comment.class';
-import {AppService} from '../../services/app.service';
+import {AppService} from '../../../services/app.service';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {CommentService} from '../../services/comment.service';
+import {CommentService} from '../../../services/comment.service';
 import {MatSelectChange} from '@angular/material/select';
-import {isNil} from "lodash";
+import {isNil} from 'lodash';
 
 @Component({
   selector: 'pdf-marker-marking-highlight-modal',
