@@ -24,7 +24,7 @@ import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
-import {MatSort} from '@angular/material/sort';
+import {MatSort, MatSortable, Sort} from '@angular/material/sort';
 import {filter, find, isNil, sortBy} from 'lodash';
 import {StudentSubmission, TreeNodeType} from '@shared/info-objects/workspace';
 import * as _moment from 'moment';
@@ -80,6 +80,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
   private rubricSubscription: Subscription;
+  private sortSubscription: Subscription;
   private settings: SettingInfo;
   private assignmentSettings: AssignmentSettingsInfo;
   private previouslyEmitted: string;
@@ -397,6 +398,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
     this.rubricSubscription.unsubscribe();
+    this.sortSubscription.unsubscribe();
   }
 
   /** Whether the number of selected elements matches the total number of rows. */
@@ -466,7 +468,21 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   ngAfterViewInit() {
-    this.sort.sort(this.sort.sortables.get('fullName'));
+    this.sortSubscription = this.sort.sortChange.subscribe((change) => {
+      localStorage.setItem('assignment-overview-sort', JSON.stringify({
+        id: change.active,
+        start: change.direction
+      }));
+    });
+
+    const value = localStorage.getItem('assignment-overview-sort');
+    let sort: MatSortable = {id: 'fullName', start: 'asc'} as MatSortable;
+    if (!isNil(value)) {
+      try {
+        sort = JSON.parse(value);
+      } catch (e) {}
+    }
+    this.sort.sort(sort);
     this.dataSource.sort = this.sort;
     this.dataSource.paginator = this.paginator;
   }
