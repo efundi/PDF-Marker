@@ -461,7 +461,7 @@ pdf-marker-rubric-criteria-level-block {
     top: calc(12px / -1.33);
   }
 
-  &:before{
+  &:not(.linkAnnotation):before{
     content: 'comment';
     font-family: "Material Icons";
     height: calc(16px / 1.33); // DPI / font size magic
