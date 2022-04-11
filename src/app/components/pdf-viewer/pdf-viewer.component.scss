@@ -6,3 +6,31 @@
   width: inherit;
   z-index: 1000;
 }
+
+.viewer-container {
+
+  display: flex;
+  flex-direction: row;
+
+  .pages-wrapper {
+    flex-grow: 1;
+    overflow-x: auto;
+    background: #999999;
+    flex-direction: column;
+
+    /* view height - navbars + borders */
+    height: calc(100vh - 132px);
+    margin-right: -23px;
+  }
+
+  .pages-wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: #F5F5F5;
+  }
+
+  .pages-wrapper::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: var(--pdf-marker-primary);
+  }
+}

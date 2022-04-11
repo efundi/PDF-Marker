@@ -1,29 +1,14 @@
-import {
-  Component,
-  ComponentFactoryResolver,
-  ElementRef,
-  OnInit,
-  QueryList,
-  Renderer2,
-  ViewChildren
-} from '@angular/core';
-import {getDocument, PDFDocumentProxy} from "pdfjs-dist";
-import {
-  AssignmentMarkingPageComponent
-} from "../assignment-marking/assignment-marking-page/assignment-marking-page.component";
-import {PdfViewerPageComponent} from "./pdf-viewer-page/pdf-viewer-page.component";
-import {from, mergeMap, Observable, Subscription} from "rxjs";
-import {AssignmentService} from "../../services/assignment.service";
-import {BusyService} from "../../services/busy.service";
-import {MatDialog} from "@angular/material/dialog";
-import {ActivatedRoute, Router} from "@angular/router";
-import {AppService} from "../../services/app.service";
-import {
-  AssignmentMarkingSessionService,
-  ZoomChangeEvent
-} from "../assignment-marking/assignment-marking-session.service";
-import {isNil} from "lodash";
-import {ToolbarSettingChange} from "./pdf-viewer-toolbar/pdf-viewer-toolbar.component";
+import {Component, ElementRef, OnInit, QueryList, Renderer2, ViewChildren} from '@angular/core';
+import {getDocument, PDFDocumentProxy} from 'pdfjs-dist';
+import {PdfViewerPageComponent} from './pdf-viewer-page/pdf-viewer-page.component';
+import {from, mergeMap, Observable, Subscription} from 'rxjs';
+import {AssignmentService} from '../../services/assignment.service';
+import {BusyService} from '../../services/busy.service';
+import {MatDialog} from '@angular/material/dialog';
+import {ActivatedRoute} from '@angular/router';
+import {ZoomChangeEvent} from '../assignment-marking/assignment-marking-session.service';
+import {isNil} from 'lodash';
+import {ToolbarSettingChange} from './pdf-viewer-toolbar/pdf-viewer-toolbar.component';
 
 @Component({
   selector: 'pdf-marker-pdf-viewer',
@@ -83,8 +68,8 @@ export class PdfViewerComponent implements OnInit {
 
         this.isPdfLoaded = true;
       }, (error) => {
-        console.error(error)
-      })
+        console.error(error);
+      });
     });
 
   }
