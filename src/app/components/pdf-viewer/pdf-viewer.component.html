@@ -7,13 +7,13 @@
   </pdf-marker-pdf-viewer-toolbar>
 </div>
 
-<div class="marking-container">
+<div class="viewer-container">
   <div
     class="pages-wrapper"
     *ngIf="isPdfLoaded"
     scrollSpy
     scrollTarget=".pages-wrapper"
-    [spiedTags]="['PDF-MARKER-ASSIGNMENT-MARKING-PAGE']"
+    [spiedTags]="['PDF-MARKER-PDF-VIEWER-PAGE']"
     (sectionChange)="onSectionChange($event)" >
     <pdf-marker-pdf-viewer-page
       [attr.id]="pageIndex"

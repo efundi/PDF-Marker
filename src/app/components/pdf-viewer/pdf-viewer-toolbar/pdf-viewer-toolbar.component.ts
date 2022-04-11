@@ -12,8 +12,7 @@ import {
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {KEY_CODE} from '../../assignment-marking/assignment-marking-toolbar/assignment-marking-toolbar.component';
 import {Subscription} from 'rxjs';
-import {IconInfo} from '../../../info-objects/icon.info';
-import {ZoomChangeEvent} from "../../assignment-marking/assignment-marking-session.service";
+import {ZoomChangeEvent} from '../../assignment-marking/assignment-marking-session.service';
 
 export interface ToolbarSettingChange {
   zoom?: ZoomChangeEvent;
