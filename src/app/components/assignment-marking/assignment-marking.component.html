@@ -12,6 +12,7 @@
      [class.show-rubric]="showRubric"
      [class.show-pdf]="showPdf">
   <div
+    #pagesWrapper
     class="pages-wrapper"
     *ngIf="isPdfLoaded"
     scrollSpy

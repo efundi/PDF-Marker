@@ -58,14 +58,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
               private appService: AppService,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) { }
 
-  @ViewChild('container', {static: true})
-  private container: ElementRef;
-
-  @ViewChild('markerContainer', {static: true})
-  private markerContainer: ElementRef;
-
-  @ViewChild('containerRef', {read: ViewContainerRef, static: false})
-  actualContainer: ViewContainerRef;
+  @ViewChild('pagesWrapper', {static: false})
+  private pagesWrapper: ElementRef;
 
   pdfDocument: PDFDocumentProxy;
 
@@ -230,7 +224,14 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   onPagedChanged(pageNumber: number) {
     this.currentPage = pageNumber;
-    this.pdfPages.get(pageNumber - 1).scrollIntoView();
+    const pdfPage = this.pdfPages.get(pageNumber - 1);
+    const pageElement: HTMLElement = pdfPage.elementRef.nativeElement;
+    const pagesElement: HTMLElement = this.pagesWrapper.nativeElement;
+    pagesElement.scrollTo({
+      left: pagesElement.scrollLeft,
+      top: pageElement.offsetTop - 64,
+      behavior: 'smooth'
+    });
   }
 
   onControl(control: string) {
@@ -463,4 +464,5 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     // Scroll to correct place
     element.scrollTo(scrollLeft, scrollTop + PAGE_Y_OFFSET);
   }
+
 }

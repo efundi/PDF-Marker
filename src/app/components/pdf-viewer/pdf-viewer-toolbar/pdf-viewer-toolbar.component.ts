@@ -10,7 +10,6 @@ import {
   SimpleChanges
 } from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {KEY_CODE} from '../../assignment-marking/assignment-marking-toolbar/assignment-marking-toolbar.component';
 import {Subscription} from 'rxjs';
 import {ZoomChangeEvent} from '../../assignment-marking/assignment-marking-session.service';
 
@@ -111,15 +110,15 @@ export class PdfViewerToolbarComponent implements OnInit, OnChanges, OnDestroy {
   @HostListener('window:keyup', ['$event'])
   keyEvent(event: KeyboardEvent) {
     event.stopPropagation();
-    if (event.keyCode === KEY_CODE.RIGHT_ARROW) {
+    if (event.key === 'ArrowRight') {
       if (this.currentPage !== this.pages) {
         this.nextPage();
       }
     }
 
-    if (event.keyCode === KEY_CODE.LEFT_ARROW) {
+    if (event.key === 'ArrowLeft') {
       if (this.currentPage !== 1) {
-        this.previousPage()
+        this.previousPage();
       }
     }
   }

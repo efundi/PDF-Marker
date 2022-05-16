@@ -95,7 +95,7 @@ export class PdfViewerPageComponent implements OnInit, OnDestroy {
 
 
   constructor(private renderer: Renderer2,
-              private elementRef: ElementRef,
+              public elementRef: ElementRef,
               private appService: AppService,
               private busyService: BusyService) { }
 
@@ -183,9 +183,5 @@ export class PdfViewerPageComponent implements OnInit, OnDestroy {
     }).then(() => {
       this.busyService.stop();
     });
-  }
-
-  scrollIntoView() {
-    this.elementRef.nativeElement.scrollIntoView({behavior: 'smooth', block: 'start', inline: 'start'});
   }
 }

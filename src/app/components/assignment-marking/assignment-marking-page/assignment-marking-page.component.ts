@@ -143,7 +143,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   private viewport: PageViewport;
 
   constructor(private renderer: Renderer2,
-              private elementRef: ElementRef,
+              public elementRef: ElementRef,
               private appService: AppService,
               private busyService: BusyService,
               public assignmentMarkingComponent: AssignmentMarkingComponent,
@@ -471,11 +471,6 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       });
     }
   }
-
-  scrollIntoView() {
-    this.elementRef.nativeElement.scrollIntoView({behavior: 'smooth', block: 'start', inline: 'start'});
-  }
-
 
   /**
    * Prompt to warn the user that marks will be removed when rotation the page
