@@ -1,4 +1,4 @@
-import {Component, ElementRef, OnInit, QueryList, Renderer2, ViewChildren} from '@angular/core';
+import {Component, ElementRef, OnInit, QueryList, Renderer2, ViewChild, ViewChildren} from '@angular/core';
 import {getDocument, PDFDocumentProxy} from 'pdfjs-dist';
 import {PdfViewerPageComponent} from './pdf-viewer-page/pdf-viewer-page.component';
 import {from, mergeMap, Observable, Subscription} from 'rxjs';
@@ -24,6 +24,9 @@ export class PdfViewerComponent implements OnInit {
    */
   @ViewChildren('pdfPage', {read: PdfViewerPageComponent})
   pdfPages: QueryList<PdfViewerPageComponent>;
+
+  @ViewChild('pagesWrapper', {static: false})
+  private pagesWrapper: ElementRef;
 
   isPdfLoaded: boolean;
   pdfDocument: PDFDocumentProxy;
@@ -59,16 +62,18 @@ export class PdfViewerComponent implements OnInit {
       this.workspaceName = params['workspaceName'];
       this.assignmentName = params['assignmentName'];
       this.pdf = params['pdf'];
-
       this.isPdfLoaded = false;
+      this.currentPage = 1;
       this.assignmentService.getFile(this.pdf)
         .pipe(
           mergeMap((data) => this.loadPdf(data))
-        ).subscribe(() => {
-
-        this.isPdfLoaded = true;
-      }, (error) => {
-        console.error(error);
+        ).subscribe({
+        next: () => {
+          this.isPdfLoaded = true;
+        },
+        error: (error) => {
+          console.error(error);
+        }
       });
     });
 
@@ -94,7 +99,14 @@ export class PdfViewerComponent implements OnInit {
 
   onPagedChanged(pageNumber: number) {
     this.currentPage = pageNumber;
-    this.pdfPages.get(pageNumber - 1).scrollIntoView();
+    const pdfPage = this.pdfPages.get(pageNumber - 1);
+    const pageElement: HTMLElement = pdfPage.elementRef.nativeElement;
+    const pagesElement: HTMLElement = this.pagesWrapper.nativeElement;
+    pagesElement.scrollTo({
+      left: pagesElement.scrollLeft,
+      top: pageElement.offsetTop - 64,
+      behavior: 'smooth'
+    });
   }
 
   settingChanged(settingChange: ToolbarSettingChange) {
