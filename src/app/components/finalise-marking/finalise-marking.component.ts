@@ -1,7 +1,7 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
-import {isNil} from "lodash";
+import {isNil} from 'lodash';
 
 @Component({
   selector: 'pdf-marker-finalise-marking',

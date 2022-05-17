@@ -1,6 +1,5 @@
 import {
   Component,
-  ComponentFactoryResolver,
   ElementRef,
   HostListener,
   OnDestroy,
@@ -9,7 +8,6 @@ import {
   Renderer2,
   ViewChild,
   ViewChildren,
-  ViewContainerRef
 } from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {from, mergeMap, Observable, Subscription, tap, throwError} from 'rxjs';
@@ -276,7 +274,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         this.assignmentSettings = assignmentSettings;
         this.busyService.stop();
       },
-      error: (error) => {
+      error: () => {
         this.busyService.stop();
       }}
     );

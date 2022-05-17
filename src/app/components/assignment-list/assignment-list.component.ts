@@ -2,11 +2,11 @@ import {Component, OnDestroy, OnInit, TrackByFunction} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {Subscription} from 'rxjs';
 import {findTreeNodes, TreeNode, TreeNodeType, Workspace} from '@shared/info-objects/workspace';
-import {FlatTreeControl, NestedTreeControl} from '@angular/cdk/tree';
+import {FlatTreeControl} from '@angular/cdk/tree';
 import {isNil, map} from 'lodash';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {Router} from '@angular/router';
-import {MatTreeFlatDataSource, MatTreeFlattener, MatTreeNestedDataSource} from '@angular/material/tree';
+import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {
   DEFAULT_WORKSPACE,
@@ -115,6 +115,10 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
   FILE_TYPE = TreeNodeType.FILE;
 
   private assignmentSubscription: Subscription;
+  private static transformer = (node: DisplayTreeNode, level: number) => {
+    node.level = level;
+    return node;
+  }
 
   hasChild = (_: number, node: TreeNode) => (node.type !== TreeNodeType.FILE);
   trackBy: TrackByFunction<DisplayTreeNode> = (index: number, treeNode: DisplayTreeNode) => treeNode.id;
@@ -132,7 +136,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     this.assignmentService.selectedSubmissionChanged.subscribe((selectedSubmission) => {
       if (selectedSubmission) {
         let treePath = selectedSubmission.pdfPath;
-        if(selectedSubmission.workspaceName === DEFAULT_WORKSPACE){
+        if (selectedSubmission.workspaceName === DEFAULT_WORKSPACE) {
           treePath = DEFAULT_WORKSPACE + '/' + treePath;
         }
 
@@ -160,10 +164,6 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     } else if (node.type === TreeNodeType.FILE && node.parent.type === TreeNodeType.FEEDBACK_DIRECTORY) {
       this.openDocument(node, false);
     }
-  }
-  private static transformer = (node: DisplayTreeNode, level: number) => {
-    node.level = level;
-    return node;
   }
 
   private openAssignmentOverview(node: DisplayTreeNode): void {
@@ -208,7 +208,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     this.assignmentSubscription.unsubscribe();
   }
 
-  public collapseAll(){
+  public collapseAll() {
     this.treeControl.collapseAll();
   }
 }

@@ -147,7 +147,7 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
 
     this.assignmentMarkingPageComponent.onMarkChanged(this.index, updatedMark)
       .subscribe({
-        next: (success) => {
+        next: () => {
           // If the save was not a success, reset the mark to original location
           this.mark.coordinates.x = updatedMark.coordinates.x;
           this.mark.coordinates.y = updatedMark.coordinates.y;
@@ -168,7 +168,7 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
       });
   }
 
-  onTotalMarkChange(event: MouseEvent) {
+  onTotalMarkChange() {
     const number = parseInt(this.iconForm.controls.totalMark.value, 10);
     if (!isNaN(number)) {
       const updatedMark: MarkInfo = cloneDeep(this.mark);

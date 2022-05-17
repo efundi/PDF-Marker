@@ -1,6 +1,5 @@
 import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {ZipService} from '../../services/zip.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {FileExplorerModalComponent} from '../file-explorer-modal/file-explorer-modal.component';
 import {AlertService} from '../../services/alert.service';
@@ -26,8 +25,6 @@ import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 })
 export class ImportComponent implements OnInit {
 
-  readonly acceptMimeType = ['application/zip', 'application/x-zip-compressed'];
-
   readonly isAssignmentName: boolean = true;
 
   readonly noRubricDefaultValue: boolean = false;
@@ -49,15 +46,16 @@ export class ImportComponent implements OnInit {
   selected: string;
 
   private actualFilePath: string;
-  assignmentTypeID = 'Assignment';
   assignmentTypes = [
     {'name': 'Assignment'},
     {'name': 'Generic'}];
   selectedType: string;
-  selectedWorkspace: string;
+
+  private static getAssignmentNameFromFilename(filename: string): string {
+    return filename.replace(/\.[^/.]+$/, '');
+  }
 
   constructor(private fb: FormBuilder,
-              private zipService: ZipService,
               private dialog: MatDialog,
               private alertService: AlertService,
               private appService: AppService,
@@ -89,7 +87,7 @@ export class ImportComponent implements OnInit {
   private loadWorkspaces(): Observable<string[]> {
     return this.workspaceService.getWorkspaces()
       .pipe(
-        catchError(error => throwError(() => 'Unable to retrieve workspaces')),
+        catchError(() => throwError(() => 'Unable to retrieve workspaces')),
         tap((workspaces) => {
           if (workspaces) {
             this.workspaces = workspaces.map(item => {
@@ -105,13 +103,9 @@ export class ImportComponent implements OnInit {
 
   private loadRubrics(): Observable<IRubricName[]> {
     return this.rubricService.getRubricNames().pipe(
-      catchError(error => throwError(() => 'Unable to retrieve rubrics')),
+      catchError(() => throwError(() => 'Unable to retrieve rubrics')),
       tap((rubrics: IRubricName[]) => this.rubrics = rubrics)
     );
-  }
-
-  compareCategoryObjects(object1: any, object2: any) {
-    return object1 && object2 && object1.id === object2.id;
   }
 
   private initForm() {
@@ -145,23 +139,25 @@ export class ImportComponent implements OnInit {
   onFileChange(appSelectedPathInfo: AppSelectedPathInfo) {
 
     this.fc.assignmentZipFileText.setValue((appSelectedPathInfo) ? appSelectedPathInfo.basename : '');
-    this.fc.assignmentName.setValue(appSelectedPathInfo ? this.getAssignmentNameFromFilename(appSelectedPathInfo.fileName) : '');
+    this.fc.assignmentName.setValue(appSelectedPathInfo ? ImportComponent.getAssignmentNameFromFilename(appSelectedPathInfo.fileName) : '');
 
     this.selectedType = this.fc.assignmentType.value;
     if (this.selectedType === 'Assignment') {
       // Is zip, then checks structure.
-      this.importService.isValidSakaiZip(appSelectedPathInfo.selectedPath).subscribe((isValidFormat: boolean) => {
-        this.isValidFormat = isValidFormat;
-        if (!this.isValidFormat) {
-          this.alertService.error(SakaiConstants.formatErrorMessage);
-        } else {
-          this.clearError();
+      this.importService.isValidSakaiZip(appSelectedPathInfo.selectedPath).subscribe({
+        next: (isValidFormat: boolean) => {
+          this.isValidFormat = isValidFormat;
+          if (!this.isValidFormat) {
+            this.alertService.error(SakaiConstants.formatErrorMessage);
+          } else {
+            this.clearError();
+          }
+          this.isFileLoaded = true;
+          this.busyService.stop();
+        }, error: (error) => {
+          this.showErrorMessage(error);
+          this.busyService.stop();
         }
-        this.isFileLoaded = true;
-        this.busyService.stop();
-      }, error => {
-        this.showErrorMessage(error);
-        this.busyService.stop();
       });
     } else  if (this.selectedType === 'Generic') {
       this.isValidFormat = true;
@@ -172,15 +168,12 @@ export class ImportComponent implements OnInit {
     }
   }
 
-  private getAssignmentNameFromFilename(filename: string): string {
-    return filename.replace(/\.[^/.]+$/, '');
-  }
 
   get fc() {
     return this.importForm.controls;
   }
 
-  onRubricChange(event) {
+  onRubricChange() {
     if (this.fc.noRubric.value) {
       this.fc.rubric.setValidators(null);
       this.fc.rubric.updateValueAndValidity();
@@ -194,7 +187,7 @@ export class ImportComponent implements OnInit {
     this.importForm.updateValueAndValidity();
   }
 
-  onAssignmentTypeChange(event) {
+  onAssignmentTypeChange() {
     this.selectedType = this.fc.assignmentType.value;
     this.fc.assignmentType.updateValueAndValidity();
   }
@@ -222,7 +215,7 @@ export class ImportComponent implements OnInit {
     this.isModalOpened = !this.isModalOpened;
   }
 
-  onSubmit(event) {
+  onSubmit() {
     this.clearError();
     if (this.importForm.invalid || !this.isValidFormat) {
       this.showErrorMessage('Please fill in the correct details!');
@@ -245,13 +238,14 @@ export class ImportComponent implements OnInit {
       assignmentType: this.selectedType
     };
     this.busyService.start();
-    this.importService.importAssignmentFile(importData).subscribe((msg) => {
-
+    this.importService.importAssignmentFile(importData).subscribe({
+      next: (msg) => {
         this.busyService.stop();
         this.alertService.success(msg);
         this.resetForm();
-      }
-      , error => this.busyService.stop());
+      },
+      error: () => this.busyService.stop()
+    });
   }
 
 

@@ -99,7 +99,7 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.getPdfFile(pdfFileLocation));
   }
 
-  private removeMarksFile(workspaceName: string, assignmentName: string): Observable<any>{
+  private removeMarksFile(workspaceName: string, assignmentName: string): Observable<any> {
     return this.getAssignmentHierarchy(workspaceName, assignmentName).pipe(
       tap(workspaceAssignment => {
         workspaceAssignment.children.forEach((f, submissionIndex) => {
@@ -184,7 +184,4 @@ export class AssignmentService {
       );
   }
 
-  getMarkedAssignmentsCount(workspaceName: string, assignmentName): Observable<number> {
-    return fromIpcResponse(this.assignmentApi.getMarkedAssignmentsCount(workspaceName, assignmentName));
-  }
 }

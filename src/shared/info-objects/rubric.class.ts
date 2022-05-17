@@ -18,20 +18,6 @@ export interface IRubricName {
   inUse?: boolean;
 }
 
-export class RubricCriteria implements IRubricCriteria {
-  description: string;
-
-  name: string;
-
-  levels: IRubricCriteriaLevels[];
-
-  constructor() {
-    this.description = "";
-    this.name = "";
-    this.levels = [];
-  }
-}
-
 export interface IRubricCriteria {
 
   description: string;
@@ -41,20 +27,6 @@ export interface IRubricCriteria {
   levels: IRubricCriteriaLevels[];
 }
 
-
-export class RubricCriteriaLevels implements IRubricCriteriaLevels {
-  score: number;
-
-  description: string;
-
-  label: string;
-
-  constructor() {
-    this.score = 0;
-    this.description = "";
-    this.label = "";
-  }
-}
 
 export interface IRubricCriteriaLevels {
   score: number;

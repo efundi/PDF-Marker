@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {isNil} from 'lodash';
-import {DEFAULT_WORKSPACE} from "@shared/constants/constants";
+import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 
 @Injectable({
   providedIn: 'root'

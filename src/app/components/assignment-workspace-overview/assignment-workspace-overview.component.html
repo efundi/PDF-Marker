@@ -5,7 +5,9 @@
 
     <h1 class="pdf-marker-assignment-overview-assignment-name">{{workspaceName}} </h1>
     <span class="pdf-marker-fill-space"></span>
-    <button color="primary" mat-button mat-icon-button matTooltip="Manage Folders" (click)="manageFolders($event)"><mat-icon>drive_file_rename_outline</mat-icon></button>
+    <button color="primary" mat-button mat-icon-button matTooltip="Manage Folders" (click)="manageFolders()">
+      <mat-icon>drive_file_rename_outline</mat-icon>
+    </button>
   </div>
 
   <table mat-table [dataSource]="dataSource">
@@ -25,8 +27,8 @@
 
     <!--  Marked Count Column-->
     <ng-container matColumnDef="progress">
-      <th mat-header-cell *matHeaderCellDef> Marked / Not marked</th>
-      <td mat-cell *matCellDef="let element">{{element.marked}} / {{element.notMarked}}</td>
+      <th mat-header-cell *matHeaderCellDef> Marked</th>
+      <td mat-cell *matCellDef="let element">{{element.marked}}</td>
     </ng-container>
     <!-- iS Rubric Column -->
     <ng-container matColumnDef="type">

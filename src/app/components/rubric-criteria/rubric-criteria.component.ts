@@ -31,8 +31,7 @@ export class RubricCriteriaComponent implements OnInit {
         if (selectedIndex >= 0 && selectedIndex < this.criteria.levels.length) {
           if (this.selectedCriteriaLevel === this.criteria.levels.indexOf(criteriaLevel)) {
             this.selectedCriteriaLevel = -1;
-          }
-          else {
+          } else {
             this.selectedCriteriaLevel = this.criteria.levels.indexOf(criteriaLevel);
           }
           this.selectedCriteriaLevelIndex.emit(this.criteria.levels.indexOf(criteriaLevel));

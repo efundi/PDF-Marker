@@ -4,7 +4,7 @@ import {FlatTreeControl} from '@angular/cdk/tree';
 import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
 import {TreeNode} from '@shared/info-objects/workspace';
 import {DisplayTreeNode} from '../assignment-list/assignment-list.component';
-import {PDFM_FILE_SORT} from "@shared/constants/constants";
+import {PDFM_FILE_SORT} from '@shared/constants/constants';
 
 @Component({
   selector: 'pdf-marker-file-explorer-modal',

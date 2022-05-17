@@ -8,7 +8,8 @@ import {CreateAssignmentComponent} from '../components/create-assignment/create-
 })
 export class UnsavedChangesGuard implements CanDeactivate<CreateAssignmentComponent> {
 
-  constructor(){}
+  constructor() {
+  }
 
   canDeactivate(
     component: CreateAssignmentComponent,

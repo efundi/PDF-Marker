@@ -3,7 +3,7 @@ import {ImportInfo} from '@shared/info-objects/import.info';
 import {fromIpcResponse} from './ipc.utils';
 import {ImportIpcService} from '@shared/ipc/import.ipc-service';
 import {Observable} from 'rxjs';
-import {TreeNode} from "@shared/info-objects/workspace";
+import {TreeNode} from '@shared/info-objects/workspace';
 
 @Injectable({
   providedIn: 'root'

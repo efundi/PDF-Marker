@@ -37,9 +37,6 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
   @Output()
   currentPageChange: EventEmitter<number> = new EventEmitter<number>();
 
-  @Output()
-  paneDisplayOption: EventEmitter<string> = new EventEmitter<string>();
-
   @Input()
   currentPage: number;
 
@@ -186,13 +183,13 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
   @HostListener('window:keyup', ['$event'])
   keyEvent(event: KeyboardEvent) {
     event.stopPropagation();
-    if (event.keyCode === KEY_CODE.RIGHT_ARROW) {
+    if (event.key === 'ArrowRight') {
       if (this.currentPage !== this.pages) {
         this.control.emit('nextPage');
       }
     }
 
-    if (event.keyCode === KEY_CODE.LEFT_ARROW) {
+    if (event.key === 'ArrowLeft') {
       if (this.currentPage !== 1) {
         this.control.emit('prevPage');
       }
@@ -201,10 +198,6 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
 
   onColourChange(colour: string) {
     this.assignmentMarkingSessionService.colour = colour;
-  }
-
-  onPaneNavigationClick(option: string) {
-    this.paneDisplayOption.emit(option);
   }
 
   ngOnChanges(changes: SimpleChanges) {

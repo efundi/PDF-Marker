@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {forkJoin, Observable, ReplaySubject, Subscription, tap} from 'rxjs';
+import {forkJoin, Observable, Subscription, tap} from 'rxjs';
 import {AppService} from '../../services/app.service';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
@@ -189,7 +189,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           this.getGrades(this.workspaceName, this.assignmentName);
           this.busyService.stop();
         },
-        error:  (error) => {
+        error:  () => {
           this.appService.openSnackBar(false, 'Unable to read assignment settings');
           this.busyService.stop();
         }
@@ -299,7 +299,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       pdfPath: element.path
     });
 
-    if(element.action === 'mark') {
+    if (element.action === 'mark') {
       this.router.navigate([
         RoutesEnum.ASSIGNMENT_MARKER,
         PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
@@ -394,7 +394,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         next: (rubric: IRubric) => {
           this.openRubricModalDialog(rubric, this.assignmentSettings);
         },
-        error: (error) => {
+        error: () => {
           this.appService.openSnackBar(false, 'Rubric View Failed');
         }
       });
@@ -413,7 +413,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     };
 
     const dialogRef = this.appService.createDialog(RubricViewModalComponent, config);
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe(() => {
       this.getAssignmentSettings();
     });
   }

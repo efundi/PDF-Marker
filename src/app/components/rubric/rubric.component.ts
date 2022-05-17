@@ -1,7 +1,6 @@
 import {Component, Input, OnChanges, OnInit, Optional, SimpleChanges} from '@angular/core';
 import {Router} from '@angular/router';
 import {AssignmentService} from '../../services/assignment.service';
-import {AppService} from '../../services/app.service';
 import {cloneDeep, isArray} from 'lodash';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {AssignmentMarkingComponent} from '../assignment-marking/assignment-marking.component';
@@ -27,19 +26,18 @@ export class RubricComponent implements OnInit, OnChanges {
 
   constructor(private router: Router,
               private assignmentService: AssignmentService,
-              @Optional() private assignmentMarkingComponent: AssignmentMarkingComponent,
-              private appService: AppService) {
+              @Optional() private assignmentMarkingComponent: AssignmentMarkingComponent) {
   }
 
   ngOnInit() {
     this.isMarkingRubricPage = isArray(this.rubricSelections);
   }
 
-  getHighestScore(rubric: IRubric) {
+  getHighestScore() {
     let maxScore = 0;
-    this.rubric.criterias.forEach((value, index) => {
+    this.rubric.criterias.forEach((value) => {
       let curHighest = -1;
-      value.levels.forEach((value1, index1, array) => {
+      value.levels.forEach((value1) => {
         if (value1.score > curHighest) {
           curHighest = value1.score;
         }
@@ -82,7 +80,7 @@ export class RubricComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    this.getHighestScore(this.rubric);
+    this.getHighestScore();
     this.getTotalMark();
   }
 

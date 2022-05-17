@@ -2,8 +2,8 @@ import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {AppService} from '../../services/app.service';
 import {BusyService} from '../../services/busy.service';
-import {Subscription} from "rxjs";
-import {AssignmentListComponent} from "../assignment-list/assignment-list.component";
+import {Subscription} from 'rxjs';
+import {AssignmentListComponent} from '../assignment-list/assignment-list.component';
 
 @Component({
   selector: 'pdf-marker-side-navigation',
@@ -16,7 +16,7 @@ export class SideNavigationComponent implements OnInit, OnDestroy {
   private loadingWorkspacesSubscription: Subscription;
 
   @ViewChild(AssignmentListComponent)
-  private assignmentListComponent: AssignmentListComponent
+  private assignmentListComponent: AssignmentListComponent;
 
   constructor(private assignmentService: AssignmentService,
               private appService: AppService,

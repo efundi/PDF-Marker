@@ -46,7 +46,7 @@ export class ScrollVisibilityDirective implements OnInit, OnDestroy, OnChanges {
 
   ngOnInit() {
     this.resizeObservable$ = fromEvent(window, 'resize');
-    this.resizeSubscription$ = this.resizeObservable$.subscribe( evt => {
+    this.resizeSubscription$ = this.resizeObservable$.subscribe( () => {
       this.checkVisibility();
     });
   }
@@ -61,7 +61,7 @@ export class ScrollVisibilityDirective implements OnInit, OnDestroy, OnChanges {
       if (!isNil(changes.scrollTarget.currentValue)) {
         // Scrolling happens on the mat-sidenav-content component
         this.container = document.querySelector(changes.scrollTarget.currentValue);
-        this.unlisten = this.renderer.listen(this.container, 'scroll', (e) => {
+        this.unlisten = this.renderer.listen(this.container, 'scroll', () => {
           this.checkVisibility();
         });
       }
@@ -107,10 +107,7 @@ export class ScrollVisibilityDirective implements OnInit, OnDestroy, OnChanges {
       visible += distanceFromViewTop;
     }
 
-    this.onVisibility(visible >= this.targetVisibility)
-
-
-
+    this.onVisibility(visible >= this.targetVisibility);
   }
 
   private onVisibility(visible: boolean) {

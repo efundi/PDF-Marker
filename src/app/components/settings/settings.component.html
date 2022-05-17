@@ -7,7 +7,7 @@
     <mat-form-field floatLabel="always">
       <mat-label>Default Workspace</mat-label>
       <div class="pdf-marker-file-upload">
-        <button type="button" mat-raised-button (click)="setWorkingDirectory($event)">Browse</button>
+        <button type="button" mat-raised-button (click)="setWorkingDirectory()">Browse</button>
         &nbsp;&nbsp;
         <input type="text" matInput formControlName="defaultPath" id="pdf-marker-upload-display" readonly placeholder="Workspace">
       </div>
@@ -23,7 +23,7 @@
     </mat-form-field><br>
     <div class="pdf-spacer"></div>
     <div>
-      <button type="button" mat-raised-button color="primary" [disabled]="settingsForm.invalid" (click)="onSubmit($event)">Save</button>
+      <button type="button" mat-raised-button color="primary" [disabled]="settingsForm.invalid" (click)="onSubmit()">Save</button>
     </div>
   </form>
 </ng-container>

@@ -29,7 +29,7 @@
           class="mark-input"
           type="text"
           formControlName="totalMark"
-          (mouseleave)="onTotalMarkChange($event)"/>
+          (mouseleave)="onTotalMarkChange()"/>
         <mat-icon
           [style.color]="mark.totalMark == null ? mark.colour : 'var(--pdf-marker-secondary)'"
           class="pdf-marker-special-icon-attach">comment</mat-icon>

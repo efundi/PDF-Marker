@@ -10,7 +10,7 @@
   </mat-form-field>
   <div class="pdf-spacer"></div>
   <div>
-    <button type="button" mat-raised-button color="primary" [disabled]="genericCommentsForm.invalid" (click)="onSubmit($event)">Save</button>
+    <button type="button" mat-raised-button color="primary" [disabled]="genericCommentsForm.invalid" (click)="onSubmit()">Save</button>
   </div>
 </form>
 <div id="pdf-marker-rubric-import-comment-list" *ngIf="comments?.length > 0">
@@ -33,7 +33,16 @@
       <td mat-cell *matCellDef="let element">
           <span>
              <!--<button type="button" matTooltip="View" mat-button mat-icon-button><mat-icon>visibility</mat-icon></button>-->
-            <button color="primary" type="button" matTooltip="Delete" mat-button mat-icon-button  (click)="deleteComment(element)"><mat-icon>delete</mat-icon></button></span></td>
+            <button
+              color="primary"
+              type="button"
+              matTooltip="Delete"
+              mat-button mat-icon-button
+              (click)="deleteComment(element)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </span>
+      </td>
     </ng-container>
 
     <!-- In Use Column -->

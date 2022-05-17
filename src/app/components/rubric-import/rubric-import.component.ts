@@ -47,12 +47,14 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.busyService.start();
-    this.rubricService.getRubricNames().subscribe((rubrics: IRubric[]) => {
-      this.populateRubrics(rubrics);
-      this.busyService.stop();
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
-      this.busyService.stop();
+    this.rubricService.getRubricNames().subscribe({
+      next: (rubrics: IRubric[]) => {
+        this.populateRubrics(rubrics);
+        this.busyService.stop();
+      }, error: () => {
+        this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
+        this.busyService.stop();
+      }
     });
   }
 
@@ -97,16 +99,6 @@ export class RubricImportComponent implements OnInit, OnDestroy {
     this.openRubricModal(rubricName);
   }
 
-  openExternalResource() {
-    this.busyService.start();
-    this.appService.openExternalLink(this.rubricTemplateFile).subscribe(() => {
-      this.busyService.stop();
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to open resource link');
-      this.busyService.stop();
-    });
-  }
-
   downloadFile() {
     this.alertService.clear();
     this.busyService.start();
@@ -144,41 +136,47 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
   deleteRubric(item: IRubric) {
     this.busyService.start();
-    this.rubricService.deleteRubricCheck(item.name).subscribe((inUse: boolean) => {
-      this.busyService.stop();
-      if (inUse) {
-        const config = new MatDialogConfig();
-        config.width = '400px';
-        config.maxWidth = '400px';
-        config.data = {
-          title: 'Confirmation',
-          message: 'This rubric is in use, are your sure you want to delete it?'
-        };
-        const shouldDeleteFn = (shouldDelete: boolean) => {
-          if (shouldDelete) {
-            this.deleteRubricImpl(item.name);
-          }
-        };
+    this.rubricService.deleteRubricCheck(item.name).subscribe({
+      next: (inUse: boolean) => {
+        this.busyService.stop();
+        if (inUse) {
+          const config = new MatDialogConfig();
+          config.width = '400px';
+          config.maxWidth = '400px';
+          config.data = {
+            title: 'Confirmation',
+            message: 'This rubric is in use, are your sure you want to delete it?'
+          };
+          const shouldDeleteFn = (shouldDelete: boolean) => {
+            if (shouldDelete) {
+              this.deleteRubricImpl(item.name);
+            }
+          };
 
-        this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
-      } else {
-        this.deleteRubricImpl(item.name);
+          this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+        } else {
+          this.deleteRubricImpl(item.name);
+        }
+      },
+      error: () => {
+        this.appService.openSnackBar(false, 'Unable to delete');
+        this.busyService.stop();
       }
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to delete');
-      this.busyService.stop();
     });
   }
 
   private deleteRubricImpl(rubricName: string) {
     this.busyService.start();
-    this.rubricService.deleteRubric(rubricName).subscribe((rubrics: IRubric[]) => {
-      this.populateRubrics(rubrics);
-      this.busyService.stop();
-      this.appService.openSnackBar(true, 'Rubric deleted');
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to delete');
-      this.busyService.stop();
+    this.rubricService.deleteRubric(rubricName).subscribe({
+      next: (rubrics: IRubric[]) => {
+        this.populateRubrics(rubrics);
+        this.busyService.stop();
+        this.appService.openSnackBar(true, 'Rubric deleted');
+      },
+      error: () => {
+        this.appService.openSnackBar(false, 'Unable to delete');
+        this.busyService.stop();
+      }
     });
   }
 
@@ -191,7 +189,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
     this.resetPreviousUpload();
   }
 
-  onSubmit(event) {
+  onSubmit() {
     this.alertService.clear();
     if (this.rubricForm.invalid) {
       this.alertService.error('Please fill in the correct details!');
@@ -203,14 +201,17 @@ export class RubricImportComponent implements OnInit, OnDestroy {
       name: this.fc.rubricName.value
     };
     this.busyService.start();
-    this.rubricService.uploadRubric(rubric).subscribe((rubrics: IRubricName[]) => {
-      this.populateRubrics(rubrics);
-      this.busyService.stop();
-      this.appService.openSnackBar(true, 'Rubric saved');
-      this.resetPreviousUpload();
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to save');
-      this.busyService.stop();
+    this.rubricService.uploadRubric(rubric).subscribe({
+      next: (rubrics: IRubricName[]) => {
+        this.populateRubrics(rubrics);
+        this.busyService.stop();
+        this.appService.openSnackBar(true, 'Rubric saved');
+        this.resetPreviousUpload();
+      },
+      error: () => {
+        this.appService.openSnackBar(false, 'Unable to save');
+        this.busyService.stop();
+      }
     });
   }
 
@@ -220,11 +221,14 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   }
 
   private openRubricModal(rubricName: string) {
-    this.rubricService.getRubric(rubricName).subscribe((rubric: IRubric) => {
-      this.openRubricModalDialog(rubric);
-      this.appService.openSnackBar(true, 'Rubric View Opened');
-    }, error => {
-      this.appService.openSnackBar(false, 'Rubric View Failed');
+    this.rubricService.getRubric(rubricName).subscribe({
+      next: (rubric: IRubric) => {
+        this.openRubricModalDialog(rubric);
+        this.appService.openSnackBar(true, 'Rubric View Opened');
+      },
+      error: () => {
+        this.appService.openSnackBar(false, 'Rubric View Failed');
+      }
     });
   }
 

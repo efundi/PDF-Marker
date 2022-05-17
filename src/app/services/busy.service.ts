@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {Observable, ReplaySubject} from "rxjs";
+import {Observable, ReplaySubject} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'

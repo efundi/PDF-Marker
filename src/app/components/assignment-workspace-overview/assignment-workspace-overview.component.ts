@@ -13,8 +13,10 @@ import {Observable, Subscription, tap, throwError} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 import {BusyService} from '../../services/busy.service';
 import {TreeNodeType, Workspace} from '@shared/info-objects/workspace';
-import {PdfmUtilsService} from "../../services/pdfm-utils.service";
-import {RoutesEnum} from "../../utils/routes.enum";
+import {PdfmUtilsService} from '../../services/pdfm-utils.service';
+import {RoutesEnum} from '../../utils/routes.enum';
+import {reduce} from 'lodash';
+import {MARK_FILE} from '@shared/constants/constants';
 
 export interface WorkspaceDetails {
   assignmentTitle: string;
@@ -22,8 +24,6 @@ export interface WorkspaceDetails {
   submissionCount: number;
 
   marked?: number;
-
-  notMarked?: number;
 
   type: string;
 
@@ -78,11 +78,10 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
     });
   }
 
-  manageFolders(event) {
+  manageFolders() {
     const config = new MatDialogConfig();
     config.disableClose = true;
     config.width = '400px';
-    // config.height = '500px';
     config.data = {
       workspaceName: this.workspaceName,
       assignments: this.dataSource.data,
@@ -104,13 +103,15 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       }
       if (edited) {
         this.busyService.start();
-        this.assignmentService.refreshWorkspaces().subscribe(() => {
-          this.busyService.stop();
-          this.appService.openSnackBar(true, 'Refreshed list');
-        }, error => {
-          this.busyService.stop();
+        this.assignmentService.refreshWorkspaces().subscribe({
+          next: () => {
+            this.busyService.stop();
+            this.appService.openSnackBar(true, 'Refreshed list');
+          },
+          error: () => {
+            this.busyService.stop();
+          }
         });
-
       }
     });
   }
@@ -137,7 +138,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
         assignmentTitle: '',
         submissionCount: 0,
         marked: 0,
-        notMarked: 0,
         type: '',
         currentWorkspace: ''
       };
@@ -146,17 +146,21 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       // Submissions Count
       const assignmentFiles = workspaceAssignment.children.filter(c => c.type === TreeNodeType.SUBMISSION);
       workspaceRow.submissionCount = assignmentFiles.length;
-      // Marked/Not Marked
-      this.assignmentService.getMarkedAssignmentsCount(this.workspaceName , workspaceAssignment.name).subscribe((count) => {
-        workspaceRow.marked = count;
-        workspaceRow.notMarked = workspaceRow.submissionCount - workspaceRow.marked;
-      });
+      workspaceRow.marked = reduce(assignmentFiles, (sum, value) => {
+        // There will only be 1 or zero mark files
+        const marked =  value.children.filter(c => c.type === TreeNodeType.FILE && c.name === MARK_FILE).length;
+        return sum + marked;
+      }, 0);
+
       // Type TODO here is an async issue, these calls will still be busy when already added to the workspaceRows array
-      this.getAssignmentSettings(workspaceAssignment.name).subscribe((assignmentSettings) => {
-        workspaceRow.type = assignmentSettings.rubric ? 'Rubric' : 'Manual';
-      }, (error) => {
-        workspaceRow.type = 'Unknown';
-        console.error('Unable to load assignment settings for \'' + workspaceAssignment.name + '\'. This directory should probably be removed');
+      this.getAssignmentSettings(workspaceAssignment.name).subscribe({
+        next: (assignmentSettings) => {
+          workspaceRow.type = assignmentSettings.rubric ? 'Rubric' : 'Manual';
+        },
+        error: (error) => {
+          workspaceRow.type = 'Unknown';
+          console.error('Unable to load assignment settings for \'' + workspaceAssignment.name + '\'. This directory should probably be removed');
+        }
       });
       workspaceRow.currentWorkspace =  this.workspaceName;
       this.workspaceRows.push(workspaceRow);

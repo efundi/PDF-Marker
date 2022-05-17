@@ -9,7 +9,6 @@ import {
   getAssignments,
   getAssignmentSettings,
   getGrades,
-  getMarkedAssignmentsCount,
   getMarks,
   getPdfFile,
   updateAssignmentRubric,
@@ -174,7 +173,6 @@ try {
     ipcMain.handle('assignments:getGrades', toIpcResponse(getGrades));
     ipcMain.handle('assignments:updateAssignmentRubric', toIpcResponse(updateAssignmentRubric));
     ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
-    ipcMain.handle('assignments:getMarkedAssignmentsCount', toIpcResponse(getMarkedAssignmentsCount));
 
     // Rubric API
     ipcMain.handle('rubrics:selectRubricFile', toIpcResponse(selectRubricFile));
