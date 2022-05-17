@@ -374,6 +374,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
         this.assignmentService.refreshWorkspaces().subscribe(() => {
           this.busyService.stop();
+          this.getAssignmentSettings();
         });
       });
 
