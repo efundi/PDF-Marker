@@ -26,7 +26,6 @@ export class AppService {
 
   constructor(private dialog: MatDialog,
               private snackBar: MatSnackBar) {
-    // this.isLoading$.next(false);
 
     this.applicationApi = (window as any).applicationApi;
   }

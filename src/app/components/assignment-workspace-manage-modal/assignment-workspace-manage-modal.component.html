@@ -10,14 +10,14 @@
     <mat-form-field>
       <input [readonly]="!isEditing" formControlName="workspaceName" id="workspaceName" type="text" matInput required
              [autocomplete]="false">
-      <button *ngIf="canRenameFolder && !isEditing" type="button" matSuffix mat-icon-button matTooltip="Edit" (click)="onEdit($event)">
+      <button *ngIf="canRenameFolder && !isEditing" type="button" matSuffix mat-icon-button matTooltip="Edit" (click)="onEdit()">
         <mat-icon>edit</mat-icon>
       </button>
       <button *ngIf="isEditing"
-              color="primary" type="button" matSuffix mat-icon-button matTooltip="Save" (click)="saveWorkspaceName($event)">
+              color="primary" type="button" matSuffix mat-icon-button matTooltip="Save" (click)="saveWorkspaceName()">
         <mat-icon>done</mat-icon>
       </button>
-      <button *ngIf="isEditing" type="button" color="accent" matSuffix  mat-icon-button matTooltip="Cancel" (click)="onCancel($event)">
+      <button *ngIf="isEditing" type="button" color="accent" matSuffix  mat-icon-button matTooltip="Cancel" (click)="onCancel()">
         <mat-icon>close</mat-icon>
       </button>
     </mat-form-field>
@@ -46,7 +46,7 @@
           matSuffix
           mat-icon-button
           matTooltip="Move"
-          (click)="onMove($event)">
+          (click)="onMove()">
           Move&nbsp;<mat-icon [class.pdf-icon-disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value" >content_copy</mat-icon>
         </button>
       </div>

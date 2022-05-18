@@ -13,8 +13,7 @@ import {CommentIpcService} from './src/shared/ipc/comment.ipc-service';
 import {ConfigIpcService} from './src/shared/ipc/config.ipc-service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {ApplicationIpcService} from './src/shared/ipc/application.ipc-service';
-import {getMarkedAssignmentsCount} from "./src-electron/ipc/assignment.handler";
-import {SubmissionInfo} from "./src/shared/info-objects/submission.info";
+import {SubmissionInfo} from './src/shared/info-objects/submission.info';
 
 contextBridge.exposeInMainWorld('updateApi', {
   onUpdateAvailable: (callback) => {
@@ -49,7 +48,6 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   shareExport: (shareRequest: ShareAssignments) => ipcRenderer.invoke('assignments:shareExport', shareRequest),
   updateAssignmentRubric: (workspaceName: string, assignmentName: string, rubricName: string, ) => ipcRenderer.invoke('assignments:updateAssignmentRubric', workspaceName, assignmentName, rubricName),
   getPdfFile: (location: string) => ipcRenderer.invoke('assignments:getPdfFile', location),
-  getMarkedAssignmentsCount: (workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:getMarkedAssignmentsCount', workspaceName, assignmentName),
 } as AssignmentIpcService);
 
 

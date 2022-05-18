@@ -20,6 +20,9 @@ export class SettingsComponent implements OnInit {
   lmsChoices: string[] = ['Sakai'];
 
 
+  private static removeTrailingSlashes(path: string): string {
+    return path.replace(/\\+$/, ''); // Removes one or more trailing slashes
+  }
 
   constructor(private fb: FormBuilder,
               private settingsService: SettingsService,
@@ -34,12 +37,15 @@ export class SettingsComponent implements OnInit {
   ngOnInit() {
 
     this.busyService.start();
-    this.settingsService.getConfigurations().subscribe(configurations => {
-      this.settingsForm.controls.lmsSelection.setValue(configurations.lmsSelection ? configurations.lmsSelection : this.settingsLMSSelected);
-      this.settingsForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath : null);
-      this.busyService.stop();
-    }, error => {
-      this.busyService.stop();
+    this.settingsService.getConfigurations().subscribe({
+      next: configurations => {
+        this.settingsForm.controls.lmsSelection.setValue(configurations.lmsSelection ? configurations.lmsSelection : this.settingsLMSSelected);
+        this.settingsForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath : null);
+        this.busyService.stop();
+      },
+      error: () => {
+        this.busyService.stop();
+      }
     });
   }
 
@@ -50,7 +56,7 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  setWorkingDirectory(event) {
+  setWorkingDirectory() {
     this.appService.getFolder()
       .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
         if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
@@ -61,29 +67,29 @@ export class SettingsComponent implements OnInit {
       });
   }
 
-  onSubmit(event) {
+  onSubmit() {
     this.alertService.clear();
     if (this.settingsForm.invalid) {
       this.alertService.error('Please fill in the correct details!');
       return;
     }
-    this.settingsForm.controls.defaultPath.setValue(this.removeTrailingSlashes(this.settingsForm.controls.defaultPath.value));
+    this.settingsForm.controls.defaultPath.setValue(SettingsComponent.removeTrailingSlashes(this.settingsForm.controls.defaultPath.value));
     // Call Service to handle rest calls... also use interceptors
     this.busyService.start();
     this.settingsService.saveConfigurations(this.settingsForm.value)
       .pipe(
         mergeMap(() => this.assignmentService.refreshWorkspaces())
       )
-      .subscribe(() => {
-        this.appService.openSnackBar(true, 'Successfully updated settings!');
-        this.busyService.stop();
-      }, error => {
-        this.busyService.stop();
+      .subscribe({
+        next: () => {
+          this.appService.openSnackBar(true, 'Successfully updated settings!');
+          this.busyService.stop();
+        },
+        error: () => {
+          this.busyService.stop();
+        }
       });
   }
 
 
-  private removeTrailingSlashes(path: string): string {
-    return path.replace(/\\+$/, ''); // Removes one or more trailing slashes
-  }
 }

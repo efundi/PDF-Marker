@@ -8,7 +8,7 @@ import { SettingsService } from '../../services/settings.service';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {MatTableDataSource} from '@angular/material/table';
-import {BusyService} from "../../services/busy.service";
+import {BusyService} from '../../services/busy.service';
 
 @Component({
   selector: 'pdf-marker-comments',
@@ -41,7 +41,7 @@ export class GenericCommentsComponent implements OnInit {
         this.populateComments(comments);
         this.busyService.stop();
       },
-      error: (error) => {
+      error: () => {
         this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
         this.busyService.stop();
       }
@@ -63,7 +63,7 @@ export class GenericCommentsComponent implements OnInit {
     return this.genericCommentsForm.controls;
   }
 
-  onSubmit(event) {
+  onSubmit() {
     this.alertService.clear();
     if (this.genericCommentsForm.invalid) {
       this.alertService.error('Please fill in the correct details!');
@@ -78,7 +78,7 @@ export class GenericCommentsComponent implements OnInit {
         this.genericCommentsForm.reset();
         this.busyService.stop();
       },
-      error: (error) => {
+      error: () => {
         this.appService.openSnackBar(false, 'Unable to save comment');
         this.busyService.stop();
       },
@@ -107,13 +107,16 @@ export class GenericCommentsComponent implements OnInit {
 
   private deleteCommentImpl(id: string) {
     this.busyService.start();
-    this.commentsService.deleteComment(id).subscribe((comments: IComment[]) => {
-      this.populateComments(comments);
-      this.busyService.stop();
-      this.appService.openSnackBar(true, 'Comment deleted');
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to delete comment');
-      this.busyService.stop();
+    this.commentsService.deleteComment(id).subscribe({
+      next: (comments: IComment[]) => {
+        this.populateComments(comments);
+        this.busyService.stop();
+        this.appService.openSnackBar(true, 'Comment deleted');
+      },
+      error: () => {
+        this.appService.openSnackBar(false, 'Unable to delete comment');
+        this.busyService.stop();
+      }
     });
   }
 

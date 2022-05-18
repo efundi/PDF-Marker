@@ -1,4 +1,4 @@
-import {TreeNode, TreeNodeType} from "@shared/info-objects/workspace";
+import {TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
 
 export const DEFAULT_WORKSPACE = 'Default Workspace';
 export const SUBMISSION_FOLDER = 'Submission attachment(s)';
@@ -10,7 +10,7 @@ export const GRADES_FILE = 'grades.csv';
 export const PDFM_FILES = [MARK_FILE, SETTING_FILE];
 
 export function PDFM_FILES_FILTER(treeNode: TreeNode): boolean {
-  return !(treeNode.type === TreeNodeType.FILE && PDFM_FILES.indexOf(treeNode.name) >= 0)
+  return !(treeNode.type === TreeNodeType.FILE && PDFM_FILES.indexOf(treeNode.name) >= 0);
 }
 
 /**

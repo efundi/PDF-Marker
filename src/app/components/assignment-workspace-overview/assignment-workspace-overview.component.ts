@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
@@ -13,8 +13,11 @@ import {Observable, Subscription, tap, throwError} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 import {BusyService} from '../../services/busy.service';
 import {TreeNodeType, Workspace} from '@shared/info-objects/workspace';
-import {PdfmUtilsService} from "../../services/pdfm-utils.service";
-import {RoutesEnum} from "../../utils/routes.enum";
+import {PdfmUtilsService} from '../../services/pdfm-utils.service';
+import {RoutesEnum} from '../../utils/routes.enum';
+import {isNil, reduce} from 'lodash';
+import {MARK_FILE} from '@shared/constants/constants';
+import {MatSort, MatSortable} from '@angular/material/sort';
 
 export interface WorkspaceDetails {
   assignmentTitle: string;
@@ -22,8 +25,6 @@ export interface WorkspaceDetails {
   submissionCount: number;
 
   marked?: number;
-
-  notMarked?: number;
 
   type: string;
 
@@ -36,18 +37,23 @@ export interface WorkspaceDetails {
   templateUrl: './assignment-workspace-overview.component.html',
   styleUrls: ['./assignment-workspace-overview.component.scss']
 })
-export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
+export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
   displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'progress', 'type'];
-  dataSource: MatTableDataSource<WorkspaceDetails>;
+  dataSource = new MatTableDataSource([]);
   workspaceRows: WorkspaceDetails[] = [];
   workspaceName = 'Workspace Name';
   assignmentsLength;
   assignmentPageSizeOptions: number[];
   readonly pageSize: number = 10;
   private workspace: Workspace;
+  private sortSubscription: Subscription;
   subscription: Subscription;
 
-  @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
+  @ViewChild(MatPaginator, {static: true})
+  paginator: MatPaginator;
+
+  @ViewChild(MatSort, {static: true})
+  sort: MatSort;
 
   isSettings: boolean;
   isCreated: boolean;
@@ -78,11 +84,10 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
     });
   }
 
-  manageFolders(event) {
+  manageFolders() {
     const config = new MatDialogConfig();
     config.disableClose = true;
     config.width = '400px';
-    // config.height = '500px';
     config.data = {
       workspaceName: this.workspaceName,
       assignments: this.dataSource.data,
@@ -99,18 +104,20 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
         edited = true;
       }
       if (result && result.movedAssignments && result.movedAssignments.length > 0) {
-        this.dataSource = new MatTableDataSource<WorkspaceDetails>(this.workspaceRows);
+        this.dataSource.data = this.workspaceRows;
         edited = true;
       }
       if (edited) {
         this.busyService.start();
-        this.assignmentService.refreshWorkspaces().subscribe(() => {
-          this.busyService.stop();
-          this.appService.openSnackBar(true, 'Refreshed list');
-        }, error => {
-          this.busyService.stop();
+        this.assignmentService.refreshWorkspaces().subscribe({
+          next: () => {
+            this.busyService.stop();
+            this.appService.openSnackBar(true, 'Refreshed list');
+          },
+          error: () => {
+            this.busyService.stop();
+          }
         });
-
       }
     });
   }
@@ -137,7 +144,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
         assignmentTitle: '',
         submissionCount: 0,
         marked: 0,
-        notMarked: 0,
         type: '',
         currentWorkspace: ''
       };
@@ -146,23 +152,26 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       // Submissions Count
       const assignmentFiles = workspaceAssignment.children.filter(c => c.type === TreeNodeType.SUBMISSION);
       workspaceRow.submissionCount = assignmentFiles.length;
-      // Marked/Not Marked
-      this.assignmentService.getMarkedAssignmentsCount(this.workspaceName , workspaceAssignment.name).subscribe((count) => {
-        workspaceRow.marked = count;
-        workspaceRow.notMarked = workspaceRow.submissionCount - workspaceRow.marked;
-      });
+      workspaceRow.marked = reduce(assignmentFiles, (sum, value) => {
+        // There will only be 1 or zero mark files
+        const marked =  value.children.filter(c => c.type === TreeNodeType.FILE && c.name === MARK_FILE).length;
+        return sum + marked;
+      }, 0);
+
       // Type TODO here is an async issue, these calls will still be busy when already added to the workspaceRows array
-      this.getAssignmentSettings(workspaceAssignment.name).subscribe((assignmentSettings) => {
-        workspaceRow.type = assignmentSettings.rubric ? 'Rubric' : 'Manual';
-      }, (error) => {
-        workspaceRow.type = 'Unknown';
-        console.error('Unable to load assignment settings for \'' + workspaceAssignment.name + '\'. This directory should probably be removed');
+      this.getAssignmentSettings(workspaceAssignment.name).subscribe({
+        next: (assignmentSettings) => {
+          workspaceRow.type = assignmentSettings.rubric ? 'Rubric' : 'Manual';
+        },
+        error: (error) => {
+          workspaceRow.type = 'Unknown';
+          console.error('Unable to load assignment settings for \'' + workspaceAssignment.name + '\'. This directory should probably be removed');
+        }
       });
       workspaceRow.currentWorkspace =  this.workspaceName;
       this.workspaceRows.push(workspaceRow);
     });
-    this.dataSource = new MatTableDataSource(this.workspaceRows);
-    this.dataSource.paginator = this.paginator;
+    this.dataSource.data = this.workspaceRows;
     this.assignmentsLength = this.workspaceRows.length;
     const range = [];
     let i = 0;
@@ -178,9 +187,8 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+    this.subscription.unsubscribe();
+    this.sortSubscription.unsubscribe();
   }
 
   openAssignmentOverview(element: WorkspaceDetails) {
@@ -190,5 +198,25 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, element.assignmentTitle, element.currentWorkspace]);
     }
 
+  }
+
+  ngAfterViewInit() {
+    this.sortSubscription = this.sort.sortChange.subscribe((change) => {
+      localStorage.setItem('workspace-overview-sort', JSON.stringify({
+        id: change.active,
+        start: change.direction
+      }));
+    });
+
+    const value = localStorage.getItem('workspace-overview-sort');
+    let sort: MatSortable = {id: 'assignmentTitle', start: 'asc'} as MatSortable;
+    if (!isNil(value)) {
+      try {
+        sort = JSON.parse(value);
+      } catch (e) {}
+    }
+    this.sort.sort(sort);
+    this.dataSource.sort = this.sort;
+    this.dataSource.paginator = this.paginator;
   }
 }

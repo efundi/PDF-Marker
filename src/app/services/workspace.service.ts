@@ -1,6 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable, Subject} from 'rxjs';
-import {WorkspaceDialogResult} from '../components/assignment-workspace-manage-modal/assignment-workspace-manage-modal.component';
+import {Observable} from 'rxjs';
 import {WorkspaceIpcService} from '@shared/ipc/workspace.ipc-service';
 import {fromIpcResponse} from './ipc.utils';
 

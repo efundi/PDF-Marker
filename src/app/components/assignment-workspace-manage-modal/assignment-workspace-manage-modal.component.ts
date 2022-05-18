@@ -103,36 +103,37 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
     });
   }
 
-  saveWorkspaceName($event) {
-    // this.dialogRef.close();
+  saveWorkspaceName() {
     if (this.manageForm.valid) {
       const newName = this.manageForm.controls.workspaceName.value;
-      this.workspaceService.updateWorkspaceName(this.data.workspaceName, newName).subscribe((workspaceName: string) => {
-        this.appService.openSnackBar(true, 'Successfully updated workspace name');
-        this.data.workspaceName = workspaceName;
-        this.workspaceName = workspaceName;
-        this.busyService.stop();
-      }, error => {
-        this.busyService.stop();
-        console.log(error);
-        this.appService.openSnackBar(false, 'Unable to update workspace name');
+      this.workspaceService.updateWorkspaceName(this.data.workspaceName, newName).subscribe({
+        next: (workspaceName: string) => {
+          this.appService.openSnackBar(true, 'Successfully updated workspace name');
+          this.data.workspaceName = workspaceName;
+          this.workspaceName = workspaceName;
+          this.busyService.stop();
+        },
+        error: (error) => {
+          this.busyService.stop();
+          console.log(error);
+          this.appService.openSnackBar(false, 'Unable to update workspace name');
+        }
       });
     }
     this.isEditing = false;
   }
 
 
-  onCancel($event) {
-    // this.dialogRef.close();
+  onCancel() {
     this.manageForm.controls.workspaceName.setValue(this.data.workspaceName);
     this.isEditing = false;
   }
 
-  onEdit($event) {
+  onEdit() {
     this.isEditing = true;
   }
 
-  onMove($event) {
+  onMove() {
     if (this.manageForm.valid) {
       const assignments = this.manageForm.get('selectedAssignments').value;
       const newFolder = this.manageForm.get('newWorkspaceFolder').value;
@@ -141,22 +142,25 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
         folder = this.manageForm.get('workspaceName').value;
       }
       if (folder && newFolder && (assignments && assignments.length > 0)) {
-        this.workspaceService.moveWorkspaceAssignments(folder, newFolder, assignments).subscribe((workspaceName: string) => {
-          this.appService.openSnackBar(true, 'Successfully moved selected assignments');
-          this.busyService.stop();
-          if (assignments && assignments.length > 0) {
+        this.workspaceService.moveWorkspaceAssignments(folder, newFolder, assignments).subscribe({
+          next: () => {
+            this.appService.openSnackBar(true, 'Successfully moved selected assignments');
+            this.busyService.stop();
+            if (assignments && assignments.length > 0) {
 
-            assignments.forEach(assignment => {
-              this.returnSelectedAssignments.push(assignment);
-              const foundIndex = this.assignments.findIndex(x => x.assignmentTitle === assignment.assignmentTitle);
-              this.assignments.splice(foundIndex, 1);
-              this.manageForm.get('selectedAssignments').patchValue('');
-            });
+              assignments.forEach(assignment => {
+                this.returnSelectedAssignments.push(assignment);
+                const foundIndex = this.assignments.findIndex(x => x.assignmentTitle === assignment.assignmentTitle);
+                this.assignments.splice(foundIndex, 1);
+                this.manageForm.get('selectedAssignments').patchValue('');
+              });
+            }
+          },
+          error: (error) => {
+            this.busyService.stop();
+            console.log(error);
+            this.appService.openSnackBar(false, error);
           }
-        }, error => {
-          this.busyService.stop();
-          console.log(error);
-          this.appService.openSnackBar(false, error);
         });
       }
     }

@@ -5,8 +5,8 @@ import {filter, map} from 'rxjs/operators';
 import {AppService} from '../../services/app.service';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {AppVersionInfo} from '@shared/info-objects/app-version.info';
-import {Observable, Subscription} from "rxjs";
-import {BusyService} from "../../services/busy.service";
+import {Subscription} from 'rxjs';
+import {BusyService} from '../../services/busy.service';
 
 @Component({
   selector: 'pdf-marker-home',
@@ -68,15 +68,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
           params: params
         };
 
-        this.breadcrumbs.url.split('/').forEach(route => {
-          this.routeList.push(decodeURI(route));
+        this.breadcrumbs.url.split('/').forEach(r => {
+          this.routeList.push(decodeURI(r));
         });
 
-        if (this.router.url === RoutesEnum.ASSIGNMENT_MARKER) {
-          this.isMarkingPage = true;
-        } else {
-          this.isMarkingPage = false;
-        }
+        this.isMarkingPage = this.router.url === RoutesEnum.ASSIGNMENT_MARKER;
       });
   }
 

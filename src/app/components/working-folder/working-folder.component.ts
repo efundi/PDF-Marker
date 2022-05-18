@@ -10,8 +10,8 @@ import {YesAndNoConfirmationDialogComponent} from '../yes-and-no-confirmation-di
 import {WorkspaceService} from '../../services/workspace.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
-import {DEFAULT_WORKSPACE} from "@shared/constants/constants";
-import {filter} from "lodash";
+import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
+import {filter} from 'lodash';
 
 @Component({
   selector: 'pdf-marker-working-folder',
@@ -20,8 +20,6 @@ import {filter} from "lodash";
 })
 export class WorkingFolderComponent implements OnInit {
 
-  // settingsLMSSelected = "Sakai";
-  // lmsChoices: string[] = ['Sakai'];
   createFolderForm: FormGroup;
   readonly displayedColumns: string[] = ['folder', 'actions'];
   folders: string[];
@@ -46,7 +44,7 @@ export class WorkingFolderComponent implements OnInit {
         this.populateWorkspaces(workspaces);
         this.busyService.stop();
       },
-      error: (error) => {
+      error: () => {
         this.appService.openSnackBar(false, 'Unable to retrieve rubrics');
         this.busyService.stop();
       }
@@ -81,7 +79,7 @@ export class WorkingFolderComponent implements OnInit {
 
 
 
-  onSubmitCreateFolder(event) {
+  onSubmitCreateFolder() {
     this.alertService.clear();
     if (this.createFolderForm.invalid) {
       this.alertService.error('Please fill in the correct details!');
@@ -89,67 +87,78 @@ export class WorkingFolderComponent implements OnInit {
     }
     // Call Service to handle rest calls... also use interceptors
     this.busyService.start();
-    this.workspaceService.createWorkingFolder(this.createFolderForm.value.workspaceName).subscribe((response) => {
-      this.workspaceService.getWorkspaces().subscribe(data => {
-        this.populateWorkspaces(data);
+    this.workspaceService.createWorkingFolder(this.createFolderForm.value.workspaceName).subscribe({
+      next: () => {
+        this.workspaceService.getWorkspaces().subscribe(data => {
+          this.populateWorkspaces(data);
+          this.busyService.stop();
+          this.appService.openSnackBar(true, 'Workspace created');
+          this.createFolderForm.reset();
+          this.refreshSideBar();
+        });
+      },
+      error: (error) => {
+        this.appService.openSnackBar(false, error);
         this.busyService.stop();
-        this.appService.openSnackBar(true, 'Workspace created');
-        this.createFolderForm.reset();
-        this.refreshSideBar();
-      });
-    }, error => {
-      this.appService.openSnackBar(false, error);
-      this.busyService.stop();
+      }
     });
   }
 
   deleteFolder(item: string) {
     this.busyService.start();
-    this.workspaceService.deleteWorkspaceCheck(item).subscribe((hasWorkspaceAssignments: boolean) => {
-      const config = new MatDialogConfig();
-      config.width = '400px';
-      config.maxWidth = '400px';
-      config.data = {
-        title: 'Confirmation',
-        message: hasWorkspaceAssignments ? 'This workspace contains assignments, Are your sure you want to delete it?' :
-          'Are you sure you want to delete this workspace?'
-      };
-      const shouldDeleteFn = (shouldDelete: boolean) => {
-        if (shouldDelete) {
-          this.deleteFolderImpl(item, shouldDelete);
-        } else {
-          this.busyService.stop();
-        }
-      };
+    this.workspaceService.deleteWorkspaceCheck(item).subscribe({
+      next: (hasWorkspaceAssignments: boolean) => {
+        const config = new MatDialogConfig();
+        config.width = '400px';
+        config.maxWidth = '400px';
+        config.data = {
+          title: 'Confirmation',
+          message: hasWorkspaceAssignments ? 'This workspace contains assignments, Are your sure you want to delete it?' :
+            'Are you sure you want to delete this workspace?'
+        };
+        const shouldDeleteFn = (shouldDelete: boolean) => {
+          if (shouldDelete) {
+            this.deleteFolderImpl(item);
+          } else {
+            this.busyService.stop();
+          }
+        };
 
-      this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+        this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
 
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to delete workspace');
-      this.busyService.stop();
+      },
+      error: () => {
+        this.appService.openSnackBar(false, 'Unable to delete workspace');
+        this.busyService.stop();
+      }
     });
   }
 
   refreshSideBar() {
     this.busyService.start();
-    this.assignmentService.refreshWorkspaces().subscribe((assignments) => {
-      this.busyService.stop();
-      this.appService.openSnackBar(true, 'Refreshed list');
-    }, error => {
-      this.busyService.stop();
+    this.assignmentService.refreshWorkspaces().subscribe({
+      next: () => {
+        this.busyService.stop();
+        this.appService.openSnackBar(true, 'Refreshed list');
+      },
+      error: () => {
+        this.busyService.stop();
+      }
     });
   }
 
-  private deleteFolderImpl(folder: string, confirmation: boolean) {
-    // const newData = { folder, confirmation};
-    this.workspaceService.deleteWorkspace(folder).subscribe((folders: string[]) => {
-      this.populateWorkspaces(folders);
-      this.busyService.stop();
-      this.appService.openSnackBar(true, 'Workspace deleted');
-      this.refreshSideBar();
-    }, error => {
-      this.appService.openSnackBar(false, 'Unable to delete workspace');
-      this.busyService.stop();
+  private deleteFolderImpl(folder: string) {
+    this.workspaceService.deleteWorkspace(folder).subscribe({
+      next: (folders: string[]) => {
+        this.populateWorkspaces(folders);
+        this.busyService.stop();
+        this.appService.openSnackBar(true, 'Workspace deleted');
+        this.refreshSideBar();
+      },
+      error: () => {
+        this.appService.openSnackBar(false, 'Unable to delete workspace');
+        this.busyService.stop();
+      }
     });
   }
 }

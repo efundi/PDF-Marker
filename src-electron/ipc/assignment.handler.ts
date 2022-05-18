@@ -1110,29 +1110,3 @@ export function getPdfFile(event: IpcMainInvokeEvent, location: string): Promise
     });
   });
 }
-
-function countFileFilter(startPath: any, filter: string): number {
-  let count = 0;
-
-  if (!existsSync(startPath)) {
-    return 0;
-  }
-
-  const files = readdirSync(startPath);
-  for (let i = 0; i < files.length; i++) {
-    const filename = path.join(startPath, files[i]);
-    const fileStat = lstatSync(filename);
-    if (fileStat.isDirectory()) {
-      count = count + countFileFilter(filename, filter);
-    } else if (filename.indexOf(filter) >= 0) {
-      count = count + 1;
-    }
-  }
-  return count;
-}
-
-export function getMarkedAssignmentsCount(event: IpcMainInvokeEvent, workingFolder: string, assignmentName: string): Promise<number> {
-  return getAssignmentDirectory(workingFolder, assignmentName).then((assignmentDirectory) => {
-    return countFileFilter(assignmentDirectory, '.marks.json');
-  });
-}

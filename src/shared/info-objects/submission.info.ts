@@ -22,6 +22,7 @@ export class SubmissionInfo {
   marks: number[] | MarkInfo[][];
 
   constructor(version: number = SubmissionInfoVersion) {
+    this.version = version;
   }
 }
 

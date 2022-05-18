@@ -54,14 +54,11 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   readonly regEx = /(.*)\((.+)\)/;
 
-  private readonly submissionFolder = 'Submission attachment(s)';
-
   private assignmentId: string;
 
   private workspaceName: string;
 
   workspaces: string[] = [];
-  selectedWorkspace: string;
 
   @ViewChild('assignmentName', {static: true})
   assignmentName: ElementRef;
@@ -238,8 +235,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private populateSavedState(data: AssignmentDetails) {
-    const studentNameSplit = data.studentName.split(',');
-
     const studentDetails = {
       studentId: data.studentNumber,
       studentName: data.studentName,
@@ -354,7 +349,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     }
   }
 
-  onSubmit(event) {
+  onSubmit() {
     this.alertService.clear();
     if (this.createAssignmentForm.invalid || this.studentRow.invalid) {
       this.alertService.error('Please fill in the correct details!');
@@ -466,7 +461,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         }
         this.busyService.stop();
       },
-      error: (error) => {
+      error: () => {
         this.busyService.stop();
       }
     });
@@ -485,7 +480,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
           this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
         }
       },
-      error: (error) => {
+      error: () => {
         this.busyService.stop();
       }
     });
