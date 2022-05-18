@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
@@ -15,8 +15,9 @@ import {BusyService} from '../../services/busy.service';
 import {TreeNodeType, Workspace} from '@shared/info-objects/workspace';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {RoutesEnum} from '../../utils/routes.enum';
-import {reduce} from 'lodash';
+import {isNil, reduce} from 'lodash';
 import {MARK_FILE} from '@shared/constants/constants';
+import {MatSort, MatSortable} from '@angular/material/sort';
 
 export interface WorkspaceDetails {
   assignmentTitle: string;
@@ -36,18 +37,23 @@ export interface WorkspaceDetails {
   templateUrl: './assignment-workspace-overview.component.html',
   styleUrls: ['./assignment-workspace-overview.component.scss']
 })
-export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
+export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
   displayedColumns: string[] = ['assignmentTitle', 'submissionCount', 'progress', 'type'];
-  dataSource: MatTableDataSource<WorkspaceDetails>;
+  dataSource = new MatTableDataSource([]);
   workspaceRows: WorkspaceDetails[] = [];
   workspaceName = 'Workspace Name';
   assignmentsLength;
   assignmentPageSizeOptions: number[];
   readonly pageSize: number = 10;
   private workspace: Workspace;
+  private sortSubscription: Subscription;
   subscription: Subscription;
 
-  @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
+  @ViewChild(MatPaginator, {static: true})
+  paginator: MatPaginator;
+
+  @ViewChild(MatSort, {static: true})
+  sort: MatSort;
 
   isSettings: boolean;
   isCreated: boolean;
@@ -98,7 +104,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
         edited = true;
       }
       if (result && result.movedAssignments && result.movedAssignments.length > 0) {
-        this.dataSource = new MatTableDataSource<WorkspaceDetails>(this.workspaceRows);
+        this.dataSource.data = this.workspaceRows;
         edited = true;
       }
       if (edited) {
@@ -165,8 +171,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       workspaceRow.currentWorkspace =  this.workspaceName;
       this.workspaceRows.push(workspaceRow);
     });
-    this.dataSource = new MatTableDataSource(this.workspaceRows);
-    this.dataSource.paginator = this.paginator;
+    this.dataSource.data = this.workspaceRows;
     this.assignmentsLength = this.workspaceRows.length;
     const range = [];
     let i = 0;
@@ -182,9 +187,8 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+    this.subscription.unsubscribe();
+    this.sortSubscription.unsubscribe();
   }
 
   openAssignmentOverview(element: WorkspaceDetails) {
@@ -194,5 +198,25 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy {
       this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, element.assignmentTitle, element.currentWorkspace]);
     }
 
+  }
+
+  ngAfterViewInit() {
+    this.sortSubscription = this.sort.sortChange.subscribe((change) => {
+      localStorage.setItem('workspace-overview-sort', JSON.stringify({
+        id: change.active,
+        start: change.direction
+      }));
+    });
+
+    const value = localStorage.getItem('workspace-overview-sort');
+    let sort: MatSortable = {id: 'assignmentTitle', start: 'asc'} as MatSortable;
+    if (!isNil(value)) {
+      try {
+        sort = JSON.parse(value);
+      } catch (e) {}
+    }
+    this.sort.sort(sort);
+    this.dataSource.sort = this.sort;
+    this.dataSource.paginator = this.paginator;
   }
 }

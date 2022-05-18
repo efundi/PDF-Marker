@@ -10,10 +10,10 @@
     </button>
   </div>
 
-  <table mat-table [dataSource]="dataSource">
+  <table mat-table [dataSource]="dataSource" matSort>
     <!-- Assignment Column -->
     <ng-container matColumnDef="assignmentTitle">
-      <th mat-header-cell *matHeaderCellDef> Assignment Name</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="assignmentTitle"> Assignment Name</th>
       <td mat-cell *matCellDef="let element">
         <p class="pdf-marker-workspace-overview-assignment-name" (click)="openAssignmentOverview(element)">{{element.assignmentTitle}}</p>
       </td>
@@ -21,18 +21,19 @@
 
     <!-- Submission Count Column -->
     <ng-container matColumnDef="submissionCount">
-      <th mat-header-cell *matHeaderCellDef> No of Students</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="submissionCount"> No of Students</th>
       <td mat-cell *matCellDef="let element">{{element.submissionCount}}</td>
     </ng-container>
 
     <!--  Marked Count Column-->
     <ng-container matColumnDef="progress">
-      <th mat-header-cell *matHeaderCellDef> Marked</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="marked"> Marked</th>
       <td mat-cell *matCellDef="let element">{{element.marked}}</td>
     </ng-container>
+
     <!-- iS Rubric Column -->
     <ng-container matColumnDef="type">
-      <th mat-header-cell *matHeaderCellDef> Type</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="type"> Type</th>
       <td mat-cell *matCellDef="let element">{{element.type}}</td>
     </ng-container>
 
