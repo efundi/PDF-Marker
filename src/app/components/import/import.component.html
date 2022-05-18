@@ -9,7 +9,7 @@
       <mat-label>Select Assignment Type</mat-label>
       <div class="pdf-spacer"></div>
       <div class="pdf-marker-assignmentType-container">
-        <mat-select formControlName="assignmentType"  class="form-control select" ngModel (change)="onAssignmentTypeChange($event)" readonly placeholder="Choose Assignment Type">
+        <mat-select formControlName="assignmentType"  class="form-control select" ngModel (change)="onAssignmentTypeChange()" readonly placeholder="Choose Assignment Type">
           <mat-option *ngFor="let assignmentType of assignmentTypes" [value]="assignmentType.name" >
             {{ assignmentType.name }}
           </mat-option>
@@ -41,7 +41,7 @@
     </mat-form-field>
     <mat-label class="pdf-marker-form-labels">Rubric</mat-label>
     <div class="pdf-marker-rubric-container">
-      <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange($event)">No Rubric</mat-checkbox>
+      <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange()">No Rubric</mat-checkbox>
       <ng-container>
         <br>
         <mat-form-field [hideRequiredMarker]="importForm.get('noRubric').value">
@@ -54,7 +54,7 @@
     </div>
     <div class="pdf-spacer"></div>
     <div class="pdf-marker-submit">
-      <button type="button" color="primary" mat-raised-button [disabled]="!importForm.valid || !isValidFormat" (click)="onSubmit($event)">Submit</button>
+      <button type="button" color="primary" mat-raised-button [disabled]="!importForm.valid || !isValidFormat" (click)="onSubmit()">Submit</button>
     </div>
   </form>
 </ng-container>
