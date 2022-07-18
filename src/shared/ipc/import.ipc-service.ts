@@ -5,6 +5,6 @@ import {TreeNode} from '@shared/info-objects/workspace';
 export interface ImportIpcService {
 
   importZip(importInfo: ImportInfo): Promise<IpcResponse<string>>;
-  isValidSakaiZip(filePath: string): Promise<IpcResponse<boolean>>;
+  validateZipFile(filePath: string, format: string): Promise<IpcResponse<any>>;
   getZipEntries(filePath: string): Promise<IpcResponse<TreeNode[]>>;
 }

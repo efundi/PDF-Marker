@@ -65,7 +65,7 @@ contextBridge.exposeInMainWorld('rubricApi', {
 contextBridge.exposeInMainWorld('importApi', {
   importZip: (importInfo: ImportInfo) => ipcRenderer.invoke('import:importZip', importInfo),
   getZipEntries: (filePath: string) => ipcRenderer.invoke('import:getZipEntries', filePath),
-  isValidSakaiZip: (filePath: string) => ipcRenderer.invoke('import:isValidSakaiZip', filePath),
+  validateZipFile: (filePath: string, format: string) => ipcRenderer.invoke('import:validateZipFile', filePath, format),
 } as ImportIpcService);
 
 

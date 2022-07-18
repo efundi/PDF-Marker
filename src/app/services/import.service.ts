@@ -20,8 +20,8 @@ export class ImportService {
     return fromIpcResponse(this.importService.importZip(data));
   }
 
-  isValidSakaiZip(filePath: string): Observable<boolean> {
-    return fromIpcResponse(this.importService.isValidSakaiZip(filePath));
+  validateZipFile(filePath: string, format: string): Observable<any> {
+    return fromIpcResponse(this.importService.validateZipFile(filePath, format));
   }
 
   getZipEntries(filePath: string): Observable<TreeNode[]> {
