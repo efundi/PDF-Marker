@@ -1,0 +1,29 @@
+.submission-navigator-wrapper{
+  border-left: 1px dashed #cecece;
+  display: flex;
+  margin-left: 235px;
+  padding-left: 8px;
+}
+
+.submission-navigator-assignment-name-wrapper{
+  display: flex;
+  flex-grow: 1;
+}
+
+
+.submission-navigator-submission-wrapper{
+  display: flex;
+}
+
+button.mat-menu-item{
+  height: 3.5rem;
+
+  .student-name, .student-id{
+    line-height: inherit;
+    height: 1rem;
+  }
+
+  .student-id{
+    color: #555555;
+  }
+}

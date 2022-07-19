@@ -235,11 +235,20 @@ button {
   min-width: auto !important;
 }
 
+$top-nav-height: 65px;
+$left-fixed-menu-width: 4rem;
+
+.left-fixed-menu {
+  height: calc(100vh - #{$top-nav-height});
+  width: $left-fixed-menu-width;
+}
+
 .mat-drawer-container {
 
   /* Height - height of navbar */
-  height: calc(100vh - 65px);
+  height: calc(100vh - #{$top-nav-height});
   background: #F5F5F5 !important;
+  display: inline-block !important;
 
   .mat-drawer {
     width: 25%;

@@ -1,0 +1,34 @@
+<div class="submission-navigator-wrapper">
+
+  <div class="submission-navigator-assignment-name-wrapper">
+    <button mat-button (click)="openAssignment()">
+      <mat-icon>description</mat-icon>
+      <span style="font-size: 1.3rem;font-weight: normal;margin-left: 5px;">Value and Ethics</span>
+    </button>
+  </div>
+
+  <div class="submission-navigator-submission-wrapper">
+    <button mat-icon-button matTooltip="Next" [disabled]="!canPrevious" (click)="previous()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <button
+      mat-button
+      [matMenuTriggerFor]="menu">{{menuItems[activeIndex]?.studentFullName}}<mat-icon>arrow_drop_down</mat-icon>
+    </button>
+
+    <mat-menu #menu="matMenu">
+      <ng-template matMenuContent>
+        <ng-container *ngFor="let item of menuItems; let i = index">
+          <button mat-menu-item (click)="selectSubmission(i)">
+            <div class="student-name">{{item.studentFullName}}</div>
+            <small class="student-id">{{item.studentNumber}}</small>
+          </button>
+        </ng-container>
+      </ng-template>
+    </mat-menu>
+
+    <button mat-icon-button matTooltip="Next" [disabled]="!canNext" (click)="next()">
+      <mat-icon>arrow_forward</mat-icon>
+    </button>
+  </div>
+</div>
