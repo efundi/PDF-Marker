@@ -199,7 +199,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private initForm() {
     this.createAssignmentForm = this.fb.group({
-      assignmentName: [null, Validators.compose([Validators.required, Validators.maxLength(50), Validators.minLength(5)])],
+      assignmentName: [null, Validators.compose([Validators.required, Validators.maxLength(50), Validators.minLength(1)])],
       noRubric: [this.noRubricDefaultValue],
       rubric: [null, Validators.required],
       workspaceFolder: [null, Validators.required],
