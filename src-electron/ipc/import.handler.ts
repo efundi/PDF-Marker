@@ -6,7 +6,6 @@ import {IpcMainInvokeEvent} from 'electron';
 import {ImportInfo} from '@shared/info-objects/import.info';
 import {isNil} from 'lodash';
 import {readFile} from 'fs/promises';
-import {getConfig} from './config.handler';
 import {getRubrics, writeRubricFile} from './rubric.handler';
 import {EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, NOT_PROVIDED_RUBRIC} from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
@@ -158,27 +157,54 @@ export function getZipEntries(event: IpcMainInvokeEvent, file: string): Promise<
 }
 
 
-export function isValidSakaiZip(event: IpcMainInvokeEvent, file: string): Promise<boolean> {
-  let found = false;
-  return readFile(file).then((data) => {
-    return new JSZip().loadAsync(data)
-      .then((zip) => {
-        const filePaths = Object.keys(zip.files);
-        const fileNames = SakaiConstants.assignmentRootFiles;
-        let count = 0;
-        for (const filePath of filePaths) {
-          const path = filePath.split('/');
-          if (path[1] !== undefined && fileNames.indexOf(path[1]) !== -1) {
-            found = true;
-            break;
-          }
-          count++;
-        }
+export function validateZipFile(event: IpcMainInvokeEvent, file: string, format: string): Promise<any> {
+  if (format === 'Assignment') {
+    return validateZipAssignmentFile(file);
+  } else {
+    return validateGenericZip(file);
+  }
+}
 
-        return found;
-      });
-  }).catch(error => {
-    console.error(error);
-    return Promise.reject('Error trying to decipher zip file format validity!');
+function readZipFile(file: string): Promise<JSZip> {
+  return readFile(file)
+    .then(data => new JSZip().loadAsync(data))
+    .catch(() => Promise.reject('Error trying to decipher zip file format validity!'));
+}
+
+function validateZipAssignmentFile(file: string): Promise<any> {
+  return readZipFile(file).then((zip) => {
+    const filePaths = Object.keys(zip.files);
+    const fileNames = SakaiConstants.assignmentRootFiles;
+    for (const filePath of filePaths) {
+      const path = filePath.split('/');
+      if (path[1] !== undefined && fileNames.indexOf(path[1]) !== -1) {
+        return true;
+      }
+    }
+
+    // Could not find at least on sakai file
+   return Promise.reject(SakaiConstants.formatErrorMessage);
+  });
+}
+
+function validateGenericZip(file: string): Promise<any> {
+  return readZipFile(file).then((zip) => {
+    const filePaths = Object.keys(zip.files).sort();
+    const sakaiFileNames = SakaiConstants.assignmentRootFiles;
+    for (const filePath of filePaths) {
+      const path = filePath.split('/');
+
+      // Check if it is a sakai file
+      if (path[1] !== undefined && sakaiFileNames.indexOf(path[1]) !== -1) {
+        return Promise.reject('Invalid zip format. Please select a file in the generic import format');
+      }
+
+      if (path.length > 2) {
+        // Too many nested directories
+        return Promise.reject('Invalid zip format. Please select a file in the generic import format');
+      }
+
+      // Check if the file is a directory
+    }
   });
 }

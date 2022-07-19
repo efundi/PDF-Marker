@@ -27,7 +27,7 @@ import {
   selectRubricFile
 } from './src-electron/ipc/rubric.handler';
 import {toIpcResponse} from './src-electron/utils';
-import {getZipEntries, importZip, isValidSakaiZip} from './src-electron/ipc/import.handler';
+import {getZipEntries, importZip, validateZipFile} from './src-electron/ipc/import.handler';
 import {
   createWorkingFolder,
   deleteWorkspace,
@@ -185,7 +185,7 @@ try {
 
     // Import API
     ipcMain.handle('import:importZip', toIpcResponse(importZip));
-    ipcMain.handle('import:isValidSakaiZip', toIpcResponse(isValidSakaiZip));
+    ipcMain.handle('import:validateZipFile', toIpcResponse(validateZipFile));
     ipcMain.handle('import:getZipEntries', toIpcResponse(getZipEntries));
 
     // Workspace API

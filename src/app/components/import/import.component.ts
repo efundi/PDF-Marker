@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {FileExplorerModalComponent} from '../file-explorer-modal/file-explorer-modal.component';
@@ -12,28 +12,26 @@ import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {ImportInfo} from '@shared/info-objects/import.info';
-import {SakaiConstants} from '@shared/constants/sakai.constants';
 import {BusyService} from '../../services/busy.service';
-import {forkJoin, Observable, tap, throwError} from 'rxjs';
+import {forkJoin, Observable, Subscription, tap, throwError} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
+import {isNil} from 'lodash';
 
 @Component({
   selector: 'pdf-marker-import',
   templateUrl: './import.component.html',
   styleUrls: ['./import.component.scss']
 })
-export class ImportComponent implements OnInit {
+export class ImportComponent implements OnInit, OnDestroy {
 
   readonly isAssignmentName: boolean = true;
-
-  readonly noRubricDefaultValue: boolean = false;
 
   isFileLoaded = false;
 
   importForm: FormGroup;
 
-  isRubric = true;
+  private formSubscriptions: Subscription[] = [];
 
   isModalOpened = false;
 
@@ -49,7 +47,6 @@ export class ImportComponent implements OnInit {
   assignmentTypes = [
     {'name': 'Assignment'},
     {'name': 'Generic'}];
-  selectedType: string;
 
   private static getAssignmentNameFromFilename(filename: string): string {
     return filename.replace(/\.[^/.]+$/, '');
@@ -84,6 +81,10 @@ export class ImportComponent implements OnInit {
     });
   }
 
+  ngOnDestroy() {
+    this.formSubscriptions.forEach(s => s.unsubscribe());
+  }
+
   private loadWorkspaces(): Observable<string[]> {
     return this.workspaceService.getWorkspaces()
       .pipe(
@@ -114,18 +115,45 @@ export class ImportComponent implements OnInit {
       assignmentZipFileText: [null],
       assignmentName: [null],
       workspaceFolder: [null, Validators.required],
-      noRubric: [this.noRubricDefaultValue],
+      noRubric: [false],
       rubric: [null, Validators.required]
     });
+
+    this.formSubscriptions.push(this.importForm.controls.assignmentType.valueChanges.subscribe((type) => {
+        this.validateZipFile(this.actualFilePath, type);
+      })
+    );
+
+    this.formSubscriptions.push(this.importForm.controls.rubric.valueChanges.subscribe((value) => {
+        if (!isNil(value)) {
+          this.importForm.patchValue({
+            noRubric: false
+          }, {emitEvent: false});
+        }
+      })
+    );
+
+    this.formSubscriptions.push(this.importForm.controls.noRubric.valueChanges.subscribe((noRubric) => {
+        const rubricControl = this.importForm.get('rubric');
+        if (noRubric === true) {
+          rubricControl.validator = null;
+          this.importForm.patchValue({
+            rubric: null
+          }, {emitEvent: false});
+        } else {
+          rubricControl.validator = Validators.required;
+        }
+        rubricControl.updateValueAndValidity();
+      })
+    );
   }
 
-  async selectFile() {
+  selectFile() {
     this.busyService.start();
     this.appService.getFile({ name: 'Zip Files', extension: ['zip'] })
       .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
         this.busyService.stop();
         if (appSelectedPathInfo.selectedPath) {
-          this.busyService.start();
           this.actualFilePath = appSelectedPathInfo.selectedPath;
         }
 
@@ -137,35 +165,33 @@ export class ImportComponent implements OnInit {
   }
 
   onFileChange(appSelectedPathInfo: AppSelectedPathInfo) {
+    this.importForm.patchValue({
+      assignmentZipFileText: (appSelectedPathInfo) ? appSelectedPathInfo.basename : '',
+      assignmentName: appSelectedPathInfo ? ImportComponent.getAssignmentNameFromFilename(appSelectedPathInfo.fileName) : ''
+    });
+    this.validateZipFile(this.actualFilePath, this.importForm.value.assignmentType);
+  }
 
-    this.fc.assignmentZipFileText.setValue((appSelectedPathInfo) ? appSelectedPathInfo.basename : '');
-    this.fc.assignmentName.setValue(appSelectedPathInfo ? ImportComponent.getAssignmentNameFromFilename(appSelectedPathInfo.fileName) : '');
-
-    this.selectedType = this.fc.assignmentType.value;
-    if (this.selectedType === 'Assignment') {
-      // Is zip, then checks structure.
-      this.importService.isValidSakaiZip(appSelectedPathInfo.selectedPath).subscribe({
-        next: (isValidFormat: boolean) => {
-          this.isValidFormat = isValidFormat;
-          if (!this.isValidFormat) {
-            this.alertService.error(SakaiConstants.formatErrorMessage);
-          } else {
-            this.clearError();
-          }
-          this.isFileLoaded = true;
-          this.busyService.stop();
-        }, error: (error) => {
-          this.showErrorMessage(error);
-          this.busyService.stop();
-        }
-      });
-    } else  if (this.selectedType === 'Generic') {
-      this.isValidFormat = true;
-      this.isFileLoaded = true;
-      this.busyService.stop();
-    }  else {
-      this.busyService.stop();
+  private validateZipFile(file: string, type: string): void {
+    if (isNil(file) || isNil(type)) {
+      // Can't validate without these
+      return;
     }
+
+    this.busyService.start();
+    this.alertService.clear();
+    this.importService.validateZipFile(file, type).subscribe({
+      next: () => {
+        this.alertService.clear();
+        this.isValidFormat = true;
+        this.isFileLoaded = true;
+        this.busyService.stop();
+      }, error: (error) => {
+        this.isValidFormat = false;
+        this.alertService.error(error);
+        this.busyService.stop();
+      }
+    });
   }
 
 
@@ -173,24 +199,7 @@ export class ImportComponent implements OnInit {
     return this.importForm.controls;
   }
 
-  onRubricChange() {
-    if (this.fc.noRubric.value) {
-      this.fc.rubric.setValidators(null);
-      this.fc.rubric.updateValueAndValidity();
-      this.fc.rubric.disable();
-      this.isRubric = false;
-    } else {
-      this.fc.rubric.setValidators(Validators.required);
-      this.fc.rubric.updateValueAndValidity();
-      this.fc.rubric.enable();
-    }
-    this.importForm.updateValueAndValidity();
-  }
 
-  onAssignmentTypeChange() {
-    this.selectedType = this.fc.assignmentType.value;
-    this.fc.assignmentType.updateValueAndValidity();
-  }
 
   onPreview() {
     this.busyService.start();
@@ -216,9 +225,9 @@ export class ImportComponent implements OnInit {
   }
 
   onSubmit() {
-    this.clearError();
+    this.alertService.clear();
     if (this.importForm.invalid || !this.isValidFormat) {
-      this.showErrorMessage('Please fill in the correct details!');
+      this.alertService.error('Please fill in the correct details!');
       return;
     }
 
@@ -226,7 +235,8 @@ export class ImportComponent implements OnInit {
       assignmentName,
       noRubric,
       rubric,
-      workspaceFolder
+      workspaceFolder,
+      assignmentType
     } = this.importForm.value;
 
     const importData: ImportInfo = {
@@ -235,7 +245,7 @@ export class ImportComponent implements OnInit {
       noRubric: noRubric,
       rubricName: rubric,
       assignmentName: assignmentName,
-      assignmentType: this.selectedType
+      assignmentType: assignmentType
     };
     this.busyService.start();
     this.importService.importAssignmentFile(importData).subscribe({
@@ -248,25 +258,13 @@ export class ImportComponent implements OnInit {
     });
   }
 
-
-  private showErrorMessage(errorMessage: string) {
-    this.alertService.error(errorMessage);
-  }
-
-  private clearError() {
-    this.alertService.clear();
-  }
-
   private resetForm() {
     this.importForm.reset();
     this.isFileLoaded = false;
-    this.isRubric = true;
     this.isModalOpened = false;
     this.isValidFormat = false;
-    this.selectedType = undefined;
-    this.fc.noRubric.setValue(this.noRubricDefaultValue);
+    this.fc.noRubric.setValue(false);
     this.fc.rubric.enable();
-    this.initForm();
     this.assignmentService.refreshWorkspaces().subscribe();
   }
 }
