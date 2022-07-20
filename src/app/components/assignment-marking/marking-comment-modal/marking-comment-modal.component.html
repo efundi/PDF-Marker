@@ -1,0 +1,82 @@
+<div mat-dialog-title>
+  <h2><mat-icon color="primary" style="top: 4px;position: relative;">comment</mat-icon> Comment</h2>
+</div>
+
+
+<mat-dialog-content>
+  <form [formGroup]="commentForm">
+
+    <div>
+      <mat-form-field>
+        <mat-label>Section Title</mat-label>
+        <input
+          formControlName="sectionLabel"
+          id="sectionLabel"
+          type="text"
+          placeholder="Question/Section ..."
+          matInput
+          [autocomplete]="false">
+      </mat-form-field>
+    </div>
+
+    <div>
+      <label class="mark-type" id="markType">Mark Type *</label>
+      <mat-radio-group
+        aria-labelledby="markType"
+        class="markType-radio-group"
+        formControlName="commentType">
+        <mat-radio-button
+          color="primary"
+          class="example-radio-button"
+          *ngFor="let commentType of commentTypes" [value]="commentType">
+          {{commentType}}
+        </mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <div *ngIf="commentForm.controls.totalMark">
+      <mat-form-field>
+        <mat-label>Mark:</mat-label>
+        <input
+          type="number"
+          formControlName="totalMark"
+          id="totalMark"
+          placeholder="Mark Value..."
+          matInput
+          [autocomplete]="false">
+      </mat-form-field>
+    </div>
+
+    <div>
+      <mat-form-field>
+        <mat-label>Generic Comment:</mat-label>
+        <mat-select formControlName="genericComment" (selectionChange)="appendGenericComment($event)">
+          <mat-option *ngFor="let comment of genericComments" [value]="comment.title">{{comment.title}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div>
+      <mat-form-field style="width:100%">
+        <mat-label>Comment:</mat-label>
+        <textarea
+          #markingComment
+          id="markingComment"
+          formControlName="markingComment"
+          type="text"
+          matInput
+          cdkTextareaAutosize
+          cdkAutosizeMinRows="2"
+          placeholder="Marking comment to student..."
+          (focusout)="trackCommentCaretPosition(markingComment, $event)">
+      </textarea>
+      </mat-form-field>
+
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button type="button" mat-raised-button color="primary" (click)="onSubmit($event)">Save</button>&nbsp;&nbsp;
+  <button type="button" mat-button color="accent" (click)="onCancel($event)">Cancel</button>
+</mat-dialog-actions>

@@ -1,0 +1,194 @@
+<mat-toolbar>
+  <ng-container *ngFor="let iconData of markIcons">
+    <button
+      color="primary"
+      [disabled]="containsRubric"
+      *ngIf="iconData.icon !== 'halfTick' && iconData.icon !== 'brush'"
+      [matTooltip]="iconData.toolTip"
+      [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
+      (click)="onIconClick(iconData, $event)"
+      mat-button
+      mat-icon-button>
+      <mat-icon [class.pdf-icon-disabled]="containsRubric">{{ iconData.icon }}</mat-icon>
+    </button>
+    <button
+      color="primary"
+      [disabled]="containsRubric"
+      *ngIf="iconData.icon === 'halfTick' && iconData.icon !== 'brush'"
+      [matTooltip]="iconData.toolTip"
+      [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
+      (click)="onIconClick(iconData, $event)"
+      mat-button
+      mat-icon-button>
+      <mat-icon class="pdf-marker-icons-svg-class"
+                [svgIcon]="iconData.icon"
+                [class.pdf-icon-disabled]="containsRubric" >
+      </mat-icon>
+    </button>
+    <div
+      *ngIf="iconData.icon === 'brush'"
+      class="pdf-marker-assignment-marking-settings-highlighter">
+      <button
+        color="primary"
+        [disabled]="containsRubric"
+        [matTooltip]="iconData.toolTip"
+        (click)="onIconClick(iconData, $event)"
+        [style.border-color]="highlightToolColor"
+        mat-button
+        mat-icon-button>
+        <mat-icon
+          [style.color]="highlightToolColor"
+          [class.pdf-icon-disabled]="containsRubric" >
+          {{ iconData.icon }}
+        </mat-icon>
+      </button>
+      <span
+        [matMenuTriggerFor]="highlightMenu"
+        [style.pointer-events]="containsRubric ? 'none': ''"
+        [style.background]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedHighlightColour"
+        class="pdf-marker-assignment-marking-settings-highlighter-choice">
+    </span>
+    </div>
+  </ng-container>
+  <button
+    color="primary"
+    [disabled]="containsRubric"
+    matTooltip="Preview Marks"
+    mat-button
+    mat-icon-button
+    (click)="onControl($event, 'finalise')">
+    <mat-icon [class.pdf-icon-disabled]="containsRubric">announcement</mat-icon>
+  </button>
+  <span class="pdf-marker-fill-space"></span>
+  <button
+    color="primary"
+    matTooltip="Prev"
+    mat-button
+    mat-icon-button
+    [disabled]="currentPage == 1"
+    [class.pdf-marker-icons-pdf-nav-buttons-disabled]="currentPage == 1"
+    (click)="onControl($event, 'prevPage')"
+    class="pdf-marker-icons-pdf-nav-buttons">
+    <mat-icon class="pdf-marker-icons-pdf-nav-icons" [class.pdf-marker-icons-pdf-nav-icons-disabled]="currentPage == 1">arrow_upward</mat-icon>
+  </button>
+  <button
+    color="primary"
+    matTooltip="Next"
+    mat-button
+    mat-icon-button
+    [disabled]="currentPage == pages"
+    [class.pdf-marker-icons-pdf-nav-buttons-disabled]="currentPage == pages"
+    (click)="onControl($event, 'nextPage')"
+    class="pdf-marker-icons-pdf-nav-buttons">
+    <mat-icon class="pdf-marker-icons-pdf-nav-icons" [class.pdf-marker-icons-pdf-nav-icons-disabled]="currentPage == pages">arrow_downward</mat-icon>
+  </button>
+  <form [formGroup]="iconForm" style="display: flex; flex-direction: row">
+    <div style="margin-top: auto; margin-bottom: auto;">
+      <input
+        matInput
+        type="text"
+        formControlName="pageNumber"
+        (change)="onPageNumberChange()" [style.width]="(pages + '')?.length + 1 + 'ch'">
+      / {{ pages }}
+    </div>
+
+    <div>
+      <mat-form-field class="zoom-select">
+        <mat-select formControlName="zoom" panelClass="zoom-select-popup">
+          <mat-option *ngFor="let zoomOption of zoomOptions" [value]="zoomOption.value">
+            {{zoomOption.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </form>
+
+  <button
+    matTooltip="Rotate Clockwise"
+    mat-button
+    mat-icon-button
+    (click)="onControl($event, 'rotate-cw')"
+    class="rotate-buttons rotate-clockwise">
+    <mat-icon class="rotate-icons">rotate_right</mat-icon>
+  </button>
+  <button
+    matTooltip="Rotate Counter-Clockwise"
+    mat-button
+    mat-icon-button
+    (click)="onControl($event, 'rotate-ccw')"
+    class="rotate-buttons rotate-cclockwise">
+    <mat-icon class="rotate-icons">rotate_left</mat-icon>
+  </button>
+
+
+  <span class="pdf-marker-fill-space"></span>
+  <button
+    color="primary"
+    [disabled]="!containsRubric"
+    matTooltip="Display PDF Only"
+    mat-button
+    mat-icon-button
+    (click)="onControl($event, 'showPDF')">
+    <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-expand-left"></mat-icon></button>
+  <button
+    color="primary"
+    [disabled]="!containsRubric"
+    matTooltip="Shared View"
+    mat-button
+    mat-icon-button
+    (click)="onControl($event, 'showBoth')">
+    <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-default"></mat-icon>
+  </button>
+  <button
+    color="primary"
+    [disabled]="!containsRubric"
+    matTooltip="Display Rubric Only"
+    mat-button
+    mat-icon-button
+    (click)="onControl($event, 'showRubric')">
+    <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-expand-right"></mat-icon>
+  </button>
+  <span class="pdf-marker-fill-space"></span>
+  <div class="pdf-marker-assignment-marking-settings-color">
+    <button
+      [disabled]="containsRubric"
+      [style.border-color]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour"
+      class="pdf-marker-assignment-marking-settings-color-pallette"
+      mat-button
+      mat-icon-button
+      [cpAlphaChannel] ="'disabled'"
+      [cpOutputFormat]="'hex'"
+      [(colorPicker)]="selectedColour"
+      (colorPickerClose)="onColourChange($event)">
+      <mat-icon
+        [style.color]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour"
+        [class.pdf-icon-disabled]="containsRubric">
+        palette
+      </mat-icon>
+    </button>
+    <span
+      [style.background]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour"
+      [style.border-color]="((containsRubric) ? 'rgba(0,0,0,.26)':selectedColour)"
+      class="pdf-marker-assignment-marking-settings-color-choice">
+    </span>
+  </div>&nbsp;&nbsp;
+  <button
+    color="primary"
+    matTooltip="Clear All"
+    mat-button
+    mat-icon-button
+    (click)="onControl($event, 'clearAll')">
+    <mat-icon>delete_sweep</mat-icon>
+  </button>
+  <span class="pdf-marker-fill-space"></span>
+</mat-toolbar>
+<mat-menu #highlightMenu="matMenu" class="highlight-menu vertical">
+  <div class="highlight-options">
+    <div class="highlight-option"
+         [class.selected]="highlightOption === selectedHighlightColour"
+         (click)="selectHighlighter(highlightOption)"
+         *ngFor="let highlightOption of highlightOptions">
+      <div class="highlight-option-brush" [style.background-color]="highlightOption.preview"></div>
+    </div>
+  </div>
+</mat-menu>

@@ -1,43 +1,100 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+$dark-primary-text: rgba(black, 0.87);
+$light-primary-text: white;
+
+
+/*Variables*/
+$pdf-marker-primary: #6f327a;
+$pdf-marker-secondary: #555;
+
+
+$pdfm-primary-pallete: (
+  50: #f0e6f0,
+  100: #dbbfdb,
+  200: #c596c4,
+  300: #ad6fac,
+  400: #9b549a,
+  500: #8a3e8a,
+  600: #7f3983,
+  700: #6f327a,
+  800: #612d70,
+  900: #47245c,
+  A100: #f0e6f0,
+  A200: #c596c4,
+  A400: #9b549a,
+  A700: #6f327a,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $dark-primary-text,
+    400: $dark-primary-text,
+    500: $light-primary-text,
+    600: $light-primary-text,
+    700: $light-primary-text,
+    800: $light-primary-text,
+    900: $light-primary-text,
+    A100: $dark-primary-text,
+    A200: $dark-primary-text,
+    A400: $dark-primary-text,
+    A700: $light-primary-text,
+  )
+);
+
+$pdfm-accent-pallete: (
+  50: #f8f8f8,
+  100: #f0f0f0,
+  200: #e6e6e6,
+  300: #d5d5d5,
+  400: #b0b0b0,
+  500: #909090,
+  600: #686868,
+  700: #555555,
+  800: #373737,
+  900: #171717,
+  A100: #f0f0f0,
+  A200: #e6e6e6,
+  A400: #b0b0b0,
+  A700: #555555,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $dark-primary-text,
+    400: $dark-primary-text,
+    500: $dark-primary-text,
+    600: $light-primary-text,
+    700: $light-primary-text,
+    800: $light-primary-text,
+    900: $light-primary-text,
+    A100: $dark-primary-text,
+    A200: $dark-primary-text,
+    A400: $dark-primary-text,
+    A700: $light-primary-text,
+  )
+);
+
+
+
+$my-app-primary: mat.define-palette($pdfm-primary-pallete, 700, 100, 800);
+$my-app-accent: mat.define-palette($pdfm-accent-pallete, 700, 100, 800);
+$my-app-warn: mat.define-palette(mat.$red-palette);
+
+$my-app-theme: mat.define-light-theme(
+    (
+      color: (
+        primary: $my-app-primary,
+        accent: $my-app-accent,
+        warn: $my-app-warn,
+      ),
+    )
+);
+
+@include mat.all-component-themes($my-app-theme);
 /* You can add global styles to this file, and also import other style files */
 /*Fonts*/
-@font-face {
-  font-family: 'opensans-light';
-  src: url(../fonts/OpenSans-Light.ttf) format("truetype");
-  font-weight:300;
-}
-
-@font-face {
-  font-family: 'opensans-light-italic';
-  font-style: italic;
-  src: url(../fonts/OpenSans-LightItalic.ttf) format("truetype");
-  font-weight:300;
-}
-
-@font-face {
-  font-family: 'opensans-regular';
-  src: url(../fonts/OpenSans-Regular.ttf) format("truetype");
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: 'opensans-regular-italic';
-  font-style: italic;
-  src: url(../fonts/OpenSans-RegularItalic.ttf) format("truetype");
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: 'opensans-semi-bold';
-  src: url(../fonts/OpenSans-SemiBold.ttf) format("truetype");
-  font-weight: 600;
-}
-
-@font-face {
-  font-family: 'opensans-semi-bold-italic';
-  font-style: italic;
-  src: url(../fonts/OpenSans-SemiBoldItalic.ttf) format("truetype");
-  font-weight: 600;
-}
 
 @font-face {
   font-family: 'Material Icons';
@@ -62,17 +119,37 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/*Variables*/
-$pdf-marker-primary: #6f327a;
-
-html, body { height: 100%; font-family: Roboto, "Helvetica Neue", sans-serif !important; min-height: 695px; min-height: 650px;}
-body { margin: 0; }
-
-ng2-pdfjs-viewer {
-  iframe {
-    border: none !important;
-  }
+@font-face {
+  font-family: 'Material Icons Outlined';
+  font-style: normal;
+  font-weight: 400;
+  src: url(../fonts/gok-H7zzDkdnRel8-DQ6KAXJ69wP1tGnf4ZGhUce.woff2) format('woff2');
 }
+
+.material-icons-outlined {
+  font-family: 'Material Icons Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -moz-font-feature-settings: 'liga';
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  height: 100%;
+  font-family: Roboto, "Helvetica Neue", sans-serif !important;
+  --pdf-marker-primary: #{$pdf-marker-primary};
+  --pdf-marker-secondary: #{$pdf-marker-secondary};
+}
+
+body { margin: 0; }
 
 pdf-marker-header {
   /*height: 10% !important;*/
@@ -106,7 +183,7 @@ pdf-marker-finalise-marking {
   }
 
   .pdf-marker-finalise-marking-modal-content::-webkit-scrollbar-thumb {
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
     border-radius: 10px;
   }
   .pdf-marker-finalise-marking-modal-content::-webkit-scrollbar {
@@ -128,7 +205,7 @@ body {
 
   .mat-dialog-container::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
   }
 
   .mat-dialog-container::-webkit-scrollbar {
@@ -138,7 +215,7 @@ body {
 
   .mat-drawer-content::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
   }
 }
 
@@ -146,9 +223,9 @@ body {
   flex: 1;
 }
 
-.mat-icon {
-  color: $pdf-marker-primary;
-}
+//.mat-icon {
+//  color: var(--pdf-marker-primary);
+//}
 
 .pdf-marker-container {
   height: 100%;
@@ -159,7 +236,9 @@ button {
 }
 
 .mat-drawer-container {
-  height: 100%;
+
+  /* Height - height of navbar */
+  height: calc(100vh - 65px);
   background: #F5F5F5 !important;
 
   .mat-drawer {
@@ -175,25 +254,47 @@ button {
 
   .mat-drawer-inner-container::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: $pdf-marker-primary;
+    background: var(--pdf-marker-primary);
   }
 
   .pdf-marker-content-container {
     padding-left: 23px;
     padding-right: 23px;
     background: #F5F5F5;
-    display: table;
-    width: 95%;
+    //display: table;
+    //width: 95%;
   }
+}
 
-  mat-toolbar {
-    font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
-  }
+.table-responsive {
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch
+}
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: #F5F5F5;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: var(--pdf-marker-secondary);
+}
+
+
+.mat-dialog-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: #F5F5F5;
+}
+
+.mat-dialog-content::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: var(--pdf-marker-primary);
 }
 
 .mat-expansion-panel {
   background: transparent !important;
-  width: 98%;
   padding: 0!important;
   margin: 0;
 }
@@ -233,20 +334,6 @@ pdf-marker-file-explorer-modal {
 
 .mat-expansion-indicator {
   display: none !important;
-}
-
-.mat-checkbox-checked, .mat-checkbox-indeterminate {
-  .mat-checkbox-background, .mat-checkbox-background {
-    background: $pdf-marker-primary !important;
-  }
-}
-
-.mat-accent .mat-pseudo-checkbox-checked, .mat-accent .mat-pseudo-checkbox-indeterminate, .mat-pseudo-checkbox-checked, .mat-pseudo-checkbox-indeterminate {
-  background: $pdf-marker-primary;
-}
-
-.errorMessages{
-  font-family: 'opensans-light', Roboto, "Helvetica Neue", sans-serif !important;
 }
 
 .alert {
@@ -335,4 +422,142 @@ pdf-marker-rubric-criteria {
 pdf-marker-rubric-criteria-level-block {
   display: flex;
   flex-direction: column;
+}
+
+
+/** Place the progress bar over other elements to avoid the page jumping */
+.mat-progress-bar{
+  position: absolute !important;
+  z-index: 99999;
+}
+
+/**
+  PDF annotations
+ */
+.annotation-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  //opacity: 0.2;
+  line-height: 1.0;
+}
+
+.annotation-layer > section {
+  position: absolute;
+  white-space: pre;
+  cursor: pointer;
+  transform-origin: 0% 0%;
+
+  &.highlightAnnotation:before{
+    top: calc(8px / -1.33);// DPI / font size magic
+  }
+
+
+  &.squareAnnotation:before{
+    left: calc(25px / 1.33);
+    top: calc(12px / -1.33);
+  }
+
+  &:not(.linkAnnotation):before{
+    content: 'comment';
+    font-family: "Material Icons";
+    height: calc(16px / 1.33); // DPI / font size magic
+    width: calc(16px / 1.33); // DPI / font size magic
+    font-size: calc(16px / 1.33); // DPI / font size magic
+    color: var(--pdf-marker-secondary);
+    position: absolute;
+
+  }
+}
+
+.annotation-layer > .linkAnnotation > a {
+  position: absolute;
+  font-size: 1em;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  &.internalLink{
+    // Hide internal links for now until we can support navigating to it
+    display: none;
+  }
+}
+
+.annotation-layer {
+  .popupWrapper{
+    width: 250px;
+    position: relative;
+    margin-left: 8px;
+    border: 1px solid #dedede;
+    border-radius: 5px;
+  }
+  .popup{
+    border-radius: 5px;
+    box-shadow: 0 7px 14px #3b415e1a, 0 3px 6px #00000012 !important;
+    padding: 7px;
+  }
+  h1 {
+    font-size: 1rem;
+    margin-top: 0;
+    white-space: pre-wrap;
+  }
+  .popupContent {
+    font-size: 0.7rem;
+    white-space: pre-wrap;
+  }
+  .popupDate {
+    display: none; // We don't fill dates
+  }
+}
+
+.highlight-menu{
+  background: #3d3d3d;
+  min-height: unset !important;
+}
+
+.highlight-menu.vertical{
+  min-width: unset !important;
+  .highlight-options {
+    flex-direction: column;
+  }
+}
+
+
+.highlight-options {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -8px;
+  margin-bottom: -8px;
+  .highlight-option {
+    padding: 0.5rem;
+    cursor: pointer;
+
+    &.selected {
+      background: #222;
+    }
+
+    &:hover{
+      background: #333;
+    }
+
+    .highlight-option-brush{
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+    }
+  }
+}
+
+/** Hide the scrollbars on the zoom select popup */
+.zoom-select-popup{
+  max-height: unset !important;
+}
+
+/** Loading indicator while pages are rendering */
+.waiting .mat-progress-spinner circle, .mat-spinner circle{
+  stroke: var(--pdf-marker-secondary);
 }

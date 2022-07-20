@@ -1,0 +1,16 @@
+
+<h4 class="rubricName">{{rubric?.name}}</h4>
+
+<div><p>Total: {{ (isMarkingRubricPage) ? totalTally +" / " :""}} {{maxScore}}</p></div>
+
+<div class="table-responsive">
+  <table style="border: 1px solid #d3d3d3;">
+    <pdf-marker-rubric-criteria
+      [selectedCriteriaLevel]="getSelectionIndex(criteriaIndex)"
+      [isMarkingRubricPage]="isMarkingRubricPage"
+      *ngFor="let criteria of rubric.criterias; let criteriaIndex = index"
+      [criteria]="criteria"
+      (selectedCriteriaLevelIndex)="selectedCriteria($event, criteriaIndex)">
+    </pdf-marker-rubric-criteria>
+  </table>
+</div>

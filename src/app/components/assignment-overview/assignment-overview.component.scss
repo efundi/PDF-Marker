@@ -1,0 +1,107 @@
+.pdf-marker-assignment-overview-assignment-header {
+  display: flex;
+  padding: 20px 24px;
+  background: #fff !important;
+  align-items: center;
+  .pdf-marker-assignment-overview-assignment-name {
+    margin: 0;
+  }
+}
+
+form {
+  width: 150px;
+}
+
+table {
+  width: 100%;
+  .mat-cell {
+    color: #888 !important;
+  }
+
+  .mat-header-cell {
+    width: calc(100% / 4);
+  }
+
+
+  .mat-column-select{
+    width: 2rem;
+    min-width: 2rem;
+  }
+  .pdf-marker-assignment-overview-student-name {
+    cursor: pointer;
+    font-weight: 500;
+    color: #2B72A1 !important;
+  }
+
+  .pdf-marker-assignment-overview-student-number {
+    font-weight: 400;
+  }
+
+  .pdf-marker-assignment-overview-assignment-grade,
+  .pdf-marker-assignment-overview-assignment-date{
+    padding: 4px 10px;
+  }
+
+  .pdf-marker-assignment-overview-assignment-status {
+    color: #fff;
+    border-radius: 12px;
+    padding: 5px;
+    font-size: 11px;
+    font-weight: 400;
+    width: 40px;
+    display: inline-block;
+  }
+
+  .pdf-marker-assignment-overview-assignment-status-on-time {
+    background: #1db954;
+    border: 1px solid #1db954;
+  }
+
+  .pdf-marker-assignment-overview-assignment-status-late {
+    background: #a94442;
+    border: 1px solid #a94442;
+  }
+
+  .pdf-marker-assignment-overview-assignment-status-unknown {
+    background: #2b72a1;
+    border: 1px solid #2b72a1;
+  }
+
+  .pdf-marker-assignment-overview-assignment-grade-header {
+    min-width: 8rem;
+    width: 8rem;
+  }
+
+  .pdf-marker-assignment-overview-select-assignment {
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    word-break: break-word;
+  }
+
+  .pdf-marker-assignment-overview-assignment-grade-data {
+    text-align: left;
+  }
+
+  .mat-icon.assignment-edit {
+    vertical-align: middle;
+    color: #888;
+    font-size: 18px;
+  }
+
+  .pdf-marker-assignment-overview-edit {
+    width: 80%;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .mat-icon.assignment {
+    vertical-align: middle;
+    color: #f8f8f8;
+    border: 1px solid;
+    border-radius: 50%;
+    padding: 4px;
+    background: #626391;
+  }
+}

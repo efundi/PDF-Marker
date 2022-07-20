@@ -1,0 +1,117 @@
+h1 {
+  margin-bottom: 0;
+}
+
+#external-rubric-tool {
+  color: #888;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin-left: 34px;
+  display: block;
+  font-size: 14px;
+}
+
+.externalLink {
+  cursor: pointer;
+  color: #0000EE !important;
+}
+
+.rubric-setup {
+  display: flex;
+}
+
+.pdf-marker-rubric-import-hide {
+  display: none;
+}
+
+#pdf-marker-rubric-import-rubric-list {
+  table {
+    min-width: 500px;
+    width: 100%;
+  }
+}
+
+.pdf-spacer-button {
+  margin-top: -1px;
+}
+
+
+form {
+  display: flex;
+  flex-direction: column;
+  /*width: 50%;
+  margin: 0 auto;*/
+
+  #pdf-marker-file-upload-wrapper {
+    display: flex;
+    align-items: flex-start;
+
+    .mat-form-field {
+      width: 25%;
+    }
+
+    .pdf-marker-file-upload {
+      display: flex;
+      padding: 2px;
+      border: 1px solid transparent;
+      width: 75%;
+
+      .pdf-marker-file-upload-remove {
+        color: #a94442 !important;
+      }
+
+      #pdf-marker-upload-display {
+        display: flex;
+        width: 100%;
+        border: 0;
+        background: transparent;
+      }
+
+      button {
+        position: relative;
+        .pdf-marker-upload {
+          width: 100%;
+          position: absolute;
+          top: 0;
+          right: 0;
+          left: 0;
+          margin: 0;
+          padding: 0;
+          z-index: 10;
+          font-size: 20px;
+          height: 36px;
+          opacity: 0;
+          filter: alpha(opacity=0);
+          background-color: #fff;
+        }
+      }
+    }
+  }
+
+  .pdf-marker-form-labels {
+    font-weight: 500;
+  }
+
+  .pdf-marker-file-upload-error {
+    border: 1px solid #f44336;
+    border-radius: 4px;
+  }
+
+  .pdf-marker-create-assignment-tooltip-error {
+    color: #a94442;
+    background-color: #f2dede;
+    font-size: 12px;
+    left: 0;
+    top: 100%;
+    transform: translate(0px, -100%);
+    position: absolute;
+    padding: 0 5px;
+    border-radius: 2px;
+    width: -moz-fit-content;
+    width: fit-content;
+  }
+
+  .pdf-marker-create-assignment-disabled {
+    cursor: no-drop;
+  }
+}

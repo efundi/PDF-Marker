@@ -1,0 +1,39 @@
+<ng-container *ngIf="workspaces.length > 0; else empty">
+  <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" [trackBy]="trackBy" >
+    <!-- This is the tree node template for leaf nodes -->
+    <mat-tree-node *matTreeNodeDef="let node" class="file" [matTreeNodePadding]="node.level" matTreeNodePaddingIndent="25">
+      <!-- use a disabled button to provide padding for tree leaf -->
+      <div style="display: flex; flex-direction: row">
+        <button mat-icon-button color="primary">
+          <mat-icon class="file">{{node.icon}} </mat-icon>
+        </button>
+        <div
+          [class.file-name-selected]="node === activeNode"
+          style="white-space: nowrap; overflow-x: hidden; cursor:pointer; display: flex; justify-content: center; flex-direction: column;"
+          (click)="onNodeClicked($event, node)">{{node.name}}</div>
+      </div>
+    </mat-tree-node>
+    <!-- This is the tree node template for expandable nodes -->
+    <mat-tree-node *matTreeNodeDef="let node; when: hasChild" [matTreeNodePadding]="node.level" matTreeNodePaddingIndent="25">
+      <div class="directory"
+           style="cursor:pointer;"
+           (click)="onNodeClicked($event, node)"
+           (dblclick)="treeControl.toggle(node)">
+        <button
+          color="primary" mat-icon-button [attr.aria-label]="'Toggle ' + node.name" matTreeNodeToggle>
+          <mat-icon class="mat-icon-rtl-mirror"
+            [class.material-icons-outlined]="!treeControl.isExpanded(node)">
+            {{treeControl.isExpanded(node) ? node.iconOpen : node.icon}}
+          </mat-icon>
+        </button>
+        <span>
+          {{node.name}}
+        </span>
+      </div>
+    </mat-tree-node>
+  </mat-tree>
+
+</ng-container>
+<ng-template #empty>
+  <span class="pdf-marker-empty">No assignments imported...</span>
+</ng-template>

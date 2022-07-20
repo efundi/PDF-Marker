@@ -1,0 +1,55 @@
+<div mat-dialog-title>
+  <h2>Manage Workspace</h2>
+  <span class="pdf-marker-fill-space"></span>
+  <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
+</div>
+<mat-dialog-content>
+  <form [formGroup]="manageForm">
+    <mat-label class="pdf-marker-form-labels">Workspace name </mat-label>
+    <div class="pdf-spacer"></div>
+    <mat-form-field>
+      <input [readonly]="!isEditing" formControlName="workspaceName" id="workspaceName" type="text" matInput required
+             [autocomplete]="false">
+      <button *ngIf="canRenameFolder && !isEditing" type="button" matSuffix mat-icon-button matTooltip="Edit" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button *ngIf="isEditing"
+              color="primary" type="button" matSuffix mat-icon-button matTooltip="Save" (click)="saveWorkspaceName()">
+        <mat-icon>done</mat-icon>
+      </button>
+      <button *ngIf="isEditing" type="button" color="accent" matSuffix  mat-icon-button matTooltip="Cancel" (click)="onCancel()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+    <mat-selection-list formControlName="selectedAssignments" #selected>
+      <mat-label class="">Assignment List</mat-label>
+      <mat-list-option color="primary" *ngFor="let assignment of assignments" [value]="assignment">{{ assignment.assignmentTitle }}</mat-list-option>
+    </mat-selection-list>
+    <div class="pdf-spacer"></div>
+    <mat-label class="pdf-marker-form-labels">Move selected assignments to&nbsp;</mat-label>
+
+    <div class="customFlexContainer flexGrow3">
+      <div>
+        <mat-form-field>
+          <mat-label>Select Workspace</mat-label>
+          <mat-select formControlName="newWorkspaceFolder">
+            <mat-option *ngFor="let workspace of workspaceNameList" [value]="workspace">{{workspace}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="button-right-margin">
+        <button
+          [disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value"
+          type="button"
+          color="primary"
+          matSuffix
+          mat-icon-button
+          matTooltip="Move"
+          (click)="onMove()">
+          Move&nbsp;<mat-icon [class.pdf-icon-disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value" >content_copy</mat-icon>
+        </button>
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>

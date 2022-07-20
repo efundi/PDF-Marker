@@ -1,0 +1,28 @@
+<div class="pdf-marker-assignment-marking-controls" *ngIf="isPdfLoaded">
+  <pdf-marker-pdf-viewer-toolbar
+    [currentPage]="currentPage"
+    (currentPageChange)="onPagedChanged($event)"
+    (settingChange)="settingChanged($event)"
+    [pages]="pdfDocument.numPages">
+  </pdf-marker-pdf-viewer-toolbar>
+</div>
+
+<div class="viewer-container">
+  <div
+    #pagesWrapper
+    class="pages-wrapper"
+    *ngIf="isPdfLoaded"
+    scrollSpy
+    scrollTarget=".pages-wrapper"
+    [spiedTags]="['PDF-MARKER-PDF-VIEWER-PAGE']"
+    (sectionChange)="onSectionChange($event)" >
+    <pdf-marker-pdf-viewer-page
+      [attr.id]="pageIndex"
+      #pdfPage
+      *ngFor="let item of repeatPerPage(); let pageIndex = index"
+      [pageIndex]="pageIndex"
+      [zoom]="zoom"
+      [pdf]="pdfDocument">
+    </pdf-marker-pdf-viewer-page>
+  </div>
+</div>

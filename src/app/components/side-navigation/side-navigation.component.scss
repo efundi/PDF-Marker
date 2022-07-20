@@ -1,0 +1,38 @@
+mat-toolbar {
+  background: transparent;
+  color: #FFF;
+}
+
+.navigation {
+  padding: 4px;
+  height: calc(100vh - 138px);
+  max-width: 375px;
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: #F5F5F5;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: var(--pdf-marker-primary);
+  }
+}
+
+@keyframes spin-animation {
+  to {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  display: block;
+  transform-origin: 20px 21px;
+  //transform-origin: center center;
+  -webkit-backface-visibility: hidden;
+  -webkit-animation: spin-animation 1s linear infinite;
+  animation: spin-animation 2s linear infinite;
+}

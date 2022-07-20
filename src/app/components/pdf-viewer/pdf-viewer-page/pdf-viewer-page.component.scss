@@ -1,0 +1,34 @@
+.pdf-viewer-container{
+  border: 1px solid #eee;
+}
+.annotation-layer {
+  overflow: visible;
+}
+.page-wrapper {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+  position: relative;
+  background: #fff;
+}
+
+.highlight{
+  position: absolute;
+  display: none;
+}
+
+
+.waiting{
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 3;
+
+  mat-spinner{
+    margin: auto;
+    top: calc(50% - 50px);
+  }
+
+}

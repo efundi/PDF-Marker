@@ -1,0 +1,22 @@
+mat-toolbar {
+  /*height: 10%;*/
+  min-width: 64px;
+  background: transparent !important;
+
+  .pdf-marker-breadcrumbs {
+    margin-left: 15px;
+    .pdf-marker-route {
+      font-size: 12px;
+
+      .mat-icon {
+        vertical-align: middle;
+      }
+    }
+  }
+}
+
+.sidenav {
+
+  max-width: 100px;
+
+}

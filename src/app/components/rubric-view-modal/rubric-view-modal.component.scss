@@ -1,0 +1,17 @@
+table {
+  width: 100%;
+}
+
+.pdf-marker-rubric-container {
+  .mat-form-field {
+    flex: 1;
+    flex-grow: unset;
+  }
+}
+
+.mat-dialog-title {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  margin-bottom: 0;
+}

@@ -1,9 +1,15 @@
-productName: "pdf-marker"
+productName: "PDF Marker"
 appId: za.ac.nwu.PDF-Marker
 
 publish:
   provider: github
+  # ONLY set this token if your GitHub repository is private and clients require a token to download updates
+  # When generating this token, make sure it has LIMITED privileges and ideally NOT YOUR PRIVATE TOKEN
+  # This token will be distributed to all clients installing the application
   token:
 
 directories:
   output: "release"
+
+files:
+  - "!.angular"

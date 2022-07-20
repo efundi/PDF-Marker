@@ -1,0 +1,60 @@
+<div
+  cdkDrag
+  cdkDragRootElement=".mark-icon-container"
+  class="pdf-marker-mark-type-icon-container"
+  cdkDragBoundary=".boundary"
+  (click)="onClicked($event)"
+  (cdkDragEnded)="onDragEnded($event)">
+
+
+  <div class="mark-icon-container" [class.hasMark]="mark.totalMark != null">
+    <form [formGroup]="iconForm">
+      <mat-icon
+        *ngIf="mark.iconType !== iconTypeEnum.NUMBER && mark.iconType !== iconTypeEnum.HALF_MARK"
+        [style.color]="mark.colour" >
+        {{ mark.iconName }}
+      </mat-icon>
+      <mat-icon
+        *ngIf="mark.iconType === iconTypeEnum.HALF_MARK"
+        [svgIcon]="mark.iconName"
+        [style.color]="mark.colour"
+        [style.stroke]="mark.colour"
+        [style.stroke-width]="0">
+      </mat-icon>
+      <div
+        *ngIf="mark.iconType === iconTypeEnum.NUMBER"
+        class="comment-circle"
+        [style.background]="mark.totalMark == null ? 'transparent' : mark.colour">
+        <input
+          class="mark-input"
+          type="text"
+          formControlName="totalMark"
+          (mouseleave)="onTotalMarkChange()"/>
+        <mat-icon
+          [style.color]="mark.totalMark == null ? mark.colour : 'var(--pdf-marker-secondary)'"
+          class="pdf-marker-special-icon-attach">comment</mat-icon>
+      </div>
+    </form>
+  </div>
+
+  <div class="tools">
+    <div style="flex-grow: 1"></div>
+
+    <div class="tool-container">
+      <mat-icon
+        *ngIf="mark.iconType === iconTypeEnum.NUMBER"
+        class="pdf-marker-mark-type-icon-edit"
+        matTooltip="Add/Edit Comment"
+        (click)="onEdit($event)">
+        edit
+      </mat-icon>
+      <mat-icon
+        [class.pdf-marker-mark-type-icon-delete-mark]="mark.iconType !== iconTypeEnum.NUMBER"
+        class="pdf-marker-mark-type-icon-delete"
+        matTooltip="Remove"
+        (click)="onRemove($event)">
+        delete_forever
+      </mat-icon>
+    </div>
+  </div>
+</div>

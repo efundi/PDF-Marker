@@ -1,0 +1,76 @@
+
+.cursor-copy {
+  cursor: copy;
+}
+
+.cursor-text {
+  cursor: text;
+}
+
+.boundary {
+  height: 90%;
+  position: relative;
+  overflow: hidden;
+  margin: 1px auto -8px auto;
+
+  .boundary-drop-zone {
+    display: none;
+    position:absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    opacity: 0;
+    z-index: 2;
+  }
+}
+
+.boundary::-webkit-scrollbar {
+  width: 7px;
+  background: transparent;
+}
+
+.boundary::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+.pdf-marker-assignment-marking-visible-pdf {
+  visibility: hidden;
+}
+
+.pdf-marker-assignment-marking-container {
+  border: 1px solid #eee;
+}
+
+
+.page-wrapper {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+  position: relative;
+  background: #fff;
+}
+
+.highlight{
+  position: absolute;
+  display: none;
+}
+
+
+.waiting{
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 3;
+
+  mat-spinner{
+    margin: auto;
+    top: calc(50% - 50px);
+
+
+  }
+
+
+}

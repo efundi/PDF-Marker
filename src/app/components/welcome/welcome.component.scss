@@ -1,0 +1,42 @@
+.pdf-marker-dropzone {
+  cursor: copy;
+}
+
+.boundary {
+  height: 90%;
+  border: 1px solid;
+  position: relative;
+  overflow: auto
+}
+
+.boundary::-webkit-scrollbar {
+  width: 7px;
+  background: transparent;
+}
+
+.boundary::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+.pdf-marker-icons-svg-class {
+  stroke: var(--pdf-marker-primary);
+  stroke-width: 0;
+}
+
+.mat-expansion-panel-welcome {
+  background-color: #fff!important;
+  padding: 15px!important;
+}
+
+mat-expansion-panel-header {
+  font-weight: 500;
+}
+
+
+.pdf-spacer {
+  margin: 10px 0 10px 0
+}
+
+tr {
+  padding: 3px;
+}

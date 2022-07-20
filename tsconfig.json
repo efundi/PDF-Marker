@@ -15,13 +15,7 @@
       "node_modules/@types"
     ],
     "paths": {
-      "jszip": [
-        "./node_modules/jszip/dist/jszip.js"
-      ],
-      "@coreModule/*": ["./src/app/modules/application/core/*"],
-      "@sharedModule/*": ["./src/app/modules/application/shared/*"],
-      "@layoutModule/*": ["./src/app/modules/application/layout/*"],
-      "@pdfMarkerModule/*": ["./src/app/modules/pdf-marker/*"]
+      "@shared/*": ["./src/shared/*"],
     },
     "lib": [
       "es2018",

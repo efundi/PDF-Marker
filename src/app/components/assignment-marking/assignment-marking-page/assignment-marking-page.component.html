@@ -1,0 +1,45 @@
+<div
+  scrollVisibility
+  (visibilityChanged)="onVisibilityChanged($event)"
+  scrollTarget=".pages-wrapper"
+  class="page-wrapper boundary pdf-marker-assignment-marking-container"
+  #pageWrapper>
+
+
+  <canvas #pdfCanvas> </canvas>
+  <div
+    #highlighter
+    class="highlight"
+  ></div>
+  <div class="annotation-layer" #annotationLayer></div>
+
+  <ng-container *ngIf="!assignmentMarkingComponent.rubric">
+    <ng-container
+      *ngFor="let mark of marks; let i = index">
+
+      <pdf-marker-mark-type-highlight
+        *ngIf="mark.iconType === IconTypeEnum.HIGHLIGHT"
+        [mark]="mark"
+        [index]="i">
+      </pdf-marker-mark-type-highlight>
+
+      <pdf-marker-mark-type-icon
+        *ngIf="mark.iconType !== IconTypeEnum.HIGHLIGHT"
+        class="pdf-marker-mark-type-icon"
+        [mark]="mark"
+        [index]="i">
+      </pdf-marker-mark-type-icon>
+    </ng-container>
+
+  </ng-container>
+
+  <div
+    #markerContainer
+    class="boundary-drop-zone"
+    (mousedown)="mouseDown($event)"
+    (click)="onDropClick($event)">
+  </div>
+  <div class="waiting" *ngIf="renderState !== 'RENDERED'">
+    <mat-spinner></mat-spinner>
+  </div>
+</div>

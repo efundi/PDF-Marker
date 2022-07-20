@@ -1,0 +1,41 @@
+<div class="pdf-marker-assignment-marking-controls" *ngIf="isPdfLoaded">
+  <pdf-marker-assignment-marking-toolbar
+    [currentPage]="currentPage"
+    (currentPageChange)="onPagedChanged($event)"
+    [pages]="pdfDocument.numPages"
+    [containsRubric]="!!rubric"
+    (control)="onControl($event)">
+  </pdf-marker-assignment-marking-toolbar>
+</div>
+
+<div class="marking-container"
+     [class.show-rubric]="showRubric"
+     [class.show-pdf]="showPdf">
+  <div
+    #pagesWrapper
+    class="pages-wrapper"
+    *ngIf="isPdfLoaded"
+    scrollSpy
+    scrollTarget=".pages-wrapper"
+    [spiedTags]="['PDF-MARKER-ASSIGNMENT-MARKING-PAGE']"
+    (sectionChange)="onSectionChange($event)" >
+    <pdf-marker-assignment-marking-page
+      [attr.id]="pageIndex"
+      #pdfPage
+      *ngFor="let item of repeatPerPage(); let pageIndex = index"
+      [pageIndex]="pageIndex"
+      [marks]="submissionInfo.marks[pageIndex]"
+      [pageSettings]="submissionInfo.pageSettings[pageIndex]"
+      [pdf]="pdfDocument">
+    </pdf-marker-assignment-marking-page>
+  </div>
+
+  <div class="rubric-wrapper" *ngIf="isPdfLoaded && !!rubric" >
+    <pdf-marker-rubric
+      style="margin: 1rem"
+      [rubric]="rubric"
+      [rubricSelections]="submissionInfo.marks">
+    </pdf-marker-rubric>
+  </div>
+
+</div>

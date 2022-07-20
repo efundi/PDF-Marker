@@ -1,0 +1,12 @@
+<pdf-marker-header [appName]="title" [appVersion]="version" (toggleMenu)="drawer.toggle()"></pdf-marker-header>
+<mat-progress-bar class="pdf-marker-progress-bar" *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+<mat-sidenav-container class="sidenav-container" autosize>
+  <mat-sidenav #drawer class="sidenav" mode="side" opened>
+    <pdf-marker-side-navigation></pdf-marker-side-navigation>
+  </mat-sidenav>
+  <mat-sidenav-content #content>
+    <div class="pdf-marker-content-container">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

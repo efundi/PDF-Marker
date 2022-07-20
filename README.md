@@ -1,27 +1,38 @@
 # PdfMarker
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.3.3.
+An application to mark PDF assignments. Assignments can be sourced from Sakai, a generic zip file, 
+or individually imported PDF files.
 
-## Development server
+## Development Setup
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+### Pre-requisites
+- NodeJS 16
+- Angular CLI 13
 
-## Code scaffolding
+### Install dependencies
+```bash
+npm install
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+### Run with hot reloading
+The run electron with hot reloading
+```bash
+npm run start
+```
 
-## Build
+## Deploy new version
+Make sure to set the appropriate version in `package.json`. Make use of "preRelease" versions if it is not
+the final stable build e.g. `x.x.x-alpha.1`, `x.x.x-beta.1`.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+Make sure all is committed and pushed to github
 
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+Set an environment variable with your github token
+```bash
+GH_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+Run the build
+```bash
+npm run deploy
+```
+It will deploy a draft release on github. Make sure the details are correct on this draft.
+Mark it as a "pre release" if it is intended to be released as such.
