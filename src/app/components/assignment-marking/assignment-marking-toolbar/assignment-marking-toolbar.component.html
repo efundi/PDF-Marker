@@ -1,5 +1,6 @@
 <mat-toolbar>
-  <ng-container *ngFor="let iconData of (containsRubric ? [] : markIcons)">
+  <div *ngIf="!containsRubric" style="display: flex; width: 33.3%">
+  <ng-container *ngFor="let iconData of markIcons">
     <button
       color="primary"
       [disabled]="containsRubric"
@@ -13,7 +14,6 @@
     </button>
     <button
       color="primary"
-      [disabled]="containsRubric"
       *ngIf="iconData.icon === 'halfTick' && iconData.icon !== 'brush'"
       [matTooltip]="iconData.toolTip"
       [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
@@ -30,7 +30,6 @@
       class="pdf-marker-assignment-marking-settings-highlighter">
       <button
         color="primary"
-        [disabled]="containsRubric"
         [matTooltip]="iconData.toolTip"
         (click)="onIconClick(iconData, $event)"
         [style.border-color]="highlightToolColor"
@@ -52,14 +51,19 @@
   </ng-container>
   <button
     color="primary"
-    *ngIf="!containsRubric"
     matTooltip="Preview Marks"
     mat-button
     mat-icon-button
     (click)="onControl($event, 'finalise')">
     <mat-icon [class.pdf-icon-disabled]="containsRubric">announcement</mat-icon>
   </button>
-  <span class="pdf-marker-fill-space"></span>
+  </div>
+
+
+  <div
+    [style.width]="containsRubric ? null : '33.3%'"
+    [style.flex-grow]="containsRubric ? '1' : null"
+    style="display: flex; align-items: center; justify-content: center">
   <button
     color="primary"
     matTooltip="Prev"
@@ -121,34 +125,38 @@
     <mat-icon class="rotate-icons">rotate_left</mat-icon>
   </button>
 
+  </div>
 
-    <ng-container *ngIf="containsRubric">
-      <span class="pdf-marker-fill-space"></span>
-      <button
-        color="primary"
-        matTooltip="Display PDF Only"
-        mat-button
-        mat-icon-button
-        (click)="onControl($event, 'showPDF')">
-        <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-expand-left"></mat-icon></button>
-      <button
-        color="primary"
-        matTooltip="Shared View"
-        mat-button
-        mat-icon-button
-        (click)="onControl($event, 'showBoth')">
-        <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-default"></mat-icon>
-      </button>
-      <button
-        color="primary"
-        matTooltip="Display Rubric Only"
-        mat-button
-        mat-icon-button
-        (click)="onControl($event, 'showRubric')">
-        <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-expand-right"></mat-icon>
-      </button>
-    </ng-container>
-  <span class="pdf-marker-fill-space"></span>
+
+
+<div style="display: flex; justify-content: flex-end;"
+     [style.width]="containsRubric ? '687px' : '33.3%'">
+  <ng-container *ngIf="containsRubric">
+    <button
+      color="primary"
+      matTooltip="Display PDF Only"
+      mat-button
+      mat-icon-button
+      (click)="onControl($event, 'showPDF')">
+      <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-expand-left"></mat-icon></button>
+    <button
+      color="primary"
+      matTooltip="Shared View"
+      mat-button
+      mat-icon-button
+      (click)="onControl($event, 'showBoth')">
+      <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-default"></mat-icon>
+    </button>
+    <button
+      color="primary"
+      matTooltip="Display Rubric Only"
+      mat-button
+      mat-icon-button
+      (click)="onControl($event, 'showRubric')">
+      <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-expand-right"></mat-icon>
+    </button>
+  </ng-container>
+
   <div class="pdf-marker-assignment-marking-settings-color" *ngIf="!containsRubric">
     <button
       [style.border-color]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour"
@@ -160,8 +168,8 @@
       [(colorPicker)]="selectedColour"
       (colorPickerClose)="onColourChange($event)">
       <mat-icon
-        [style.color]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour"
-        [class.pdf-icon-disabled]="containsRubric">
+        matTooltip="Mark Color"
+          [style.color]="selectedColour">
         palette
       </mat-icon>
     </button>
@@ -170,7 +178,7 @@
       [style.border-color]="((containsRubric) ? 'rgba(0,0,0,.26)':selectedColour)"
       class="pdf-marker-assignment-marking-settings-color-choice">
     </span>
-  </div>&nbsp;&nbsp;
+  </div>
   <button
     color="primary"
     matTooltip="Clear All"
@@ -179,6 +187,7 @@
     (click)="onControl($event, 'clearAll')">
     <mat-icon>delete_sweep</mat-icon>
   </button>
+</div>
 </mat-toolbar>
 <mat-menu #highlightMenu="matMenu" class="highlight-menu vertical">
   <div class="highlight-options">
