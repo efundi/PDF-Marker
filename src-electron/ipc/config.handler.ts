@@ -1,16 +1,27 @@
 import {mkdir, readFile, writeFile} from 'fs/promises';
-import {CONFIG_DIR, CONFIG_FILE} from '../constants';
+import {COMMENTS_FILE, CONFIG_DIR, CONFIG_FILE} from '../constants';
 import {isJson} from '../utils';
 import {existsSync} from 'fs';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {IpcMainInvokeEvent} from 'electron';
 
 export function ensureConfigDirectory(): Promise<string> {
-  let promise = Promise.resolve();
   if (!existsSync(CONFIG_DIR)) {
-    promise = mkdir(CONFIG_DIR);
+    return mkdir(CONFIG_DIR)
+      .then(() => ensureConfigFile())
+      .then(() => CONFIG_DIR);
+  } else {
+    return ensureConfigFile().then(() => CONFIG_DIR);
   }
-  return promise.then(() => CONFIG_DIR);
+}
+
+function ensureConfigFile(): Promise<string> {
+  if (existsSync(CONFIG_DIR + CONFIG_FILE)) {
+    return Promise.resolve(CONFIG_DIR + CONFIG_FILE);
+  } else {
+    return writeFile(CONFIG_DIR + CONFIG_FILE, '{}')
+      .then(() => CONFIG_DIR + CONFIG_FILE);
+  }
 }
 
 export function getConfig(): Promise<SettingInfo> {
