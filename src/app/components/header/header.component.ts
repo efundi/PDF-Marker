@@ -13,6 +13,8 @@ export class HeaderComponent implements OnInit {
   constructor(private router: Router) {
   }
 
+  menuOpen = true;
+
   @Input()
   appName: string;
 
@@ -26,7 +28,8 @@ export class HeaderComponent implements OnInit {
   }
 
   menuToggleClicked() {
-    this.toggleMenu.emit({});
+    this.menuOpen = !this.menuOpen;
+    this.toggleMenu.emit(this.menuOpen);
   }
 
   goHome() {

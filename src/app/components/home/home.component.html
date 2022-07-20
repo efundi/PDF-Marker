@@ -1,4 +1,4 @@
-<pdf-marker-header [appName]="title" [appVersion]="version" (toggleMenu)="drawer.toggle()"></pdf-marker-header>
+<pdf-marker-header [appName]="title" [appVersion]="version" (toggleMenu)="drawer.toggle($event)"></pdf-marker-header>
 <mat-progress-bar class="pdf-marker-progress-bar" *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
 <div style="display: flex">
   <div class="left-fixed-menu">

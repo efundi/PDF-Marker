@@ -570,3 +570,15 @@ pdf-marker-rubric-criteria-level-block {
 .waiting .mat-progress-spinner circle, .mat-spinner circle{
   stroke: var(--pdf-marker-secondary);
 }
+
+.header-toolbar{
+  .submission-navigator-wrapper{
+    transition: margin 400ms;
+    transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+    margin-left: 16px;
+  }
+  &.menuOpen .submission-navigator-wrapper{
+    margin-left: 258px;
+  }
+}
+
