@@ -1,5 +1,4 @@
 .submission-navigator-wrapper{
-  border-left: 1px dashed #cecece;
   display: flex;
   margin-left: 235px;
   padding-left: 8px;
@@ -8,15 +7,22 @@
 .submission-navigator-assignment-name-wrapper{
   display: flex;
   flex-grow: 1;
+  border-left: 1px solid #545454;
 }
 
 
 .submission-navigator-submission-wrapper{
   display: flex;
+  border-left: 1px solid #545454;
+  padding-left: 16px;
 }
 
 button.mat-menu-item{
   height: 3.5rem;
+
+  &.selected {
+    background: rgba(0, 0, 0, 0.2);
+  }
 
   .student-name, .student-id{
     line-height: inherit;

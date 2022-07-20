@@ -46,7 +46,7 @@ import {getAssignmentDirectory} from './workspace.handler';
 import {
   FeedbackAttachments,
   StudentSubmission,
-  SubmissionAttachments,
+  SubmissionAttachments, TreeNode,
   TreeNodeType,
   Workspace,
   WorkspaceAssignment,
@@ -67,11 +67,9 @@ import {
   SubmissionInfo,
   SubmissionInfoVersion,
   SubmissionType
-} from "@shared/info-objects/submission.info";
-import {getComments, updateCommentsFile} from "./comment.handler";
-import {promise} from "protractor";
-import {findRubric} from "./rubric.handler";
-import {SettingInfo} from "@shared/info-objects/setting.info";
+} from '@shared/info-objects/submission.info';
+import {getComments, updateCommentsFile} from './comment.handler';
+import {findRubric} from './rubric.handler';
 
 const zipDir = require('zip-dir');
 
@@ -83,7 +81,7 @@ export function getAssignments(): Promise<Workspace[]> {
   return loadWorkspaces();
 }
 
-function loadFiles(directory: string): Promise<WorkspaceFile[]> {
+function loadFiles(directory: string, parent: TreeNode): Promise<WorkspaceFile[]> {
   return readdir(directory).then(files => {
     const workspaceFiles: WorkspaceFile[] = [];
     const promises: Promise<any>[] = map(files, (file) => {
@@ -93,7 +91,8 @@ function loadFiles(directory: string): Promise<WorkspaceFile[]> {
             type: TreeNodeType.FILE,
             dateModified: fileStat.mtime,
             name: file,
-            children: []
+            children: [],
+            parent
           });
         }
       });
@@ -102,12 +101,13 @@ function loadFiles(directory: string): Promise<WorkspaceFile[]> {
   });
 }
 
-function loadAssignmentContents(directoryFullPath: string): Promise<WorkspaceAssignment> {
+function loadAssignmentContents(directoryFullPath: string, parent: Workspace): Promise<WorkspaceAssignment> {
   const assignment: WorkspaceAssignment = {
     type: TreeNodeType.ASSIGNMENT,
     dateModified: null,
     name: basename(directoryFullPath),
-    children: []
+    children: [],
+    parent
   };
   return readdir(directoryFullPath).then((files) => {
     const promises: Promise<any>[] = map(files, (file) => {
@@ -118,7 +118,8 @@ function loadAssignmentContents(directoryFullPath: string): Promise<WorkspaceAss
             type: TreeNodeType.FILE,
             name: file,
             dateModified: fileStats.mtime,
-            children: []
+            children: [],
+            parent: assignment
           });
         } else {
           // It must be a submission
@@ -151,29 +152,32 @@ function loadAssignmentContents(directoryFullPath: string): Promise<WorkspaceAss
             studentName,
             studentSurname,
             children: [],
+            parent: assignment
           };
           assignment.children.push(submission);
+          const feedbackNode: FeedbackAttachments = {
+            name: FEEDBACK_FOLDER,
+            type: TreeNodeType.FEEDBACK_DIRECTORY,
+            children: [],
+            dateModified: null,
+            parent: submission
+          };
+          submission.children.push(feedbackNode);
+
+          const submissionAttachments: SubmissionAttachments = {
+            name: SUBMISSION_FOLDER,
+            type: TreeNodeType.SUBMISSIONS_DIRECTORY,
+            children: [],
+            dateModified: null,
+            parent: submission
+          };
+          submission.children.push(submissionAttachments);
+
 
           return Promise.all([
-            loadFiles(fullPath).then(sFiles => submission.children.push(...sFiles)),
-            loadFiles(fullPath + sep + FEEDBACK_FOLDER).then(fFiles => {
-              const feedbackNode: FeedbackAttachments = {
-                name: FEEDBACK_FOLDER,
-                type: TreeNodeType.FEEDBACK_DIRECTORY,
-                children: fFiles,
-                dateModified: null
-              };
-              submission.children.push(feedbackNode);
-            }),
-            loadFiles(fullPath + sep + SUBMISSION_FOLDER).then(sFiles => {
-              const submissionAttachments: SubmissionAttachments = {
-                name: SUBMISSION_FOLDER,
-                type: TreeNodeType.SUBMISSIONS_DIRECTORY,
-                children: sFiles,
-                dateModified: null
-              };
-              submission.children.push(submissionAttachments);
-            }),
+            loadFiles(fullPath, submission).then(nodes => submission.children.push(...nodes)),
+            loadFiles(fullPath + sep + FEEDBACK_FOLDER, feedbackNode).then(nodes => feedbackNode.children = nodes),
+            loadFiles(fullPath + sep + SUBMISSION_FOLDER, submissionAttachments).then(nodes => submissionAttachments.children = nodes),
           ]).then(() => {
             submission.children.sort(PDFM_FILE_SORT);
             return submission;
@@ -194,12 +198,13 @@ function loadWorkspaceContents(directoryFullPath: string): Promise<Workspace> {
     type: TreeNodeType.WORKSPACE,
     dateModified: null,
     name: basename(directoryFullPath),
-    children: []
+    children: [],
+    parent: null
   };
 
   return readdir(directoryFullPath).then((assignments) => {
     const promises = map(assignments, assignment => {
-      return loadAssignmentContents(directoryFullPath + sep + assignment)
+      return loadAssignmentContents(directoryFullPath + sep + assignment, workspace)
         .then(a => workspace.children.push(a));
     });
 
@@ -217,7 +222,8 @@ function loadWorkspaces(): Promise<Workspace[]> {
       type: TreeNodeType.WORKSPACE,
       name: DEFAULT_WORKSPACE,
       dateModified: null,
-      children: []
+      children: [],
+      parent: null
     };
     const workspaceFolders = config.folders || [];
     const workspaces: Workspace[] = [defaultWorkspace];
@@ -230,7 +236,7 @@ function loadWorkspaces(): Promise<Workspace[]> {
           return loadWorkspaceContents(fullPath)
             .then(workspace => workspaces.push(workspace));
         } else {
-          return loadAssignmentContents(fullPath)
+          return loadAssignmentContents(fullPath, defaultWorkspace)
             .then(a => defaultWorkspace.children.push(a));
         }
       });
@@ -247,7 +253,7 @@ function loadWorkspaces(): Promise<Workspace[]> {
 
 export function saveMarks(event: IpcMainInvokeEvent, location: string, submissionInfo: SubmissionInfo): Promise<string> {
 
-  if (submissionInfo.type === SubmissionType.MARK){
+  if (submissionInfo.type === SubmissionType.MARK) {
 
     const marksPerPage = submissionInfo.marks as MarkInfo[][];
 
@@ -301,15 +307,14 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
   }
 }
 
-function saveSubmissionInfo(studentLocation: string, submissionInfo: SubmissionInfo): Promise<SubmissionInfo>{
+function saveSubmissionInfo(studentLocation: string, submissionInfo: SubmissionInfo): Promise<SubmissionInfo> {
   return writeFile(studentLocation + sep + MARK_FILE, JSON.stringify(submissionInfo))
     .then(() => submissionInfo, () => Promise.reject('Failed to save student marks!'));
 }
 
 function saveToMarks(studentLocation: string, marks: SubmissionInfo, totalMark: number): Promise<string> {
 
-  return getConfig().then((config) => {
-    const studentFolder = config.defaultPath + sep + studentLocation.replace(/\//g, sep);
+  return workspaceRelativePathToAbsolute(studentLocation).then((studentFolder) => {
     return checkAccess(studentFolder).then(() => {
 
       return saveSubmissionInfo(studentFolder, marks).then(() => {
@@ -408,13 +413,12 @@ function convertMarks(marks: any, studentFolderFullPath: string): Promise<Submis
 }
 
 
-export function loadMarks(studentFolder: string): Promise<SubmissionInfo>{
-  return getConfig().then((config) => {
-    studentFolder = config.defaultPath + sep + studentFolder.replace(/\//g, sep);
-    return loadMarksAt(studentFolder);
+export function loadMarks(studentFolder: string): Promise<SubmissionInfo> {
+  return workspaceRelativePathToAbsolute(studentFolder).then((absolutePath) => {
+    return loadMarksAt(absolutePath);
   });
 }
-export function loadMarksAt(studentFolderFull: string): Promise<SubmissionInfo>{
+export function loadMarksAt(studentFolderFull: string): Promise<SubmissionInfo> {
   return readFile(studentFolderFull + sep + MARK_FILE).then((data) => {
     if (!isJson(data)) {
       return [];
@@ -771,14 +775,10 @@ function writeAssignmentSettingsFor(
 
 export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: string, location: string): Promise<any> {
   try {
-    return getConfig().then((config) => {
-      const loc = location.replace(/\//g, sep);
-      if (workspaceFolder && workspaceFolder !== DEFAULT_WORKSPACE) {
-        workspaceFolder = workspaceFolder.replace(/\//g, sep);
-      } else {
-        workspaceFolder = '';
-      }
-      const assignmentFolder = (workspaceFolder !== '') ? config.defaultPath + sep + workspaceFolder + sep + loc : config.defaultPath + sep + loc;
+    return Promise.all([
+      getConfig(),
+      workspaceRelativePathToAbsolute(location)
+    ]).then(([config, assignmentFolder]) => {
       return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE).then((gradesJSON) => {
         const files = glob.sync(assignmentFolder + sep + '/*');
         const promises: Promise<any>[] = files.map((file) => {
@@ -843,11 +843,13 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
           }
         });
         return Promise.all(promises).then(() => {
-          return zipDir((workspaceFolder !== '') ? config.defaultPath + sep + workspaceFolder : config.defaultPath,
+          return zipDir((workspaceFolder === DEFAULT_WORKSPACE) ? config.defaultPath : config.defaultPath + sep + workspaceFolder,
             {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(assignmentFolder)) ? true : (path.startsWith((assignmentFolder) + sep))))})
             .then((buffer) => {
               return buffer;
             }, (err) => {
+              console.error('Could not export assignment');
+              console.error(err);
               return Promise.reject('Could not export assignment');
             });
         });
@@ -863,14 +865,10 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
 
 export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFolder: string, location: string, rubricName: string): Promise<any> {
   try {
-    return getConfig().then((config) => {
-      const loc = location.replace(/\//g, sep);
-      if (workspaceFolder && workspaceFolder !== DEFAULT_WORKSPACE) {
-        workspaceFolder = workspaceFolder.replace(/\//g, sep);
-      } else {
-        workspaceFolder = '';
-      }
-      const assignmentFolder = (workspaceFolder !== '') ? config.defaultPath + sep + workspaceFolder + sep + loc : config.defaultPath + sep + loc;
+    return Promise.all([
+      getConfig(),
+      workspaceRelativePathToAbsolute(location)
+    ]).then(([config, assignmentFolder]) => {
       return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE).then((gradesJSON) => {
         const files = glob.sync(assignmentFolder + sep + '/*');
         const assignmentSettingsBuffer = readFileSync(assignmentFolder + sep + SETTING_FILE);
@@ -947,11 +945,13 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
           }
         });
         return Promise.all(promises).then(() => {
-          return zipDir((workspaceFolder !== null && workspaceFolder !== '' && workspaceFolder !== undefined) ? config.defaultPath + sep + workspaceFolder : config.defaultPath,
+          return zipDir((workspaceFolder === DEFAULT_WORKSPACE) ? config.defaultPath : config.defaultPath + sep + workspaceFolder,
             {filter: (filterPath: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(filterPath)) && ((filterPath.endsWith(assignmentFolder)) ? true : (filterPath.startsWith(assignmentFolder + sep))))})
             .then((buffer) => {
               return buffer;
             }, (err) => {
+              console.error('Could not export assignment');
+              console.error(err);
               return Promise.reject('Could not export assignment');
             });
         });
@@ -1101,12 +1101,23 @@ export function updateAssignmentRubric(
 
 
 export function getPdfFile(event: IpcMainInvokeEvent, location: string): Promise<Uint8Array> {
-  return getConfig().then((config) => {
-    const loc = location.replace(/\//g, sep);
-    const actualPath = config.defaultPath + sep + loc;
-
+  return workspaceRelativePathToAbsolute(location).then((actualPath) => {
     return checkAccess(actualPath).then(() => {
       return readFile(actualPath);
     });
+  });
+}
+
+/**
+ * Convert a workspace relative tree path, to an absolute filesystem path
+ * @param relativePath Workspace relative file path
+ */
+export function workspaceRelativePathToAbsolute(relativePath: string): Promise<string> {
+  return getConfig().then((config) => {
+    if (relativePath.startsWith(DEFAULT_WORKSPACE + '/')) {
+      relativePath = relativePath.replace(DEFAULT_WORKSPACE + '/', '');
+    }
+    relativePath = relativePath.replace(/\//g, sep);
+    return config.defaultPath + sep + relativePath;
   });
 }

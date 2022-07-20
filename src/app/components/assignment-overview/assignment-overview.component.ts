@@ -24,11 +24,18 @@ import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
-import {MatSort, MatSortable, Sort} from '@angular/material/sort';
+import {MatSort, MatSortable} from '@angular/material/sort';
 import {filter, find, isNil, sortBy} from 'lodash';
-import {StudentSubmission, TreeNodeType} from '@shared/info-objects/workspace';
+import {
+  StudentSubmission,
+  TreeNodeType,
+  Workspace,
+  WorkspaceAssignment,
+  WorkspaceFile
+} from '@shared/info-objects/workspace';
 import * as _moment from 'moment';
-import {FEEDBACK_FOLDER, MARK_FILE, SUBMISSION_FOLDER} from '@shared/constants/constants';
+import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
+
 const moment = _moment;
 
 export interface AssignmentDetails {
@@ -44,15 +51,13 @@ export interface AssignmentDetails {
 
   grade?: number;
 
-  path?: string;
-
   status?: string;
 
   date?: string;
 
-  action?: 'view' | 'mark';
-
   submissionDirectoryName?: string;
+
+  pdfFile: WorkspaceFile;
 }
 
 @Component({
@@ -150,7 +155,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     this.subscription = this.activatedRoute.params.subscribe({
       next: (params) => {
 
-        this.workspaceName = params['workspaceName'];
+        this.workspaceName = params['workspaceName'] || DEFAULT_WORKSPACE;
         this.assignmentName = params['id'];
         this.getAssignmentSettings();
       },
@@ -236,7 +241,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
             studentNumber: workspaceSubmission.studentId,
             assignment: '',
             grade: 0,
-            path: null,
+            pdfFile: null,
             status: '',
           };
           const submissionDirectory = find(workspaceSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
@@ -245,26 +250,16 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           if (marksFile) {
             value.date = moment(marksFile.dateModified).format('YYYY-MM-DD HH:mm:ss');
           }
-
-          let pdf = '';
-          let pdfPath = '';
-          let action;
           if (submissionDirectory && submissionDirectory.children.length > 0) {
-            pdf = submissionDirectory.children[0].name;
-            pdfPath = PdfmUtilsService.buildFilePath(this.workspaceName, this.assignmentName, workspaceSubmission.name, SUBMISSION_FOLDER, pdf);
-            action = 'mark';
+            value.pdfFile = submissionDirectory.children[0] as WorkspaceFile;
           } else if (feedbackDirectory && feedbackDirectory.children.length > 0) {
-            pdf = feedbackDirectory.children[0].name;
-            pdfPath = PdfmUtilsService.buildFilePath(this.workspaceName, this.assignmentName, workspaceSubmission.name, FEEDBACK_FOLDER, pdf);
-            action = 'view';
+            value.pdfFile = feedbackDirectory.children[0] as WorkspaceFile;
           }
-          value.assignment = pdf;
+          value.assignment = value.pdfFile.name;
           const gradesInfo = this.assignmentGrades
             .find(grade => grade[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
           value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5 : 0);
-          value.path = pdfPath;
           value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7 : 'N/A');
-          value.action = action;
           values.push(value);
         });
         this.dataSource.data = sortBy(values, 'fullName');
@@ -293,24 +288,29 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   onSelectedPdf(element: AssignmentDetails) {
+    const pdfFile = element.pdfFile;
+    const assignment = pdfFile.parent.parent.parent as WorkspaceAssignment;
+    const workspace = assignment.parent as Workspace;
+    const pdfPath = PdfmUtilsService.buildTreePath(pdfFile);
+
     this.assignmentService.selectSubmission({
-      workspaceName: PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
-      assignmentName: this.assignmentName,
-      pdfPath: element.path
+      workspace,
+      assignment,
+      pdfFile
     });
 
-    if (element.action === 'mark') {
+    if (pdfFile.parent.type === TreeNodeType.SUBMISSIONS_DIRECTORY) {
       this.router.navigate([
         RoutesEnum.ASSIGNMENT_MARKER,
-        PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
-        this.assignmentName,
-        element.path]);
+        workspace.name,
+        assignment.name,
+        pdfPath]);
     } else {
       this.router.navigate([
         RoutesEnum.PDF_VIEWER,
-        PdfmUtilsService.defaultWorkspaceName(this.workspaceName),
-        this.assignmentName,
-        element.path]);
+        workspace.name,
+        assignment.name,
+        pdfPath]);
     }
   }
 

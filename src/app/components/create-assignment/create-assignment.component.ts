@@ -171,6 +171,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
             studentSurname: studentSubmission.studentSurname,
             studentNumber: studentSubmission.studentId,
             assignment: null,
+            pdfFile: null
           };
           const submissionDirectory = find(studentSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
           value.assignment = (submissionDirectory && submissionDirectory.children.length > 0) ? submissionDirectory.children[0].name : '';

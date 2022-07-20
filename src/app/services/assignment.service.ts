@@ -129,7 +129,8 @@ export class AssignmentService {
               type: TreeNodeType.FILE,
               children: [],
               name: MARK_FILE,
-              dateModified: new Date()
+              dateModified: new Date(),
+              parent: studentSubmission
             };
             studentSubmission.children.push(marksFile);
           } else {

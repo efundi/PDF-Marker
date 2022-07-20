@@ -1,9 +1,9 @@
-<div class="submission-navigator-wrapper">
+<div class="submission-navigator-wrapper" [style.display]="activeSubmission == null ? 'none' : 'flex'">
 
   <div class="submission-navigator-assignment-name-wrapper">
     <button mat-button (click)="openAssignment()">
       <mat-icon>description</mat-icon>
-      <span style="font-size: 1.3rem;font-weight: normal;margin-left: 5px;">Value and Ethics</span>
+      <span style="font-size: 1.3rem;font-weight: normal;margin-left: 5px;">{{activeSubmission?.assignment.name}}</span>
     </button>
   </div>
 
@@ -13,15 +13,24 @@
     </button>
     <button
       mat-button
-      [matMenuTriggerFor]="menu">{{menuItems[activeIndex]?.studentFullName}}<mat-icon>arrow_drop_down</mat-icon>
+      [matMenuTriggerFor]="menu">
+      <div style="display: flex">
+        <div style="flex-grow: 1;line-height: 2rem;height: 2.5rem; width: 185px; text-align: left">
+          <div style="height: 1.5rem;white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{menuItems[activeIndex]?.studentFullName}}</div>
+          <small style="position: relative; top: -0.5rem;">{{menuItems[activeIndex]?.studentId}}</small>
+        </div>
+        <div style="display: flex; align-items: center;">
+          <mat-icon>arrow_drop_down</mat-icon>
+        </div>
+      </div>
     </button>
 
     <mat-menu #menu="matMenu">
       <ng-template matMenuContent>
         <ng-container *ngFor="let item of menuItems; let i = index">
-          <button mat-menu-item (click)="selectSubmission(i)">
+          <button mat-menu-item (click)="selectSubmission(i)" [class.selected]="i === activeIndex">
             <div class="student-name">{{item.studentFullName}}</div>
-            <small class="student-id">{{item.studentNumber}}</small>
+            <small class="student-id">{{item.studentId}}</small>
           </button>
         </ng-container>
       </ng-template>

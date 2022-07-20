@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {isNil} from 'lodash';
 import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
+import {TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
 
 @Injectable({
   providedIn: 'root'
@@ -77,5 +78,13 @@ export class PdfmUtilsService {
       finalPath = workspaceName + '/' + finalPath;
     }
     return finalPath;
+  }
+
+  public static buildTreePath(treeNode: TreeNode): string {
+    if (isNil(treeNode)) {
+      return null;
+    }
+    const parentPath = PdfmUtilsService.buildTreePath(treeNode.parent);
+    return (isNil(parentPath) ? '' :  parentPath + '/') +  treeNode.name;
   }
 }
