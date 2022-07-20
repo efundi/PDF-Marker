@@ -22,16 +22,6 @@ table {
     width: calc(100% / 4);
   }
 
-  tr {
-    th:last-child {
-      text-align: center;
-    }
-
-    td:last-child {
-      text-align: center;
-    }
-  }
-
   .pdf-marker-workspace-overview-assignment-name {
     cursor: pointer;
     font-weight: 500;
