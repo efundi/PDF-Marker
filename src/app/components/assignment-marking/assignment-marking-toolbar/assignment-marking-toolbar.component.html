@@ -159,7 +159,8 @@
 
   <div class="pdf-marker-assignment-marking-settings-color" *ngIf="!containsRubric">
     <button
-      [style.border-color]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour"
+      #picker="ngxColorPicker"
+      [style.border-color]="selectedColour"
       class="pdf-marker-assignment-marking-settings-color-pallette"
       mat-button
       mat-icon-button
@@ -174,8 +175,9 @@
       </mat-icon>
     </button>
     <span
-      [style.background]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedColour"
-      [style.border-color]="((containsRubric) ? 'rgba(0,0,0,.26)':selectedColour)"
+      (click)="picker.openDialog()"
+      [style.background]="selectedColour"
+      [style.border-color]="selectedColour"
       class="pdf-marker-assignment-marking-settings-color-choice">
     </span>
   </div>
@@ -192,7 +194,6 @@
 <mat-menu #highlightMenu="matMenu" class="highlight-menu vertical">
   <div class="highlight-options">
     <div class="highlight-option"
-         [class.selected]="highlightOption === selectedHighlightColour"
          (click)="selectHighlighter(highlightOption)"
          *ngFor="let highlightOption of highlightOptions">
       <div class="highlight-option-brush" [style.background-color]="highlightOption.preview"></div>
