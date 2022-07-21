@@ -86,6 +86,7 @@ import {
 import { PdfViewerComponent } from './components/pdf-viewer/pdf-viewer.component';
 import { PdfViewerPageComponent } from './components/pdf-viewer/pdf-viewer-page/pdf-viewer-page.component';
 import { PdfViewerToolbarComponent } from './components/pdf-viewer/pdf-viewer-toolbar/pdf-viewer-toolbar.component';
+import { MarkersManageComponent } from './components/markers-manage/markers-manage.component';
 
 @NgModule({
   declarations: [
@@ -126,6 +127,7 @@ import { PdfViewerToolbarComponent } from './components/pdf-viewer/pdf-viewer-to
     PdfViewerComponent,
     PdfViewerPageComponent,
     PdfViewerToolbarComponent,
+    MarkersManageComponent,
   ],
   imports: [
     HttpClientModule,

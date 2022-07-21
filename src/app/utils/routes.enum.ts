@@ -1,5 +1,6 @@
 export enum RoutesEnum {
   MARKER = '/marker',
+  MARKERS_MANAGE = '/markers-manage',
   ASSIGNMENT_IMPORT = '/marker/assignment/import',
   ASSIGNMENT_UPLOAD = '/marker/assignment/upload',
   ASSIGNMENT_SETTINGS = '/marker/assignment/settings',
