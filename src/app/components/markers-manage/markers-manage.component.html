@@ -1,0 +1,85 @@
+<h1><mat-icon color="primary">person</mat-icon>&nbsp;Markers</h1>
+<mat-tab-group>
+  <mat-tab label="Markers">
+    <form [formGroup]="personFormGroup">
+      <div class="pdf-spacer"></div>
+      <mat-form-field>
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name">
+      </mat-form-field>
+
+      <mat-form-field style="margin-left: 16px">
+        <mat-label>Email</mat-label>
+        <input matInput  formControlName="email" type="email">
+      </mat-form-field>
+
+      <div class="pdf-spacer"></div>
+      <div>
+        <button
+          [disabled]="personFormGroup.invalid"
+          type="submit"
+          mat-button
+          mat-raised-button
+          (click)="addMarker()"
+          color="primary">Save</button>
+      </div>
+    </form>
+
+    <div style="width: 100%; margin-top: 16px">
+      <table mat-table [dataSource]="dataSource" matSort style="width: 100%">
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="name"> Name</th>
+          <td mat-cell *matCellDef="let element" >
+            <p>{{element.name}}</p>
+          </td>
+        </ng-container>
+
+        <!-- Assignment Column -->
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="email"> Email </th>
+          <td mat-cell *matCellDef="let element">{{element.email}}</td>
+        </ng-container>
+
+        <!-- Groups Column -->
+        <ng-container matColumnDef="groups">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="groups"> Groups </th>
+          <td mat-cell *matCellDef="let element">{{element.groups}}</td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef style="text-align: right"> Actions </th>
+          <td mat-cell *matCellDef="let element" style="text-align: right">
+            <button
+              mat-button
+              mat-icon-button
+              matTooltip="Edit"
+              color="primary">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              (click)="removeMarker(element)"
+              mat-button
+              mat-icon-button
+              color="primary"
+              matTooltip="Delete">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+      <mat-paginator [length]="dataSource?.data.length" [pageSize]="pageSize" [pageSizeOptions]="assignmentPageSizeOptions" showFirstLastButtons></mat-paginator>
+
+
+    </div>
+  </mat-tab>
+  <mat-tab label="Groups">
+    <div>
+
+    </div>
+  </mat-tab>
+</mat-tab-group>

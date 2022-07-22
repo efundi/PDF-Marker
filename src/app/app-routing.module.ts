@@ -14,11 +14,13 @@ import {SettingsComponent} from './components/settings/settings.component';
 import {WorkingFolderComponent} from './components/working-folder/working-folder.component';
 import {RubricImportComponent} from './components/rubric-import/rubric-import.component';
 import {PdfViewerComponent} from "./components/pdf-viewer/pdf-viewer.component";
+import {MarkersManageComponent} from './components/markers-manage/markers-manage.component';
 
 
 const routes: Routes = [
   { path: '', redirectTo: '/marker', pathMatch: 'full' },
   { path: 'marker', component: WelcomeComponent },
+  { path: 'markers-manage', component: MarkersManageComponent },
   { path: 'marker/assignment/settings', component: SettingsComponent },
   { path: 'marker/assignment/import', component: ImportComponent },
   { path: 'marker/assignment/upload', component: CreateAssignmentComponent },
