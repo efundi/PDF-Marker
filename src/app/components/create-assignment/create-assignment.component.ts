@@ -462,7 +462,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         }
         this.busyService.stop();
       },
-      error: () => {
+      error: (error) => {
+        this.alertService.error(error);
         this.busyService.stop();
       }
     });
@@ -481,7 +482,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
           this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
         }
       },
-      error: () => {
+      error: (error) => {
+        this.alertService.error(error);
         this.busyService.stop();
       }
     });
