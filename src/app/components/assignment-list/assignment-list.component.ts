@@ -1,7 +1,14 @@
 import {Component, OnDestroy, OnInit, TrackByFunction} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {Subscription} from 'rxjs';
-import {findTreeNodes, TreeNode, TreeNodeType, Workspace} from '@shared/info-objects/workspace';
+import {
+  findTreeNodes,
+  StudentSubmission,
+  TreeNode,
+  TreeNodeType,
+  Workspace,
+  WorkspaceAssignment, WorkspaceFile
+} from '@shared/info-objects/workspace';
 import {FlatTreeControl} from '@angular/cdk/tree';
 import {isNil, map} from 'lodash';
 import {RoutesEnum} from '../../utils/routes.enum';
@@ -16,6 +23,7 @@ import {
   SUBMISSION_FOLDER
 } from '@shared/constants/constants';
 let treeId = 0;
+
 /**
  * Tree node that has a reference to the parent
  */
@@ -114,7 +122,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
 
   FILE_TYPE = TreeNodeType.FILE;
 
-  private assignmentSubscription: Subscription;
+  private workspacesSubscription: Subscription;
   private static transformer = (node: DisplayTreeNode, level: number) => {
     node.level = level;
     return node;
@@ -124,7 +132,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
   trackBy: TrackByFunction<DisplayTreeNode> = (index: number, treeNode: DisplayTreeNode) => treeNode.id;
 
   ngOnInit() {
-    this.assignmentSubscription = this.assignmentService.workspaceList.subscribe(workspaces => {
+    this.workspacesSubscription = this.assignmentService.workspaceList.subscribe(workspaces => {
 
       this.workspaces = workspaces;
       this.dataSource.data = [];
@@ -135,11 +143,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
 
     this.assignmentService.selectedSubmissionChanged.subscribe((selectedSubmission) => {
       if (selectedSubmission) {
-        let treePath = selectedSubmission.pdfPath;
-        if (selectedSubmission.workspaceName === DEFAULT_WORKSPACE) {
-          treePath = DEFAULT_WORKSPACE + '/' + treePath;
-        }
-
+        const treePath = PdfmUtilsService.buildTreePath(selectedSubmission.pdfFile);
         const treeNodes: DisplayTreeNode[] = findTreeNodes(treePath, this.treeNodes) as DisplayTreeNode[];
         treeNodes.forEach((treeNode) => this.treeControl.expand(treeNode));
         this.activeNode = treeNodes[treeNodes.length - 1];
@@ -153,20 +157,20 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
   }
 
 
-  onNodeClicked(mouseEvent: MouseEvent, node: DisplayTreeNode) {
+  onNodeClicked(mouseEvent: MouseEvent, node: TreeNode) {
 
     if (node.type === TreeNodeType.ASSIGNMENT) {
       this.openAssignmentOverview(node);
     } else if (node.type === TreeNodeType.WORKSPACE) {
       this.openWorkspaceOverview(node);
     } else if (node.type === TreeNodeType.FILE && node.parent.type === TreeNodeType.SUBMISSIONS_DIRECTORY) {
-      this.openDocument(node, true);
+      this.openDocument(node as WorkspaceFile, true);
     } else if (node.type === TreeNodeType.FILE && node.parent.type === TreeNodeType.FEEDBACK_DIRECTORY) {
-      this.openDocument(node, false);
+      this.openDocument(node as WorkspaceFile, false);
     }
   }
 
-  private openAssignmentOverview(node: DisplayTreeNode): void {
+  private openAssignmentOverview(node: TreeNode): void {
     if (isNil(node.parent)) {
       this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, node.name]);
     } else {
@@ -174,38 +178,35 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     }
   }
 
-  private openWorkspaceOverview(node: DisplayTreeNode): void {
+  private openWorkspaceOverview(node: TreeNode): void {
     this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW, node.name]);
   }
 
-  private openDocument(node: DisplayTreeNode, marking: boolean): void {
+  private openDocument(node: WorkspaceFile, marking: boolean): void {
 
-    const submission = node.parent.parent;
-    const assignment = submission.parent;
-    const workspaceName = assignment.parent ? assignment.parent.name : DEFAULT_WORKSPACE;
+    const submission = node.parent.parent as StudentSubmission;
+    const assignment = submission.parent as WorkspaceAssignment;
+    const workspace = assignment.parent as Workspace;
 
     const assignmentName = assignment.name;
+    const workspaceName = workspace.name;
+    this.assignmentService.selectSubmission({
+      workspace,
+      assignment,
+      pdfFile: node
+    });
     if (marking) {
       const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, SUBMISSION_FOLDER, node.name);
-      this.assignmentService.selectSubmission({
-        workspaceName,
-        assignmentName,
-        pdfPath
-      });
       this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
     } else {
       const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, FEEDBACK_FOLDER, node.name);
-      this.assignmentService.selectSubmission({
-        workspaceName,
-        assignmentName,
-        pdfPath
-      });
       this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);
     }
   }
 
+
   ngOnDestroy() {
-    this.assignmentSubscription.unsubscribe();
+    this.workspacesSubscription.unsubscribe();
   }
 
   public collapseAll() {

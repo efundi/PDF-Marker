@@ -87,17 +87,14 @@ mat-toolbar {
 
     .pdf-marker-assignment-marking-settings-color-choice {
       display: block;
-      width: 25px;
-      margin-left: 7px;
+      width: 32px;
+      margin-left: 3px;
       text-align: center;
-      height: 2px;
-      border: 1px solid;
+      height: 6px;
+      border: 1px solid #cecece;
       position: absolute;
-      top: 90%;
-    }
-
-    .pdf-marker-assignment-marking-settings-color-pallette {
-      border: 1px solid;
+      top: 85%;
+      cursor: pointer;
     }
   }
 

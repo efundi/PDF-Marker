@@ -3,18 +3,18 @@ mat-toolbar {
   height: 99%;
   min-height: 64px;
   .pdf-marker-brand {
-    display: flex;
-    align-items: center;
+    margin-left: 16px;
     cursor: pointer;
 
     .pdf-marker-title {
       font-weight: 800;
     }
 
-    #pdf-marker-version {
+    .pdf-marker-version {
       font-size: 10px;
-      vertical-align: super;
       font-weight: normal;
+      position: absolute;
+      top: 2.1rem;
     }
 
     img {

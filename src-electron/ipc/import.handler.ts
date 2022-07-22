@@ -143,6 +143,7 @@ export function getZipEntries(event: IpcMainInvokeEvent, file: string): Promise<
                   type: (index + 1) < splits.length ? TreeNodeType.ASSIGNMENT : TreeNodeType.FILE,
                   children: [],
                   dateModified: zipEntry.date,
+                  parent: null // Do we need parent nodes for zips?
                 };
                 nodes.push(node);
               }
