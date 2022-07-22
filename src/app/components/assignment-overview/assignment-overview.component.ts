@@ -299,7 +299,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       pdfPath: element.path
     });
 
-    if (element.action === 'mark') {
+    if (isNil(this.assignmentSettings.dateFinalized)) {
       this.router.navigate([
         RoutesEnum.ASSIGNMENT_MARKER,
         PdfmUtilsService.defaultWorkspaceName(this.workspaceName),

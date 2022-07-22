@@ -159,10 +159,8 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
       this.openAssignmentOverview(node);
     } else if (node.type === TreeNodeType.WORKSPACE) {
       this.openWorkspaceOverview(node);
-    } else if (node.type === TreeNodeType.FILE && node.parent.type === TreeNodeType.SUBMISSIONS_DIRECTORY) {
-      this.openDocument(node, true);
-    } else if (node.type === TreeNodeType.FILE && node.parent.type === TreeNodeType.FEEDBACK_DIRECTORY) {
-      this.openDocument(node, false);
+    } else if (node.type === TreeNodeType.FILE) {
+      this.openDocument(node);
     }
   }
 
@@ -178,30 +176,33 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW, node.name]);
   }
 
-  private openDocument(node: DisplayTreeNode, marking: boolean): void {
+  private openDocument(node: DisplayTreeNode): void {
 
     const submission = node.parent.parent;
     const assignment = submission.parent;
     const workspaceName = assignment.parent ? assignment.parent.name : DEFAULT_WORKSPACE;
 
     const assignmentName = assignment.name;
-    if (marking) {
-      const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, SUBMISSION_FOLDER, node.name);
-      this.assignmentService.selectSubmission({
-        workspaceName,
-        assignmentName,
-        pdfPath
-      });
-      this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
-    } else {
-      const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, FEEDBACK_FOLDER, node.name);
-      this.assignmentService.selectSubmission({
-        workspaceName,
-        assignmentName,
-        pdfPath
-      });
-      this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);
-    }
+
+    this.assignmentService.getAssignmentSettings(workspaceName, assignmentName).subscribe((assignmentSettingsInfo) => {
+      if (isNil(assignmentSettingsInfo.dateFinalized)) {
+        const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, node.parent.name, node.name);
+        this.assignmentService.selectSubmission({
+          workspaceName,
+          assignmentName,
+          pdfPath
+        });
+        this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
+      } else {
+        const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, node.parent.name, node.name);
+        this.assignmentService.selectSubmission({
+          workspaceName,
+          assignmentName,
+          pdfPath
+        });
+        this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);
+      }
+    });
   }
 
   ngOnDestroy() {
