@@ -457,10 +457,6 @@ export function updateAssignmentSettings(event: IpcMainInvokeEvent, updatedSetti
 
 
 export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: UpdateAssignment): Promise<any> {
-  if (updateRequest.assignmentName.length < 5) {
-    return Promise.reject(`Assignment must be > 5 characters`);
-  }
-
   const assignmentName: string = updateRequest.assignmentName.trim();
   try {
     return getConfig().then(async (config) => {
