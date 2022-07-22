@@ -1,5 +1,13 @@
 import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
-import {AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators} from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatSort} from '@angular/material/sort';
@@ -33,7 +41,8 @@ function uuidv4() {
 })
 export class MarkersManageComponent implements OnInit, AfterViewInit {
 
-  personFormGroup: FormGroup;
+  markerFormGroup: FormGroup;
+  markersFormArray: FormArray;
   displayedColumns: string[] = ['name', 'email', 'groups', 'actions'];
   readonly pageSize: number = 10;
   dataSource = new MatTableDataSource<MarkersTableData>([]);
@@ -56,11 +65,16 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
   }
 
   private initForm() {
-    this.personFormGroup = this.formBuilder.group({
+    this.markerFormGroup = this.formBuilder.group({
       name: [null, Validators.required],
       email: [null, Validators.compose([Validators.required, Validators.email, (ac) => this.validateUniqueEmail(ac)])]
     });
 
+    this.markersFormArray = this.formBuilder.array([]);
+  }
+
+  getFormControl(index: number, name: string): FormControl {
+    return this.markersFormArray.at(index).get(name) as FormControl;
   }
 
   private validateUniqueName(name: string): boolean {
@@ -115,10 +129,19 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
         editing: false
       };
     });
+
+    this.markersFormArray.clear();
+    this.originalSettings.markers.forEach((marker) => {
+      this.markersFormArray.push(this.formBuilder.group({
+        name: [marker.name, Validators.required],
+        email: [marker.email, Validators.compose([Validators.required, Validators.email, (ac) => this.validateUniqueEmail(ac)])]
+      }), {emitEvent: false});
+    });
+    this.markersFormArray.updateValueAndValidity();
   }
 
   private populateMarker(): Marker {
-    const formValue = this.personFormGroup.value;
+    const formValue = this.markerFormGroup.value;
     return {
       id: uuidv4(),
       email: formValue.email,
@@ -132,9 +155,7 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
       next: (settings) => {
         this.originalSettings = settings;
         this.updateTable();
-        this.personFormGroup.reset();
-        this.personFormGroup.markAsPristine();
-        this.personFormGroup.markAsUntouched();
+        this.markerFormGroup.reset();
         this.busyService.stop();
         this.appService.openSnackBar(true, 'Settings updated');
       },

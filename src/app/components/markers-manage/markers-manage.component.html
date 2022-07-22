@@ -1,26 +1,26 @@
 <h1><mat-icon color="primary">person</mat-icon>&nbsp;Markers</h1>
 <mat-tab-group>
   <mat-tab label="Markers">
-    <form [formGroup]="personFormGroup">
+    <form [formGroup]="markerFormGroup">
       <div class="pdf-spacer"></div>
       <mat-form-field>
         <mat-label>Name</mat-label>
         <input matInput formControlName="name" required>
-        <mat-error *ngIf="personFormGroup.controls.name.errors?.required">Name required</mat-error>
+        <mat-error *ngIf="markerFormGroup.controls.name.errors?.required">Name required</mat-error>
       </mat-form-field>
 
       <mat-form-field style="margin-left: 16px">
         <mat-label>Email</mat-label>
         <input matInput  formControlName="email" type="email" required>
-        <mat-error *ngIf="personFormGroup.controls.email.errors?.required ">Email required</mat-error>
-        <mat-error *ngIf="personFormGroup.controls.email.errors?.email ">Invalid email</mat-error>
-        <mat-error *ngIf="personFormGroup.controls.email.errors?.unique ">Email already used</mat-error>
+        <mat-error *ngIf="markerFormGroup.controls.email.errors?.required ">Email required</mat-error>
+        <mat-error *ngIf="markerFormGroup.controls.email.errors?.email ">Invalid email</mat-error>
+        <mat-error *ngIf="markerFormGroup.controls.email.errors?.unique ">Email already used</mat-error>
       </mat-form-field>
 
       <div class="pdf-spacer"></div>
       <div>
         <button
-          [disabled]="personFormGroup.invalid"
+          [disabled]="markerFormGroup.invalid"
           type="submit"
           mat-button
           mat-raised-button
@@ -30,19 +30,31 @@
     </form>
 
     <div style="width: 100%; margin-top: 16px">
-      <table mat-table [dataSource]="dataSource" matSort style="width: 100%">
+      <table mat-table [dataSource]="dataSource" matSort style="width: 100%" >
 
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="name"> Name</th>
-          <td mat-cell *matCellDef="let element" >
-            <p>{{element.name}}</p>
+          <td mat-cell *matCellDef="let element; let i = index" >
+            <mat-form-field  *ngIf="element.editing">
+              <input matInput [formControl]="getFormControl(i, 'name')" required>
+              <mat-error *ngIf="getFormControl(i, 'name').errors?.required">Name required</mat-error>
+            </mat-form-field>
+            <p *ngIf="!element.editing">{{element.name}}</p>
           </td>
         </ng-container>
 
         <!-- Assignment Column -->
         <ng-container matColumnDef="email">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="email"> Email </th>
-          <td mat-cell *matCellDef="let element">{{element.email}}</td>
+          <td mat-cell *matCellDef="let element; let i = index">
+            <mat-form-field  *ngIf="element.editing" >
+              <input matInput [formControl]="getFormControl(i, 'email')" required>
+              <mat-error *ngIf="getFormControl(i, 'email').errors?.required ">Email required</mat-error>
+              <mat-error *ngIf="getFormControl(i, 'email').errors?.email ">Invalid email</mat-error>
+              <mat-error *ngIf="getFormControl(i, 'email').errors?.unique ">Email already used</mat-error>
+            </mat-form-field>
+            <p *ngIf="!element.editing">{{element.email}}</p>
+          </td>
         </ng-container>
 
         <!-- Groups Column -->
@@ -53,13 +65,32 @@
 
         <!-- Actions Column -->
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef style="text-align: right"> Actions </th>
-          <td mat-cell *matCellDef="let element" style="text-align: right">
+          <th mat-header-cell *matHeaderCellDef style="text-align: right; width: 8rem;"> Actions </th>
+          <td mat-cell *matCellDef="let element; let i = index" style="text-align: right">
             <button
               mat-button
               mat-icon-button
               matTooltip="Edit"
               color="primary"
+              [disabled]="getFormControl(i, 'email').invalid"
+              *ngIf="element.editing">
+              <mat-icon>done</mat-icon>
+            </button>
+            <button
+              mat-button
+              mat-icon-button
+              matTooltip="Edit"
+              color="primary"
+              *ngIf="element.editing"
+              (click)="element.editing=false">
+              <mat-icon>close</mat-icon>
+            </button>
+            <button
+              mat-button
+              mat-icon-button
+              matTooltip="Edit"
+              color="primary"
+              *ngIf="!element.editing"
               (click)="element.editing = true">
               <mat-icon>edit</mat-icon>
             </button>
