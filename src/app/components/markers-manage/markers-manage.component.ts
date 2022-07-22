@@ -16,6 +16,7 @@ import {Subscription} from 'rxjs';
 
 export interface MarkersTableData extends Marker {
   groups: boolean;
+  editing: false;
 }
 
 function uuidv4() {
@@ -43,8 +44,6 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
   @ViewChild(MatSort, {static: true})
   sort: MatSort;
   assignmentPageSizeOptions: number[];
-
-  uniqueName = true;
 
   private originalSettings: SettingInfo;
 
@@ -90,7 +89,6 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    // this.sort.sort(sort);
     this.dataSource.sort = this.sort;
     this.dataSource.paginator = this.paginator;
   }
@@ -113,7 +111,8 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
     this.dataSource.data = (this.originalSettings.markers || []).map((marker) => {
       return {
         ...marker,
-        groups: false // TODO calculate groups
+        groups: false, // TODO calculate groups
+        editing: false
       };
     });
   }

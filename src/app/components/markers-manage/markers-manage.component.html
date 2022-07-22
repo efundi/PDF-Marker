@@ -4,10 +4,9 @@
     <form [formGroup]="personFormGroup">
       <div class="pdf-spacer"></div>
       <mat-form-field>
-        <mat-label>Name {{uniqueName}}</mat-label>
+        <mat-label>Name</mat-label>
         <input matInput formControlName="name" required>
         <mat-error *ngIf="personFormGroup.controls.name.errors?.required">Name required</mat-error>
-        <mat-error *ngIf="!uniqueName">Name required</mat-error>
       </mat-form-field>
 
       <mat-form-field style="margin-left: 16px">
@@ -60,7 +59,8 @@
               mat-button
               mat-icon-button
               matTooltip="Edit"
-              color="primary">
+              color="primary"
+              (click)="element.editing = true">
               <mat-icon>edit</mat-icon>
             </button>
             <button
@@ -84,7 +84,7 @@
   </mat-tab>
   <mat-tab label="Groups">
     <div>
-
+      <h1>Coming soon...</h1>
     </div>
   </mat-tab>
 </mat-tab-group>

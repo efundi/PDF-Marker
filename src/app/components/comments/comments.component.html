@@ -13,9 +13,8 @@
     <button type="button" mat-raised-button color="primary" [disabled]="genericCommentsForm.invalid" (click)="onSubmit()">Save</button>
   </div>
 </form>
-<div id="pdf-marker-rubric-import-comment-list" *ngIf="comments?.length > 0">
-  <br>
-  <table mat-table [dataSource]="dataSource">
+<div id="pdf-marker-rubric-import-comment-list" style="margin-top: 16px">
+  <table mat-table [dataSource]="dataSource" matSort>
 
     <ng-container matColumnDef="id" style="display: none">
       <th mat-header-cell *matHeaderCellDef> Title </th>
@@ -23,14 +22,22 @@
     </ng-container>
     <!-- Title Column -->
     <ng-container matColumnDef="title">
-      <th mat-header-cell *matHeaderCellDef> Comment </th>
-      <td mat-cell *matCellDef="let element"><span class="">{{ element.title }}</span></td>
+      <th mat-header-cell *matHeaderCellDef  mat-sort-header="title"> Comment </th>
+      <td mat-cell *matCellDef="let element" ><span class="">{{ element.title }}</span></td>
     </ng-container>
+
+    <!-- In Use Column -->
+    <ng-container matColumnDef="inUse">
+      <th mat-header-cell *matHeaderCellDef> In use </th>
+      <td mat-cell *matCellDef="let element"><span>{{ (element?.inUse) ? 'Yes':'No' }}</span></td>
+    </ng-container>
+
+
 
     <!-- Actions Column -->
     <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef> Actions </th>
-      <td mat-cell *matCellDef="let element">
+      <th mat-header-cell *matHeaderCellDef style="text-align: right"> Actions </th>
+      <td mat-cell *matCellDef="let element"  style="text-align: right">
           <span>
              <!--<button type="button" matTooltip="View" mat-button mat-icon-button><mat-icon>visibility</mat-icon></button>-->
             <button
@@ -45,14 +52,9 @@
       </td>
     </ng-container>
 
-    <!-- In Use Column -->
-    <ng-container matColumnDef="inUse">
-      <th mat-header-cell *matHeaderCellDef> In use </th>
-      <td mat-cell *matCellDef="let element"><span>{{ (element?.inUse) ? 'Yes':'No' }}</span></td>
-    </ng-container>
-
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
   </table>
+  <mat-paginator [length]="dataSource.data.length" [pageSize]="10" [pageSizeOptions]="[10, 20, 50, 100]" showFirstLastButtons></mat-paginator>
 </div>
 
