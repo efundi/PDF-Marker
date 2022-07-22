@@ -260,6 +260,7 @@ export class ImportComponent implements OnInit, OnDestroy {
 
   private resetForm() {
     this.importForm.reset();
+    this.actualFilePath = null;
     this.isFileLoaded = false;
     this.isModalOpened = false;
     this.isValidFormat = false;
