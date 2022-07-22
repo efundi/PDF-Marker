@@ -4,13 +4,18 @@
     <form [formGroup]="personFormGroup">
       <div class="pdf-spacer"></div>
       <mat-form-field>
-        <mat-label>Name</mat-label>
-        <input matInput formControlName="name">
+        <mat-label>Name {{uniqueName}}</mat-label>
+        <input matInput formControlName="name" required>
+        <mat-error *ngIf="personFormGroup.controls.name.errors?.required">Name required</mat-error>
+        <mat-error *ngIf="!uniqueName">Name required</mat-error>
       </mat-form-field>
 
       <mat-form-field style="margin-left: 16px">
         <mat-label>Email</mat-label>
-        <input matInput  formControlName="email" type="email">
+        <input matInput  formControlName="email" type="email" required>
+        <mat-error *ngIf="personFormGroup.controls.email.errors?.required ">Email required</mat-error>
+        <mat-error *ngIf="personFormGroup.controls.email.errors?.email ">Invalid email</mat-error>
+        <mat-error *ngIf="personFormGroup.controls.email.errors?.unique ">Email already used</mat-error>
       </mat-form-field>
 
       <div class="pdf-spacer"></div>
