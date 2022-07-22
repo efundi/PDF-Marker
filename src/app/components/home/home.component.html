@@ -1,12 +1,17 @@
-<pdf-marker-header [appName]="title" [appVersion]="version" (toggleMenu)="drawer.toggle()"></pdf-marker-header>
+<pdf-marker-header [appName]="title" [appVersion]="version" (toggleMenu)="drawer.toggle($event)"></pdf-marker-header>
 <mat-progress-bar class="pdf-marker-progress-bar" *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
-<mat-sidenav-container class="sidenav-container" autosize>
-  <mat-sidenav #drawer class="sidenav" mode="side" opened>
-    <pdf-marker-side-navigation></pdf-marker-side-navigation>
-  </mat-sidenav>
-  <mat-sidenav-content #content>
-    <div class="pdf-marker-content-container">
-      <router-outlet></router-outlet>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+<div style="display: flex">
+  <div class="left-fixed-menu">
+    <pdf-marker-menu></pdf-marker-menu>
+  </div>
+  <mat-sidenav-container class="sidenav-container" autosize style="flex-grow: 1">
+    <mat-sidenav #drawer class="sidenav" mode="side" opened>
+      <pdf-marker-side-navigation></pdf-marker-side-navigation>
+    </mat-sidenav>
+    <mat-sidenav-content #content>
+      <div class="pdf-marker-content-container">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

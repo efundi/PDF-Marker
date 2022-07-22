@@ -1,4 +1,4 @@
-<mat-toolbar>
+<mat-toolbar style="background: #888; color:white" [class.menuOpen]="menuOpen" class="header-toolbar">
   <button
     tool
     color="primary"
@@ -6,13 +6,14 @@
     aria-label="Toggle sidenav"
     (click)="menuToggleClicked()"
     mat-icon-button>
-    <mat-icon matTooltip="Toggle Menu" aria-label="Side nav toggle icon">swap_horiz</mat-icon>
+    <mat-icon matTooltip="Toggle Menu" aria-label="Side nav toggle icon" style="color: #FFFFFF; font-size: 36px; width: 36px;">swap_horiz</mat-icon>
   </button>
-  <span class="pdf-marker-brand" (click)="goHome()">
-    <img src="assets/logo.png" alt="">
-    <span class="pdf-marker-title">{{ appName }} <span id="pdf-marker-version" *ngIf="appVersion"><span id="pdf-marker-version-prefix">v</span><span id="pdf-marker-version-number">{{ appVersion.version }}</span></span></span>
-  </span>
-  <span class="pdf-marker-fill-space"></span>
-  <pdf-marker-menu></pdf-marker-menu>
+  <div class="pdf-marker-brand" (click)="goHome()">
+    <div class="pdf-marker-title">{{ appName }}</div>
+    <div *ngIf="appVersion" class="pdf-marker-version">
+      v{{ appVersion.version }}
+    </div>
+  </div>
+  <pdf-marker-submission-navigator style="flex-grow: 1"></pdf-marker-submission-navigator>
 </mat-toolbar>
 <mat-divider></mat-divider>

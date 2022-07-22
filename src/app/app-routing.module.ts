@@ -13,7 +13,7 @@ import {AssignmentOverviewComponent} from './components/assignment-overview/assi
 import {SettingsComponent} from './components/settings/settings.component';
 import {WorkingFolderComponent} from './components/working-folder/working-folder.component';
 import {RubricImportComponent} from './components/rubric-import/rubric-import.component';
-import {PdfViewerComponent} from "./components/pdf-viewer/pdf-viewer.component";
+import {PdfViewerComponent} from './components/pdf-viewer/pdf-viewer.component';
 import {MarkersManageComponent} from './components/markers-manage/markers-manage.component';
 
 

@@ -13,17 +13,20 @@ export interface TreeNode {
   name: string;
   type: TreeNodeType;
   dateModified: Date;
+  parent: TreeNode;
   children?: TreeNode[];
 }
 
 export interface Workspace extends TreeNode {
   type: TreeNodeType.WORKSPACE;
   children: WorkspaceAssignment[];
+  parent: null;
 }
 
 export interface WorkspaceAssignment extends TreeNode {
   type: TreeNodeType.ASSIGNMENT;
   children: (WorkspaceFile| StudentSubmission)[];
+  parent: Workspace;
 }
 
 export interface WorkspaceFile extends TreeNode {
@@ -33,11 +36,13 @@ export interface WorkspaceFile extends TreeNode {
 export interface SubmissionAttachments extends TreeNode {
   type: TreeNodeType.SUBMISSIONS_DIRECTORY;
   children: WorkspaceFile[];
+  parent: StudentSubmission;
 }
 
 export interface FeedbackAttachments extends TreeNode {
   type: TreeNodeType.FEEDBACK_DIRECTORY;
   children: WorkspaceFile[];
+  parent: StudentSubmission;
 }
 
 export interface StudentSubmission extends TreeNode {
@@ -45,6 +50,7 @@ export interface StudentSubmission extends TreeNode {
   studentSurname: string;
   studentId: string;
   children: (WorkspaceFile|SubmissionAttachments|FeedbackAttachments)[];
+  parent: WorkspaceAssignment;
 }
 
 export function findTreeNode(path: string, roots: TreeNode[]): TreeNode {

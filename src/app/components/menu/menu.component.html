@@ -11,7 +11,11 @@
 
   <ng-container *ngFor="let tmenu of toolbarMenu">
     <!--<a [routerLink]="[tmenu.href]" mat-button matTooltip="{{ tmenu.toolTip }}"><mat-icon>{{ tmenu.icon }}</mat-icon></a>-->
-    <a color="primary" [routerLink]="[tmenu.href]" *ngIf="tmenu.title !== settings" mat-button matTooltip="{{ tmenu.toolTip }}"><mat-icon>{{ tmenu.icon }}</mat-icon></a>
-    <button  color="primary" type="button" *ngIf="tmenu.title === settings" mat-button matTooltip="{{ tmenu.toolTip }}" [matMenuTriggerFor]="menu"><mat-icon>{{ tmenu.icon }}</mat-icon></button>
+    <a color="primary" [routerLink]="[tmenu.href]" *ngIf="tmenu.title !== settings" mat-button matTooltip="{{ tmenu.toolTip }}" style="padding: 0; width: 100%;">
+      <mat-icon class="menu-item">{{ tmenu.icon }}</mat-icon>
+    </a>
+    <button style="width: 100%" color="primary" type="button" *ngIf="tmenu.title === settings" mat-button matTooltip="{{ tmenu.toolTip }}" [matMenuTriggerFor]="menu">
+      <mat-icon class="menu-item">{{ tmenu.icon }}</mat-icon>
+    </button>
   </ng-container>
 </span>

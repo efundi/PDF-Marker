@@ -1,5 +1,7 @@
+import {Workspace, WorkspaceAssignment, WorkspaceFile} from '@shared/info-objects/workspace';
+
 export interface SelectedSubmission {
-  workspaceName: string;
-  assignmentName: string;
-  pdfPath: string;
+  workspace: Workspace;
+  assignment: WorkspaceAssignment;
+  pdfFile: WorkspaceFile;
 }
