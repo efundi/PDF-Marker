@@ -7,7 +7,11 @@
     </div>
     <div class="pdf-marker-assignment-overview-assignment-name">
       <h1 >{{ assignmentName }}</h1>
-      <div><span class="badge badge-success" *ngIf="assignmentSettings?.dateFinalized">Finalized</span></div>
+      <div>
+        <span class="badge badge-success" *ngIf="assignmentState === 'finalized'">Finalized</span>
+        <span class="badge badge-gray" *ngIf="assignmentState === 'inprogress'">In Progress</span>
+        <span class="badge badge-gray" *ngIf="assignmentState === 'notstarted'">Not Started</span>
+      </div>
     </div>
     <div class="pdf-marker-assignment-overview-buttons">
       <button

@@ -602,7 +602,13 @@ pdf-marker-rubric-criteria-level-block {
   border-radius: 0.375rem;
 
   &.badge-success {
-    color: #fff !important;
+    color: #fff;
     background: rgb(25, 135, 84);
+  }
+
+  /** Adapted from badge-secondary */
+  &.badge-gray {
+    color: #fff;
+    background: rgb(108, 117, 125);
   }
 }
