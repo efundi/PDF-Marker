@@ -299,7 +299,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       pdfFile
     });
 
-    if (pdfFile.parent.type === TreeNodeType.SUBMISSIONS_DIRECTORY) {
+    if (isNil(this.assignmentSettings.dateFinalized)) {
       this.router.navigate([
         RoutesEnum.ASSIGNMENT_MARKER,
         workspace.name,
