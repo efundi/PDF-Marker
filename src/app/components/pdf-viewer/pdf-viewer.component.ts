@@ -1,4 +1,4 @@
-import {Component, ElementRef, OnInit, QueryList, Renderer2, ViewChild, ViewChildren} from '@angular/core';
+import {Component, ElementRef, OnDestroy, OnInit, QueryList, Renderer2, ViewChild, ViewChildren} from '@angular/core';
 import {getDocument, PDFDocumentProxy} from 'pdfjs-dist';
 import {PdfViewerPageComponent} from './pdf-viewer-page/pdf-viewer-page.component';
 import {from, mergeMap, Observable, Subscription} from 'rxjs';
@@ -15,7 +15,7 @@ import {ToolbarSettingChange} from './pdf-viewer-toolbar/pdf-viewer-toolbar.comp
   templateUrl: './pdf-viewer.component.html',
   styleUrls: ['./pdf-viewer.component.scss']
 })
-export class PdfViewerComponent implements OnInit {
+export class PdfViewerComponent implements OnInit, OnDestroy {
 
   /**
    * Reference to the assignment marking pages
@@ -55,7 +55,9 @@ export class PdfViewerComponent implements OnInit {
     }
   }
 
-
+  ngOnDestroy() {
+    this.assignmentService.selectSubmission(null);
+  }
 
   ngOnInit(): void {
     this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {

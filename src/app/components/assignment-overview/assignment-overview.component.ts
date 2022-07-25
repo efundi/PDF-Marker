@@ -89,7 +89,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   private rubricSubscription: Subscription;
   private sortSubscription: Subscription;
   private settings: SettingInfo;
-  private assignmentSettings: AssignmentSettingsInfo;
+  assignmentSettings: AssignmentSettingsInfo;
   private previouslyEmitted: string;
   isSettings: boolean;
   isCreated: boolean;

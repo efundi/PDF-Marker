@@ -87,6 +87,7 @@ import { PdfViewerComponent } from './components/pdf-viewer/pdf-viewer.component
 import { PdfViewerPageComponent } from './components/pdf-viewer/pdf-viewer-page/pdf-viewer-page.component';
 import { PdfViewerToolbarComponent } from './components/pdf-viewer/pdf-viewer-toolbar/pdf-viewer-toolbar.component';
 import { SubmissionNavigatorComponent } from './components/submission-navigator/submission-navigator.component';
+import {MatChipsModule} from '@angular/material/chips';
 
 @NgModule({
   declarations: [
@@ -150,6 +151,7 @@ import { SubmissionNavigatorComponent } from './components/submission-navigator/
     MatProgressBarModule,
     MatTableModule,
     MatCheckboxModule,
+    MatChipsModule,
     FormsModule,
     ReactiveFormsModule,
     MatInputModule,

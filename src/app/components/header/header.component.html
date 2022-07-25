@@ -1,5 +1,6 @@
 <mat-toolbar style="background: #888; color:white" [class.menuOpen]="menuOpen" class="header-toolbar">
   <button
+    [ngStyle]="{visibility : showCollapse ? 'visible' : 'hidden'}"
     tool
     color="primary"
     type="button"

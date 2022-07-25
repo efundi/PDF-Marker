@@ -285,8 +285,8 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
     });
   } else if (submissionInfo.type === SubmissionType.RUBRIC) {
     const assignmentDirectory = dirname(location);
-    return getConfig().then((config) => {
-      return getAssignmentSettingsAt(config.defaultPath + sep + assignmentDirectory)
+    return workspaceRelativePathToAbsolute(assignmentDirectory).then((assignmentSettingsPath) => {
+      return getAssignmentSettingsAt(assignmentSettingsPath)
         .then((assignmentSettingsInfo) => {
 
           if (isNil(assignmentSettingsInfo.rubric)) {
@@ -868,7 +868,7 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
   try {
     return Promise.all([
       getConfig(),
-      workspaceRelativePathToAbsolute(location)
+      getAssignmentDirectory(workspaceFolder, location)
     ]).then(([config, assignmentFolder]) => {
       return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE).then((gradesJSON) => {
         const files = glob.sync(assignmentFolder + sep + '/*');

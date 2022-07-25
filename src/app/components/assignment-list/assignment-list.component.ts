@@ -7,7 +7,8 @@ import {
   TreeNode,
   TreeNodeType,
   Workspace,
-  WorkspaceAssignment, WorkspaceFile
+  WorkspaceAssignment,
+  WorkspaceFile
 } from '@shared/info-objects/workspace';
 import {FlatTreeControl} from '@angular/cdk/tree';
 import {isNil, map} from 'lodash';
@@ -15,13 +16,8 @@ import {RoutesEnum} from '../../utils/routes.enum';
 import {Router} from '@angular/router';
 import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
-import {
-  DEFAULT_WORKSPACE,
-  FEEDBACK_FOLDER,
-  GRADES_FILE,
-  PDFM_FILES_FILTER,
-  SUBMISSION_FOLDER
-} from '@shared/constants/constants';
+import {GRADES_FILE, PDFM_FILES_FILTER} from '@shared/constants/constants';
+
 let treeId = 0;
 
 /**
@@ -163,7 +159,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
       this.openAssignmentOverview(node);
     } else if (node.type === TreeNodeType.WORKSPACE) {
       this.openWorkspaceOverview(node);
-    } else if (node.type === TreeNodeType.FILE) {
+    } else if (node.type === TreeNodeType.FILE && (node.parent.type === TreeNodeType.SUBMISSIONS_DIRECTORY || node.parent.type === TreeNodeType.FEEDBACK_DIRECTORY)) {
       this.openDocument(node as WorkspaceFile);
     }
   }
