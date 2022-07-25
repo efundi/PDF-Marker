@@ -88,8 +88,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   @ViewChildren('pdfPage', {read: AssignmentMarkingPageComponent})
   pdfPages: QueryList<AssignmentMarkingPageComponent>;
 
-  pageObjects = [];
-
   repeatPerPage(): [] | Array<any> {
     if (isNil(this.pdfDocument)) {
       return [];

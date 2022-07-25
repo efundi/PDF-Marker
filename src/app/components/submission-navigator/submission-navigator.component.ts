@@ -21,13 +21,35 @@ export interface SubmissionItem {
 })
 export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
 
+  /**
+   * Indicator if we can navigate any further
+   */
   canNext = false;
+
+  /**
+   * Indicator if we can navigate any back
+   */
   canPrevious = false;
 
+  /**
+   * Index of currently active submission
+   */
   activeIndex = 0;
+
+  /**
+   * Active selected submission
+   */
   activeSubmission: SelectedSubmission;
+
+  /**
+   * Items to display in the droplist
+   */
   menuItems: SubmissionItem[] = [];
 
+  /**
+   * Subscription listening for the active submission
+   * @private
+   */
   private assignmentSubscription: Subscription;
 
   constructor(private assignmentService: AssignmentService,
@@ -35,7 +57,6 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.subscribe((assignment) => {
-      console.log(assignment);
       this.generateDataFromModel(assignment);
     });
   }
@@ -112,7 +133,7 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
   }
 
   openAssignment() {
-    this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.activeSubmission.assignment.name]);
+    this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.activeSubmission.assignment.name, this.activeSubmission.workspace.name]);
   }
 
   private updateStates(): void {
