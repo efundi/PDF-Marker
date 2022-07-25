@@ -13,12 +13,15 @@
     <!--<a [routerLink]="[tmenu.href]" mat-button matTooltip="{{ tmenu.toolTip }}"><mat-icon>{{ tmenu.icon }}</mat-icon></a>-->
     <a color="primary"
        [routerLink]="[tmenu.href]"
+       routerLinkActive
+       [routerLinkActiveOptions]="{exact: tmenu.exact}"
+       #rla="routerLinkActive"
        *ngIf="tmenu.title !== settings"
        mat-button
        matTooltip="{{ tmenu.toolTip }}"
        matTooltipPosition="right"
        style="padding: 0; width: 100%;">
-      <mat-icon class="menu-item">{{ tmenu.icon }}</mat-icon>
+      <mat-icon class="menu-item" [class.material-icons-outlined]="!rla.isActive">{{ tmenu.icon }}</mat-icon>
     </a>
     <button
       style="width: 100%"
@@ -29,7 +32,7 @@
       matTooltip="{{ tmenu.toolTip }}"
       [matMenuTriggerFor]="menu"
       matTooltipPosition="right">
-      <mat-icon class="menu-item">{{ tmenu.icon }}</mat-icon>
+      <mat-icon class="menu-item material-icons-outlined">{{ tmenu.icon }}</mat-icon>
     </button>
   </ng-container>
 </span>
