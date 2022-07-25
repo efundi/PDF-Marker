@@ -7,6 +7,7 @@ import {AssignmentService} from '../../services/assignment.service';
 import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {SelectedSubmission} from '../../info-objects/selected-submission';
+import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 
 export interface SubmissionItem {
   studentFullName: string;
@@ -21,20 +22,46 @@ export interface SubmissionItem {
 })
 export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
 
+  /**
+   * Indicator if we can navigate any further
+   */
   canNext = false;
+
+  /**
+   * Indicator if we can navigate any back
+   */
   canPrevious = false;
 
+  /**
+   * Index of currently active submission
+   */
   activeIndex = 0;
+
+  /**
+   * Active selected submission
+   */
   activeSubmission: SelectedSubmission;
+
+  /**
+   * Items to display in the droplist
+   */
   menuItems: SubmissionItem[] = [];
 
+  /**
+   * Subscription listening for the active submission
+   * @private
+   */
   private assignmentSubscription: Subscription;
+
+  private assignmentSettings: AssignmentSettingsInfo;
 
   constructor(private assignmentService: AssignmentService,
               private router: Router) { }
 
   ngOnInit(): void {
     this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.subscribe((assignment) => {
+      this.activeSubmission = assignment;
+      this.loadAssignmentSettings();
       this.generateDataFromModel(assignment);
     });
   }
@@ -44,12 +71,18 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
   }
 
 
+  private loadAssignmentSettings() {
+    if (!isNil(this.activeSubmission)) {
+       this.assignmentService.getAssignmentSettings(this.activeSubmission.workspace.name, this.activeSubmission.assignment.name).subscribe((settings) => {
+        this.assignmentSettings = settings;
+      });
+    }
+  }
+
   private generateDataFromModel(activeSubmission: SelectedSubmission) {
     if (isNil(activeSubmission)) {
-      this.activeSubmission = null;
       this.menuItems = [];
     } else {
-      this.activeSubmission = activeSubmission;
       this.menuItems = filter(activeSubmission.assignment.children, {type: TreeNodeType.SUBMISSION})
         .map((studentSubmission: StudentSubmission) => {
 
@@ -103,7 +136,7 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
       pdfFile: activeMenuItem.pdfFile
     });
 
-    if (activeMenuItem.pdfFile.parent.type === TreeNodeType.SUBMISSIONS_DIRECTORY) {
+    if (isNil(this.assignmentSettings.dateFinalized)) {
       this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
     } else {
       this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);
@@ -111,7 +144,7 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
   }
 
   openAssignment() {
-    this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.activeSubmission.assignment.name]);
+    this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.activeSubmission.assignment.name, this.activeSubmission.workspace.name]);
   }
 
   private updateStates(): void {

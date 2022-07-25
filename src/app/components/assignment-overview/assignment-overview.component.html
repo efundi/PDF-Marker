@@ -2,44 +2,55 @@
   <pdf-marker-alert></pdf-marker-alert>
 
   <div class="pdf-marker-assignment-overview-assignment-header">
-    <h1 class="pdf-marker-assignment-overview-assignment-name">{{ assignmentName }}</h1>
-    <span class="pdf-marker-fill-space"></span>
-    <button
-      color="primary"
-      [disabled]="selection.isEmpty()"
-      mat-button
-      mat-icon-button
-      matTooltip="Share"
-      (click)="share()">
-      <mat-icon [class.pdf-icon-disabled]="selection.isEmpty()">share</mat-icon>
-    </button>
-    <button
-      color="primary"
-      [disabled]="!isCreated"
-      mat-button
-      mat-icon-button
-      matTooltip="Manage Submissions"
-      (click)="manageStudents()">
-      <mat-icon [class.pdf-icon-disabled]="!isCreated">person</mat-icon>
-    </button>
-    <button
-      color="primary"
-      [disabled]="!isRubric"
-      mat-button
-      mat-icon-button
-      matTooltip="Manage Rubric"
-      (click)="viewRubric()">
-      <mat-icon [class.pdf-icon-disabled]="!isRubric">apps</mat-icon>
-    </button>
-    <button
-      color="primary"
-      [disabled]="!isSettings"
-      mat-button
-      mat-icon-button
-      matTooltip="Finalise and Export Assignment"
-      (click)="onFinalizeAndExport($event)">
-      <mat-icon >archive</mat-icon>
-    </button>
+    <div class="pdf-marker-assignment-overview-icon">
+      <mat-icon color="primary">description</mat-icon>
+    </div>
+    <div class="pdf-marker-assignment-overview-assignment-name">
+      <h1 >{{ assignmentName }}</h1>
+      <div>
+        <span class="badge badge-success" *ngIf="assignmentState === 'finalized'">Finalized</span>
+        <span class="badge badge-gray" *ngIf="assignmentState === 'inprogress'">In Progress</span>
+        <span class="badge badge-gray" *ngIf="assignmentState === 'notstarted'">Not Started</span>
+      </div>
+    </div>
+    <div class="pdf-marker-assignment-overview-buttons">
+      <button
+        color="primary"
+        [disabled]="selection.isEmpty()"
+        mat-button
+        mat-icon-button
+        matTooltip="Share"
+        (click)="share()">
+        <mat-icon [class.pdf-icon-disabled]="selection.isEmpty()">share</mat-icon>
+      </button>
+      <button
+        color="primary"
+        [disabled]="!isCreated"
+        mat-button
+        mat-icon-button
+        matTooltip="Manage Submissions"
+        (click)="manageStudents()">
+        <mat-icon [class.pdf-icon-disabled]="!isCreated">person</mat-icon>
+      </button>
+      <button
+        color="primary"
+        [disabled]="!isRubric"
+        mat-button
+        mat-icon-button
+        matTooltip="Manage Rubric"
+        (click)="viewRubric()">
+        <mat-icon [class.pdf-icon-disabled]="!isRubric">apps</mat-icon>
+      </button>
+      <button
+        color="primary"
+        [disabled]="!isSettings"
+        mat-button
+        mat-icon-button
+        matTooltip="Finalise and Export Assignment"
+        (click)="onFinalizeAndExport($event)">
+        <mat-icon >archive</mat-icon>
+      </button>
+    </div>
   </div>
 
   <table mat-table [dataSource]="dataSource" matSort>

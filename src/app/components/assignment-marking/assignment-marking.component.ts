@@ -88,8 +88,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   @ViewChildren('pdfPage', {read: AssignmentMarkingPageComponent})
   pdfPages: QueryList<AssignmentMarkingPageComponent>;
 
-  pageObjects = [];
-
   repeatPerPage(): [] | Array<any> {
     if (isNil(this.pdfDocument)) {
       return [];
@@ -127,6 +125,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
+      this.assignmentMarkingSessionService.reset();
       this.workspaceName = params['workspaceName'];
       this.assignmentName = params['assignmentName'];
       this.pdf = params['pdf'];

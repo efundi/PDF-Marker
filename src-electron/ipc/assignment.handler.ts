@@ -285,8 +285,8 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
     });
   } else if (submissionInfo.type === SubmissionType.RUBRIC) {
     const assignmentDirectory = dirname(location);
-    return getConfig().then((config) => {
-      return getAssignmentSettingsAt(config.defaultPath + sep + assignmentDirectory)
+    return workspaceRelativePathToAbsolute(assignmentDirectory).then((assignmentSettingsPath) => {
+      return getAssignmentSettingsAt(assignmentSettingsPath)
         .then((assignmentSettingsInfo) => {
 
           if (isNil(assignmentSettingsInfo.rubric)) {
@@ -715,6 +715,13 @@ export function getGrades(event: IpcMainInvokeEvent, workspaceName: string, assi
   });
 }
 
+function setDateFinalized(assignmentFolder: string): Promise<any> {
+  return getAssignmentSettingsAt(assignmentFolder).then((assignmentSettings) => {
+    assignmentSettings.dateFinalized = new Date().toISOString();
+    return writeAssignmentSettingsAt(assignmentSettings, assignmentFolder);
+  });
+}
+
 function getAssignmentSettingsAt(assignmentFolder: string): Promise<any> {
   assignmentFolder = assignmentFolder.replace(/\//g, sep);
   if (existsSync(assignmentFolder)) {
@@ -845,6 +852,8 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
               return Promise.reject('Could not export assignment');
             });
         });
+      }).then(() => {
+        return setDateFinalized(assignmentFolder);
       });
     });
   } catch (e) {
@@ -859,7 +868,7 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
   try {
     return Promise.all([
       getConfig(),
-      workspaceRelativePathToAbsolute(location)
+      getAssignmentDirectory(workspaceFolder, location)
     ]).then(([config, assignmentFolder]) => {
       return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE).then((gradesJSON) => {
         const files = glob.sync(assignmentFolder + sep + '/*');
@@ -947,6 +956,8 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
               return Promise.reject('Could not export assignment');
             });
         });
+      }).then(() => {
+        return setDateFinalized(assignmentFolder);
       });
     });
 

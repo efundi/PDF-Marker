@@ -291,12 +291,14 @@ $left-fixed-menu-width: 4rem;
 }
 
 
+.mat-menu-panel::-webkit-scrollbar,
 .mat-dialog-content::-webkit-scrollbar {
   width: 8px;
   height: 8px;
   background: #F5F5F5;
 }
 
+.mat-menu-panel::-webkit-scrollbar-thumb,
 .mat-dialog-content::-webkit-scrollbar-thumb {
   border-radius: 10px;
   background: var(--pdf-marker-primary);
@@ -582,3 +584,31 @@ pdf-marker-rubric-criteria-level-block {
   }
 }
 
+
+/**
+  Custom styles for badges
+  Adapted from bootstrap badges
+ */
+.badge {
+  display: inline-block;
+  padding: 0.35em 0.65em;
+  font-size: 0.75em;
+  font-weight: 500;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+
+  &.badge-success {
+    color: #fff;
+    background: rgb(25, 135, 84);
+  }
+
+  /** Adapted from badge-secondary */
+  &.badge-gray {
+    color: #fff;
+    background: rgb(108, 117, 125);
+  }
+}

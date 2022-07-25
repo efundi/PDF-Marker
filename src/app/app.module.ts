@@ -87,6 +87,7 @@ import { PdfViewerComponent } from './components/pdf-viewer/pdf-viewer.component
 import { PdfViewerPageComponent } from './components/pdf-viewer/pdf-viewer-page/pdf-viewer-page.component';
 import { PdfViewerToolbarComponent } from './components/pdf-viewer/pdf-viewer-toolbar/pdf-viewer-toolbar.component';
 import { SubmissionNavigatorComponent } from './components/submission-navigator/submission-navigator.component';
+import {MatChipsModule} from '@angular/material/chips';
 import { MarkersManageComponent } from './components/markers-manage/markers-manage.component';
 import {MatTabsModule} from '@angular/material/tabs';
 import { MarkersTabComponent } from './components/markers-manage/markers-tab/markers-tab.component';
@@ -157,6 +158,7 @@ import { GroupsTabComponent } from './components/markers-manage/groups-tab/group
     MatProgressBarModule,
     MatTableModule,
     MatCheckboxModule,
+    MatChipsModule,
     MatTabsModule,
     FormsModule,
     ReactiveFormsModule,

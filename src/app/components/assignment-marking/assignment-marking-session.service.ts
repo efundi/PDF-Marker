@@ -82,6 +82,12 @@ export class AssignmentMarkingSessionService implements OnDestroy {
     return style.color !== '';
   }
 
+  reset() {
+  this._colour = AssignmentMarkingSessionService.DEFAULT_COLOR;
+  this._icon = null;
+  this._zoom = 1.0;
+  this._highlighterColour = DEFAULT_HIGHLIGHTER;
+  }
 
   constructor() { }
 

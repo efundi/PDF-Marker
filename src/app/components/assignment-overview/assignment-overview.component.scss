@@ -2,11 +2,33 @@
   display: flex;
   padding: 20px 24px;
   background: #fff !important;
-  align-items: center;
+
+  .pdf-marker-assignment-overview-icon{
+    display: flex;
+    align-items: center;
+    margin-right: 8px;
+
+    .mat-icon{
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+    }
+  }
+
   .pdf-marker-assignment-overview-assignment-name {
-    margin: 0;
+    flex-grow: 1;
+    h1 {
+      margin: 0;
+      font-size: 16px;
+    }
+  }
+
+  .pdf-marker-assignment-overview-buttons {
+    display: flex;
+    align-items: end;
   }
 }
+
 
 form {
   width: 150px;

@@ -7,7 +7,8 @@ import {
   TreeNode,
   TreeNodeType,
   Workspace,
-  WorkspaceAssignment, WorkspaceFile
+  WorkspaceAssignment,
+  WorkspaceFile
 } from '@shared/info-objects/workspace';
 import {FlatTreeControl} from '@angular/cdk/tree';
 import {isNil, map} from 'lodash';
@@ -15,13 +16,8 @@ import {RoutesEnum} from '../../utils/routes.enum';
 import {Router} from '@angular/router';
 import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
-import {
-  DEFAULT_WORKSPACE,
-  FEEDBACK_FOLDER,
-  GRADES_FILE,
-  PDFM_FILES_FILTER,
-  SUBMISSION_FOLDER
-} from '@shared/constants/constants';
+import {GRADES_FILE, PDFM_FILES_FILTER} from '@shared/constants/constants';
+
 let treeId = 0;
 
 /**
@@ -163,10 +159,8 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
       this.openAssignmentOverview(node);
     } else if (node.type === TreeNodeType.WORKSPACE) {
       this.openWorkspaceOverview(node);
-    } else if (node.type === TreeNodeType.FILE && node.parent.type === TreeNodeType.SUBMISSIONS_DIRECTORY) {
-      this.openDocument(node as WorkspaceFile, true);
-    } else if (node.type === TreeNodeType.FILE && node.parent.type === TreeNodeType.FEEDBACK_DIRECTORY) {
-      this.openDocument(node as WorkspaceFile, false);
+    } else if (node.type === TreeNodeType.FILE && (node.parent.type === TreeNodeType.SUBMISSIONS_DIRECTORY || node.parent.type === TreeNodeType.FEEDBACK_DIRECTORY)) {
+      this.openDocument(node as WorkspaceFile);
     }
   }
 
@@ -182,7 +176,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW, node.name]);
   }
 
-  private openDocument(node: WorkspaceFile, marking: boolean): void {
+  private openDocument(node: WorkspaceFile): void {
 
     const submission = node.parent.parent as StudentSubmission;
     const assignment = submission.parent as WorkspaceAssignment;
@@ -195,13 +189,15 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
       assignment,
       pdfFile: node
     });
-    if (marking) {
-      const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, SUBMISSION_FOLDER, node.name);
-      this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
-    } else {
-      const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, FEEDBACK_FOLDER, node.name);
-      this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);
-    }
+    this.assignmentService.getAssignmentSettings(workspaceName, assignmentName).subscribe((assignmentSettingsInfo) => {
+      if (isNil(assignmentSettingsInfo.dateFinalized)) {
+        const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, node.parent.name, node.name);
+        this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
+      } else {
+        const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, node.parent.name, node.name);
+        this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);
+      }
+    });
   }
 
 
