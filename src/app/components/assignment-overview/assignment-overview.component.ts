@@ -67,9 +67,8 @@ export interface AssignmentDetails {
 })
 export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
   displayedColumns: string[] = ['select', 'fullName', 'assignment', 'grade', 'date', 'status'];
-  dataSource = new MatTableDataSource([]);
+  dataSource = new MatTableDataSource<AssignmentDetails>([]);
   assignmentsLength;
-  assignmentPageSizeOptions: number[];
   readonly pageSize: number = 10;
   private assignmentGrades: any[] = [];
   private assignmentHeader: string;
@@ -264,17 +263,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         });
         this.dataSource.data = sortBy(values, 'fullName');
         this.assignmentsLength = values.length;
-        const range = [];
-        let i = 0;
-        while (i <= this.assignmentsLength) {
-          i += this.pageSize;
-          range.push(i);
-
-          if (i > this.assignmentsLength) {
-            break;
-          }
-        }
-        this.assignmentPageSizeOptions = range;
       } else {
         this.router.navigate([RoutesEnum.MARKER]);
       }

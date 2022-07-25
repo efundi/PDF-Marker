@@ -1,73 +1,51 @@
-import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {MatTableDataSource} from '@angular/material/table';
-import {MatPaginator} from '@angular/material/paginator';
-import {MatSort} from '@angular/material/sort';
-import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
+import {Component, OnInit} from '@angular/core';
+import {FormBuilder} from '@angular/forms';
+import {SettingInfo} from '@shared/info-objects/setting.info';
 import {SettingsService} from '../../services/settings.service';
-import {cloneDeep, isNil, remove} from 'lodash';
 import {BusyService} from '../../services/busy.service';
 import {AppService} from '../../services/app.service';
-
-export interface MarkersTableData extends Marker {
-  groups: boolean;
-}
-
-function uuidv4() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+import {Observable, ReplaySubject} from 'rxjs';
 
 @Component({
   selector: 'pdf-marker-markers-manage',
   templateUrl: './markers-manage.component.html',
   styleUrls: ['./markers-manage.component.scss']
 })
-export class MarkersManageComponent implements OnInit, AfterViewInit {
+export class MarkersManageComponent implements OnInit {
 
-  personFormGroup: FormGroup;
-  displayedColumns: string[] = ['name', 'email', 'groups', 'actions'];
-  readonly pageSize: number = 10;
-  dataSource = new MatTableDataSource<MarkersTableData>([]);
 
-  @ViewChild(MatPaginator, {static: true})
-  paginator: MatPaginator;
-
-  @ViewChild(MatSort, {static: true})
-  sort: MatSort;
-  assignmentPageSizeOptions: number[];
-
+  /**
+   * Original settings as returned from file
+   * @private
+   */
   private originalSettings: SettingInfo;
+
+  private settingsReplaySubject = new ReplaySubject<SettingInfo>(1);
+  settingsLoaded: Observable<SettingInfo>;
 
   constructor(private formBuilder: FormBuilder,
               private appService: AppService,
               private settingsService: SettingsService,
               private busyService: BusyService) {
 
-    this.initForm();
+    this.settingsLoaded = this.settingsReplaySubject.asObservable();
   }
 
-  private initForm() {
-    this.personFormGroup = this.formBuilder.group({
-      name: [null, Validators.required],
-      email: [null, Validators.required],
-    });
-  }
-
-  ngAfterViewInit() {
-    // this.sort.sort(sort);
-    this.dataSource.sort = this.sort;
-    this.dataSource.paginator = this.paginator;
-  }
 
   ngOnInit(): void {
     this.busyService.start();
+    this.loadMarkers();
+  }
+
+  /**
+   * Load the existing markers from file
+   * @private
+   */
+  private loadMarkers(): void {
     this.settingsService.getConfigurations().subscribe({
       next: (settings) => {
         this.originalSettings = settings;
-        this.updateTable();
+        this.settingsReplaySubject.next(settings);
         this.busyService.stop();
       },
       error: () => {
@@ -76,55 +54,27 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
     });
   }
 
-  private updateTable(): void {
-    this.dataSource.data = (this.originalSettings.markers || []).map((marker) => {
-      return {
-        ...marker,
-        groups: false // TODO calculate groups
-      };
-    });
-  }
 
-  private populateMarker(): Marker {
-    const formValue = this.personFormGroup.value;
-    return {
-      id: uuidv4(),
-      email: formValue.email,
-      name: formValue.name,
-    };
-  }
-
-  private saveSettings(updatedSettings: SettingInfo): void {
+  saveSettings(updatedSettings: SettingInfo): Observable<any> {
     this.busyService.start();
-    this.settingsService.saveConfigurations(updatedSettings).subscribe({
-      next: (settings) => {
-        this.originalSettings = settings;
-        this.updateTable();
-        this.personFormGroup.reset();
-        this.personFormGroup.markAsPristine();
-        this.personFormGroup.markAsUntouched();
-        this.busyService.stop();
-        this.appService.openSnackBar(true, "Settings updated");
-      },
-      error: () => {
-        this.busyService.stop();
-      }
+    return new Observable<any>((subscriber) => {
+      this.settingsService.saveConfigurations(updatedSettings).subscribe({
+        next: (settings) => {
+          this.originalSettings = settings;
+
+          this.busyService.stop();
+          this.appService.openSnackBar(true, 'Settings updated');
+          this.settingsReplaySubject.next(settings);
+          subscriber.next();
+          subscriber.complete();
+        },
+        error: (error) => {
+          this.busyService.stop();
+          subscriber.error(error);
+          subscriber.complete();
+        }
+      });
     });
   }
 
-  addMarker() {
-    const marker = this.populateMarker();
-    const updateSettings = cloneDeep(this.originalSettings);
-    if (isNil(updateSettings.markers)) {
-      updateSettings.markers = [];
-    }
-    updateSettings.markers.push(marker);
-    this.saveSettings(updateSettings);
-  }
-
-  removeMarker(element: MarkersTableData) {
-    const updateSettings = cloneDeep(this.originalSettings);
-    updateSettings.markers = remove(updateSettings.markers, (item) => item.id !== element.id);
-    this.saveSettings(updateSettings);
-  }
 }

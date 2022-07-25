@@ -1,4 +1,4 @@
-import {from, Observable} from 'rxjs';
+import {Observable} from 'rxjs';
 import {IpcResponse} from '@shared/ipc/ipc-response';
 
 /**
@@ -9,15 +9,20 @@ import {IpcResponse} from '@shared/ipc/ipc-response';
  * @param ipcResponse
  */
 export function fromIpcResponse<T>(ipcResponse: Promise<IpcResponse<T>>): Observable<T> {
-  const promise: Promise<T> =  ipcResponse.then((response) => {
-    if (response.hasOwnProperty('error')) {
-      // If the response has an "error" property reject the promise with that value
-      return Promise.reject(response.error);
-
-    } else {
-      // Return a resolved promise with the data (if any)
-      return response.data;
-    }
+  return new Observable<T>((subscriber) => {
+    ipcResponse.then((response) => {
+      if (response.hasOwnProperty('error')) {
+        // If the response has an "error" property reject the promise with that value
+        subscriber.error(response.error);
+        subscriber.complete();
+      } else {
+        // Return a resolved promise with the data (if any)
+        subscriber.next(response.data);
+        subscriber.complete();
+      }
+    }, () => {
+      subscriber.error();
+      subscriber.complete();
+    });
   });
-  return from(promise);
 }

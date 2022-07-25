@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AlertService } from '../../services/alert.service';
 import { AppService } from '../../services/app.service';
@@ -9,20 +9,28 @@ import {MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {MatTableDataSource} from '@angular/material/table';
 import {BusyService} from '../../services/busy.service';
+import {MatPaginator} from '@angular/material/paginator';
+import {MatSort} from '@angular/material/sort';
 
 @Component({
   selector: 'pdf-marker-comments',
   templateUrl: './comments.component.html',
   styleUrls: ['./comments.component.scss']
 })
-export class GenericCommentsComponent implements OnInit {
+export class GenericCommentsComponent implements OnInit, AfterViewInit {
 
 
-  readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
+  readonly displayedColumns: string[] = ['title', 'inUse', 'actions'];
   genericCommentsForm: FormGroup;
 
+  @ViewChild(MatPaginator, {static: true})
+  paginator: MatPaginator;
+
+  @ViewChild(MatSort, {static: true})
+  sort: MatSort;
+
   comments: IComment[];
-  dataSource: MatTableDataSource<IComment>;
+  dataSource = new MatTableDataSource<IComment>([]);
 
   constructor(private fb: FormBuilder,
               private settingsService: SettingsService,
@@ -48,9 +56,14 @@ export class GenericCommentsComponent implements OnInit {
     });
   }
 
+  ngAfterViewInit() {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+  }
+
   private populateComments(comments: IComment[]) {
     this.comments = comments;
-    this.dataSource = new MatTableDataSource<IComment>(this.comments);
+    this.dataSource.data = this.comments;
   }
 
   private initForm() {

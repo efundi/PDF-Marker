@@ -89,6 +89,8 @@ import { PdfViewerToolbarComponent } from './components/pdf-viewer/pdf-viewer-to
 import { SubmissionNavigatorComponent } from './components/submission-navigator/submission-navigator.component';
 import { MarkersManageComponent } from './components/markers-manage/markers-manage.component';
 import {MatTabsModule} from '@angular/material/tabs';
+import { MarkersTabComponent } from './components/markers-manage/markers-tab/markers-tab.component';
+import { GroupsTabComponent } from './components/markers-manage/groups-tab/groups-tab.component';
 
 @NgModule({
   declarations: [
@@ -131,6 +133,8 @@ import {MatTabsModule} from '@angular/material/tabs';
     PdfViewerToolbarComponent,
     SubmissionNavigatorComponent,
     MarkersManageComponent,
+    MarkersTabComponent,
+    GroupsTabComponent,
   ],
   imports: [
     HttpClientModule,
