@@ -83,6 +83,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   @ViewChild(MatSort, {static: true})
   sort: MatSort;
 
+  assignmentState: 'notstarted' | 'inprogress' | 'finalized' = 'notstarted';
+
 
   readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
@@ -177,6 +179,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   private getAssignmentSettings() {
     this.busyService.start();
+    this.assignmentState = 'notstarted';
     this.assignmentService.getAssignmentSettings(this.workspaceName, this.assignmentName)
       .subscribe({
         next: (assignmentSettings: AssignmentSettingsInfo) => {
@@ -248,6 +251,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           const feedbackDirectory = find(workspaceSubmission.children, {type: TreeNodeType.FEEDBACK_DIRECTORY});
           const marksFile = find(workspaceSubmission.children, (c => c.name === MARK_FILE));
           if (marksFile) {
+            this.assignmentState = 'inprogress';
             value.date = moment(marksFile.dateModified).format('YYYY-MM-DD HH:mm:ss');
           }
           if (submissionDirectory && submissionDirectory.children.length > 0) {
@@ -275,6 +279,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           }
         }
         this.assignmentPageSizeOptions = range;
+
+
+        if (!isNil(this.assignmentSettings.dateFinalized)){
+          this.assignmentState = 'finalized';
+        }
       } else {
         this.router.navigate([RoutesEnum.MARKER]);
       }
