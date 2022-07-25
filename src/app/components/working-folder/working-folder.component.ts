@@ -32,7 +32,7 @@ export class WorkingFolderComponent implements OnInit {
               private alertService: AlertService,
               private assignmentService: AssignmentService,
               private busyService: BusyService,
-              private workspaceService: WorkspaceService) {
+              private workspaceService: WorkspaceService,) {
 
     this.initForm();
   }
@@ -73,7 +73,7 @@ export class WorkingFolderComponent implements OnInit {
 
   private initForm() {
     this.createFolderForm = this.fb.group({
-      workspaceName: [null, [Validators.required, Validators.pattern('^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$')]]
+      workspaceName: [null, Validators.compose([Validators.required, Validators.pattern('^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$')])]
     });
   }
 
@@ -89,13 +89,14 @@ export class WorkingFolderComponent implements OnInit {
     this.busyService.start();
     this.workspaceService.createWorkingFolder(this.createFolderForm.value.workspaceName).subscribe({
       next: () => {
-        this.workspaceService.getWorkspaces().subscribe(data => {
+        this.workspaceService.getWorkspaces().subscribe({
+          next: (data) => {
           this.populateWorkspaces(data);
           this.busyService.stop();
           this.appService.openSnackBar(true, 'Workspace created');
           this.createFolderForm.reset();
           this.refreshSideBar();
-        });
+        }});
       },
       error: (error) => {
         this.appService.openSnackBar(false, error);

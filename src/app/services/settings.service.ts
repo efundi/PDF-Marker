@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, NgZone} from '@angular/core';
 import {Observable} from 'rxjs';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {ConfigIpcService} from '@shared/ipc/config.ipc-service';
@@ -11,7 +11,7 @@ export class SettingsService {
 
   private configApi: ConfigIpcService;
 
-  constructor() {
+  constructor(private ngZone: NgZone) {
     this.configApi = (window as any).configApi;
   }
 

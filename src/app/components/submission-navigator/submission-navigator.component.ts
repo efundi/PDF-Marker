@@ -35,7 +35,6 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.subscribe((assignment) => {
-      console.log(assignment);
       this.generateDataFromModel(assignment);
     });
   }

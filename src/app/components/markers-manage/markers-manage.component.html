@@ -1,17 +1,18 @@
 <h1><mat-icon color="primary">person</mat-icon>&nbsp;Markers</h1>
+
 <mat-tab-group>
   <mat-tab label="Markers">
-    <form [formGroup]="markerFormGroup">
+    <form [formGroup]="markerFormGroup" #markerForm="ngForm" style="margin-top: 16px">
       <div class="pdf-spacer"></div>
-      <mat-form-field>
+      <mat-form-field floatLabel="always">
         <mat-label>Name</mat-label>
-        <input matInput formControlName="name" required>
+        <input id="name" matInput formControlName="name" type="text">
         <mat-error *ngIf="markerFormGroup.controls.name.errors?.required">Name required</mat-error>
       </mat-form-field>
 
-      <mat-form-field style="margin-left: 16px">
+      <mat-form-field style="margin-left: 16px" floatLabel="always">
         <mat-label>Email</mat-label>
-        <input matInput  formControlName="email" type="email" required>
+        <input id="email" matInput formControlName="email" type="email">
         <mat-error *ngIf="markerFormGroup.controls.email.errors?.required ">Email required</mat-error>
         <mat-error *ngIf="markerFormGroup.controls.email.errors?.email ">Invalid email</mat-error>
         <mat-error *ngIf="markerFormGroup.controls.email.errors?.unique ">Email already used</mat-error>
@@ -25,7 +26,8 @@
           mat-button
           mat-raised-button
           (click)="addMarker()"
-          color="primary">Save</button>
+          color="primary">Save
+        </button>
       </div>
     </form>
 
@@ -108,7 +110,7 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
       </table>
-      <mat-paginator [length]="dataSource?.data.length" [pageSize]="pageSize" [pageSizeOptions]="assignmentPageSizeOptions" showFirstLastButtons></mat-paginator>
+      <mat-paginator [length]="dataSource?.data.length" [pageSize]="10" [pageSizeOptions]="[10,20,50,100]" showFirstLastButtons></mat-paginator>
 
 
     </div>

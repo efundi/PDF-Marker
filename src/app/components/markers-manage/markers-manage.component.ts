@@ -1,11 +1,11 @@
-import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, NgZone, OnInit, ViewChild} from '@angular/core';
 import {
   AbstractControl,
   FormArray,
   FormBuilder,
   FormControl,
-  FormGroup,
-  ValidationErrors,
+  FormGroup, NgForm,
+  ValidationErrors, ValidatorFn,
   Validators
 } from '@angular/forms';
 import {MatTableDataSource} from '@angular/material/table';
@@ -20,7 +20,7 @@ import {MatDialogConfig} from '@angular/material/dialog';
 import {
   YesAndNoConfirmationDialogComponent
 } from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
-import {Subscription} from 'rxjs';
+import {Observable, Subscription} from 'rxjs';
 
 export interface MarkersTableData extends Marker {
   groups: boolean;
@@ -41,65 +41,137 @@ function uuidv4() {
 })
 export class MarkersManageComponent implements OnInit, AfterViewInit {
 
+  /**
+   * Reference to the create marker form group
+   */
   markerFormGroup: FormGroup;
+
+  /**
+   * Reference to the list of markers form aray
+   */
   markersFormArray: FormArray;
+
+  /**
+   * Columns to display in the table
+   */
   displayedColumns: string[] = ['name', 'email', 'groups', 'actions'];
-  readonly pageSize: number = 10;
+
+  /**
+   * Data source for the markers table
+   */
   dataSource = new MatTableDataSource<MarkersTableData>([]);
 
+  /**
+   * Paginator for the markers table
+   */
   @ViewChild(MatPaginator, {static: true})
   paginator: MatPaginator;
 
+  /**
+   * Reference to the marker form
+   */
+  @ViewChild('markerForm', {static: true})
+  markerForm: NgForm;
+
+  /**
+   * Reference to the markers table sorter
+   */
   @ViewChild(MatSort, {static: true})
   sort: MatSort;
-  assignmentPageSizeOptions: number[];
 
+  /**
+   * Original settings as returned from file
+   * @private
+   */
   private originalSettings: SettingInfo;
 
   constructor(private formBuilder: FormBuilder,
               private appService: AppService,
               private settingsService: SettingsService,
-              private busyService: BusyService) {
+              private busyService: BusyService,
+              private zone: NgZone) {
 
     this.initForm();
   }
 
+  /**
+   * Initialise forms
+   * @private
+   */
   private initForm() {
     this.markerFormGroup = this.formBuilder.group({
       name: [null, Validators.required],
-      email: [null, Validators.compose([Validators.required, Validators.email, (ac) => this.validateUniqueEmail(ac)])]
+      email: [null, Validators.compose([Validators.required, Validators.email, this.formValidateUniqueEmail()])]
     });
 
     this.markersFormArray = this.formBuilder.array([]);
   }
 
+  /**
+   * Get a marker form control from the array
+   * @param index
+   * @param name
+   */
   getFormControl(index: number, name: string): FormControl {
     return this.markersFormArray.at(index).get(name) as FormControl;
   }
 
-  private validateUniqueName(name: string): boolean {
+  /**
+   * Creates a form validatorFn that can validate unique email
+   * @param existingId
+   * @private
+   */
+  private formValidateUniqueEmail (existingId?: string): ValidatorFn {
+    return (ac: FormControl) => {
+      if (this.validateUniqueEmail(ac.value, existingId)) {
+        return null;
+      } else {
+        return {unique: 'Email already used'};
+      }
+    };
+  }
+
+  /**
+   * Validate if the name is unique in the list of existing markers.
+   * Optionally the existingId can be provided to avoid matching the same record
+   * @param name The name to check for uniqueness
+   * @param existingId Optional existing id (only required for edits)
+   * @private
+   */
+  private validateUniqueName(name: string, existingId?: string): boolean {
     if (isNil(name)) {
       return true;
     }
 
     const existing = find(this.originalSettings.markers, (marker) => {
-      return marker.name.toLocaleLowerCase() === name.toLocaleLowerCase();
+      const nameMatch =  marker.name.toLocaleLowerCase() === name.toLocaleLowerCase();
+      const isSame = !isNil(existingId) && existingId === marker.id;
+
+      return nameMatch && !isSame;
     });
     return isNil(existing);
   }
 
-  private validateUniqueEmail(abstractControl: AbstractControl): ValidationErrors | null {
-      const value = abstractControl.value;
-      if (isNil(value)) {
-        return null;
-      }
 
-      const existing = find(this.originalSettings.markers, {email: value});
-      if (isNil(existing)) {
-        return null;
-      } else {
-        return {unique: 'Email already used'};
-      }
+  /**
+   * Validate if the email is unique in the lsit of existing markers.
+   * Optionally the existingId can be provided to avoid matching the same recorrd.
+   * @param email The email to check for uniqueness
+   * @param existingId Optional existing id (only required for edits)
+   * @private
+   */
+  private validateUniqueEmail(email: string, existingId?: string): boolean {
+    if (isNil(email)) {
+      return null;
+    }
+
+    const existing = find(this.originalSettings.markers, (marker) => {
+      const nameMatch =  marker.email.toLocaleLowerCase() === email.toLocaleLowerCase();
+      const isSame = !isNil(existingId) && existingId === marker.id;
+
+      return nameMatch && !isSame;
+    });
+    return isNil(existing);
   }
 
   ngAfterViewInit() {
@@ -109,9 +181,18 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.busyService.start();
+    this.loadMarkers();
+  }
+
+  /**
+   * Load the existing markers from file
+   * @private
+   */
+  private loadMarkers(): void {
     this.settingsService.getConfigurations().subscribe({
       next: (settings) => {
         this.originalSettings = settings;
+        this.markerFormGroup.reset();
         this.updateTable();
         this.busyService.stop();
       },
@@ -134,7 +215,7 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
     this.originalSettings.markers.forEach((marker) => {
       this.markersFormArray.push(this.formBuilder.group({
         name: [marker.name, Validators.required],
-        email: [marker.email, Validators.compose([Validators.required, Validators.email, (ac) => this.validateUniqueEmail(ac)])]
+        email: [marker.email, Validators.compose([Validators.required, Validators.email, this.formValidateUniqueEmail(marker.id)])]
       }), {emitEvent: false});
     });
     this.markersFormArray.updateValueAndValidity();
@@ -144,7 +225,7 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
     const formValue = this.markerFormGroup.value;
     return {
       id: uuidv4(),
-      email: formValue.email,
+      email: formValue.email.toLocaleLowerCase(),
       name: formValue.name,
     };
   }
@@ -156,10 +237,12 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
         this.originalSettings = settings;
         this.updateTable();
         this.markerFormGroup.reset();
+        this.markerForm.resetForm();
         this.busyService.stop();
         this.appService.openSnackBar(true, 'Settings updated');
       },
       error: () => {
+        this.markerFormGroup.reset();
         this.busyService.stop();
       }
     });
@@ -190,11 +273,6 @@ export class MarkersManageComponent implements OnInit, AfterViewInit {
     } else {
       this.saveSettings(updateSettings);
     }
-
-
-
-
-
   }
 
   removeMarker(element: MarkersTableData) {
