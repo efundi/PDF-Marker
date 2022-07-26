@@ -304,27 +304,12 @@ $left-fixed-menu-width: 4rem;
   background: var(--pdf-marker-primary);
 }
 
-.mat-expansion-panel {
-  background: transparent !important;
-  padding: 0!important;
-  margin: 0;
-}
-
 .mat-expansion-panel-header {
   height: auto !important;
   display: unset !important;
   margin: 0;
   padding: 0 !important;
   animation-name: none !important;
-}
-
-.mat-expansion-indicator {
-  display: none !important;
-}
-
-.mat-expansion-panel-body {
-  padding: 0 24px 0!important;
-  padding-right: 0 !important;
 }
 
 pdf-marker-file-explorer-modal {
@@ -610,5 +595,10 @@ pdf-marker-rubric-criteria-level-block {
   &.badge-gray {
     color: #fff;
     background: rgb(108, 117, 125);
+  }
+
+  &.badge-primary {
+    color: #fff;
+    background: var(--pdf-marker-primary);
   }
 }

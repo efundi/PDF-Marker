@@ -1,0 +1,50 @@
+
+.pdfm-markers-panel,
+.pdfm-groups-panel {
+  flex: 1 1 auto !important;
+}
+.pdfm-markers-panel {
+  display: flex;
+  flex-direction: column;
+
+  .markers-list-container {
+    flex-grow: 1;
+    background: white;
+    margin-right: 32px;
+  }
+}
+
+.drag-add-preview,
+.drag-remove-preview{
+  padding: 16px;
+  background: #fff;
+  border: 1px  solid #cecece;
+}
+
+.groups-expansion-panel{
+  background-color: #eeeeee !important;
+
+  padding: 15px !important;
+
+  .panel-buttons{
+    display: flex;
+    width: 100%;
+    justify-content: end;
+  }
+
+  ::ng-deep .mat-expansion-panel-body{
+    background-color: #fff !important;
+    margin: 15px -15px -15px;
+  }
+}
+
+
+
+
+.add-group {
+  margin-top: 16px;
+
+  .add-group-button{
+    width: 100%;
+  }
+}
