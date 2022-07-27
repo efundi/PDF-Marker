@@ -1,4 +1,8 @@
 export interface SettingInfo {
+  name: string;
+
+  email: string;
+
   lmsSelection: string;
 
   defaultPath: string;

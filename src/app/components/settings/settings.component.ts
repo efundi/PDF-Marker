@@ -7,6 +7,8 @@ import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {AssignmentService} from '../../services/assignment.service';
 import {BusyService} from '../../services/busy.service';
 import {mergeMap} from 'rxjs';
+import {SettingInfo} from '@shared/info-objects/setting.info';
+import {cloneDeep} from 'lodash';
 
 @Component({
   selector: 'pdf-marker-settings',
@@ -18,7 +20,7 @@ export class SettingsComponent implements OnInit {
   settingsForm: FormGroup;
   settingsLMSSelected = 'Sakai';
   lmsChoices: string[] = ['Sakai'];
-
+  private originalSettings: SettingInfo;
 
   private static removeTrailingSlashes(path: string): string {
     return path.replace(/\\+$/, ''); // Removes one or more trailing slashes
@@ -39,8 +41,13 @@ export class SettingsComponent implements OnInit {
     this.busyService.start();
     this.settingsService.getConfigurations().subscribe({
       next: configurations => {
-        this.settingsForm.controls.lmsSelection.setValue(configurations.lmsSelection ? configurations.lmsSelection : this.settingsLMSSelected);
-        this.settingsForm.controls.defaultPath.setValue(configurations.defaultPath ? configurations.defaultPath : null);
+        this.originalSettings = configurations;
+        this.settingsForm.reset({
+          name: configurations.name ? configurations.name : null,
+          email: configurations.email ? configurations.email : null,
+          lmsSelection: configurations.lmsSelection ? configurations.lmsSelection : this.settingsLMSSelected,
+          defaultPath: configurations.defaultPath ? configurations.defaultPath : null
+        });
         this.busyService.stop();
       },
       error: () => {
@@ -51,6 +58,8 @@ export class SettingsComponent implements OnInit {
 
   private initForm() {
     this.settingsForm = this.fb.group({
+      name: [null, Validators.required],
+      email: [null, Validators.compose([Validators.required, Validators.email])],
       lmsSelection: ['Sakai', Validators.required],
       defaultPath: [null, Validators.required]
     });
@@ -67,16 +76,26 @@ export class SettingsComponent implements OnInit {
       });
   }
 
+  private populateSettings(): SettingInfo {
+    const settings = cloneDeep(this.originalSettings);
+    const formValue = this.settingsForm.value;
+    settings.name = SettingsComponent.removeTrailingSlashes(formValue.name);
+    settings.email = SettingsComponent.removeTrailingSlashes(formValue.email);
+    settings.lmsSelection = formValue.lmsSelection;
+    settings.defaultPath = SettingsComponent.removeTrailingSlashes(formValue.defaultPath);
+    return settings;
+  }
+
   onSubmit() {
     this.alertService.clear();
     if (this.settingsForm.invalid) {
       this.alertService.error('Please fill in the correct details!');
       return;
     }
-    this.settingsForm.controls.defaultPath.setValue(SettingsComponent.removeTrailingSlashes(this.settingsForm.controls.defaultPath.value));
+    const settings = this.populateSettings();
     // Call Service to handle rest calls... also use interceptors
     this.busyService.start();
-    this.settingsService.saveConfigurations(this.settingsForm.value)
+    this.settingsService.saveConfigurations(settings)
       .pipe(
         mergeMap(() => this.assignmentService.refreshWorkspaces())
       )
@@ -90,6 +109,4 @@ export class SettingsComponent implements OnInit {
         }
       });
   }
-
-
 }
