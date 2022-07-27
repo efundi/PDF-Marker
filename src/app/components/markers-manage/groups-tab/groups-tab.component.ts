@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
+import {ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
@@ -6,6 +6,15 @@ import {MarkersManageComponent} from '../markers-manage.component';
 import {cloneDeep, filter, find, findIndex, indexOf, isNil, remove} from 'lodash';
 import {uuidv4} from '../../../utils/utils';
 import {CdkDrag, CdkDragDrop, CdkDragStart, CdkDropList} from '@angular/cdk/drag-drop';
+import {MatDialogConfig} from '@angular/material/dialog';
+import {
+  YesAndNoConfirmationDialogComponent
+} from '../../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {AppService} from '../../../services/app.service';
+
+function nameSort(a, b): number {
+  return a.name.localeCompare(b.name);
+}
 
 export interface MarkerItem extends Marker {
   groupCount: number;
@@ -44,7 +53,9 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
   private originalSettings: SettingInfo;
 
   constructor(private markersManageComponent: MarkersManageComponent,
-              private formBuilder: FormBuilder) {
+              private appService: AppService,
+              private formBuilder: FormBuilder,
+              private changeDetectorRef: ChangeDetectorRef) {
     this.initForm();
   }
 
@@ -67,7 +78,9 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
 
   private populateExpansions(): void {
     if (!isNil(this.originalSettings.groups)) {
-      this.groupItems = this.originalSettings.groups.map((group) => {
+      this.groupItems = this.originalSettings.groups
+        .sort(nameSort)
+        .map((group) => {
         const groupItem: GroupItem = {
           groupId: group.id,
           name: group.name,
@@ -80,7 +93,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
             .map((gm) => {
               return find(this.originalSettings.markers, {id: gm.markerId});
             })
-            .sort((a, b) => a.name.localeCompare(b.name));
+            .sort(nameSort);
         }
 
         return groupItem;
@@ -94,7 +107,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
           groupCount : filter(this.originalSettings.groupMembers, {markerId: marker.id}).length
         };
       })
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .sort(nameSort);
     }
   }
 
@@ -103,14 +116,18 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
     if (isNil(settings.groups)) {
       settings.groups = [];
     }
+    const id = uuidv4();
     settings.groups.push({
-      id: uuidv4(),
+      id,
       name: this.formGroup.value.groupName
     });
     this.markersManageComponent.saveSettings(settings).subscribe({
       next: () => {
         this.isEditing = false;
         this.formGroup.reset();
+        // Determine the index of the new group
+        this.activeGroupIndex = findIndex(settings.groups.sort(nameSort), {id});
+        this.changeDetectorRef.detectChanges();
       },
       error: () => {
 
@@ -190,5 +207,33 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
     if (expanded) {
       this.activeGroupIndex = index;
     }
+  }
+
+  deleteGroup(event, groupItem: GroupItem) {
+    event.stopImmediatePropagation();
+    const config = new MatDialogConfig();
+    config.width = '400px';
+    config.maxWidth = '400px';
+    config.data = {
+      title: 'Delete group',
+      message: `Are you sure you want to delete group ${groupItem.name}?`,
+    };
+    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, (accepted) => {
+      if (accepted) {
+        this.activeGroupIndex = undefined;
+        const updateSettings = cloneDeep(this.originalSettings);
+        remove(updateSettings.groups, (g) => g.id === groupItem.groupId);
+        remove(updateSettings.groupMembers, (gm) => gm.groupId === groupItem.groupId);
+
+        this.markersManageComponent.saveSettings(updateSettings).subscribe(({
+          next: () => {
+
+          },
+          error: () => {
+
+          }
+        }));
+      }
+    });
   }
 }

@@ -55,7 +55,7 @@ export class MarkersManageComponent implements OnInit {
   }
 
 
-  saveSettings(updatedSettings: SettingInfo): Observable<any> {
+  saveSettings(updatedSettings: SettingInfo): Observable<SettingInfo> {
     this.busyService.start();
     return new Observable<any>((subscriber) => {
       this.settingsService.saveConfigurations(updatedSettings).subscribe({
@@ -65,7 +65,7 @@ export class MarkersManageComponent implements OnInit {
           this.busyService.stop();
           this.appService.openSnackBar(true, 'Settings updated');
           this.settingsReplaySubject.next(settings);
-          subscriber.next();
+          subscriber.next(settings);
           subscriber.complete();
         },
         error: (error) => {

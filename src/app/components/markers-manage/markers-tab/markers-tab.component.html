@@ -58,7 +58,17 @@
     <!-- Groups Column -->
     <ng-container matColumnDef="groups">
       <th mat-header-cell *matHeaderCellDef mat-sort-header="groups" style="width: 4rem;"> Groups </th>
-      <td mat-cell *matCellDef="let element">{{element.groups}}</td>
+      <td mat-cell *matCellDef="let element">
+        <span class="badge badge-primary" *ngIf="element.groups.length === 0">0</span>
+        <span class="badge badge-primary"
+              style="cursor:pointer;"
+              *ngIf="element.groups.length > 0"
+              pdfMarkerPopover
+              [pdfMarkerPopoverContext]="{groups: element.groups}"
+              [pdfMarkerPopoverTemplate]="template">
+          {{element.groups.length}}
+        </span>
+      </td>
     </ng-container>
 
     <!-- Actions Column -->
@@ -109,5 +119,9 @@
   </table>
   <mat-paginator [length]="dataSource?.data.length" [pageSize]="10" [pageSizeOptions]="[10,20,50,100]" showFirstLastButtons></mat-paginator>
 
-
+  <ng-template #template let-groups="groups">
+    <div class="marker-groups-popup" style="">
+      <div class="marker-groups-popup-item" *ngFor="let group of groups">{{group}}</div>
+    </div>
+  </ng-template>
 </div>

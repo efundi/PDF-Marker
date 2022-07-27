@@ -55,7 +55,8 @@
                     mat-button
                     mat-icon-button
                     color="primary"
-                    matTooltip="Delete">
+                    matTooltip="Delete"
+                  (click)="deleteGroup($event, groupItem)">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
@@ -83,7 +84,13 @@
       </mat-accordion>
 
       <form class="add-group" [formGroup]="formGroup">
-        <button mat-stroked-button color="primary" class="add-group-button" (click)="isEditing = true" *ngIf="!isEditing">
+        <button
+          mat-stroked-button
+          matTooltip="Add Group"
+          color="primary"
+          class="add-group-button"
+          (click)="isEditing = true"
+          *ngIf="!isEditing">
           <mat-icon color="primary">add</mat-icon>
         </button>
         <mat-form-field *ngIf="isEditing" style="width: 100%">
@@ -96,7 +103,7 @@
             [autocomplete]="false">
           <button
             color="primary"
-            type="button"
+            type="submit"
             matSuffix
             mat-icon-button
             matTooltip="Add"
