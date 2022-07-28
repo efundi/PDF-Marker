@@ -1,5 +1,5 @@
 import {ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {FormArray, FormBuilder, FormControl, FormGroup, NgForm, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
 import {MarkersManageComponent} from '../markers-manage.component';
@@ -24,6 +24,7 @@ export interface GroupItem {
   groupId: string;
   name: string;
   members: Marker[];
+  editing: boolean;
 }
 
 @Component({
@@ -35,6 +36,18 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
   isEditing = false;
 
   formGroup: FormGroup;
+
+  /**
+   * Reference to the marker form
+   */
+  @ViewChild('groupForm', {static: true})
+  groupForm: NgForm;
+
+  /**
+   * Reference to the list of groups form array
+   */
+  groupsFormArray: FormArray;
+
 
   groupItems: GroupItem[] = [];
 
@@ -61,8 +74,10 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
 
   private initForm() {
     this.formGroup = this.formBuilder.group({
-      groupName: [null, Validators.required]
+      groupName: [null, Validators.compose([Validators.required, Validators.maxLength(50), Validators.pattern('^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$')])]
     });
+
+    this.groupsFormArray = this.formBuilder.array([]);
   }
 
   ngOnInit(): void {
@@ -84,7 +99,8 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
         const groupItem: GroupItem = {
           groupId: group.id,
           name: group.name,
-          members: []
+          members: [],
+          editing: false
         };
 
         if (!isNil(this.originalSettings.groupMembers)) {
@@ -98,6 +114,15 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
 
         return groupItem;
       });
+
+      this.groupsFormArray.clear();
+      this.originalSettings.groups.forEach((group) => {
+        this.groupsFormArray.push(this.formBuilder.group({
+          id: [group.id],
+          name: [group.name, Validators.compose([Validators.required, Validators.maxLength(50), Validators.pattern('^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$')])],
+        }), {emitEvent: false});
+      });
+      this.groupsFormArray.updateValueAndValidity();
     }
 
     if (!isNil(this.originalSettings.markers)) {
@@ -109,6 +134,8 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
       })
         .sort(nameSort);
     }
+
+
   }
 
   addGroup(): void {
@@ -125,6 +152,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
       next: () => {
         this.isEditing = false;
         this.formGroup.reset();
+        this.groupForm.resetForm();
         // Determine the index of the new group
         this.activeGroupIndex = findIndex(settings.groups.sort(nameSort), {id});
         this.changeDetectorRef.detectChanges();
@@ -189,7 +217,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
   canAddMember = (drag: CdkDrag<MarkerItem>, drop: CdkDropList<MarkerItem[]>) => {
     const groupMember = drag.data;
     const group = this.groupItems[this.activeGroupIndex];
-    const existingMember = find(group.members, {id: groupMember.id})
+    const existingMember = find(group.members, {id: groupMember.id});
     return isNil(existingMember);
   }
 
@@ -233,6 +261,51 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
 
           }
         }));
+      }
+    });
+  }
+
+  /**
+   * Get a marker form control from the array
+   * @param index
+   * @param name
+   */
+  getFormControl(index: number, name: string): FormControl {
+    return this.groupsFormArray.at(index).get(name) as FormControl;
+  }
+
+  editGroup($event: MouseEvent, groupItem: GroupItem) {
+    $event.stopImmediatePropagation();
+    groupItem.editing = true;
+  }
+
+  cancelEdit($event: MouseEvent, $index: number, groupItem: GroupItem) {
+    $event.stopImmediatePropagation();
+    this.getFormControl($index, 'name').reset(groupItem.name);
+    groupItem.editing = false;
+  }
+
+  updateGroupKeypress($event: KeyboardEvent, index: number, groupItem: GroupItem) {
+    $event.stopImmediatePropagation();
+    this.updateGroup(index, groupItem);
+  }
+  updateGroupClick($event: MouseEvent, index: number, groupItem: GroupItem) {
+    $event.stopImmediatePropagation();
+    this.updateGroup(index, groupItem);
+  }
+
+  updateGroup(index: number, groupItem: GroupItem) {
+    const formValue = this.getFormControl(index, 'name').value;
+    const updateSettings = cloneDeep(this.originalSettings);
+    const group = find(updateSettings.groups, {id: groupItem.groupId});
+    group.name = formValue;
+
+    this.markersManageComponent.saveSettings(updateSettings).subscribe({
+      next: () => {
+
+      },
+      error: () => {
+
       }
     });
   }

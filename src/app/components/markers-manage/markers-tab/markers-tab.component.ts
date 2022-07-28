@@ -202,7 +202,7 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.markersFormArray.clear();
-    this.originalSettings.markers.forEach((marker) => {
+    (this.originalSettings.markers || []).forEach((marker) => {
       this.markersFormArray.push(this.formBuilder.group({
         id: [marker.id],
         name: [marker.name, Validators.required],

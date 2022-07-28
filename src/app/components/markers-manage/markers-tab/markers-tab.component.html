@@ -45,7 +45,7 @@
     <ng-container matColumnDef="email">
       <th mat-header-cell *matHeaderCellDef mat-sort-header="email"  style="width: 40%;"> Email </th>
       <td mat-cell *matCellDef="let element">
-        <mat-form-field  *ngIf="element.editing" >
+        <mat-form-field  *ngIf="element.editing">
           <input matInput [formControl]="getFormControl(element.index, 'email')" required>
           <mat-error *ngIf="getFormControl(element.index, 'email').errors?.required ">Email required</mat-error>
           <mat-error *ngIf="getFormControl(element.index, 'email').errors?.email ">Invalid email</mat-error>
@@ -108,6 +108,7 @@
           mat-button
           mat-icon-button
           color="primary"
+          *ngIf="!element.editing"
           matTooltip="Delete">
           <mat-icon>delete</mat-icon>
         </button>

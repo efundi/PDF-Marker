@@ -1,7 +1,11 @@
 
 .pdfm-markers-panel,
 .pdfm-groups-panel {
-  flex: 1 1 auto !important;
+  //flex: 1 1 auto !important;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  max-width: 50%;
 }
 .pdfm-markers-panel {
   display: flex;
@@ -31,6 +35,11 @@
     width: 100%;
     justify-content: end;
   }
+
+  ::ng-deep .mat-expansion-panel-header-description {
+    flex-grow: 0;
+  }
+
 
   ::ng-deep .mat-expansion-panel-body{
     background-color: #fff !important;

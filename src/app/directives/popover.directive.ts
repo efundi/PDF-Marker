@@ -64,6 +64,12 @@ export class PopoverDirective {
         overlayX: 'center',
         overlayY: 'top',
         offsetY: 5,
+      }, {
+        originX: 'center',
+        originY: 'top',
+        overlayX: 'center',
+        overlayY: 'bottom',
+        offsetY: -5,
       }]);
 
     this._overlayRef = this._overlay.create({ positionStrategy});
