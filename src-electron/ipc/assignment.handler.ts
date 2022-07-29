@@ -776,7 +776,7 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
   try {
     return Promise.all([
       getConfig(),
-      workspaceRelativePathToAbsolute(location)
+      getAssignmentDirectory(workspaceFolder, location)
     ]).then(([config, assignmentFolder]) => {
       return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE).then((gradesJSON) => {
         const files = glob.sync(assignmentFolder + sep + '/*');
@@ -852,8 +852,9 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
               return Promise.reject('Could not export assignment');
             });
         });
-      }).then(() => {
-        return setDateFinalized(assignmentFolder);
+      }).then((buffer) => {
+        return setDateFinalized(assignmentFolder)
+          .then(() => buffer);
       });
     });
   } catch (e) {
@@ -956,8 +957,9 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
               return Promise.reject('Could not export assignment');
             });
         });
-      }).then(() => {
-        return setDateFinalized(assignmentFolder);
+      }).then((buffer) => {
+        return setDateFinalized(assignmentFolder)
+          .then(() => buffer);
       });
     });
 
