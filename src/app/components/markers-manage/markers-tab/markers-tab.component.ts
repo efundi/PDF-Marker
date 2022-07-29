@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {cloneDeep, find, isNil, remove, findIndex} from 'lodash';
+import {cloneDeep, find, isNil, remove, findIndex, filter} from 'lodash';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {
   YesAndNoConfirmationDialogComponent
@@ -17,7 +17,7 @@ import {uuidv4} from '../../../utils/utils';
 
 
 export interface MarkersTableData extends Marker {
-  groups: boolean;
+  groups: string[];
   editing: false;
 
   /**
@@ -180,17 +180,29 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
   private updateTable(): void {
+
+
+
     this.dataSource.data = (this.originalSettings.markers || []).map((marker, index) => {
+      let groups: string[] = [];
+      if (!isNil(this.originalSettings.groupMembers)){
+        groups = filter(this.originalSettings.groupMembers, {markerId: marker.id}).map((gm) => {
+          const group = find(this.originalSettings.groups, {id: gm.groupId});
+          return group.name;
+        });
+      }
+
+
       return {
         ...marker,
-        groups: false, // TODO calculate groups
+        groups,
         editing: false,
         index
       };
     });
 
     this.markersFormArray.clear();
-    this.originalSettings.markers.forEach((marker) => {
+    (this.originalSettings.markers || []).forEach((marker) => {
       this.markersFormArray.push(this.formBuilder.group({
         id: [marker.id],
         name: [marker.name, Validators.required],

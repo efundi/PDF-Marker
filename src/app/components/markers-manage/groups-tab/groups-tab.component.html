@@ -1,1 +1,169 @@
-<h1>Coming soon!</h1>
+  <div style="display: flex">
+
+    <div class="pdfm-markers-panel">
+      <div><h3>Markers</h3></div>
+
+      <div class="markers-list-container">
+
+        <mat-list
+          cdkDropList
+          #markersList="cdkDropList"
+          (cdkDropListDropped)="removeMember($event)"
+          [cdkDropListConnectedTo]="groupDropLists?.get(activeGroupIndex)"
+          [cdkDropListData]="markers"
+          cdkDropListSortingDisabled>
+          <mat-list-item
+            cdkDrag
+            [cdkDragData]="marker"
+            *ngFor="let marker of markers">
+
+            <div *cdkDragPlaceholder><!-- --></div>
+            <div *cdkDragPreview class="drag-add-preview">{{marker.name}} ({{marker.email}})</div>
+            <span><span class="badge badge-primary">{{marker.groupCount}}</span>&nbsp;{{marker.name}} ({{marker.email}})</span>
+          </mat-list-item>
+          <mat-list-item *ngIf="markers.length === 0">No Markers</mat-list-item>
+        </mat-list>
+      </div>
+    </div>
+
+    <div class="pdfm-groups-panel">
+      <div><h3>Groups</h3></div>
+
+      <div style="padding: 16px; background: white">
+        <mat-accordion>
+          <mat-expansion-panel
+            hideToggle
+            class="groups-expansion-panel"
+            *ngFor="let groupItem of groupItems; let $index = index"
+            [expanded]="activeGroupIndex === $index"
+            (expandedChange)="groupExpanded($event, $index)">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+
+                <mat-icon color="accent" style="margin-right: 16px;">person</mat-icon>
+                <span class="badge badge-primary" style="margin-right: 16px;">{{groupItem.members.length}}</span>&nbsp;
+                <mat-form-field  *ngIf="groupItem.editing"
+
+                                 (keydown.space)="$event.stopImmediatePropagation()"
+                                 (keydown.enter)="updateGroupKeypress($event, $index, groupItem)"
+                                 (click)="$event.stopImmediatePropagation()" style="width: 100%">
+                  <input matInput [formControl]="getFormControl($index, 'name')" required>
+                  <mat-error *ngIf="getFormControl($index, 'name').errors?.required ">Email required</mat-error>
+                  <mat-error *ngIf="getFormControl($index, 'name').errors?.maxlength ">
+                    Maximum group name length is {{getFormControl($index, 'name').errors?.maxlength.requiredLength}} characters.
+                  </mat-error>
+                </mat-form-field>
+                <div *ngIf="!groupItem.editing">{{groupItem.name}}</div>
+
+
+              </mat-panel-title>
+              <mat-panel-description>
+                <div class="panel-buttons">
+                  <div>
+                    <button
+                      mat-button
+                      mat-icon-button
+                      matTooltip="Update"
+                      color="primary"
+                      type="submit"
+                      (click)="updateGroupClick($event, $index, groupItem)"
+                      [disabled]="getFormControl($index, 'name').invalid"
+                      *ngIf="groupItem.editing">
+                      <mat-icon>done</mat-icon>
+                    </button>
+                    <button
+                      mat-button
+                      mat-icon-button
+                      matTooltip="Cancel"
+                      color="primary"
+                      *ngIf="groupItem.editing"
+                      (click)="cancelEdit($event, $index, groupItem)">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                    <button
+                      mat-button
+                      mat-icon-button
+                      matTooltip="Edit"
+                      color="primary"
+                      *ngIf="!groupItem.editing"
+                      (click)="editGroup($event, groupItem)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button
+                      mat-button
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="Delete"
+                      *ngIf="!groupItem.editing"
+                      (click)="deleteGroup($event, groupItem)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+            <div>
+              <mat-list cdkDropList
+                        #membersList="cdkDropList"
+                        (cdkDropListDropped)="addMember($event)"
+                        cdkDropListSortingDisabled
+                        [cdkDropListEnterPredicate]="canAddMember"
+                        [cdkDropListConnectedTo]="[markersList]"
+                        [cdkDropListData]="groupItem.members">
+                <mat-list-item *ngFor="let groupMember of groupItem.members" cdkDrag
+                               [cdkDragData]="groupMember">
+                  <div *cdkDragPlaceholder><!-- Empty placeholder --></div>
+                  <div *cdkDragPreview class="drag-remove-preview">{{groupMember.name}} ({{groupMember.email}})</div>
+                  <div>{{groupMember.name}} ({{groupMember.email}})</div>
+                </mat-list-item>
+                <mat-list-item *ngIf="groupItem.members.length === 0">No Members</mat-list-item>
+              </mat-list>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+
+        <form class="add-group" [formGroup]="formGroup" #groupForm="ngForm">
+          <button
+            mat-stroked-button
+            matTooltip="Add Group"
+            color="primary"
+            class="add-group-button"
+            (click)="isEditing = true"
+            *ngIf="!isEditing">
+            <mat-icon color="primary">add</mat-icon>
+          </button>
+          <mat-form-field *ngIf="isEditing" style="width: 100%">
+            <input
+              formControlName="groupName"
+              id="groupName"
+              type="text"
+              matInput
+              required
+              [autocomplete]="false">
+            <button
+              color="primary"
+              type="submit"
+              matSuffix
+              mat-icon-button
+              matTooltip="Add"
+              [disabled]="formGroup.invalid"
+              (click)="addGroup()">
+              <mat-icon>done</mat-icon>
+            </button>
+            <button
+              type="button"
+              color="accent"
+              matSuffix
+              mat-icon-button
+              matTooltip="Cancel"
+              (click)="cancelAddGroup()">
+              <mat-icon>close</mat-icon>
+            </button>
+            <mat-error *ngIf="formGroup.controls.groupName.errors?.required ">Group name is required</mat-error>
+            <mat-error *ngIf="formGroup.controls.groupName.errors?.maxlength ">Maximum group name length is {{formGroup.controls.groupName.errors?.maxlength.requiredLength}} characters.</mat-error>
+          </mat-form-field>
+        </form>
+      </div>
+    </div>
+
+  </div>

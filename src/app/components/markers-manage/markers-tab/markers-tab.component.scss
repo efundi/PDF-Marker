@@ -1,0 +1,15 @@
+.marker-groups-popup{
+  display: block;
+  background: white;
+  border: 1px solid #cecece;
+  min-width: 8rem;
+
+  .marker-groups-popup-item{
+    padding: 16px;
+    border-bottom: 1px solid #cecece;
+
+   &:last-child{
+     border-bottom: none;
+   }
+  }
+}
