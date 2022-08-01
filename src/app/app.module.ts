@@ -88,6 +88,8 @@ import { PdfViewerPageComponent } from './components/pdf-viewer/pdf-viewer-page/
 import { PdfViewerToolbarComponent } from './components/pdf-viewer/pdf-viewer-toolbar/pdf-viewer-toolbar.component';
 import { SubmissionNavigatorComponent } from './components/submission-navigator/submission-navigator.component';
 import {MatChipsModule} from '@angular/material/chips';
+import {UpdateService} from './services/update.service';
+import { UpdateModalComponent } from './components/update-modal/update-modal.component';
 
 @NgModule({
   declarations: [
@@ -129,6 +131,7 @@ import {MatChipsModule} from '@angular/material/chips';
     PdfViewerPageComponent,
     PdfViewerToolbarComponent,
     SubmissionNavigatorComponent,
+    UpdateModalComponent,
   ],
   imports: [
     HttpClientModule,

@@ -14,24 +14,13 @@ import {ConfigIpcService} from './src/shared/ipc/config.ipc-service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {ApplicationIpcService} from './src/shared/ipc/application.ipc-service';
 import {SubmissionInfo} from './src/shared/info-objects/submission.info';
+import {UpdateIpcService} from './src/shared/ipc/update.ipc-service';
 
 contextBridge.exposeInMainWorld('updateApi', {
-  onUpdateAvailable: (callback) => {
-    ipcRenderer.on('update_available', () => {
-      ipcRenderer.removeAllListeners('update_available');
-      callback();
-    });
-  },
-  onUpdateDownloaded: (callback) => {
-    ipcRenderer.on('update_downloaded', () => {
-      ipcRenderer.removeAllListeners('update_downloaded');
-      callback();
-    });
-  },
-  restartApp: () => {
-    ipcRenderer.send('restart_app');
-  }
-});
+  checkForUpdate: () => ipcRenderer.invoke('update:check'),
+  downloadUpdate: () => ipcRenderer.invoke('update:download'),
+  restartApplication: () => ipcRenderer.send('update:restart')
+} as UpdateIpcService);
 
 contextBridge.exposeInMainWorld('assignmentApi', {
   getAssignments: () => ipcRenderer.invoke('assignments:get'),
