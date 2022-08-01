@@ -38,13 +38,25 @@ import {
 } from './src-electron/ipc/workspace.handler';
 import {addComment, deleteComment, getComments} from './src-electron/ipc/comment.handler';
 import {getConfig, updateConfig} from './src-electron/ipc/config.handler';
-import {getFile, getFolder, getVersion, openExternalLink, saveFile} from './src-electron/ipc/application.handler';
+import {
+  getFile,
+  getFolder,
+  getVersion,
+  openExternalLink,
+  saveFile
+} from './src-electron/ipc/application.handler';
+import {checkForUpdates, downloadUpdate, restartApplication} from './src-electron/ipc/update.handler';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
 serve = args.some(val => val === '--serve');
 
 const logger = require('electron-log');
+
+
+// Only auto download for full (non pre-releases)
+autoUpdater.autoDownload = !autoUpdater.allowPrerelease;
+
 
 function createWindow() {
 
@@ -84,11 +96,6 @@ function createWindow() {
     // when you should delete the corresponding element.
     mainWindow = null;
   });
-
-  mainWindow.webContents.on('did-finish-load', () => {
-    autoUpdater.checkForUpdatesAndNotify();
-  });
-
 
   mainWindow.webContents.setWindowOpenHandler((details: HandlerDetails) => {
     // For now we assume all links are external
@@ -213,6 +220,13 @@ try {
     ipcMain.handle('app:getFile', toIpcResponse(getFile));
     ipcMain.handle('app:openExternalLink', toIpcResponse(openExternalLink));
 
+
+    // Update API
+    ipcMain.handle('update:check', toIpcResponse(checkForUpdates));
+    ipcMain.handle('update:download', toIpcResponse(downloadUpdate));
+    ipcMain.on('update:restart', () => {
+      autoUpdater.quitAndInstall();
+    });
   });
 
   // Quit when all windows are closed.
@@ -230,20 +244,6 @@ try {
     if (mainWindow === null) {
       createWindow();
     }
-  });
-
-  autoUpdater.on('update-available', () => {
-    mainWindow.webContents.send('update_available');
-    logger.log('update-available');
-  });
-
-  autoUpdater.on('update-downloaded', () => {
-    mainWindow.webContents.send('update_downloaded');
-    logger.log('update-downloaded');
-  });
-
-  ipcMain.on('restart_app', () => {
-    autoUpdater.quitAndInstall();
   });
 
   autoUpdater.on('error', err => {
