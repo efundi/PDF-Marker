@@ -66,6 +66,7 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
       this.pdf = params['pdf'];
       this.isPdfLoaded = false;
       this.currentPage = 1;
+      this.zoom = 1.0;
       this.assignmentService.getFile(this.pdf)
         .pipe(
           mergeMap((data) => this.loadPdf(data))

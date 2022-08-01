@@ -92,11 +92,6 @@ export class PdfViewerToolbarComponent implements OnInit, OnChanges, OnDestroy {
 
   }
 
-  onZoomSelected($event: MouseEvent) {
-    $event.stopImmediatePropagation();
-  }
-
-
   onPageNumberChange() {
     const number = parseInt(this.iconForm.controls.pageNumber.value, 10);
     if (!isNaN(number) && (number >= 1 && number <= this.pages)) {
