@@ -3,23 +3,6 @@
 <head>
   <meta charset="utf-8">
   <title>PDF Marker</title>
-  <style>
-      #notification {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 200px;
-        z-index: 20;
-        transform: translate(-50%, -50%);
-        padding: 20px;
-        border-radius: 5px;
-        background-color: white;
-        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-      }
-      .hidden {
-        display: none;
-      }
-    </style>
   <base href="./">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -27,42 +10,6 @@
   <!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
 </head>
 <body>
-    <div id="notification" class="hidden">
-      <p id="message"></p>
-      <button id="close-button" onClick="closeNotification()">
-        Close
-      </button>
-      <button id="restart-button" onClick="restartApp()" class="hidden">
-        Restart
-      </button>
-    </div>
-    <script>
-      const notification = document.getElementById('notification');
-      const message = document.getElementById('message');
-      const restartButton = document.getElementById('restart-button');
-
-      window.updateApi.onUpdateAvailable(() => {
-        message.innerText = 'A new update is available. Downloading now...';
-        notification.classList.remove('hidden');
-      });
-
-
-      window.updateApi.onUpdateDownloaded(() => {
-        message.innerText = 'Update Downloaded. It will be installed on restart. Restart now?';
-        restartButton.classList.remove('hidden');
-        notification.classList.remove('hidden');
-        console.log('Update Downloaded PDF Marker');
-      });
-
-      function closeNotification() {
-        notification.classList.add('hidden');
-      }
-
-      function restartApp() {
-        console.log('Restarting PDF Marker');
-        window.updateApi.restartApp();
-      }
-    </script>
   <app-root></app-root>
 </body>
 </html>

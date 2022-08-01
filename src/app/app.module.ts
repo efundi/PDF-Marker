@@ -93,6 +93,8 @@ import {MatTabsModule} from '@angular/material/tabs';
 import { MarkersTabComponent } from './components/markers-manage/markers-tab/markers-tab.component';
 import { GroupsTabComponent } from './components/markers-manage/groups-tab/groups-tab.component';
 import { PopoverDirective } from './directives/popover.directive';
+import {UpdateService} from './services/update.service';
+import { UpdateModalComponent } from './components/update-modal/update-modal.component';
 
 @NgModule({
   declarations: [
@@ -138,6 +140,7 @@ import { PopoverDirective } from './directives/popover.directive';
     MarkersTabComponent,
     GroupsTabComponent,
     PopoverDirective,
+    UpdateModalComponent,
   ],
   imports: [
     HttpClientModule,

@@ -258,7 +258,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           } else if (feedbackDirectory && feedbackDirectory.children.length > 0) {
             value.pdfFile = feedbackDirectory.children[0] as WorkspaceFile;
           }
-          value.assignment = value.pdfFile.name;
+          if (!isNil(value.pdfFile)) {
+            value.assignment = value.pdfFile.name;
+          }
           const gradesInfo = this.assignmentGrades
             .find(grade => grade[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
           value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5 : 0);
@@ -283,6 +285,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   onSelectedPdf(element: AssignmentDetails) {
+    if (isNil(element.pdfFile)) {
+      return;
+    }
     const pdfFile = element.pdfFile;
     const assignment = pdfFile.parent.parent.parent as WorkspaceAssignment;
     const workspace = assignment.parent as Workspace;
