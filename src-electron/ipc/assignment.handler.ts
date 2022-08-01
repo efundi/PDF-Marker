@@ -903,40 +903,42 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
                 accessSync(submission, constants.F_OK);
                 const studentFolder = dirname(dirname(submission));
                 return loadMarksAt(studentFolder).then((submissionInfo: RubricSubmissionInfo) => {
-                  return annotatePdfRubric(submission, submissionInfo, assignmentSettingsInfo.rubric).then((data) => {
-                    const ext = path.extname(submission);
-                    const fileName = path.basename(submission, ext) + '_MARK';
-                    writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
-                    unlinkSync(submission);
-                    accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
-                    let changed = false;
-                    let assignmentHeader;
-                    for (let i = 0; i < gradesJSON.length; i++) {
-                      if (i === 0) {
-                        const gradesKeys = Object.keys(gradesJSON[i]);
-                        if (gradesKeys.length > 0) {
-                          assignmentHeader = gradesKeys[0];
+                  if (submissionInfo.marks.length > 0) {
+                    return annotatePdfRubric(submission, submissionInfo, assignmentSettingsInfo.rubric).then((data) => {
+                      const ext = path.extname(submission);
+                      const fileName = path.basename(submission, ext) + '_MARK';
+                      writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
+                      unlinkSync(submission);
+                      accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
+                      let changed = false;
+                      let assignmentHeader;
+                      for (let i = 0; i < gradesJSON.length; i++) {
+                        if (i === 0) {
+                          const gradesKeys = Object.keys(gradesJSON[i]);
+                          if (gradesKeys.length > 0) {
+                            assignmentHeader = gradesKeys[0];
+                          }
+                        } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
+                          gradesJSON[i].field5 = data.totalMark;
+                          changed = true;
+                          break;
                         }
-                      } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
-                        gradesJSON[i].field5 = data.totalMark;
-                        changed = true;
-                        break;
                       }
-                    }
-                    if (changed) {
-                      return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
-                        .then(csv => {
-                          return writeFile(assignmentFolder + sep + GRADES_FILE, csv);
-                        })
-                        .catch(() => {
-                          return Promise.reject('Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
-                        });
-                    } else {
-                      return Promise.reject('Failed to save mark');
-                    }
-                  }, (error) => {
-                    return Promise.reject('Error annotating marks to PDF [' + error.message + ']');
-                  });
+                      if (changed) {
+                        return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
+                          .then(csv => {
+                            return writeFile(assignmentFolder + sep + GRADES_FILE, csv);
+                          })
+                          .catch(() => {
+                            return Promise.reject('Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
+                          });
+                      } else {
+                        return Promise.reject('Failed to save mark');
+                      }
+                    }, (error) => {
+                      return Promise.reject('Error annotating marks to PDF [' + error.message + ']');
+                    });
+                  }
                 });
               } catch (e) {
                 return Promise.reject(e.message);
