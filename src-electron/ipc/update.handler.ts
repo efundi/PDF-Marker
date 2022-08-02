@@ -4,7 +4,10 @@ import {isNil} from 'lodash';
 
 let latestUpdate: ElectronUpdateCheckResult = null;
 
-export function checkForUpdates(): Promise<UpdateCheckResult> {
+export function checkForUpdates(): Promise<UpdateCheckResult | null> {
+  if (!autoUpdater.isUpdaterActive()) {
+    return Promise.resolve(null);
+  }
   return autoUpdater.checkForUpdates().then((update) => {
     latestUpdate = update;
     const canSkip = autoUpdater.allowPrerelease;
@@ -22,9 +25,4 @@ export function downloadUpdate(): Promise<UpdateInfo> {
   return autoUpdater.downloadUpdate(latestUpdate.cancellationToken).then(() => {
     return latestUpdate.updateInfo;
   });
-}
-
-export function restartApplication(): Promise<any> {
-  autoUpdater.quitAndInstall();
-  return Promise.resolve();
 }
