@@ -45,7 +45,7 @@ import {
   openExternalLink,
   saveFile
 } from './src-electron/ipc/application.handler';
-import {checkForUpdates, downloadUpdate, restartApplication} from './src-electron/ipc/update.handler';
+import {checkForUpdates, downloadUpdate} from './src-electron/ipc/update.handler';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);

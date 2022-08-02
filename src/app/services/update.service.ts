@@ -68,7 +68,7 @@ export class UpdateService {
     });
   }
 
-  private checkForUpdate(): Observable<UpdateCheckResult> {
+  private checkForUpdate(): Observable<UpdateCheckResult | null> {
     return fromIpcResponse(this.updateApi.checkForUpdate());
   }
 
