@@ -1,21 +1,21 @@
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, CanDeactivate, RouterStateSnapshot, UrlTree} from '@angular/router';
-import {Observable} from 'rxjs';
-import {CreateAssignmentComponent} from '../components/create-assignment/create-assignment.component';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, CanDeactivate, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { Observable } from 'rxjs';
+import {SettingsComponent} from '../components/settings/settings.component';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {YesAndNoConfirmationDialogComponent} from '../components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 
 @Injectable({
   providedIn: 'root'
 })
-export class UnsavedChangesGuard implements CanDeactivate<CreateAssignmentComponent> {
+export class UnsavedSettingsChangesGuard implements CanDeactivate<SettingsComponent> {
   constructor(private dialog: MatDialog) {
   }
   canDeactivate(
-    component: CreateAssignmentComponent,
-    next: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-
+    component: SettingsComponent,
+    currentRoute: ActivatedRouteSnapshot,
+    currentState: RouterStateSnapshot,
+    nextState?: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     if (component.hasUnsavedChanges()) {
       const config = new MatDialogConfig();
       config.data = {
