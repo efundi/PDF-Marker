@@ -1,9 +1,14 @@
 export const SettingInfoVersion = 1;
 
 export interface SettingInfo {
+  /**
+   * Version number of the settings file
+   */
   version: number;
-  email: string;
-  name: string;
+  /**
+   * Marker for this application user
+   */
+  user?: Marker;
   lmsSelection: string;
 
   defaultPath: string;
@@ -24,17 +29,17 @@ export interface SettingInfo {
 
 
 export interface Marker {
-  id: string;
-  name: string;
-  email: string;
+  id?: string;
+  name?: string;
+  email?: string;
 }
 
 export interface Group {
-  id: string;
-  name: string;
+  id?: string;
+  name?: string;
 }
 
 export interface GroupMember {
-  markerId: string;
-  groupId: string;
+  markerId?: string;
+  groupId?: string;
 }

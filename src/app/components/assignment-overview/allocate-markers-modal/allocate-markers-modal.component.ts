@@ -6,14 +6,11 @@ import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
 import {Subscription} from 'rxjs';
 import {filter, find, isNil, shuffle, sortBy} from 'lodash';
 import {StudentSubmission, TreeNodeType, WorkspaceAssignment, WorkspaceFile} from '@shared/info-objects/workspace';
+import {SubmissionAllocation} from '@shared/info-objects/assignment-settings.info';
 
 interface Allocation {
   marker: Marker;
-  submissions: Submission[];
-}
-
-interface Submission {
-  ref: WorkspaceFile;
+  submissions: string[];
 }
 
 @Component({
@@ -29,7 +26,7 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
     groupId: FormControl<string | null>,
     includeMe: FormControl<boolean>,
   }>;
-  submissions: Submission[] = [];
+  submissions: string[] = [];
   allocations: Allocation[] = [];
   assignmentName: string;
   studentCount: number;
@@ -64,16 +61,9 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
     const workspaceAssignment: WorkspaceAssignment = this.data.workspaceAssignment;
     const studentDirectories: StudentSubmission[] = workspaceAssignment.children.filter(i => i.type === TreeNodeType.SUBMISSION) as StudentSubmission[];
     this.studentCount = studentDirectories.length;
-    this.submissions = studentDirectories.map(submission => {
-      return submission.children.find(f => f.type === TreeNodeType.SUBMISSIONS_DIRECTORY).children[0];
-    })
-      // Filter out any that does not have submissions
-      .filter(f => !isNil(f))
-      .map(s => {
-        return {
-          ref: s as WorkspaceFile
-        };
-      });
+    this.submissions = studentDirectories.filter(submission => {
+      return !isNil(submission.children.find(f => f.type === TreeNodeType.SUBMISSIONS_DIRECTORY).children[0]);
+    }).map(s => s.name);
     this.loadSettings();
   }
 
@@ -94,9 +84,9 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
       allocations.push({
         submissions: [],
         marker: {
-          email : this.settings.email,
-          name : (this.settings as any).name,
-          id : (this.settings as any).id,
+          email : this.settings.user.email,
+          name : this.settings.user.name,
+          id : this.settings.user.id,
         }
       });
     }
@@ -108,9 +98,7 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
       const allocationSubmissions = shuffle(this.submissions);
       let markerIdx = 0;
       for (let allocated = 0; allocated < allocationSubmissions.length; allocated++) {
-        allocations[markerIdx++].submissions.push({
-          ref: allocationSubmissions[allocated].ref
-        });
+        allocations[markerIdx++].submissions.push(allocationSubmissions[allocated]);
 
         if (markerIdx === allocations.length) {
           markerIdx = 0;
@@ -134,5 +122,23 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
 
   onClose() {
     this.dialogRef.close();
+  }
+
+  submit() {
+    const allocations: SubmissionAllocation[] = [];
+    this.allocations.forEach(a => {
+      const marker: Marker = a.marker;
+      a.submissions.forEach((submission) => {
+        allocations.push({
+          marker: {
+            email: marker.email,
+            id: marker.id
+          },
+          submission
+        });
+      });
+    });
+
+    this.dialogRef.close(allocations);
   }
 }

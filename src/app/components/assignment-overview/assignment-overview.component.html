@@ -24,21 +24,21 @@
       </button>
       <button
         color="primary"
-        [disabled]="!isCreated"
+        [disabled]="!assignmentSettings?.isCreated"
         mat-button
         mat-icon-button
         matTooltip="Manage Submissions"
         (click)="manageStudents()">
-        <mat-icon [class.pdf-icon-disabled]="!isCreated">person</mat-icon>
+        <mat-icon [class.pdf-icon-disabled]="!assignmentSettings?.isCreated">person</mat-icon>
       </button>
       <button
         color="primary"
-        [disabled]="!isRubric"
+        [disabled]="!assignmentSettings?.rubric"
         mat-button
         mat-icon-button
         matTooltip="Manage Rubric"
         (click)="viewRubric()">
-        <mat-icon [class.pdf-icon-disabled]="!isRubric">apps</mat-icon>
+        <mat-icon [class.pdf-icon-disabled]="!assignmentSettings?.rubric">apps</mat-icon>
       </button>
       <button
         color="primary"

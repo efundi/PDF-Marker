@@ -55,7 +55,7 @@ export interface SubmissionAllocation {
   /**
    * Reference to the marker for the submission
    */
-  allocation: MakerReference;
+  marker: MakerReference;
 }
 
 export interface AssignmentSettingsInfo {

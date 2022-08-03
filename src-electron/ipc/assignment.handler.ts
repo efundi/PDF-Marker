@@ -445,17 +445,8 @@ export function getMarks(event: IpcMainInvokeEvent, studentFolder: string): Prom
 
 
 // Only For updating colour for now
-export function updateAssignmentSettings(event: IpcMainInvokeEvent, updatedSettings: any = {}, workspaceName: string, assignmentName: string): Promise<any> {
-
-  if (JSON.stringify(updatedSettings) === JSON.stringify({})) {
-    return Promise.resolve();
-  }
-
-  return getAssignmentSettingsFor(workspaceName, assignmentName)
-    .then((originalSettings) => {
-      originalSettings.defaultColour = (updatedSettings.defaultColour) ? updatedSettings.defaultColour : originalSettings.defaultColour;
-      return writeAssignmentSettingsFor(originalSettings, workspaceName, assignmentName);
-    });
+export function updateAssignmentSettings(event: IpcMainInvokeEvent, updatedSettings: any = {}, workspaceName: string, assignmentName: string): Promise<AssignmentSettingsInfo> {
+  return writeAssignmentSettingsFor(updatedSettings, workspaceName, assignmentName);
 }
 
 

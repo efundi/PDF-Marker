@@ -4,6 +4,7 @@ import {isJson} from '../utils';
 import {existsSync} from 'fs';
 import {SettingInfo, SettingInfoVersion} from '@shared/info-objects/setting.info';
 import {IpcMainInvokeEvent} from 'electron';
+import {uuidv4} from '../../src/app/utils/utils';
 
 export function ensureConfigDirectory(): Promise<string> {
   if (!existsSync(CONFIG_DIR)) {
@@ -47,8 +48,9 @@ function upgradeSettings(settings: SettingInfo): Promise<SettingInfo> {
     if (!settings.hasOwnProperty('version')) {
       // This is the first upgrade, set all the new fields
       settings.version = 1;
-      settings.email = settings.email || null;
-      settings.name = settings.name || null;
+      settings.user = {
+        id: uuidv4()
+      };
       settings.markers = settings.markers || [];
       settings.groups = settings.groups || [];
       settings.groupMembers = settings.groupMembers || [];

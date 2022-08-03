@@ -183,14 +183,11 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
 
-    this.dataSource.data = (this.originalSettings.markers || []).map((marker, index) => {
-      let groups: string[] = [];
-      if (!isNil(this.originalSettings.groupMembers)){
-        groups = filter(this.originalSettings.groupMembers, {markerId: marker.id}).map((gm) => {
-          const group = find(this.originalSettings.groups, {id: gm.groupId});
-          return group.name;
-        });
-      }
+    this.dataSource.data = this.originalSettings.markers.map((marker, index) => {
+      const groups: string[] = filter(this.originalSettings.groupMembers, {markerId: marker.id}).map((gm) => {
+        const group = find(this.originalSettings.groups, {id: gm.groupId});
+        return group.name;
+      });
 
 
       return {
@@ -202,7 +199,7 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.markersFormArray.clear();
-    (this.originalSettings.markers || []).forEach((marker) => {
+    this.originalSettings.markers.forEach((marker) => {
       this.markersFormArray.push(this.formBuilder.group({
         id: [marker.id],
         name: [marker.name, Validators.required],

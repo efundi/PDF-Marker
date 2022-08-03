@@ -12,7 +12,7 @@ import {
 import {AlertService} from '../../services/alert.service';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo, SubmissionAllocation} from '@shared/info-objects/assignment-settings.info';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {ImportService} from '../../services/import.service';
 import {UntypedFormBuilder, UntypedFormGroup} from '@angular/forms';
@@ -25,7 +25,7 @@ import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
 import {MatSort, MatSortable} from '@angular/material/sort';
-import {filter, find, isNil, sortBy} from 'lodash';
+import {cloneDeep, filter, find, isNil, sortBy} from 'lodash';
 import {
   StudentSubmission,
   TreeNodeType,
@@ -86,18 +86,12 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
 
   private subscription: Subscription;
-  private rubricSubscription: Subscription;
   private sortSubscription: Subscription;
   private settings: SettingInfo;
   assignmentSettings: AssignmentSettingsInfo;
   private workspaceAssignment: WorkspaceAssignment;
-  private previouslyEmitted: string;
   isSettings: boolean;
-  isCreated: boolean;
-  isRubric: boolean;
-  selectedRubric: string = null;
   rubrics: IRubricName[] = [];
-  rubricForm: UntypedFormGroup;
 
   private workspaceName: string;
   assignmentName: string;
@@ -168,12 +162,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   private initForm() {
-    this.rubricForm = this.fb.group({
-      rubric: [null]
-    });
-
-
-    this.rubricSubscription = this.rubricForm.valueChanges.subscribe(value => this.onRubricChange(value));
   }
 
   private getAssignmentSettings() {
@@ -183,16 +171,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       .subscribe({
         next: (assignmentSettings: AssignmentSettingsInfo) => {
           this.assignmentSettings = assignmentSettings;
-          this.isCreated = this.assignmentSettings.isCreated;
-          if (this.assignmentSettings.rubric) {
-            this.selectedRubric = this.assignmentSettings.rubric.name;
-            this.rubricForm.controls.rubric.setValue(this.assignmentSettings.rubric.name);
-            this.isRubric = true;
-          } else {
-            this.selectedRubric = null;
-            this.rubricForm.controls.rubric.setValue(this.selectedRubric);
-            this.isRubric = false;
-          }
           this.getGrades(this.workspaceName, this.assignmentName);
           this.busyService.stop();
         },
@@ -232,7 +210,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         let index = 0;
         filter(workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmission) => {
 
-          const fullName = workspaceSubmission.studentSurname + (isNil(workspaceSubmission.studentName) ? '' : ', ' + workspaceSubmission.studentName);
+           const fullName = workspaceSubmission.studentSurname + (isNil(workspaceSubmission.studentName) ? '' : ', ' + workspaceSubmission.studentName);
 
           const value: AssignmentDetails = {
             submissionDirectoryName: workspaceSubmission.name,
@@ -269,7 +247,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         });
         this.dataSource.data = sortBy(values, 'fullName');
         this.assignmentsLength = values.length;
-        if (!isNil(this.assignmentSettings.dateFinalized)){
+        if (!isNil(this.assignmentSettings.dateFinalized)) {
           this.assignmentState = 'finalized';
         }
       } else {
@@ -278,11 +256,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     });
   }
 
-  onRubricChange(value) {
-    if (value.rubric !== this.previouslyEmitted && value.rubric !== this.selectedRubric) {
-      this.previouslyEmitted = value.rubric;
-    }
-  }
 
   onSelectedPdf(element: AssignmentDetails) {
     if (isNil(element.pdfFile)) {
@@ -420,7 +393,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
-    this.rubricSubscription.unsubscribe();
     this.sortSubscription.unsubscribe();
   }
 
@@ -523,8 +495,25 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     };
 
     const dialogRef = this.appService.createDialog(AllocateMarkersModalComponent, config);
-    dialogRef.afterClosed().subscribe(() => {
-
+    dialogRef.afterClosed().subscribe((allocations: SubmissionAllocation[]) => {
+      const settings = cloneDeep(this.assignmentSettings);
+      settings.allocations = allocations;
+      this.updateAssignmentSettings(settings);
     });
+  }
+
+  private updateAssignmentSettings(assignmentSettings: AssignmentSettingsInfo) {
+    this.busyService.start();
+    this.assignmentService.updateAssignmentSettings(assignmentSettings, this.workspaceName, this.assignmentName)
+      .subscribe({
+        next: (settings) => {
+          this.assignmentSettings = settings;
+          this.busyService.stop();
+        },
+        error: (error) => {
+          this.alertService.error(error);
+          this.busyService.stop();
+        }
+      });
   }
 }
