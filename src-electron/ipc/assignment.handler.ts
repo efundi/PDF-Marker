@@ -2,10 +2,8 @@ import {
   accessSync,
   constants,
   existsSync,
-  lstatSync,
   mkdirSync,
   mkdtempSync,
-  readdirSync,
   readFileSync,
   rmSync,
   statSync,
@@ -21,7 +19,8 @@ import {
   INVALID_RUBRIC_JSON_FILE,
   INVALID_STUDENT_FOLDER,
   NOT_PROVIDED_RUBRIC,
-  RUBRICS_FILE, STUDENT_DIRECTORY_ID_REGEX,
+  RUBRICS_FILE,
+  STUDENT_DIRECTORY_ID_REGEX,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
   STUDENT_DIRECTORY_REGEX,
 } from '../constants';
@@ -36,7 +35,11 @@ import {PDFDocument} from 'pdf-lib';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-assignment.info';
 import {annotatePdfFile} from '../pdf/marking-annotations';
-import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
+import {
+  AssignmentFormat,
+  AssignmentSettingsInfo,
+  AssignmentSettingsVersion
+} from '@shared/info-objects/assignment-settings.info';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {annotatePdfRubric} from '../pdf/rubric-annotations';
 import {ShareAssignments} from '@shared/info-objects/share-assignments';
@@ -46,7 +49,8 @@ import {getAssignmentDirectory} from './workspace.handler';
 import {
   FeedbackAttachments,
   StudentSubmission,
-  SubmissionAttachments, TreeNode,
+  SubmissionAttachments,
+  TreeNode,
   TreeNodeType,
   Workspace,
   WorkspaceAssignment,
@@ -366,7 +370,7 @@ function saveToMarks(studentLocation: string, marks: SubmissionInfo, totalMark: 
   });
 }
 
-function convertMarks(marks: any, studentFolderFullPath: string): Promise<SubmissionInfo> {
+function upgradeMarks(marks: any, studentFolderFullPath: string): Promise<SubmissionInfo> {
 
   let submissionInfo: SubmissionInfo;
   if (marks.version !== SubmissionInfoVersion) {
@@ -425,12 +429,12 @@ export function loadMarksAt(studentFolderFull: string): Promise<SubmissionInfo> 
     } else {
       const marks = JSON.parse(data.toString());
       if (marks.version !== SubmissionInfoVersion) {
-        return convertMarks(marks, studentFolderFull);
+        return upgradeMarks(marks, studentFolderFull);
       }
       return marks;
     }
   }, (err) => {
-    return convertMarks([], studentFolderFull);
+    return upgradeMarks([], studentFolderFull);
   });
 }
 
@@ -441,17 +445,8 @@ export function getMarks(event: IpcMainInvokeEvent, studentFolder: string): Prom
 
 
 // Only For updating colour for now
-export function updateAssignmentSettings(event: IpcMainInvokeEvent, updatedSettings: any = {}, workspaceName: string, assignmentName: string): Promise<any> {
-
-  if (JSON.stringify(updatedSettings) === JSON.stringify({})) {
-    return Promise.resolve();
-  }
-
-  return getAssignmentSettingsFor(workspaceName, assignmentName)
-    .then((originalSettings) => {
-      originalSettings.defaultColour = (updatedSettings.defaultColour) ? updatedSettings.defaultColour : originalSettings.defaultColour;
-      return writeAssignmentSettingsFor(originalSettings, workspaceName, assignmentName);
-    });
+export function updateAssignmentSettings(event: IpcMainInvokeEvent, updatedSettings: any = {}, workspaceName: string, assignmentName: string): Promise<AssignmentSettingsInfo> {
+  return writeAssignmentSettingsFor(updatedSettings, workspaceName, assignmentName);
 }
 
 
@@ -715,27 +710,58 @@ export function getGrades(event: IpcMainInvokeEvent, workspaceName: string, assi
   });
 }
 
-function setDateFinalized(assignmentFolder: string): Promise<any> {
+function setDateFinalized(assignmentFolder: string): Promise<AssignmentSettingsInfo> {
   return getAssignmentSettingsAt(assignmentFolder).then((assignmentSettings) => {
     assignmentSettings.dateFinalized = new Date().toISOString();
     return writeAssignmentSettingsAt(assignmentSettings, assignmentFolder);
   });
 }
 
-function getAssignmentSettingsAt(assignmentFolder: string): Promise<any> {
+function getAssignmentSettingsAt(assignmentFolder: string): Promise<AssignmentSettingsInfo> {
   assignmentFolder = assignmentFolder.replace(/\//g, sep);
   if (existsSync(assignmentFolder)) {
     return readFile(assignmentFolder + sep + SETTING_FILE).then((data) => {
       if (!isJson(data)) {
         return Promise.reject('Assignment settings is not JSON');
       }
-      return JSON.parse(data.toString());
+      return JSON.parse(data.toString()) as AssignmentSettingsInfo;
     }, (error) => {
       return Promise.reject(error.message);
-    });
+    }).then((assignmentSettings) => upgradeAssignmentSettings(assignmentFolder, assignmentSettings));
   } else {
     return Promise.reject('Could not load assignment settings');
   }
+}
+
+function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings: AssignmentSettingsInfo): Promise<AssignmentSettingsInfo> {
+  let promise: Promise<AssignmentSettingsInfo> = Promise.resolve(assignmentSettings);
+  if (assignmentSettings.version !== AssignmentSettingsVersion) {
+
+    if (!assignmentSettings.hasOwnProperty('version')) {
+      // This is the first upgrade, set all the new fields
+      assignmentSettings.version = 1;
+      assignmentSettings.assignmentFormat = AssignmentFormat.STANDALONE; // TODO confirm
+      assignmentSettings.allocations = [];
+      assignmentSettings.dateFinalized = null;
+      assignmentSettings.owner = null; // We can't set it here because it might not be configured
+      promise = writeAssignmentSettingsAt(assignmentSettings, assignmentFolder);
+    }
+
+    /*
+       if (assignmentSettings.version === 1) {
+         // Convert to from v 1 to version 2
+         assignmentSettings = assignmentSettingsV2;
+         promise = promise.then(() => writeAssignmentSettingsAt(assignmentSettings, assignmentFolder));
+       }
+
+       if (assignmentSettings.version === 2) {
+         // Convert to from v 2 to version 3
+         assignmentSettings = assignmentSettingsV3;
+         promise = promise.then(() => writeAssignmentSettingsAt(studentFolder, submissionInfo));
+       }
+     */
+  }
+  return promise;
 }
 
 function getAssignmentSettingsFor(workspaceName: string, assignmentName: string): Promise<AssignmentSettingsInfo> {

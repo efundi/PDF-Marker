@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {FormBuilder} from '@angular/forms';
+import {UntypedFormBuilder} from '@angular/forms';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {SettingsService} from '../../services/settings.service';
 import {BusyService} from '../../services/busy.service';
@@ -23,7 +23,7 @@ export class MarkersManageComponent implements OnInit {
   private settingsReplaySubject = new ReplaySubject<SettingInfo>(1);
   settingsLoaded: Observable<SettingInfo>;
 
-  constructor(private formBuilder: FormBuilder,
+  constructor(private formBuilder: UntypedFormBuilder,
               private appService: AppService,
               private settingsService: SettingsService,
               private busyService: BusyService) {

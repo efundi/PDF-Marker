@@ -12,10 +12,10 @@ import {
 import {AlertService} from '../../services/alert.service';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo, SubmissionAllocation} from '@shared/info-objects/assignment-settings.info';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {ImportService} from '../../services/import.service';
-import {FormBuilder, FormGroup} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup} from '@angular/forms';
 import {RubricViewModalComponent} from '../rubric-view-modal/rubric-view-modal.component';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {SelectionModel} from '@angular/cdk/collections';
@@ -25,7 +25,7 @@ import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
 import {MatSort, MatSortable} from '@angular/material/sort';
-import {filter, find, isNil, sortBy} from 'lodash';
+import {cloneDeep, filter, find, isNil, sortBy} from 'lodash';
 import {
   StudentSubmission,
   TreeNodeType,
@@ -35,6 +35,7 @@ import {
 } from '@shared/info-objects/workspace';
 import * as _moment from 'moment';
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
+import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-markers-modal.component';
 
 const moment = _moment;
 
@@ -69,7 +70,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   displayedColumns: string[] = ['select', 'fullName', 'assignment', 'grade', 'date', 'status'];
   dataSource = new MatTableDataSource<AssignmentDetails>([]);
   assignmentsLength;
-  readonly pageSize: number = 10;
   private assignmentGrades: any[] = [];
   private assignmentHeader: string;
 
@@ -85,19 +85,13 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   assignmentState: 'notstarted' | 'inprogress' | 'finalized' = 'notstarted';
 
 
-  readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
-  private rubricSubscription: Subscription;
   private sortSubscription: Subscription;
   private settings: SettingInfo;
   assignmentSettings: AssignmentSettingsInfo;
-  private previouslyEmitted: string;
+  private workspaceAssignment: WorkspaceAssignment;
   isSettings: boolean;
-  isCreated: boolean;
-  isRubric: boolean;
-  selectedRubric: string = null;
   rubrics: IRubricName[] = [];
-  rubricForm: FormGroup;
 
   private workspaceName: string;
   assignmentName: string;
@@ -111,7 +105,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
               private importService: ImportService,
               private busyService: BusyService,
               private rubricService: RubricService,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private viewContainerRef: ViewContainerRef) {
   }
 
@@ -168,12 +162,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   private initForm() {
-    this.rubricForm = this.fb.group({
-      rubric: [null]
-    });
-
-
-    this.rubricSubscription = this.rubricForm.valueChanges.subscribe(value => this.onRubricChange(value));
   }
 
   private getAssignmentSettings() {
@@ -183,16 +171,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       .subscribe({
         next: (assignmentSettings: AssignmentSettingsInfo) => {
           this.assignmentSettings = assignmentSettings;
-          this.isCreated = this.assignmentSettings.isCreated;
-          if (this.assignmentSettings.rubric) {
-            this.selectedRubric = this.assignmentSettings.rubric.name;
-            this.rubricForm.controls.rubric.setValue(this.assignmentSettings.rubric.name);
-            this.isRubric = true;
-          } else {
-            this.selectedRubric = null;
-            this.rubricForm.controls.rubric.setValue(this.selectedRubric);
-            this.isRubric = false;
-          }
           this.getGrades(this.workspaceName, this.assignmentName);
           this.busyService.stop();
         },
@@ -227,12 +205,12 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   private generateDataFromModel() {
     const values: AssignmentDetails[] = [];
     this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentName).subscribe((workspaceAssignment) => {
-
+      this.workspaceAssignment = workspaceAssignment;
       if (!isNil(workspaceAssignment)) {
         let index = 0;
         filter(workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmission) => {
 
-          const fullName = workspaceSubmission.studentSurname + (isNil(workspaceSubmission.studentName) ? '' : ', ' + workspaceSubmission.studentName);
+           const fullName = workspaceSubmission.studentSurname + (isNil(workspaceSubmission.studentName) ? '' : ', ' + workspaceSubmission.studentName);
 
           const value: AssignmentDetails = {
             submissionDirectoryName: workspaceSubmission.name,
@@ -269,7 +247,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         });
         this.dataSource.data = sortBy(values, 'fullName');
         this.assignmentsLength = values.length;
-        if (!isNil(this.assignmentSettings.dateFinalized)){
+        if (!isNil(this.assignmentSettings.dateFinalized)) {
           this.assignmentState = 'finalized';
         }
       } else {
@@ -278,11 +256,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     });
   }
 
-  onRubricChange(value) {
-    if (value.rubric !== this.previouslyEmitted && value.rubric !== this.selectedRubric) {
-      this.previouslyEmitted = value.rubric;
-    }
-  }
 
   onSelectedPdf(element: AssignmentDetails) {
     if (isNil(element.pdfFile)) {
@@ -420,7 +393,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
-    this.rubricSubscription.unsubscribe();
     this.sortSubscription.unsubscribe();
   }
 
@@ -508,5 +480,40 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     this.sort.sort(sort);
     this.dataSource.sort = this.sort;
     this.dataSource.paginator = this.paginator;
+  }
+
+  allocateMarkers(): void {
+    const config = new MatDialogConfig();
+    config.width = '600px';
+    config.maxWidth = '800px';
+    config.disableClose = true;
+    config.data = {
+      assignmentName: this.assignmentName,
+      workspaceName: this.workspaceName,
+      assignmentSettings: this.assignmentSettings,
+      workspaceAssignment: this.workspaceAssignment
+    };
+
+    const dialogRef = this.appService.createDialog(AllocateMarkersModalComponent, config);
+    dialogRef.afterClosed().subscribe((allocations: SubmissionAllocation[]) => {
+      const settings = cloneDeep(this.assignmentSettings);
+      settings.allocations = allocations;
+      this.updateAssignmentSettings(settings);
+    });
+  }
+
+  private updateAssignmentSettings(assignmentSettings: AssignmentSettingsInfo) {
+    this.busyService.start();
+    this.assignmentService.updateAssignmentSettings(assignmentSettings, this.workspaceName, this.assignmentName)
+      .subscribe({
+        next: (settings) => {
+          this.assignmentSettings = settings;
+          this.busyService.stop();
+        },
+        error: (error) => {
+          this.alertService.error(error);
+          this.busyService.stop();
+        }
+      });
   }
 }

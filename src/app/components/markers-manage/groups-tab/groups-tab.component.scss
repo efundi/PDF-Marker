@@ -33,7 +33,7 @@
   .panel-buttons{
     display: flex;
     width: 100%;
-    justify-content: end;
+    justify-content: flex-end;
   }
 
   ::ng-deep .mat-expansion-panel-header-description {

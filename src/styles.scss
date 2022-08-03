@@ -1,5 +1,7 @@
 @use '@angular/material' as mat;
 
+@import '@material-design-icons/font';
+
 @include mat.core();
 $dark-primary-text: rgba(black, 0.87);
 $light-primary-text: white;
@@ -8,6 +10,40 @@ $light-primary-text: white;
 /*Variables*/
 $pdf-marker-primary: #6f327a;
 $pdf-marker-secondary: #555;
+
+// 1. Include functions first (so you can manipulate colors, SVGs, calc, etc)
+@import "../node_modules/bootstrap/scss/functions";
+
+// 2. Include any default variable overrides here
+$primary: $pdf-marker-primary;
+$secondary: $pdf-marker-secondary;
+
+// 3. Include remainder of required Bootstrap stylesheets
+@import "../node_modules/bootstrap/scss/variables";
+
+// 4. Include any default map overrides here
+
+// 5. Include remainder of required parts
+@import "../node_modules/bootstrap/scss/maps";
+@import "../node_modules/bootstrap/scss/mixins";
+@import "../node_modules/bootstrap/scss/root";
+
+// 6. Optionally include any other parts as needed
+@import "../node_modules/bootstrap/scss/utilities";
+@import "../node_modules/bootstrap/scss/reboot";
+@import "../node_modules/bootstrap/scss/type";
+@import "../node_modules/bootstrap/scss/images";
+@import "../node_modules/bootstrap/scss/containers";
+@import "../node_modules/bootstrap/scss/tables";
+@import "../node_modules/bootstrap/scss/grid";
+@import "../node_modules/bootstrap/scss/badge";
+@import "../node_modules/bootstrap/scss/helpers";
+
+// 7. Optionally include utilities API last to generate classes based on the Sass map in `_utilities.scss`
+@import "../node_modules/bootstrap/scss/utilities/api";
+
+// 8. Add additional custom code here
+
 
 
 $pdfm-primary-pallete: (
@@ -96,51 +132,6 @@ $my-app-theme: mat.define-light-theme(
 /* You can add global styles to this file, and also import other style files */
 /*Fonts*/
 
-@font-face {
-  font-family: 'Material Icons';
-  font-style: normal;
-  font-weight: 400;
-  src: url(../fonts/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format("woff2");
-}
-
-.material-icons {
-  font-family: 'Material Icons';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-}
-
-@font-face {
-  font-family: 'Material Icons Outlined';
-  font-style: normal;
-  font-weight: 400;
-  src: url(../fonts/gok-H7zzDkdnRel8-DQ6KAXJ69wP1tGnf4ZGhUce.woff2) format('woff2');
-}
-
-.material-icons-outlined {
-  font-family: 'Material Icons Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -moz-font-feature-settings: 'liga';
-  -moz-osx-font-smoothing: grayscale;
-}
 
 html, body {
   height: 100%;
@@ -270,8 +261,6 @@ $left-fixed-menu-width: 4rem;
     padding-left: 23px;
     padding-right: 23px;
     background: #F5F5F5;
-    //display: table;
-    //width: 95%;
   }
 }
 
@@ -428,6 +417,21 @@ pdf-marker-rubric-criteria-level-block {
 }
 
 /**
+ Override material zero padding with bootstrap padding
+ */
+th.mat-header-cell, td.mat-cell, td.mat-footer-cell{
+  padding: $table-cell-padding-y $table-cell-padding-x !important;
+}
+
+/**
+ Override bootstrap bottom table headers back to materials middle
+ */
+.table > thead,
+.table > tbody{
+  vertical-align: middle;
+}
+
+/**
   PDF annotations
  */
 .annotation-layer {
@@ -566,39 +570,5 @@ pdf-marker-rubric-criteria-level-block {
   }
   &.menuOpen .submission-navigator-wrapper{
     margin-left: 258px;
-  }
-}
-
-
-/**
-  Custom styles for badges
-  Adapted from bootstrap badges
- */
-.badge {
-  display: inline-block;
-  padding: 0.35em 0.65em;
-  font-size: 0.75em;
-  font-weight: 500;
-  line-height: 1;
-  color: #fff;
-  text-align: center;
-  white-space: nowrap;
-  vertical-align: baseline;
-  border-radius: 0.375rem;
-
-  &.badge-success {
-    color: #fff;
-    background: rgb(25, 135, 84);
-  }
-
-  /** Adapted from badge-secondary */
-  &.badge-gray {
-    color: #fff;
-    background: rgb(108, 117, 125);
-  }
-
-  &.badge-primary {
-    color: #fff;
-    background: var(--pdf-marker-primary);
   }
 }

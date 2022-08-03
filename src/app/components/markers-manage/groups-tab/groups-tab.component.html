@@ -1,7 +1,7 @@
   <div style="display: flex">
 
     <div class="pdfm-markers-panel">
-      <div><h3>Markers</h3></div>
+      <div class="pt-3"><h3>Markers</h3></div>
 
       <div class="markers-list-container">
 
@@ -19,7 +19,7 @@
 
             <div *cdkDragPlaceholder><!-- --></div>
             <div *cdkDragPreview class="drag-add-preview">{{marker.name}} ({{marker.email}})</div>
-            <span><span class="badge badge-primary">{{marker.groupCount}}</span>&nbsp;{{marker.name}} ({{marker.email}})</span>
+            <span><span class="badge text-bg-primary">{{marker.groupCount}}</span>&nbsp;{{marker.name}} ({{marker.email}})</span>
           </mat-list-item>
           <mat-list-item *ngIf="markers.length === 0">No Markers</mat-list-item>
         </mat-list>
@@ -27,7 +27,7 @@
     </div>
 
     <div class="pdfm-groups-panel">
-      <div><h3>Groups</h3></div>
+      <div class="pt-3"><h3>Groups</h3></div>
 
       <div style="padding: 16px; background: white">
         <mat-accordion>
@@ -41,7 +41,7 @@
               <mat-panel-title>
 
                 <mat-icon color="accent" style="margin-right: 16px;">person</mat-icon>
-                <span class="badge badge-primary" style="margin-right: 16px;">{{groupItem.members.length}}</span>&nbsp;
+                <span class="badge text-bg-primary" style="margin-right: 16px;">{{groupItem.members.length}}</span>&nbsp;
                 <mat-form-field  *ngIf="groupItem.editing"
 
                                  (keydown.space)="$event.stopImmediatePropagation()"

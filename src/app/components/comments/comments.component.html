@@ -13,8 +13,8 @@
     <button type="button" mat-raised-button color="primary" [disabled]="genericCommentsForm.invalid" (click)="onSubmit()">Save</button>
   </div>
 </form>
-<div id="pdf-marker-rubric-import-comment-list" style="margin-top: 16px">
-  <table mat-table [dataSource]="dataSource" matSort>
+<div id="pdf-marker-rubric-import-comment-list" class="mt-3">
+  <table mat-table [dataSource]="dataSource" matSort class="table">
 
     <ng-container matColumnDef="id" style="display: none">
       <th mat-header-cell *matHeaderCellDef> Title </th>

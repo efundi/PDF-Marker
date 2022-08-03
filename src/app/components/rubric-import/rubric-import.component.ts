@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit, ViewContainerRef} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {AlertService} from '../../services/alert.service';
@@ -28,13 +28,13 @@ export class RubricImportComponent implements OnInit, OnDestroy {
 
   config: MatDialogConfig;
 
-  rubricForm: FormGroup;
+  rubricForm: UntypedFormGroup;
   dataSource: MatTableDataSource<IRubricName>;
   rubrics: IRubricName[];
 
   subscription: Subscription;
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private alertService: AlertService,
               private appService: AppService,
               private importService: ImportService,

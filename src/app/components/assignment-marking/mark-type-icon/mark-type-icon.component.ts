@@ -1,6 +1,6 @@
 import {Component, ElementRef, Input, OnDestroy, OnInit, Renderer2} from '@angular/core';
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {AppService} from '../../../services/app.service';
 import {
@@ -8,13 +8,13 @@ import {
 } from '../marking-comment-modal/marking-comment-modal.component';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {cloneDeep, isEqual} from 'lodash';
-import {CdkDragEnd} from '@angular/cdk/drag-drop/drag-events';
 import {
   AssignmentMarkingPageComponent
 } from '../assignment-marking-page/assignment-marking-page.component';
 import {
   AssignmentMarkingSessionService
 } from '../assignment-marking-session.service';
+import {CdkDragEnd} from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'pdf-marker-mark-type-icon',
@@ -25,7 +25,7 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
 
   static readonly widthAndHeight: number = 36;
 
-  iconForm: FormGroup;
+  iconForm: UntypedFormGroup;
 
   config: MatDialogConfig;
 
@@ -45,7 +45,7 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
 
 
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private appService: AppService,
               private elementRef: ElementRef,
               private renderer: Renderer2,

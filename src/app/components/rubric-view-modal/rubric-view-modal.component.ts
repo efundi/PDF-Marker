@@ -2,7 +2,7 @@ import {Component, Inject, Input, OnDestroy, OnInit} from '@angular/core';
 import {AppService} from '../../services/app.service';
 import {MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef} from '@angular/material/dialog';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
-import {FormBuilder, FormGroup} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup} from '@angular/forms';
 import {SettingsService} from '../../services/settings.service';
 import {ImportService} from '../../services/import.service';
 import {Subscription} from 'rxjs';
@@ -36,7 +36,7 @@ export class RubricViewModalComponent implements OnInit, OnDestroy {
   private formSubscription: Subscription;
   @Input()
   assignmentSettingsInfo: AssignmentSettingsInfo;
-  rubricForm: FormGroup;
+  rubricForm: UntypedFormGroup;
   rubricsNames: string[] = [];
   private assignmentName = 'No Assignment';
   isRubric: boolean;
@@ -46,7 +46,7 @@ export class RubricViewModalComponent implements OnInit, OnDestroy {
               private settingsService: SettingsService,
               private importService: ImportService,
               private rubricService: RubricService,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private assignmentService: AssignmentService,
               private busyService: BusyService,
               @Inject(MAT_DIALOG_DATA)  private config) {

@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {FileExplorerModalComponent} from '../file-explorer-modal/file-explorer-modal.component';
 import {AlertService} from '../../services/alert.service';
@@ -29,7 +29,7 @@ export class ImportComponent implements OnInit, OnDestroy {
 
   isFileLoaded = false;
 
-  importForm: FormGroup;
+  importForm: UntypedFormGroup;
 
   private formSubscriptions: Subscription[] = [];
 
@@ -52,7 +52,7 @@ export class ImportComponent implements OnInit, OnDestroy {
     return filename.replace(/\.[^/.]+$/, '');
   }
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private dialog: MatDialog,
               private alertService: AlertService,
               private appService: AppService,

@@ -5,8 +5,8 @@ mat-toolbar {
 
 .navigation {
   padding: 4px;
-  height: calc(100vh - 138px);
-  max-width: 375px;
+  height: calc(100vh - 130px);
+  //max-width: 375px;
   overflow: auto;
 
   &::-webkit-scrollbar {

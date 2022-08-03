@@ -4,7 +4,7 @@
 <div><p>Total: {{ (isMarkingRubricPage) ? totalTally +" / " :""}} {{maxScore}}</p></div>
 
 <div class="table-responsive">
-  <table style="border: 1px solid #d3d3d3;">
+  <table class="table table-bordered">
     <pdf-marker-rubric-criteria
       [selectedCriteriaLevel]="getSelectionIndex(criteriaIndex)"
       [isMarkingRubricPage]="isMarkingRubricPage"
