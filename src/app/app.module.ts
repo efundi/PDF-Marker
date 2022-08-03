@@ -95,6 +95,7 @@ import { GroupsTabComponent } from './components/markers-manage/groups-tab/group
 import { PopoverDirective } from './directives/popover.directive';
 import {UpdateService} from './services/update.service';
 import { UpdateModalComponent } from './components/update-modal/update-modal.component';
+import { AllocateMarkersModalComponent } from './components/assignment-overview/allocate-markers-modal/allocate-markers-modal.component';
 
 @NgModule({
   declarations: [
@@ -141,6 +142,7 @@ import { UpdateModalComponent } from './components/update-modal/update-modal.com
     GroupsTabComponent,
     PopoverDirective,
     UpdateModalComponent,
+    AllocateMarkersModalComponent,
   ],
   imports: [
     HttpClientModule,

@@ -134,7 +134,6 @@
       }
     }
   },
-  "defaultProject": "pdf-marker",
   "cli": {
     "packageManager": "npm"
   }

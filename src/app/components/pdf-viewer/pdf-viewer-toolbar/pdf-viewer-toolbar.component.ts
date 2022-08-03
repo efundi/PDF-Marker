@@ -9,7 +9,7 @@ import {
   Output,
   SimpleChanges
 } from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {ZoomChangeEvent} from '../../assignment-marking/assignment-marking-session.service';
 
@@ -36,7 +36,7 @@ export class PdfViewerToolbarComponent implements OnInit, OnChanges, OnDestroy {
   @Input()
   pages: number;
 
-  iconForm: FormGroup;
+  iconForm: UntypedFormGroup;
 
   readonly zoomOptions = [{
     label: '400%',
@@ -61,7 +61,7 @@ export class PdfViewerToolbarComponent implements OnInit, OnChanges, OnDestroy {
 
   private zoomFormSubscription: Subscription;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
 
   }
 

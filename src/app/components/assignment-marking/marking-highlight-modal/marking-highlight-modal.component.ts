@@ -1,5 +1,5 @@
 import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
-import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators} from '@angular/forms';
 import {IComment} from '@shared/info-objects/comment.class';
 import {AppService} from '../../../services/app.service';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
@@ -15,7 +15,7 @@ import {isNil} from 'lodash';
 export class MarkingHighlightModalComponent implements OnInit {
 
 
-  commentForm: FormGroup;
+  commentForm: UntypedFormGroup;
 
   private sectionLabel: string;
 
@@ -28,7 +28,7 @@ export class MarkingHighlightModalComponent implements OnInit {
   constructor(private appService: AppService,
               private dialogRef: MatDialogRef<MarkingHighlightModalComponent>,
               @Inject(MAT_DIALOG_DATA) private config,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private commentService: CommentService) {
 
     this.initForm();
@@ -57,9 +57,9 @@ export class MarkingHighlightModalComponent implements OnInit {
   }
   private initForm() {
     this.commentForm = this.fb.group({
-      sectionLabel: new FormControl(null, Validators.required),
-      genericComment: new FormControl(null),
-      markingComment: new FormControl(null),
+      sectionLabel: new UntypedFormControl(null, Validators.required),
+      genericComment: new UntypedFormControl(null),
+      markingComment: new UntypedFormControl(null),
     });
   }
 

@@ -1,6 +1,6 @@
 import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators} from '@angular/forms';
 import {AppService} from '../../../services/app.service';
 import {IComment} from '@shared/info-objects/comment.class';
 import {CommentService} from '../../../services/comment.service';
@@ -15,7 +15,7 @@ import {isNil} from 'lodash';
 })
 export class MarkingCommentModalComponent implements OnInit, OnDestroy {
 
-  commentForm: FormGroup;
+  commentForm: UntypedFormGroup;
 
   private formSubscription: Subscription;
 
@@ -31,7 +31,7 @@ export class MarkingCommentModalComponent implements OnInit, OnDestroy {
   constructor(private appService: AppService,
               private dialogRef: MatDialogRef<MarkingCommentModalComponent>,
               @Inject(MAT_DIALOG_DATA) private config,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private commentService: CommentService) {
 
     this.initForm();
@@ -68,10 +68,10 @@ export class MarkingCommentModalComponent implements OnInit, OnDestroy {
 
   private initForm() {
     this.commentForm = this.fb.group({
-      commentType: new FormControl(null, Validators.required),
-      sectionLabel: new FormControl(null, Validators.required),
-      genericComment: new FormControl(null),
-      markingComment: new FormControl(null),
+      commentType: new UntypedFormControl(null, Validators.required),
+      sectionLabel: new UntypedFormControl(null, Validators.required),
+      genericComment: new UntypedFormControl(null),
+      markingComment: new UntypedFormControl(null),
     });
 
     this.formSubscription = this.commentForm.controls.commentType.valueChanges.subscribe((commentType) => {
@@ -85,7 +85,7 @@ export class MarkingCommentModalComponent implements OnInit, OnDestroy {
 
   private toggleTotalMark(show: boolean) {
     if (show) {
-      this.commentForm.addControl('totalMark', new FormControl(null, Validators.required));
+      this.commentForm.addControl('totalMark', new UntypedFormControl(null, Validators.required));
     } else {
       this.commentForm.removeControl('totalMark');
     }

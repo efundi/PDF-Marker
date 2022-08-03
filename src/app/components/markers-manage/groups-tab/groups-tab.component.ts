@@ -1,5 +1,5 @@
 import {ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
-import {FormArray, FormBuilder, FormControl, FormGroup, NgForm, Validators} from '@angular/forms';
+import {UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NgForm, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
 import {MarkersManageComponent} from '../markers-manage.component';
@@ -35,7 +35,7 @@ export interface GroupItem {
 export class GroupsTabComponent implements OnInit, OnDestroy {
   isEditing = false;
 
-  formGroup: FormGroup;
+  formGroup: UntypedFormGroup;
 
   /**
    * Reference to the marker form
@@ -46,7 +46,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
   /**
    * Reference to the list of groups form array
    */
-  groupsFormArray: FormArray;
+  groupsFormArray: UntypedFormArray;
 
 
   groupItems: GroupItem[] = [];
@@ -67,7 +67,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
 
   constructor(private markersManageComponent: MarkersManageComponent,
               private appService: AppService,
-              private formBuilder: FormBuilder,
+              private formBuilder: UntypedFormBuilder,
               private changeDetectorRef: ChangeDetectorRef) {
     this.initForm();
   }
@@ -270,8 +270,8 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
    * @param index
    * @param name
    */
-  getFormControl(index: number, name: string): FormControl {
-    return this.groupsFormArray.at(index).get(name) as FormControl;
+  getFormControl(index: number, name: string): UntypedFormControl {
+    return this.groupsFormArray.at(index).get(name) as UntypedFormControl;
   }
 
   editGroup($event: MouseEvent, groupItem: GroupItem) {

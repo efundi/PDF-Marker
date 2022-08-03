@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { AlertService } from '../../services/alert.service';
 import { AppService } from '../../services/app.service';
 import { IComment } from '@shared/info-objects/comment.class';
@@ -21,7 +21,7 @@ export class GenericCommentsComponent implements OnInit, AfterViewInit {
 
 
   readonly displayedColumns: string[] = ['title', 'inUse', 'actions'];
-  genericCommentsForm: FormGroup;
+  genericCommentsForm: UntypedFormGroup;
 
   @ViewChild(MatPaginator, {static: true})
   paginator: MatPaginator;
@@ -32,7 +32,7 @@ export class GenericCommentsComponent implements OnInit, AfterViewInit {
   comments: IComment[];
   dataSource = new MatTableDataSource<IComment>([]);
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private settingsService: SettingsService,
               private appService: AppService,
               private commentsService: CommentService,

@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {SettingsService} from '../../services/settings.service';
 import {AppService} from '../../services/app.service';
 import {AlertService} from '../../services/alert.service';
@@ -20,13 +20,13 @@ import {filter} from 'lodash';
 })
 export class WorkingFolderComponent implements OnInit {
 
-  createFolderForm: FormGroup;
+  createFolderForm: UntypedFormGroup;
   readonly displayedColumns: string[] = ['folder', 'actions'];
   folders: string[];
   private folderNameList: string[];
   dataSource: MatTableDataSource<string>;
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private settingsService: SettingsService,
               private appService: AppService,
               private alertService: AlertService,

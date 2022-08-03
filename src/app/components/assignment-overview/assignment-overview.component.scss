@@ -25,7 +25,7 @@
 
   .pdf-marker-assignment-overview-buttons {
     display: flex;
-    align-items: end;
+    align-items: flex-end;
   }
 }
 
@@ -59,35 +59,10 @@ table {
     font-weight: 400;
   }
 
-  .pdf-marker-assignment-overview-assignment-grade,
   .pdf-marker-assignment-overview-assignment-date{
     padding: 4px 10px;
   }
 
-  .pdf-marker-assignment-overview-assignment-status {
-    color: #fff;
-    border-radius: 12px;
-    padding: 5px;
-    font-size: 11px;
-    font-weight: 400;
-    width: 40px;
-    display: inline-block;
-  }
-
-  .pdf-marker-assignment-overview-assignment-status-on-time {
-    background: #1db954;
-    border: 1px solid #1db954;
-  }
-
-  .pdf-marker-assignment-overview-assignment-status-late {
-    background: #a94442;
-    border: 1px solid #a94442;
-  }
-
-  .pdf-marker-assignment-overview-assignment-status-unknown {
-    background: #2b72a1;
-    border: 1px solid #2b72a1;
-  }
 
   .pdf-marker-assignment-overview-assignment-grade-header {
     min-width: 8rem;
@@ -125,5 +100,7 @@ table {
     border-radius: 50%;
     padding: 4px;
     background: #626391;
+    width: 33px;
+    height: 33px;
   }
 }

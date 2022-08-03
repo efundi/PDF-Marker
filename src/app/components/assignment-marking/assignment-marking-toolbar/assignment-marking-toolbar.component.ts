@@ -1,4 +1,4 @@
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {
   Component,
   EventEmitter,
@@ -51,7 +51,7 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
 
   selectedColour: string;
 
-  iconForm: FormGroup;
+  iconForm: UntypedFormGroup;
 
   readonly zoomOptions = [{
     label: '400%',
@@ -101,7 +101,7 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
    */
   highlightToolColor: string;
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) {}
   /** constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
     this.matIconRegistry

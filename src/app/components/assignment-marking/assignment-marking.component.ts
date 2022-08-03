@@ -213,9 +213,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private onColourChanged(colour: string) {
     this.onAssignmentSettings({
       ...this.assignmentSettings,
-      defaultColour: colour,
-      rubricID: this.assignmentSettings.rubricID,
-      isCreated: this.assignmentSettings.isCreated
+      defaultColour: colour
     });
   }
 

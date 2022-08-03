@@ -1,8 +1,9 @@
+export const SettingInfoVersion = 1;
+
 export interface SettingInfo {
-  name: string;
-
+  version: number;
   email: string;
-
+  name: string;
   lmsSelection: string;
 
   defaultPath: string;

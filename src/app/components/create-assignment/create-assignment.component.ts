@@ -1,5 +1,5 @@
 import {Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {FormArray, FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {RxwebValidators} from '@rxweb/reactive-form-validators';
 import {AlertService} from '../../services/alert.service';
 import {AssignmentService} from '../../services/assignment.service';
@@ -34,7 +34,7 @@ import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 })
 export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
-  createAssignmentForm: FormGroup;
+  createAssignmentForm: UntypedFormGroup;
 
   private readonly noRubricDefaultValue: boolean = false;
 
@@ -67,7 +67,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private studentDetails: any[] = [];
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private alertService: AlertService,
               private busyService: BusyService,
               private assignmentService: AssignmentService,
@@ -186,13 +186,13 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private populateStudentDetails(studentDetails: AssignmentDetails[]) {
     for (let i = 0; i < studentDetails.length; i++) {
-      const studentFormGroup: FormGroup = this.newFormGroupRowFromData(studentDetails[i]);
-      (this.fc.studentRow as FormArray).push(studentFormGroup);
+      const studentFormGroup: UntypedFormGroup = this.newFormGroupRowFromData(studentDetails[i]);
+      (this.fc.studentRow as UntypedFormArray).push(studentFormGroup);
       this.studentFiles.push(new File([''], studentDetails[i].assignment));
     }
   }
 
-  private disableFields(formGroup: FormGroup, fields: string[]) {
+  private disableFields(formGroup: UntypedFormGroup, fields: string[]) {
     fields.forEach(fieldName => {
       formGroup.get(fieldName).disable();
     });
@@ -210,7 +210,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     this.assignmentName.nativeElement.focus();
   }
 
-  private newFormGroupRow(): FormGroup {
+  private newFormGroupRow(): UntypedFormGroup {
     return this.fb.group({
       studentId: [null, [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
       studentName: [null, Validators.required],
@@ -222,7 +222,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     });
   }
 
-  private newFormGroupRowFromData(data: AssignmentDetails): FormGroup {
+  private newFormGroupRowFromData(data: AssignmentDetails): UntypedFormGroup {
     this.populateSavedState(data);
     return this.fb.group({
       studentId: [data.studentNumber, [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
@@ -249,7 +249,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   addNewRow() {
     if (this.studentRow.valid) {
-      (this.fc.studentRow as FormArray).push(this.newFormGroupRow());
+      (this.fc.studentRow as UntypedFormArray).push(this.newFormGroupRow());
     }
   }
 
@@ -258,11 +258,11 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   get studentRow() {
-    return this.fc.studentRow as FormArray;
+    return this.fc.studentRow as UntypedFormArray;
   }
 
-  studentFormGroupAtIndex(index: number): FormGroup {
-    return (this.studentRow.controls[index] as FormGroup);
+  studentFormGroupAtIndex(index: number): UntypedFormGroup {
+    return (this.studentRow.controls[index] as UntypedFormGroup);
   }
 
   onRubricChange() {

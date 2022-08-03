@@ -15,7 +15,7 @@ import {SettingInfo} from '@shared/info-objects/setting.info';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {ImportService} from '../../services/import.service';
-import {FormBuilder, FormGroup} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup} from '@angular/forms';
 import {RubricViewModalComponent} from '../rubric-view-modal/rubric-view-modal.component';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {SelectionModel} from '@angular/cdk/collections';
@@ -35,6 +35,7 @@ import {
 } from '@shared/info-objects/workspace';
 import * as _moment from 'moment';
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
+import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-markers-modal.component';
 
 const moment = _moment;
 
@@ -69,7 +70,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   displayedColumns: string[] = ['select', 'fullName', 'assignment', 'grade', 'date', 'status'];
   dataSource = new MatTableDataSource<AssignmentDetails>([]);
   assignmentsLength;
-  readonly pageSize: number = 10;
   private assignmentGrades: any[] = [];
   private assignmentHeader: string;
 
@@ -85,19 +85,19 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   assignmentState: 'notstarted' | 'inprogress' | 'finalized' = 'notstarted';
 
 
-  readonly regEx = /(.*)\((.+)\)/;
   private subscription: Subscription;
   private rubricSubscription: Subscription;
   private sortSubscription: Subscription;
   private settings: SettingInfo;
   assignmentSettings: AssignmentSettingsInfo;
+  private workspaceAssignment: WorkspaceAssignment;
   private previouslyEmitted: string;
   isSettings: boolean;
   isCreated: boolean;
   isRubric: boolean;
   selectedRubric: string = null;
   rubrics: IRubricName[] = [];
-  rubricForm: FormGroup;
+  rubricForm: UntypedFormGroup;
 
   private workspaceName: string;
   assignmentName: string;
@@ -111,7 +111,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
               private importService: ImportService,
               private busyService: BusyService,
               private rubricService: RubricService,
-              private fb: FormBuilder,
+              private fb: UntypedFormBuilder,
               private viewContainerRef: ViewContainerRef) {
   }
 
@@ -227,7 +227,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   private generateDataFromModel() {
     const values: AssignmentDetails[] = [];
     this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentName).subscribe((workspaceAssignment) => {
-
+      this.workspaceAssignment = workspaceAssignment;
       if (!isNil(workspaceAssignment)) {
         let index = 0;
         filter(workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmission) => {
@@ -508,5 +508,23 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     this.sort.sort(sort);
     this.dataSource.sort = this.sort;
     this.dataSource.paginator = this.paginator;
+  }
+
+  allocateMarkers(): void {
+    const config = new MatDialogConfig();
+    config.width = '600px';
+    config.maxWidth = '800px';
+    config.disableClose = true;
+    config.data = {
+      assignmentName: this.assignmentName,
+      workspaceName: this.workspaceName,
+      assignmentSettings: this.assignmentSettings,
+      workspaceAssignment: this.workspaceAssignment
+    };
+
+    const dialogRef = this.appService.createDialog(AllocateMarkersModalComponent, config);
+    dialogRef.afterClosed().subscribe(() => {
+
+    });
   }
 }

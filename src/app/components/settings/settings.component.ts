@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {SettingsService} from '../../services/settings.service';
 import {AppService} from '../../services/app.service';
 import {AlertService} from '../../services/alert.service';
@@ -17,7 +17,7 @@ import {cloneDeep, isEqual} from 'lodash';
 })
 export class SettingsComponent implements OnInit {
 
-  settingsForm: FormGroup;
+  settingsForm: UntypedFormGroup;
   settingsLMSSelected = 'Sakai';
   lmsChoices: string[] = ['Sakai'];
   private originalSettings: SettingInfo;
@@ -26,7 +26,7 @@ export class SettingsComponent implements OnInit {
     return path.replace(/\\+$/, ''); // Removes one or more trailing slashes
   }
 
-  constructor(private fb: FormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private settingsService: SettingsService,
               private appService: AppService,
               private alertService: AlertService,

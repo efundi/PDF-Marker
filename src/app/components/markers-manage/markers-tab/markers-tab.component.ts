@@ -5,7 +5,7 @@ import {
   YesAndNoConfirmationDialogComponent
 } from '../../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {MarkersManageComponent} from '../markers-manage.component';
-import {FormArray, FormBuilder, FormControl, FormGroup, NgForm, ValidatorFn, Validators} from '@angular/forms';
+import {UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NgForm, ValidatorFn, Validators} from '@angular/forms';
 import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatPaginator} from '@angular/material/paginator';
@@ -36,12 +36,12 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * Reference to the create marker form group
    */
-  markerFormGroup: FormGroup;
+  markerFormGroup: UntypedFormGroup;
 
   /**
    * Reference to the list of markers form aray
    */
-  markersFormArray: FormArray;
+  markersFormArray: UntypedFormArray;
 
   /**
    * Columns to display in the table
@@ -76,7 +76,7 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
   private originalSettings: SettingInfo;
 
 
-  constructor(private formBuilder: FormBuilder,
+  constructor(private formBuilder: UntypedFormBuilder,
               private markersManageComponent: MarkersManageComponent,
               private appService: AppService) {
     this.initForm();
@@ -116,8 +116,8 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
    * @param index
    * @param name
    */
-  getFormControl(index: number, name: string): FormControl {
-    return this.markersFormArray.at(index).get(name) as FormControl;
+  getFormControl(index: number, name: string): UntypedFormControl {
+    return this.markersFormArray.at(index).get(name) as UntypedFormControl;
   }
 
   /**
@@ -126,7 +126,7 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
    * @private
    */
   private formValidateUniqueEmail (existingId?: string): ValidatorFn {
-    return (ac: FormControl) => {
+    return (ac: UntypedFormControl) => {
       if (this.validateUniqueEmail(ac.value, existingId)) {
         return null;
       } else {

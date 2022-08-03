@@ -1,8 +1,8 @@
 import {mkdir, readFile, writeFile} from 'fs/promises';
-import {COMMENTS_FILE, CONFIG_DIR, CONFIG_FILE} from '../constants';
+import {CONFIG_DIR, CONFIG_FILE} from '../constants';
 import {isJson} from '../utils';
 import {existsSync} from 'fs';
-import {SettingInfo} from '@shared/info-objects/setting.info';
+import {SettingInfo, SettingInfoVersion} from '@shared/info-objects/setting.info';
 import {IpcMainInvokeEvent} from 'electron';
 
 export function ensureConfigDirectory(): Promise<string> {
@@ -33,7 +33,43 @@ export function getConfig(): Promise<SettingInfo> {
 
       return JSON.parse(data.toString());
     });
-  });
+  }).then(settings => upgradeSettings(settings));
+}
+
+/**
+ * Upgrade settings if required
+ * @param settings
+ */
+function upgradeSettings(settings: SettingInfo): Promise<SettingInfo> {
+  let promise: Promise<SettingInfo> = Promise.resolve(settings);
+  if (settings.version !== SettingInfoVersion) {
+
+    if (!settings.hasOwnProperty('version')) {
+      // This is the first upgrade, set all the new fields
+      settings.version = 1;
+      settings.email = settings.email || null;
+      settings.name = settings.name || null;
+      settings.markers = settings.markers || [];
+      settings.groups = settings.groups || [];
+      settings.groupMembers = settings.groupMembers || [];
+      promise = updateConfigFile(settings);
+    }
+
+    /*
+       if (settings.version === 1) {
+         // Convert to from v 1 to version 2
+         settings = settingsV2;
+         promise = promise.then(() => updateConfigFile(settings));
+       }
+
+       if (settings.version === 2) {
+         // Convert to from v 2 to version 3
+         settings = sSettingsV3;
+         promise = promise.then(() => updateConfigFile(settings));
+       }
+     */
+  }
+  return promise;
 }
 
 export function updateConfig(event: IpcMainInvokeEvent, config: SettingInfo): Promise<SettingInfo> {

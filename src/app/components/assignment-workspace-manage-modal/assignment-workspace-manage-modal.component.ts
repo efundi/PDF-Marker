@@ -1,6 +1,6 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {WorkspaceService} from '../../services/workspace.service';
 import {AppService} from '../../services/app.service';
 import {AssignmentService} from '../../services/assignment.service';
@@ -25,7 +25,7 @@ export interface WorkspaceDialogResult {
 })
 export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
-  manageForm: FormGroup;
+  manageForm: UntypedFormGroup;
 
   /**
    * Flag if we can rename this folder
@@ -43,7 +43,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
   selectedOptions: string[] = [];
   movedAssignments: string[] = [];
 
-  constructor(private formBuilder: FormBuilder,
+  constructor(private formBuilder: UntypedFormBuilder,
               public dialogRef: MatDialogRef<AssignmentWorkspaceManageModalComponent>,
               private appService: AppService,
               private assignmentService: AssignmentService,
