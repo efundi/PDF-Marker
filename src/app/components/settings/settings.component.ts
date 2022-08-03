@@ -8,7 +8,7 @@ import {AssignmentService} from '../../services/assignment.service';
 import {BusyService} from '../../services/busy.service';
 import {mergeMap} from 'rxjs';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {cloneDeep} from 'lodash';
+import {cloneDeep, isEqual} from 'lodash';
 
 @Component({
   selector: 'pdf-marker-settings',
@@ -108,5 +108,11 @@ export class SettingsComponent implements OnInit {
           this.busyService.stop();
         }
       });
+  }
+
+  hasUnsavedChanges(): boolean {
+    console.log(this.originalSettings);
+    console.log(this.populateSettings());
+    return !isEqual(this.originalSettings, this.populateSettings());
   }
 }
