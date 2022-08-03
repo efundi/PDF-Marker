@@ -67,7 +67,7 @@
     "json-2-csv": "^3.5.7",
     "jszip": "^3.2.2",
     "lodash": "^4.17.21",
-    "moment": "^2.29.1",
+    "moment": "^2.29.4",
     "ngx-color-picker": "^11.0.0",
     "ngx-filesaver": "^8.1.0",
     "pdf-lib": "^1.4.0",
