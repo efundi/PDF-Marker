@@ -1,14 +1,14 @@
 <form [formGroup]="markerFormGroup" #markerForm="ngForm" style="margin-top: 16px">
   <div class="pdf-spacer"></div>
-  <mat-form-field floatLabel="always">
-    <mat-label>Name</mat-label>
-    <input id="name" matInput formControlName="name" type="text">
+  <mat-form-field>
+    <mat-label>Marker Name</mat-label>
+    <input id="name" matInput formControlName="name" type="text" required placeholder="Name">
     <mat-error *ngIf="markerFormGroup.controls.name.errors?.required">Name required</mat-error>
   </mat-form-field>
 
-  <mat-form-field style="margin-left: 16px" floatLabel="always">
-    <mat-label>Email</mat-label>
-    <input id="email" matInput formControlName="email" type="email">
+  <mat-form-field style="margin-left: 16px">
+    <mat-label>Marker Email</mat-label>
+    <input id="email" matInput formControlName="email" type="email" required placeholder="Email">
     <mat-error *ngIf="markerFormGroup.controls.email.errors?.required ">Email required</mat-error>
     <mat-error *ngIf="markerFormGroup.controls.email.errors?.email ">Invalid email</mat-error>
     <mat-error *ngIf="markerFormGroup.controls.email.errors?.unique ">Email already used</mat-error>

@@ -165,8 +165,8 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
    * @private
    */
   private validateUniqueEmail(email: string, existingId?: string): boolean {
-    if (isNil(email)) {
-      return null;
+    if (isNil(email) || email.trim() === '') {
+      return true;
     }
 
     const existing = find(this.originalSettings.markers, (marker) => {
