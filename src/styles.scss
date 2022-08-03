@@ -1,7 +1,7 @@
 @use '@angular/material' as mat;
 
 @import '@material-design-icons/font';
-
+@import 'scss/mixins';
 @include mat.core();
 $dark-primary-text: rgba(black, 0.87);
 $light-primary-text: white;
@@ -173,12 +173,10 @@ pdf-marker-finalise-marking {
     }
   }
 
-  .pdf-marker-finalise-marking-modal-content::-webkit-scrollbar-thumb {
-    background: var(--pdf-marker-primary);
-    border-radius: 10px;
-  }
-  .pdf-marker-finalise-marking-modal-content::-webkit-scrollbar {
-    width: 5px;
+
+
+  .pdf-marker-finalise-marking-modal-content {
+    @include scrollbar();
   }
 }
 
@@ -188,25 +186,9 @@ pdf-marker-finalise-marking {
 
 body {
 
-  .mat-drawer-content::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-    background: #F5F5F5;
-  }
-
-  .mat-dialog-container::-webkit-scrollbar-thumb {
-    border-radius: 10px;
-    background: var(--pdf-marker-primary);
-  }
-
-  .mat-dialog-container::-webkit-scrollbar {
-    width: 8px;
-    background: #F5F5F5;
-  }
-
-  .mat-drawer-content::-webkit-scrollbar-thumb {
-    border-radius: 10px;
-    background: var(--pdf-marker-primary);
+  .mat-drawer-content,
+  .mat-dialog-container{
+    @include scrollbar();
   }
 }
 
@@ -246,17 +228,6 @@ $left-fixed-menu-width: 4rem;
     min-width: 380px;
   }
 
-  .mat-drawer-inner-container::-webkit-scrollbar {
-    width: 4px;
-    height: 6px;
-    background: #F5F5F5;
-  }
-
-  .mat-drawer-inner-container::-webkit-scrollbar-thumb {
-    border-radius: 10px;
-    background: var(--pdf-marker-primary);
-  }
-
   .pdf-marker-content-container {
     padding-left: 23px;
     padding-right: 23px;
@@ -266,31 +237,14 @@ $left-fixed-menu-width: 4rem;
 
 .table-responsive {
   overflow-x:auto;
-  -webkit-overflow-scrolling:touch
-}
-.table-responsive::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  background: #F5F5F5;
-}
-
-.table-responsive::-webkit-scrollbar-thumb {
-  border-radius: 10px;
-  background: var(--pdf-marker-secondary);
+  -webkit-overflow-scrolling:touch;
+  @include scrollbar(--pdf-marker-secondary);
 }
 
 
-.mat-menu-panel::-webkit-scrollbar,
-.mat-dialog-content::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  background: #F5F5F5;
-}
-
-.mat-menu-panel::-webkit-scrollbar-thumb,
-.mat-dialog-content::-webkit-scrollbar-thumb {
-  border-radius: 10px;
-  background: var(--pdf-marker-primary);
+.mat-menu-panel,
+.mat-dialog-content {
+  @include scrollbar();
 }
 
 .mat-expansion-panel-header {

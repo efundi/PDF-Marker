@@ -1,12 +1,19 @@
+@import '/src/scss/mixins';
 
 .pdfm-markers-panel,
 .pdfm-groups-panel {
-  //flex: 1 1 auto !important;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
   max-width: 50%;
+
 }
+
+.pdfm-groups-panel .groups-list-container{
+  max-height: calc(100vh - 261px);
+  @include scrollbar();
+}
+
 .pdfm-markers-panel {
   display: flex;
   flex-direction: column;
@@ -15,6 +22,9 @@
     flex-grow: 1;
     background: white;
     margin-right: 32px;
+
+    max-height: calc(100vh - 261px);
+    @include scrollbar();
   }
 }
 
