@@ -33,11 +33,9 @@ import {
   WorkspaceAssignment,
   WorkspaceFile
 } from '@shared/info-objects/workspace';
-import * as _moment from 'moment';
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
 import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-markers-modal.component';
-
-const moment = _moment;
+import { DateTime } from "luxon";
 
 export interface AssignmentDetails {
   index?: number;
@@ -229,7 +227,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           const marksFile = find(workspaceSubmission.children, (c => c.name === MARK_FILE));
           if (marksFile) {
             this.assignmentState = 'inprogress';
-            value.date = moment(marksFile.dateModified).format('YYYY-MM-DD HH:mm:ss');
+            value.date = DateTime.fromJSDate(marksFile.dateModified).toFormat('yyyy-MM-dd HH:mm:ss');
           }
           if (submissionDirectory && submissionDirectory.children.length > 0) {
             value.pdfFile = submissionDirectory.children[0] as WorkspaceFile;
