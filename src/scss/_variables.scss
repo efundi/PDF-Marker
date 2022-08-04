@@ -1,0 +1,94 @@
+@use '@angular/material' as mat;
+
+$dark-primary-text: rgba(black, 0.87);
+$light-primary-text: white;
+
+
+/*Variables*/
+$pdf-marker-primary: #6f327a;
+$pdf-marker-secondary: #555;
+
+$top-nav-height: 65px;
+$left-fixed-menu-width: 4rem;
+
+@import "bootstrap/scss/functions";
+
+$primary: $pdf-marker-primary;
+$secondary: $pdf-marker-secondary;
+
+@import "bootstrap/scss/variables";
+
+// Include any default map overrides here
+
+
+$pdfm-primary-pallete: (
+  50: #f0e6f0,
+  100: #dbbfdb,
+  200: #c596c4,
+  300: #ad6fac,
+  400: #9b549a,
+  500: #8a3e8a,
+  600: #7f3983,
+  700: #6f327a,
+  800: #612d70,
+  900: #47245c,
+  A100: #f0e6f0,
+  A200: #c596c4,
+  A400: #9b549a,
+  A700: #6f327a,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $dark-primary-text,
+    400: $dark-primary-text,
+    500: $light-primary-text,
+    600: $light-primary-text,
+    700: $light-primary-text,
+    800: $light-primary-text,
+    900: $light-primary-text,
+    A100: $dark-primary-text,
+    A200: $dark-primary-text,
+    A400: $dark-primary-text,
+    A700: $light-primary-text,
+  )
+);
+
+$pdfm-accent-pallete: (
+  50: #f8f8f8,
+  100: #f0f0f0,
+  200: #e6e6e6,
+  300: #d5d5d5,
+  400: #b0b0b0,
+  500: #909090,
+  600: #686868,
+  700: #555555,
+  800: #373737,
+  900: #171717,
+  A100: #f0f0f0,
+  A200: #e6e6e6,
+  A400: #b0b0b0,
+  A700: #555555,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $dark-primary-text,
+    400: $dark-primary-text,
+    500: $dark-primary-text,
+    600: $light-primary-text,
+    700: $light-primary-text,
+    800: $light-primary-text,
+    900: $light-primary-text,
+    A100: $dark-primary-text,
+    A200: $dark-primary-text,
+    A400: $dark-primary-text,
+    A700: $light-primary-text,
+  )
+);
+
+
+
+$my-app-primary: mat.define-palette($pdfm-primary-pallete, 700, 100, 800);
+$my-app-accent: mat.define-palette($pdfm-accent-pallete, 700, 100, 800);
+$my-app-warn: mat.define-palette(mat.$red-palette);

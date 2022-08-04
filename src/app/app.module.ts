@@ -38,7 +38,6 @@ import {
   AssignmentWorkspaceOverviewComponent
 } from './components/assignment-workspace-overview/assignment-workspace-overview.component';
 import {CreateAssignmentComponent} from './components/create-assignment/create-assignment.component';
-import {FinaliseMarkingComponent} from './components/finalise-marking/finalise-marking.component';
 import {GenericCommentsComponent} from './components/comments/comments.component';
 import {RubricImportComponent} from './components/rubric-import/rubric-import.component';
 import {WorkingFolderComponent} from './components/working-folder/working-folder.component';
@@ -93,7 +92,6 @@ import {MatTabsModule} from '@angular/material/tabs';
 import { MarkersTabComponent } from './components/markers-manage/markers-tab/markers-tab.component';
 import { GroupsTabComponent } from './components/markers-manage/groups-tab/groups-tab.component';
 import { PopoverDirective } from './directives/popover.directive';
-import {UpdateService} from './services/update.service';
 import { UpdateModalComponent } from './components/update-modal/update-modal.component';
 import { AllocateMarkersModalComponent } from './components/assignment-overview/allocate-markers-modal/allocate-markers-modal.component';
 
@@ -121,7 +119,6 @@ import { AllocateMarkersModalComponent } from './components/assignment-overview/
     AssignmentWorkspaceManageModalComponent,
     AssignmentWorkspaceOverviewComponent,
     CreateAssignmentComponent,
-    FinaliseMarkingComponent,
     GenericCommentsComponent,
     HomeComponent,
     ImportComponent,

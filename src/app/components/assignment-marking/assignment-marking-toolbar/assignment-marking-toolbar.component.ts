@@ -18,11 +18,6 @@ import {
 import {Subscription} from 'rxjs';
 import {HIGHLIGHTER_OPTIONS, HighlighterColor} from '../../../info-objects/highlighter-color';
 
-export enum KEY_CODE {
-  RIGHT_ARROW = 39,
-  LEFT_ARROW = 37
-}
-
 @Component({
   selector: 'pdf-marker-assignment-marking-toolbar',
   templateUrl: './assignment-marking-toolbar.component.html',
@@ -103,14 +98,6 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
 
   constructor(private fb: UntypedFormBuilder,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) {}
-  /** constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private fb: FormBuilder) {
-    this.matIconRegistry
-      .addSvgIcon("halfTick", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/halftick.svg"))
-      .addSvgIcon("layout-expand-left", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-left.svg"))
-      .addSvgIcon("layout-expand-right", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-expand-right.svg"))
-      .addSvgIcon("layout-default", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/layout-default.svg"));
-  }
-   */
 
   ngOnDestroy() {
     this.highlightSubscription.unsubscribe();
@@ -138,10 +125,6 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
     this.highlightSubscription = this.assignmentMarkingSessionService.highlighterColourChanged.subscribe((value) => {
       this.selectedHighlightColour = value.preview;
     });
-  }
-
-  onZoomSelected($event: MouseEvent) {
-    $event.stopImmediatePropagation();
   }
 
   onIconClick(selectedIcon: IconInfo, event?: MouseEvent) {

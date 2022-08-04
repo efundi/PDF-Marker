@@ -15,7 +15,6 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
-import {FinaliseMarkingComponent} from '../finalise-marking/finalise-marking.component';
 import {getDocument, GlobalWorkerOptions, PDFDocumentProxy} from 'pdfjs-dist';
 import {cloneDeep, isNil, times} from 'lodash';
 import {MarkInfo} from '@shared/info-objects/mark.info';
@@ -61,7 +60,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
   pdfDocument: PDFDocumentProxy;
 
-  pdfPath: string;
   isPdfLoaded: boolean;
   currentPage = 1;
   assignmentSettings: AssignmentSettingsInfo;
@@ -235,8 +233,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         break;
       case 'clearAll' :   this.clearMarks();
         break;
-      case 'finalise' :   this.finalise();
-        break;
       case 'prevPage' :   this.onPagedChanged(this.currentPage - 1);
         break;
       case 'nextPage' :   this.onPagedChanged(this.currentPage + 1);
@@ -379,21 +375,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
   }
 
-
-  private finalise() {
-    const config: MatDialogConfig = new MatDialogConfig();
-    config.width = '400px';
-    config.height = '500px';
-    config.disableClose = true;
-
-    config.data = {
-      assignmentPath: this.pdf,
-      submissionInfo: this.submissionInfo,
-      defaultTick: this.defaultFullMark,
-      incorrectTick: this.defaultIncorrectMark
-    };
-    this.appService.createDialog(FinaliseMarkingComponent, config);
-  }
 
   openNewMarkingCommentModal(): MatDialogConfig {
     const config = new MatDialogConfig();
