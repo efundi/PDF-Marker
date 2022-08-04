@@ -1,4 +1,4 @@
-
+@import '/src/scss/mixins';
 .cursor-copy {
   cursor: copy;
 }
@@ -23,15 +23,6 @@
     opacity: 0;
     z-index: 2;
   }
-}
-
-.boundary::-webkit-scrollbar {
-  width: 7px;
-  background: transparent;
-}
-
-.boundary::-webkit-scrollbar-thumb {
-  background: #888;
 }
 
 .pdf-marker-assignment-marking-visible-pdf {

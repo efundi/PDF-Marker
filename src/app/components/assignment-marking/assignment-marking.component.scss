@@ -1,3 +1,5 @@
+@import '/src/scss/mixins';
+
 .pdf-marker-assignment-marking-controls {
   height: 65px;
   position: sticky;
@@ -31,15 +33,12 @@
     margin-right: -23px;
   }
 
-  .rubric-wrapper::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-    background: #F5F5F5;
+  .pages-wrapper{
+    @include scrollbar();
   }
 
-  .rubric-wrapper::-webkit-scrollbar-thumb {
-    border-radius: 10px;
-    background: #555;
+  .rubric-wrapper {
+    @include scrollbar(--pdf-marker-secondary);
   }
 
   .pages-wrapper {
@@ -51,17 +50,6 @@
     /* view height - navbars + borders */
     height: calc(100vh - 132px);
     margin-right: -23px;
-  }
-
-  .pages-wrapper::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-    background: #F5F5F5;
-  }
-
-  .pages-wrapper::-webkit-scrollbar-thumb {
-    border-radius: 10px;
-    background: var(--pdf-marker-primary);
   }
 }
 

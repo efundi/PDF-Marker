@@ -1,3 +1,5 @@
+@import '/src/scss/mixins';
+
 mat-toolbar {
   background: transparent;
   color: #FFF;
@@ -8,17 +10,7 @@ mat-toolbar {
   height: calc(100vh - 130px);
   //max-width: 375px;
   overflow: auto;
-
-  &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-    background: #F5F5F5;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 10px;
-    background: var(--pdf-marker-primary);
-  }
+  @include scrollbar();
 }
 
 @keyframes spin-animation {

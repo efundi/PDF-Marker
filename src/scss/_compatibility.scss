@@ -1,0 +1,25 @@
+@import './_variables';
+
+/**
+ Override material zero padding with bootstrap padding
+ */
+th.mat-header-cell,
+td.mat-cell,
+td.mat-footer-cell{
+  padding: $table-cell-padding-y $table-cell-padding-x !important;
+}
+
+/**
+ Override bootstrap bottom table headers back to materials middle
+ */
+.table > thead,
+.table > tbody{
+  vertical-align: middle;
+}
+
+/**
+ Reset material
+ */
+.mat-icon svg{
+  vertical-align: baseline;
+}

@@ -5,7 +5,12 @@ import {
   YesAndNoConfirmationDialogComponent
 } from '../../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {MarkersManageComponent} from '../markers-manage.component';
-import {UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NgForm, ValidatorFn, Validators} from '@angular/forms';
+import {
+  NgForm,
+  ValidatorFn,
+  Validators,
+  FormGroup, FormControl, FormBuilder, FormArray
+} from '@angular/forms';
 import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatPaginator} from '@angular/material/paginator';
@@ -36,12 +41,19 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * Reference to the create marker form group
    */
-  markerFormGroup: UntypedFormGroup;
+  markerFormGroup: FormGroup<{
+    name: FormControl<string>,
+    email: FormControl<string>,
+  }>;
 
   /**
    * Reference to the list of markers form aray
    */
-  markersFormArray: UntypedFormArray;
+  markersFormArray: FormArray<FormGroup<{
+    id: FormControl<string>,
+    name: FormControl<string>,
+    email: FormControl<string>
+  }>>;
 
   /**
    * Columns to display in the table
@@ -76,7 +88,7 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
   private originalSettings: SettingInfo;
 
 
-  constructor(private formBuilder: UntypedFormBuilder,
+  constructor(private formBuilder: FormBuilder,
               private markersManageComponent: MarkersManageComponent,
               private appService: AppService) {
     this.initForm();
@@ -92,11 +104,16 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   private initForm() {
     this.markerFormGroup = this.formBuilder.group({
-      name: [null, Validators.required],
-      email: [null, Validators.compose([Validators.required, Validators.email, this.formValidateUniqueEmail()])]
+      name: [null as string, Validators.required],
+      email: [null as string, Validators.compose([
+          Validators.required,
+          Validators.email,
+          this.formValidateUniqueEmail(),
+          this.formValidateSelfAsMarker()
+        ])]
     });
 
-    this.markersFormArray = this.formBuilder.array([]);
+    this.markersFormArray = new FormArray([]);
   }
 
   ngOnInit(): void {
@@ -116,8 +133,18 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
    * @param index
    * @param name
    */
-  getFormControl(index: number, name: string): UntypedFormControl {
-    return this.markersFormArray.at(index).get(name) as UntypedFormControl;
+  getFormControl(index: number, name: string): FormControl<any> {
+    return this.markersFormArray.at(index).get(name) as FormControl<any>;
+  }
+
+  private formValidateSelfAsMarker(): ValidatorFn {
+    return (ac: FormControl<string>) => {
+      if (this.validateSelfAsMarker(ac.value)) {
+        return null;
+      } else {
+        return {selfMarker: 'User may not be added as a marker'};
+      }
+    };
   }
 
   /**
@@ -125,8 +152,8 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
    * @param existingId
    * @private
    */
-  private formValidateUniqueEmail (existingId?: string): ValidatorFn {
-    return (ac: UntypedFormControl) => {
+  private formValidateUniqueEmail(existingId?: string): ValidatorFn {
+    return (ac: FormControl<string>) => {
       if (this.validateUniqueEmail(ac.value, existingId)) {
         return null;
       } else {
@@ -148,7 +175,7 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const existing = find(this.originalSettings.markers, (marker) => {
-      const nameMatch =  marker.name.toLocaleLowerCase() === name.toLocaleLowerCase();
+      const nameMatch =  marker.name.toLowerCase() === name.toLowerCase();
       const isSame = !isNil(existingId) && existingId === marker.id;
 
       return nameMatch && !isSame;
@@ -165,12 +192,12 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
    * @private
    */
   private validateUniqueEmail(email: string, existingId?: string): boolean {
-    if (isNil(email)) {
-      return null;
+    if (isNil(email) || email.trim() === '') {
+      return true;
     }
 
     const existing = find(this.originalSettings.markers, (marker) => {
-      const nameMatch =  marker.email.toLocaleLowerCase() === email.toLocaleLowerCase();
+      const nameMatch =  marker.email.toLowerCase() === email.toLowerCase();
       const isSame = !isNil(existingId) && existingId === marker.id;
 
       return nameMatch && !isSame;
@@ -178,11 +205,26 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
     return isNil(existing);
   }
 
+  /**
+   * The user of the application may not self be added as a marker
+   * @param email
+   * @private
+   */
+  private validateSelfAsMarker(email: string): boolean {
+    if (isNil(email) || email.trim() === '') {
+      return true;
+    }
+
+    const userEmail = this.originalSettings.user.email;
+    if (isNil(userEmail) || userEmail === '') {
+      // If the user has no email set up, there is nothing to validate agains
+      return true;
+    }
+    return userEmail.toLowerCase() !== email.toLowerCase();
+  }
+
 
   private updateTable(): void {
-
-
-
     this.dataSource.data = this.originalSettings.markers.map((marker, index) => {
       const groups: string[] = filter(this.originalSettings.groupMembers, {markerId: marker.id}).map((gm) => {
         const group = find(this.originalSettings.groups, {id: gm.groupId});
@@ -203,7 +245,12 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
       this.markersFormArray.push(this.formBuilder.group({
         id: [marker.id],
         name: [marker.name, Validators.required],
-        email: [marker.email, Validators.compose([Validators.required, Validators.email, this.formValidateUniqueEmail(marker.id)])]
+        email: [marker.email, Validators.compose([
+          Validators.required,
+          Validators.email,
+          this.formValidateUniqueEmail(marker.id),
+          this.formValidateSelfAsMarker()
+        ])]
       }), {emitEvent: false});
     });
     this.markersFormArray.updateValueAndValidity();
