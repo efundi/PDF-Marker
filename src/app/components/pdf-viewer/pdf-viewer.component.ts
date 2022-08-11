@@ -1,14 +1,15 @@
 import {Component, ElementRef, OnDestroy, OnInit, QueryList, Renderer2, ViewChild, ViewChildren} from '@angular/core';
 import {getDocument, PDFDocumentProxy} from 'pdfjs-dist';
 import {PdfViewerPageComponent} from './pdf-viewer-page/pdf-viewer-page.component';
-import {from, mergeMap, Observable, Subscription} from 'rxjs';
+import {filter, from, mergeMap, Observable, Subscription} from 'rxjs';
 import {AssignmentService} from '../../services/assignment.service';
 import {BusyService} from '../../services/busy.service';
 import {MatDialog} from '@angular/material/dialog';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
 import {ZoomChangeEvent} from '../assignment-marking/assignment-marking-session.service';
 import {isNil} from 'lodash';
 import {ToolbarSettingChange} from './pdf-viewer-toolbar/pdf-viewer-toolbar.component';
+import {RoutesEnum} from '../../utils/routes.enum';
 
 @Component({
   selector: 'pdf-marker-pdf-viewer',
@@ -35,11 +36,13 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
   private pdf: string;
 
   private paramsSubscription: Subscription;
+  private routeSubscription: Subscription;
   currentPage = 1;
   zoom = 1.0;
 
 
   constructor(private renderer: Renderer2,
+              private router: Router,
               private assignmentService: AssignmentService,
               private busyService: BusyService,
               private el: ElementRef,
@@ -56,10 +59,20 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.assignmentService.selectSubmission(null);
+    this.pdfDocument.cleanup();
+    this.routeSubscription.unsubscribe();
   }
 
   ngOnInit(): void {
+
+    this.routeSubscription = this.router.events.pipe(
+      filter(e => e instanceof NavigationStart)
+    ).subscribe((event: NavigationStart) => {
+      if (!(event.url.startsWith(RoutesEnum.ASSIGNMENT_MARKER) || event.url.startsWith(RoutesEnum.PDF_VIEWER))) {
+        this.assignmentService.selectSubmission(null);
+      }
+    });
+
     this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
       this.workspaceName = params['workspaceName'];
       this.assignmentName = params['assignmentName'];
@@ -92,10 +105,16 @@ export class PdfViewerComponent implements OnInit, OnDestroy {
 
 
   private loadPdf(data: Uint8Array): Observable<PDFDocumentProxy> {
-    const promise = getDocument(data).promise.then((pdf) => {
-      this.pdfDocument = pdf;
-      return pdf;
-    });
+    let promise: Promise<any> = Promise.resolve();
+    if (this.pdfDocument) {
+      promise = this.pdfDocument.cleanup(true);
+    }
+
+    promise = promise.then(() => getDocument(data).promise)
+      .then((pdf) => {
+        this.pdfDocument = pdf;
+        return pdf;
+      });
 
     return from(promise);
   }

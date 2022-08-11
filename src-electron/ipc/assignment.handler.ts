@@ -1,51 +1,35 @@
-import {
-  accessSync,
-  constants,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  statSync,
-  unlinkSync,
-  writeFileSync
-} from 'fs';
+import {accessSync, constants, existsSync, mkdtempSync, rmSync, statSync, unlinkSync, writeFileSync} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
-import {checkAccess, deleteFolderRecursive, isFolder, isJson, isNullOrUndefined, writeToFile} from '../utils';
+import {checkAccess, isFolder, isJson, writeToFile} from '../utils';
 import {
-  CONFIG_DIR,
-  COULD_NOT_READ_RUBRIC_LIST,
-  INVALID_RUBRIC_JSON_FILE,
   INVALID_STUDENT_FOLDER,
   NOT_PROVIDED_RUBRIC,
-  RUBRICS_FILE,
-  STUDENT_DIRECTORY_ID_REGEX,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
   STUDENT_DIRECTORY_REGEX,
 } from '../constants';
 import * as path from 'path';
 import {basename, dirname, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
-import {readFile, stat, writeFile} from 'fs/promises';
-import {find, isNil, map, sortBy} from 'lodash';
+import {mkdir, readFile, rmdir, stat, writeFile} from 'fs/promises';
+import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, remove, sortBy} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {PDFDocument} from 'pdf-lib';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-assignment.info';
-import {annotatePdfFile} from '../pdf/marking-annotations';
 import {
-  AssignmentFormat,
   AssignmentSettingsInfo,
-  AssignmentSettingsVersion
+  DEFAULT_ASSIGNMENT_SETTINGS,
+  Submission,
+  SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {annotatePdfRubric} from '../pdf/rubric-annotations';
 import {ShareAssignments} from '@shared/info-objects/share-assignments';
 import * as os from 'os';
-import {copySync, readdir} from 'fs-extra';
-import {getAssignmentDirectory} from './workspace.handler';
+import {copy, readdir} from 'fs-extra';
+import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {
   FeedbackAttachments,
   StudentSubmission,
@@ -57,6 +41,7 @@ import {
   WorkspaceFile
 } from '@shared/info-objects/workspace';
 import {
+  ASSIGNMENT_BACKUP_DIR,
   DEFAULT_WORKSPACE,
   FEEDBACK_FOLDER,
   GRADES_FILE,
@@ -69,11 +54,12 @@ import {
   MarkingSubmissionInfo,
   RubricSubmissionInfo,
   SubmissionInfo,
-  SubmissionInfoVersion,
   SubmissionType
 } from '@shared/info-objects/submission.info';
 import {getComments, updateCommentsFile} from './comment.handler';
 import {findRubric} from './rubric.handler';
+import {GradesCSV, StudentGrade} from '@shared/info-objects/grades';
+import {annotatePdfFile} from '../pdf/marking-annotations';
 
 const zipDir = require('zip-dir');
 
@@ -85,7 +71,7 @@ export function getAssignments(): Promise<Workspace[]> {
   return loadWorkspaces();
 }
 
-function loadFiles(directory: string, parent: TreeNode): Promise<WorkspaceFile[]> {
+function  loadFiles(directory: string, parent: TreeNode): Promise<WorkspaceFile[]> {
   return readdir(directory).then(files => {
     const workspaceFiles: WorkspaceFile[] = [];
     const promises: Promise<any>[] = map(files, (file) => {
@@ -130,6 +116,11 @@ function loadAssignmentContents(directoryFullPath: string, parent: Workspace): P
           let studentId: string;
           let studentName: string;
           let studentSurname: string;
+
+          if (file === ASSIGNMENT_BACKUP_DIR) {
+            // Skip the backup dir
+            return Promise.resolve(null);
+          }
 
           let matches = STUDENT_DIRECTORY_REGEX.exec(file);
           if (matches !== null) {
@@ -255,165 +246,78 @@ function loadWorkspaces(): Promise<Workspace[]> {
 }
 
 
-export function saveMarks(event: IpcMainInvokeEvent, location: string, submissionInfo: SubmissionInfo): Promise<string> {
+export function saveMarks(event: IpcMainInvokeEvent, location: string, submissionInfo: SubmissionInfo): Promise<any> {
 
-  if (submissionInfo.type === SubmissionType.MARK) {
 
-    const marksPerPage = submissionInfo.marks as MarkInfo[][];
+  let totalMark = 0;
+  return workspaceRelativePathToAbsolute(location)
+    .then((submissionPath) => {
+      const assignmentPath = dirname(submissionPath);
+      const submissionDirectoryName = basename(submissionPath);
+      return Promise.all([
+        getAssignmentSettingsAt(assignmentPath),
+        saveSubmissionInfo(submissionPath, submissionInfo)
+      ]).then(([assignmentSettings]) => {
+        let savePromise: Promise<any> = Promise.resolve();
+        if (submissionInfo.type === SubmissionType.MARK) {
 
-    return getComments().then((comments) => {
-      let updateComments = false;
-      let totalMark = 0;
-      marksPerPage.forEach((pageMarks) => {
-        if (Array.isArray(pageMarks)) {
-          for (let i = 0; i < pageMarks.length; i++) {
-            totalMark += (pageMarks[i] && pageMarks[i].totalMark) ? pageMarks[i].totalMark : 0;
+          const marksPerPage = submissionInfo.marks as MarkInfo[][];
 
-            comments.forEach(comment => {
-              // Try and mark a comment as in use
-              if (pageMarks[i].comment && pageMarks[i].comment.includes(comment.title) && !comment.inUse) {
-                updateComments = true;
-                comment.inUse = true;
+          savePromise = getComments().then((comments) => {
+            let updateComments = false;
+            marksPerPage.forEach((pageMarks) => {
+              if (Array.isArray(pageMarks)) {
+                for (let i = 0; i < pageMarks.length; i++) {
+                  totalMark += (pageMarks[i] && pageMarks[i].totalMark) ? pageMarks[i].totalMark : 0;
+
+                  comments.forEach(comment => {
+                    // Try and mark a comment as in use
+                    if (pageMarks[i].comment && pageMarks[i].comment.includes(comment.title) && !comment.inUse) {
+                      updateComments = true;
+                      comment.inUse = true;
+                    }
+                  });
+                }
               }
             });
-          }
-        }
-      });
 
-      let promise: Promise<any> = Promise.resolve();
-      if (updateComments) {
-        promise = promise.then(() => updateCommentsFile(comments));
-      }
-
-      return promise.then(() => saveToMarks(location, submissionInfo, totalMark));
-    });
-  } else if (submissionInfo.type === SubmissionType.RUBRIC) {
-    const assignmentDirectory = dirname(location);
-    return workspaceRelativePathToAbsolute(assignmentDirectory).then((assignmentSettingsPath) => {
-      return getAssignmentSettingsAt(assignmentSettingsPath)
-        .then((assignmentSettingsInfo) => {
-
-          if (isNil(assignmentSettingsInfo.rubric)) {
+            if (updateComments) {
+              return updateCommentsFile(comments);
+            }
+          });
+        } else if (submissionInfo.type === SubmissionType.RUBRIC) {
+          if (isNil(assignmentSettings.rubric)) {
             return Promise.reject('Assignment\'s settings does not contain a rubric!');
           }
-          let totalMark = 0;
+
           const marks = submissionInfo.marks as number[];
           marks.forEach((levelIndex: number, index: number) => {
             if (levelIndex !== null) {
-              totalMark += parseFloat('' + assignmentSettingsInfo.rubric.criterias[index].levels[levelIndex].score);
+              totalMark += parseFloat('' + assignmentSettings.rubric.criterias[index].levels[levelIndex].score);
             }
           });
-          return saveToMarks(location, submissionInfo, totalMark);
-        });
-    });
-  } else {
-    return Promise.reject('Unknown submission info type');
-  }
-}
 
-function saveSubmissionInfo(studentLocation: string, submissionInfo: SubmissionInfo): Promise<SubmissionInfo> {
-  return writeFile(studentLocation + sep + MARK_FILE, JSON.stringify(submissionInfo))
-    .then(() => submissionInfo, () => Promise.reject('Failed to save student marks!'));
-}
+        } else {
+          return Promise.reject('Unknown submission info type');
+        }
 
-function saveToMarks(studentLocation: string, marks: SubmissionInfo, totalMark: number): Promise<string> {
-
-  return workspaceRelativePathToAbsolute(studentLocation).then((studentFolder) => {
-    return checkAccess(studentFolder).then(() => {
-
-      return saveSubmissionInfo(studentFolder, marks).then(() => {
-        const assignmentFolder = dirname(studentFolder);
-
-        return checkAccess(assignmentFolder + sep + GRADES_FILE).then(() => {
-
-          const studentDirectoryName = basename(studentFolder);
-          const matches = STUDENT_DIRECTORY_ID_REGEX.exec(studentDirectoryName);
-          const studentNumber = matches[1] + '';
-
-          return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE)
-            .then((gradesJSON) => {
-              let changed = false;
-              let assignmentHeader;
-              if (gradesJSON.length < 3 || Object.keys(gradesJSON[2]).length < 4) {
-                return Promise.reject('grades.csv file appears to be corrupt');
-              }
-
-              for (let i = 0; i < gradesJSON.length; i++) {
-                if (i === 0) {
-                  const keys = Object.keys(gradesJSON[i]);
-                  if (keys.length > 0) {
-                    assignmentHeader = keys[0];
-                  }
-                } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === studentNumber.toUpperCase()) {
-                  gradesJSON[i].field5 = totalMark;
-                  changed = true;
-
-                }
-              }
-
-              if (changed) {
-                // more logic to save new JSON to CSV
-                return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false}).then((csv) => {
-                  return writeToFile(assignmentFolder + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!');
-                }, () => {
-                  return Promise.reject('Failed to convert json to csv!');
-                });
-              } else {
-                return Promise.reject(`Could not find student ${studentNumber} in grades.csv`);
-              }
-            }, reason => {
-              return Promise.reject( reason);
-            });
+        return savePromise.then(() => {
+          const submission = find(assignmentSettings.submissions, {directoryName: submissionDirectoryName});
+          submission.mark = totalMark;
+          if (isEmpty(submissionInfo.marks)) {
+            submission.state = isNil(submission.allocation) ? SubmissionState.NEW : SubmissionState.ASSIGNED_TO_MARKER;
+          } else {
+            submission.state = SubmissionState.MARKED;
+          }
+          return writeAssignmentSettingsAt(assignmentSettings, assignmentPath);
         });
       });
     });
-  });
 }
 
-function upgradeMarks(marks: any, studentFolderFullPath: string): Promise<SubmissionInfo> {
-
-  let submissionInfo: SubmissionInfo;
-  if (marks.version !== SubmissionInfoVersion) {
-
-    return getAssignmentSettingsAt(dirname(studentFolderFullPath)).then((assignmentSettings) => {
-
-      let promise: Promise<any> = Promise.resolve();
-      if (!marks.hasOwnProperty('version')) {
-        // This is the original .marks.json convert it to version 1
-        if (assignmentSettings.rubric) {
-          const rubricSubmissionInfo = new RubricSubmissionInfo(1);
-          rubricSubmissionInfo.marks = marks;
-          submissionInfo = rubricSubmissionInfo;
-        } else {
-          const markingSubmissionInfo = new MarkingSubmissionInfo(1);
-          markingSubmissionInfo.marks = marks;
-          submissionInfo = markingSubmissionInfo;
-        }
-        promise = promise.then(() => saveSubmissionInfo(studentFolderFullPath, submissionInfo));
-      }
-      /*
-       if (marks.version === 1) {
-         // Convert to from v 1 to version 2
-         submissionInfo = upgradedV2;
-          promise = promise.then(() => saveSubmissionInfo(studentFolder, submissionInfo));
-       }
-
-       if (marks.version === 2) {
-         // Convert to from v 2 to version 3
-         submissionInfo = upgradedV3;
-          promise = promise.then(() => saveSubmissionInfo(studentFolder, submissionInfo));
-       }
-       */
-
-
-      return promise;
-    });
-
-
-  }
-
-
-  return Promise.resolve(marks);
+export function saveSubmissionInfo(studentLocation: string, submissionInfo: SubmissionInfo): Promise<SubmissionInfo> {
+  return writeFile(studentLocation + sep + MARK_FILE, JSON.stringify(submissionInfo))
+    .then(() => submissionInfo, () => Promise.reject('Failed to save student marks!'));
 }
 
 
@@ -425,16 +329,12 @@ export function loadMarks(studentFolder: string): Promise<SubmissionInfo> {
 export function loadMarksAt(studentFolderFull: string): Promise<SubmissionInfo> {
   return readFile(studentFolderFull + sep + MARK_FILE).then((data) => {
     if (!isJson(data)) {
-      return [];
+      return new SubmissionInfo();
     } else {
-      const marks = JSON.parse(data.toString());
-      if (marks.version !== SubmissionInfoVersion) {
-        return upgradeMarks(marks, studentFolderFull);
-      }
-      return marks;
+      return JSON.parse(data.toString());
     }
-  }, (err) => {
-    return upgradeMarks([], studentFolderFull);
+  }, () => {
+    return new SubmissionInfo();
   });
 }
 
@@ -445,124 +345,70 @@ export function getMarks(event: IpcMainInvokeEvent, studentFolder: string): Prom
 
 
 // Only For updating colour for now
-export function updateAssignmentSettings(event: IpcMainInvokeEvent, updatedSettings: any = {}, workspaceName: string, assignmentName: string): Promise<AssignmentSettingsInfo> {
+export function updateAssignmentSettings(
+  event: IpcMainInvokeEvent,
+  updatedSettings: any = {},
+  workspaceName: string,
+  assignmentName: string): Promise<AssignmentSettingsInfo> {
   return writeAssignmentSettingsFor(updatedSettings, workspaceName, assignmentName);
 }
 
 
 
 export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: UpdateAssignment): Promise<any> {
-  const assignmentName: string = updateRequest.assignmentName.trim();
-  try {
-    return getConfig().then(async (config) => {
-      let assignmentSettingsBuffer;
-      if (updateRequest.workspace === DEFAULT_WORKSPACE || isNil(updateRequest.workspace)) {
-        assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE);
-        if (!isJson(assignmentSettingsBuffer)) {
-          return Promise.reject('Invalid assignment settings file!');
-        }
+  return Promise.all([
+    getAssignmentSettingsFor(updateRequest.workspace, updateRequest.assignmentName),
+    getAssignmentDirectoryAbsolutePath(updateRequest.workspace, updateRequest.assignmentName)
+  ]).then(([assignmentSettings, assignmentAbsolutePath]) => {
+    if (!assignmentSettings.isCreated) {
+      return Promise.reject('Operation not permitted on this type of assignment!');
+    }
 
+    if (updateRequest.studentDetails.length !== updateRequest.files.length) {
+      return Promise.reject( `Student details is not equal to number of files sent!`);
+    }
+
+    const promises: Promise<any>[] = updateRequest.studentDetails.map((studentInfo, index) => {
+      const file: any = updateRequest.files[index];
+      const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
+      const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
+      const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
+
+      const existingSubmission = find(assignmentSettings.submissions, {studentId: studentInfo.studentId.toUpperCase()});
+
+      if (isNil(existingSubmission)) {
+        const filename = basename(file);
+        assignmentSettings.submissions.push({
+          studentId: studentInfo.studentId.toUpperCase(),
+          studentName: studentInfo.studentName.toUpperCase(),
+          studentSurname: studentInfo.studentSurname.toUpperCase(),
+          allocation: null,
+          lmsStatusText: null,
+          state: SubmissionState.NEW,
+          directoryName: studentFolder,
+          mark: null
+        });
+        return mkdir(assignmentAbsolutePath + sep + feedbackFolder, {recursive: true})
+          .then(() =>  mkdir(assignmentAbsolutePath + sep + submissionFolder, {recursive: true}))
+          .then(() => readFile(file))
+          .then((content) => PDFDocument.load(content))
+          .then((pdfDocument) => pdfDocument.save())
+          .then((pdfBytes) => writeFile(assignmentAbsolutePath + sep + submissionFolder + sep + filename, pdfBytes));
       } else {
-        assignmentSettingsBuffer = readFileSync(config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + SETTING_FILE);
-        if (!isJson(assignmentSettingsBuffer)) {
-          return Promise.reject('Invalid assignment settings file!');
-        }
-      }
-      const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
-      if (!assignmentSettingsInfo.isCreated) {
-        return Promise.reject('Operation not permitted on this type of assignment!');
-      }
-
-      if (updateRequest.studentDetails.length !== updateRequest.files.length) {
-        return Promise.reject( `Student details is not equal to number of files sent!`);
-      }
-
-      const grades = await csvtojson({
-        noheader: true,
-        trim: false
-      }).fromFile(
-        (updateRequest.workspace === DEFAULT_WORKSPACE || isNil(updateRequest.workspace)) ?
-          config.defaultPath + sep + assignmentName + sep + GRADES_FILE :
-          config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + GRADES_FILE);
-
-      let count = 0;
-      const headers = `'${assignmentName}','SCORE_GRADE_TYPE'\n`;
-      const line = `''\n`;
-      const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
-      let csvString = headers + line + subheaders;
-      for (const studentInfo of updateRequest.studentDetails) {
-        const file: any = updateRequest.files[count];
-        const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
-        const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
-        const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
-        let csvData = '';
-
-        if (updateRequest.workspace === DEFAULT_WORKSPACE || isNil(updateRequest.workspace)) {
-          if (existsSync(config.defaultPath + sep + assignmentName + sep + studentFolder)) {
-            if (studentInfo.remove) {
-              deleteFolderRecursive(config.defaultPath + sep + assignmentName + sep + studentFolder);
-            } else {
-              const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
-              if (studentRecord) {
-                csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},${studentRecord.field5},,\n`;
-              } else {
-                csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
-              }
-            }
-          } else {
-            const filename = basename(file);
-            mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
-            mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
-
-            const content = readFileSync(file);
-            const pdfDoc = await PDFDocument.load(content);
-            const pdfBytes = await pdfDoc.save();
-            await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + filename, pdfBytes);
-            // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
-            csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
-          }
+        if (studentInfo.remove) {
+          remove(assignmentSettings.submissions, {studentId: studentInfo.studentId.toUpperCase()});
+          return rmdir(assignmentAbsolutePath + sep + studentFolder, {recursive: true});
         } else {
-          if (existsSync(config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + studentFolder)) {
-            if (studentInfo.remove) {
-              deleteFolderRecursive(config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + studentFolder);
-            } else {
-              const studentRecord = grades.find(grade => grade[Object.keys(grades[0])[0]] === studentInfo.studentId.toUpperCase());
-              if (studentRecord) {
-                csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},${studentRecord.field5},,\n`;
-              } else {
-                csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
-              }
-            }
-          } else {
-            const filename = basename(file);
-            mkdirSync(config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + feedbackFolder, {recursive: true});
-            mkdirSync(config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + submissionFolder, {recursive: true});
-
-            const content = readFileSync(file);
-            const pdfDoc = await PDFDocument.load(content);
-            const pdfBytes = await pdfDoc.save();
-            await writeFileSync(config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + submissionFolder + sep + filename, pdfBytes);
-            // copyFileSync(file.path, config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + file.originalname);
-            csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
-          }
+          return Promise.resolve();
         }
-        csvString += csvData;
-        count++;
-      }
 
-      //
-      if (updateRequest.workspace === DEFAULT_WORKSPACE || isNil(updateRequest.workspace)) {
-        writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
-        return ;
-      } else {
-        writeFileSync(config.defaultPath + sep + updateRequest.workspace + sep + assignmentName + sep + GRADES_FILE, csvString);
-        return;
       }
-
     });
-  } catch (e) {
-    return Promise.reject(e.message);
-  }
+
+    return Promise.all(promises)
+      .then(() => writeAssignmentSettingsAt(assignmentSettings, assignmentAbsolutePath));
+
+  });
 }
 
 
@@ -571,142 +417,80 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
 
   let assignmentName: string = createInfo.assignmentName.trim();
 
-  try {
-    return getConfig().then(async (config) => {
-      const folders = glob.sync(config.defaultPath + '/*');
-
-      let foundCount = 0;
-      for (let i = 0; i < folders.length; i++) {
-        if (isFolder(folders[i])) {
-          const assignmentDirectoryName = path.basename(folders[i]);
-          // Doing a casesensitive check on the directory names - for Window's sake
-          if (assignmentName.toLowerCase() === assignmentDirectoryName.toLowerCase()) {
-            foundCount++;
-
-            // Doing a casesensitive check on the directory names - for Window's sake
-          } else if ((assignmentName.toLowerCase() + ' (' + (foundCount + 1) + ')') === assignmentDirectoryName.toLowerCase()) {
-            foundCount++;
-          }
-        }
-      }
-
-      if (foundCount > 0) {
-        assignmentName = assignmentName + ' (' + (foundCount + 1) + ')';
-      }
-
-      const noRubric: boolean = createInfo.noRubric;
-      let rubricName: string;
-      let rubric: IRubric = null;
-      let rubricIndex: number;
-      let rubrics: IRubric[];
-
-      if (!noRubric) {
-        if (isNil(createInfo.rubric)) {
-          return Promise.reject(NOT_PROVIDED_RUBRIC);
-        }
-
-        rubricName = createInfo.rubric.trim();
-        if (!isNullOrUndefined(rubricName)) {
-          const rubricData = readFileSync(CONFIG_DIR + RUBRICS_FILE);
-          try {
-            if (!isJson(rubricData)) {
-              return Promise.reject(INVALID_RUBRIC_JSON_FILE);
-            }
-
-            rubrics = JSON.parse(rubricData.toString());
-
-            if (Array.isArray(rubrics)) {
-              let index = -1;
-              for (let i = 0; i < rubrics.length; i++) {
-                if (rubrics[i].name === rubricName) {
-                  index = i;
-                  break;
-                }
-              }
-
-              if (index !== -1) {
-                rubric = rubrics[index];
-                rubricIndex = index;
-              }
-            } else {
-              return Promise.reject(COULD_NOT_READ_RUBRIC_LIST);
-            }
-
-          } catch (e) {
-            return Promise.reject(e.message);
-          }
-        }
-      }
-      const studentDetails: StudentInfo[] = createInfo.studentRow;
-
-      if (!Array.isArray(studentDetails)) {
-        return Promise.reject(`Student details must be a list`);
-      }
-
-      if (studentDetails.length !== createInfo.files.length) {
-        return Promise.reject(`Student details is not equal to number of files sent!`);
-      }
-
-      const settings: AssignmentSettingsInfo = {defaultColour: '#6F327A', rubric, isCreated: true};
-
-      let count = 0;
-      const headers = `'${assignmentName}','SCORE_GRADE_TYPE'\n`;
-      const line = `''\n`;
-      const subheaders = `'Display ID','ID','Last Name','First Name','Mark','Submission date','Late submission'\n`;
-      let csvString = headers + line + subheaders;
-      for (const studentInfo of studentDetails) {
-        const file: any = createInfo.files[count];
-        const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
-        const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
-        const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
-        const csvData = `${studentInfo.studentId.toUpperCase()},${studentInfo.studentId.toUpperCase()},${studentInfo.studentSurname.toUpperCase()},${studentInfo.studentName.toUpperCase()},,,\n`;
-        csvString += csvData;
-
-        if (createInfo.workspace === DEFAULT_WORKSPACE || isNil(createInfo.workspace)) {
-          const filename = basename(file);
-          mkdirSync(config.defaultPath + sep + assignmentName + sep + feedbackFolder, {recursive: true});
-          mkdirSync(config.defaultPath + sep + assignmentName + sep + submissionFolder, {recursive: true});
-          const content = readFileSync(file);
-          const pdfDoc = await PDFDocument.load(content);
-          const pdfBytes = await pdfDoc.save();
-          await writeFileSync(config.defaultPath + sep + assignmentName + sep + submissionFolder + sep + filename, pdfBytes);
-          count++;
-        } else {
-          const filename = basename(file);
-          mkdirSync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + feedbackFolder, {recursive: true});
-          mkdirSync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + submissionFolder, {recursive: true});
-          const content = readFileSync(file);
-          const pdfDoc = await PDFDocument.load(content);
-          const pdfBytes = await pdfDoc.save();
-          await writeFileSync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + submissionFolder + sep + filename, pdfBytes);
-          count++;
-        }
-      }
-
-      if (createInfo.workspace === DEFAULT_WORKSPACE || isNil(createInfo.workspace)) {
-        writeFileSync(config.defaultPath + sep + assignmentName + sep + GRADES_FILE, csvString);
-        writeFileSync(config.defaultPath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
-        return;
-      } else {
-        writeFileSync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + GRADES_FILE, csvString);
-        writeFileSync(config.defaultPath + sep + createInfo.workspace + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings));
-        return;
-      }
-
-    });
-  } catch (e) {
-    return Promise.reject(e.message);
+  if (createInfo.studentRow.length !== createInfo.files.length) {
+    return Promise.reject(`Student details is not equal to number of files sent!`);
   }
-}
 
+  if (!createInfo.noRubric) {
+    if (isNil(createInfo.rubric)) {
+      return Promise.reject(NOT_PROVIDED_RUBRIC);
+    }
+  }
+  let rubricPromise: Promise<IRubric> = Promise<IRubric>.resolve(null);
+  if (!createInfo.noRubric) {
+    rubricPromise = findRubric(createInfo.rubric.trim());
+  }
+  return Promise.all([
+    getWorkingDirectoryAbsolutePath(createInfo.workspace),
+    getConfig(),
+    rubricPromise
+  ]).then(([workspaceAbsolutePath , config, rubric]) => {
+    const folders = glob.sync(config.defaultPath + '/*');
 
+    let foundCount = 0;
+    for (let i = 0; i < folders.length; i++) {
+      if (isFolder(folders[i])) {
+        const assignmentDirectoryName = path.basename(folders[i]);
+        // Doing a casesensitive check on the directory names - for Window's sake
+        if (assignmentName.toLowerCase() === assignmentDirectoryName.toLowerCase()) {
+          foundCount++;
 
-export function getGrades(event: IpcMainInvokeEvent, workspaceName: string, assignmentName: string): Promise<any> {
+          // Doing a casesensitive check on the directory names - for Window's sake
+        } else if ((assignmentName.toLowerCase() + ' (' + (foundCount + 1) + ')') === assignmentDirectoryName.toLowerCase()) {
+          foundCount++;
+        }
+      }
+    }
 
-  return getAssignmentDirectory(workspaceName, assignmentName).then((assignmentFolder) => {
-    return checkAccess(assignmentFolder + sep + GRADES_FILE).then(() => {
-      return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE);
+    if (foundCount > 0) {
+      assignmentName = assignmentName + ' (' + (foundCount + 1) + ')';
+    }
+
+    const studentDetails: StudentInfo[] = createInfo.studentRow;
+    const settings: AssignmentSettingsInfo = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
+    settings.assignmentName = assignmentName;
+    settings.rubric = rubric;
+    settings.isCreated = true;
+
+    const submissionPromises: Promise<any>[] = studentDetails.map((studentInfo, index) => {
+      const file: any = createInfo.files[index];
+      const filename = basename(file);
+      const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
+      const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
+      const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
+
+      settings.submissions.push({
+        studentId: studentInfo.studentId.toUpperCase(),
+        studentName: studentInfo.studentName,
+        studentSurname: studentInfo.studentSurname,
+        allocation: null,
+        lmsStatusText: null,
+        mark: null,
+        state: SubmissionState.NEW,
+        directoryName: studentFolder
+      });
+
+      return mkdir(workspaceAbsolutePath + sep + assignmentName + sep + feedbackFolder, {recursive: true})
+        .then(() =>  mkdir(workspaceAbsolutePath + sep + assignmentName + sep + submissionFolder, {recursive: true}))
+        .then(() => readFile(file))
+        .then((content) => PDFDocument.load(content))
+        .then((pdfDocument) => pdfDocument.save())
+        .then((pdfBytes) => writeFile(workspaceAbsolutePath + sep + assignmentName + sep + submissionFolder + sep + filename, pdfBytes))
     });
+
+    return Promise.all(submissionPromises)
+      .then(() => writeFile(workspaceAbsolutePath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings)))
+
   });
 }
 
@@ -717,7 +501,7 @@ function setDateFinalized(assignmentFolder: string): Promise<AssignmentSettingsI
   });
 }
 
-function getAssignmentSettingsAt(assignmentFolder: string): Promise<AssignmentSettingsInfo> {
+export function getAssignmentSettingsAt(assignmentFolder: string): Promise<AssignmentSettingsInfo> {
   assignmentFolder = assignmentFolder.replace(/\//g, sep);
   if (existsSync(assignmentFolder)) {
     return readFile(assignmentFolder + sep + SETTING_FILE).then((data) => {
@@ -727,45 +511,15 @@ function getAssignmentSettingsAt(assignmentFolder: string): Promise<AssignmentSe
       return JSON.parse(data.toString()) as AssignmentSettingsInfo;
     }, (error) => {
       return Promise.reject(error.message);
-    }).then((assignmentSettings) => upgradeAssignmentSettings(assignmentFolder, assignmentSettings));
+    });
   } else {
     return Promise.reject('Could not load assignment settings');
   }
 }
 
-function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings: AssignmentSettingsInfo): Promise<AssignmentSettingsInfo> {
-  let promise: Promise<AssignmentSettingsInfo> = Promise.resolve(assignmentSettings);
-  if (assignmentSettings.version !== AssignmentSettingsVersion) {
-
-    if (!assignmentSettings.hasOwnProperty('version')) {
-      // This is the first upgrade, set all the new fields
-      assignmentSettings.version = 1;
-      assignmentSettings.assignmentFormat = AssignmentFormat.STANDALONE; // TODO confirm
-      assignmentSettings.allocations = [];
-      assignmentSettings.dateFinalized = null;
-      assignmentSettings.owner = null; // We can't set it here because it might not be configured
-      promise = writeAssignmentSettingsAt(assignmentSettings, assignmentFolder);
-    }
-
-    /*
-       if (assignmentSettings.version === 1) {
-         // Convert to from v 1 to version 2
-         assignmentSettings = assignmentSettingsV2;
-         promise = promise.then(() => writeAssignmentSettingsAt(assignmentSettings, assignmentFolder));
-       }
-
-       if (assignmentSettings.version === 2) {
-         // Convert to from v 2 to version 3
-         assignmentSettings = assignmentSettingsV3;
-         promise = promise.then(() => writeAssignmentSettingsAt(studentFolder, submissionInfo));
-       }
-     */
-  }
-  return promise;
-}
 
 function getAssignmentSettingsFor(workspaceName: string, assignmentName: string): Promise<AssignmentSettingsInfo> {
-  return getAssignmentDirectory(workspaceName, assignmentName)
+  return getAssignmentDirectoryAbsolutePath(workspaceName, assignmentName)
     .then((directory) => getAssignmentSettingsAt(directory));
 }
 
@@ -782,219 +536,214 @@ export function getAssignmentGlobalSettings(event: IpcMainInvokeEvent, location:
   return getAssignmentSettingsAt(location);
 }
 
-function writeAssignmentSettingsAt(assignmentSettings: AssignmentSettingsInfo, location: string): Promise<AssignmentSettingsInfo> {
+export function writeAssignmentSettingsAt(
+  assignmentSettings: AssignmentSettingsInfo,
+  assignmentAbsolutePath: string): Promise<AssignmentSettingsInfo> {
   const buffer = new Uint8Array(Buffer.from(JSON.stringify(assignmentSettings)));
 
-  return writeToFile(location + sep + SETTING_FILE, buffer, null, 'Failed to save assignment settings!').then(() => {
+  return writeToFile(assignmentAbsolutePath + sep + SETTING_FILE, buffer, null, 'Failed to save assignment settings!').then(() => {
     return assignmentSettings;
   });
 }
 
-function writeAssignmentSettingsFor(
+export function writeAssignmentSettingsFor(
   assignmentSettings: AssignmentSettingsInfo,
   workspaceName: string,
   assignmentName: string): Promise<AssignmentSettingsInfo> {
-  return getAssignmentDirectory(workspaceName, assignmentName)
-    .then((assignmentDirectory) => writeAssignmentSettingsAt(assignmentSettings, assignmentDirectory));
+  return getAssignmentDirectoryAbsolutePath(workspaceName, assignmentName)
+    .then((assignmentAbsolutePath) => writeAssignmentSettingsAt(assignmentSettings, assignmentAbsolutePath));
 }
 
-export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: string, location: string): Promise<any> {
+export function readGradesCsv(sourceFile: string): Promise<GradesCSV> {
+  return stat(sourceFile).then(() => {
+    return csvtojson({noheader: true, trim: false}).fromFile(sourceFile).then((data) => {
+      const grades: GradesCSV = {
+        studentGrades: [],
+        header: {
+          gradeType: data[0].field2,
+          assignmentName: data[0].field1
+        }
+      };
+
+      for (let index = 3; index < data.length; index++) {
+        grades.studentGrades.push({
+          displayId: data[index].field1,
+          id: data[index].field2,
+          lastName: data[index].field3,
+          firstName: data[index].field4,
+          grade: data[index].field5 === '' ? null : +data[index].field5,
+          submissionDate: data[index].field6,
+          lateSubmission: data[index].field7,
+        });
+      }
+
+      return grades;
+    });
+  }, () => {
+    return null;
+  });
+}
+
+function writeGradesCsv(outputFile: string, grades: GradesCSV): Promise<any> {
+  const gradesJSON = [];
+  gradesJSON.push({
+    field1: grades.header.assignmentName,
+    field2: grades.header.gradeType,
+  });
+  gradesJSON.push({
+    field1: ''
+  });
+  forEach(grades.studentGrades, (studentGrade) => {
+    gradesJSON.push({
+      field1: studentGrade.displayId,
+      field2: studentGrade.id,
+      field3: studentGrade.lastName,
+      field4: studentGrade.firstName,
+      field5: studentGrade.grade,
+      field6: studentGrade.submissionDate,
+      field7: studentGrade.lastName,
+    });
+  });
+
+  return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
+    .then(csv => {
+      return writeFile(outputFile, csv);
+    }, (error) => {
+      console.error(error);
+      return Promise.reject( 'Failed to export marks.csv');
+    });
+}
+
+function writeGrades(outputDirectory: string, submissions: Submission[], assignmentName: string): Promise<any>{
+  return stat(outputDirectory + sep + GRADES_FILE)
+    .then(_ => true, _ => false)
+    .then((exists) => {
+      let promise: Promise<GradesCSV>;
+      if (exists) {
+        promise = readGradesCsv(outputDirectory + sep + GRADES_FILE);
+      } else {
+        promise = Promise.resolve({
+          studentGrades: [],
+          header: {
+            gradeType: 'SCORE_GRADE_TYPE',
+            assignmentName: assignmentName
+          }
+        });
+      }
+      return promise.then((grades) => {
+
+        forEach(submissions, (submission) => {
+          // Find existing student grade
+          let studentGrade: StudentGrade = find(grades.studentGrades, {id: submission.studentId});
+          if (isNil(studentGrade)) {
+            studentGrade = {
+              displayId : submission.studentId,
+              id : submission.studentId,
+              firstName : submission.studentName,
+              lastName : submission.studentSurname,
+              grade: null,
+              lateSubmission: null,
+              submissionDate: null
+            };
+            grades.studentGrades.push(studentGrade);
+          }
+          studentGrade.grade = submission.mark;
+        });
+        return writeGradesCsv(outputDirectory + sep + GRADES_FILE, grades);
+      });
+    });
+}
+
+export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: string, assignmentName: string): Promise<any> {
   try {
     return Promise.all([
       getConfig(),
-      getAssignmentDirectory(workspaceFolder, location)
-    ]).then(([config, assignmentFolder]) => {
-      return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE).then((gradesJSON) => {
-        const files = glob.sync(assignmentFolder + sep + '/*');
-        const promises: Promise<any>[] = files.map((file) => {
-          if (statSync(file).isDirectory()) {
-            const regEx = /(.*)\((.+)\)$/;
-            if (!regEx.test(file)) {
-              return Promise.reject(INVALID_STUDENT_FOLDER + ' ' + basename(file));
-            }
-
-            const matches = regEx.exec(file);
-
-            const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
-
-            const submissionPromisses: Promise<any>[] = submissionFiles.map((submission) => {
-              try {
-                accessSync(submission, constants.F_OK);
-                const studentFolder = dirname(dirname(submission));
-                return loadMarksAt(studentFolder).then((submissionInfo: MarkingSubmissionInfo) => {
-                  if (submissionInfo.marks.length > 0) {
-                    const ext = path.extname(submission);
-                    let fileName = path.basename(submission, ext);
-                    return annotatePdfFile(submission, submissionInfo).then(async (data) => {
-                      fileName += '_MARK';
-                      writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
-                      unlinkSync(submission);
-                      accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
-                      let changed = false;
-                      let assignmentHeader;
-                      for (let i = 0; i < gradesJSON.length; i++) {
-                        if (i === 0) {
-                          const gradeKeys = Object.keys(gradesJSON[i]);
-                          if (gradeKeys.length > 0) {
-                            assignmentHeader = gradeKeys[0];
-                          }
-                        } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
-                          gradesJSON[i].field5 = data.totalMark;
-                          changed = true;
-                        }
-                      }
-                      if (changed) {
-                        return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
-                          .then(csv => {
-                            return writeFile(assignmentFolder + sep + GRADES_FILE, csv);
-                          }, () => {
-                            return Promise.reject( 'Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
-                          });
-                      } else {
-                        return Promise.reject('Failed to save mark');
-                      }
-                    }, (error) => {
-                      return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
-                    });
-                  }
-                });
-
-              } catch (e) {
-                return Promise.reject(e.message);
-              }
-            });
-
-            return Promise.all(submissionPromisses);
+      getAssignmentDirectoryAbsolutePath(workspaceFolder, assignmentName),
+      getAssignmentSettingsFor(workspaceFolder, assignmentName)
+    ]).then(([config, assignmentFolder, assignmentSettings]) => {
+      // Finalize the pdfs in the workspace
+      const files = glob.sync(assignmentFolder + sep + '/*');
+      const tempDirectory = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
+      const exportTempDirectory = tempDirectory + sep + assignmentName;
+      const promises: Promise<any>[] = files.map((file) => {
+        if (statSync(file).isDirectory()) {
+          const regEx = /(.*)\((.+)\)$/;
+          if (!regEx.test(file)) {
+            return Promise.reject(INVALID_STUDENT_FOLDER + ' ' + basename(file));
           }
-        });
-        return Promise.all(promises).then(() => {
-          return zipDir((workspaceFolder === DEFAULT_WORKSPACE) ? config.defaultPath : config.defaultPath + sep + workspaceFolder,
-            {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(assignmentFolder)) ? true : (path.startsWith((assignmentFolder) + sep))))})
-            .then((buffer) => {
-              return buffer;
-            }, (err) => {
-              console.error('Could not export assignment');
-              console.error(err);
-              return Promise.reject('Could not export assignment');
-            });
-        });
-      }).then((buffer) => {
-        return setDateFinalized(assignmentFolder)
-          .then(() => buffer);
+
+          const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
+          const submissionPromisses: Promise<any>[] = submissionFiles.map((submission) => {
+            try {
+              accessSync(submission, constants.F_OK);
+              const studentFolder = dirname(dirname(submission));
+              return loadMarksAt(studentFolder).then((submissionInfo: SubmissionInfo) => {
+                if (submissionInfo.marks.length > 0) {
+                  const ext = path.extname(submission);
+                  let fileName = path.basename(submission, ext);
+                  let promise: Promise<any>;
+                  if (isNil(assignmentSettings.rubric)) {
+                    promise = annotatePdfFile(submission, submissionInfo as MarkingSubmissionInfo);
+                  } else {
+                    promise = annotatePdfRubric(submission, submissionInfo as RubricSubmissionInfo, assignmentSettings.rubric);
+                  }
+
+                  return promise.then((data) => {
+                    fileName += '_MARK';
+                    writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
+                    unlinkSync(submission);
+                  }, (error) => {
+                    return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
+                  });
+                }
+              });
+
+            } catch (e) {
+              return Promise.reject(e.message);
+            }
+          });
+
+          return Promise.all(submissionPromisses);
+        }
+        return Promise.resolve();
       });
+
+      // Create temp directory
+      return Promise.all(promises).then(() => {
+        return mkdir(exportTempDirectory);
+      }).then(() => copy(assignmentFolder + sep + ASSIGNMENT_BACKUP_DIR, exportTempDirectory))
+        .then(() => {
+          return copy(
+            assignmentFolder,
+            exportTempDirectory, {
+              filter: (src) => {
+                return !(
+                  src.startsWith(assignmentFolder + sep + ASSIGNMENT_BACKUP_DIR) ||
+                  src.endsWith(SETTING_FILE) ||
+                  src.endsWith(MARK_FILE)
+                );
+              }
+            }
+          );
+        })
+        .then(() => writeGrades(exportTempDirectory, assignmentSettings.submissions, assignmentName))
+        .then(() => setDateFinalized(assignmentFolder))
+        .then(() => zipDir(exportTempDirectory))
+        .then((buffer) => {
+          return rmdir(tempDirectory, {recursive: true}).then(() => buffer);
+        }, (err) => {
+          console.error('Could not export assignment');
+          console.error(err);
+          return rmdir(tempDirectory, {recursive: true}).then(() => () => {
+            return Promise.reject('Could not export assignment');
+          });
+        });
     });
   } catch (e) {
     return Promise.reject(e.message);
   }
 }
 
-
-
-
-export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFolder: string, location: string, rubricName: string): Promise<any> {
-  try {
-    return Promise.all([
-      getConfig(),
-      getAssignmentDirectory(workspaceFolder, location)
-    ]).then(([config, assignmentFolder]) => {
-      return csvtojson({noheader: true, trim: false}).fromFile(assignmentFolder + sep + GRADES_FILE).then((gradesJSON) => {
-        const files = glob.sync(assignmentFolder + sep + '/*');
-        const assignmentSettingsBuffer = readFileSync(assignmentFolder + sep + SETTING_FILE);
-        if (!isJson(assignmentSettingsBuffer)) {
-          return Promise.reject('Invalid assignment settings file!');
-        }
-
-        const assignmentSettingsInfo: AssignmentSettingsInfo = JSON.parse(assignmentSettingsBuffer.toString());
-
-        const promises: Promise<any>[] = files.map((file) => {
-          if (statSync(file).isDirectory()) {
-            const regEx = /(.*)\((.+)\)$/;
-            if (!regEx.test(file)) {
-              return Promise.reject(INVALID_STUDENT_FOLDER + ' ' + basename(file));
-            }
-
-            const matches = regEx.exec(file);
-
-            const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
-            rubricName = rubricName.trim();
-
-            if (isNullOrUndefined(assignmentSettingsInfo.rubric)) {
-              return Promise.reject('Assignment\'s settings does not contain a rubric!');
-            } else if (assignmentSettingsInfo.rubric.name !== rubricName) {
-              return Promise.reject('Assignment\'s settings rubric does not match provided!');
-            }
-
-            const submissionPromisses: Promise<any>[] = submissionFiles.map((submission) => {
-              try {
-                accessSync(submission, constants.F_OK);
-                const studentFolder = dirname(dirname(submission));
-                return loadMarksAt(studentFolder).then((submissionInfo: RubricSubmissionInfo) => {
-                  if (submissionInfo.marks.length > 0) {
-                    return annotatePdfRubric(submission, submissionInfo, assignmentSettingsInfo.rubric).then((data) => {
-                      const ext = path.extname(submission);
-                      const fileName = path.basename(submission, ext) + '_MARK';
-                      writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
-                      unlinkSync(submission);
-                      accessSync(assignmentFolder + sep + GRADES_FILE, constants.F_OK);
-                      let changed = false;
-                      let assignmentHeader;
-                      for (let i = 0; i < gradesJSON.length; i++) {
-                        if (i === 0) {
-                          const gradesKeys = Object.keys(gradesJSON[i]);
-                          if (gradesKeys.length > 0) {
-                            assignmentHeader = gradesKeys[0];
-                          }
-                        } else if (i > 1 && !isNullOrUndefined(assignmentHeader) && gradesJSON[i] && gradesJSON[i][assignmentHeader].toUpperCase() === matches[2].toUpperCase()) {
-                          gradesJSON[i].field5 = data.totalMark;
-                          changed = true;
-                          break;
-                        }
-                      }
-                      if (changed) {
-                        return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
-                          .then(csv => {
-                            return writeFile(assignmentFolder + sep + GRADES_FILE, csv);
-                          })
-                          .catch(() => {
-                            return Promise.reject('Failed to save marks to ' + GRADES_FILE + ' file for student ' + matches[2] + '!');
-                          });
-                      } else {
-                        return Promise.reject('Failed to save mark');
-                      }
-                    }, (error) => {
-                      return Promise.reject('Error annotating marks to PDF [' + error.message + ']');
-                    });
-                  }
-                });
-              } catch (e) {
-                return Promise.reject(e.message);
-              }
-            });
-
-            return Promise.all(submissionPromisses);
-          }
-        });
-        return Promise.all(promises).then(() => {
-          return zipDir((workspaceFolder === DEFAULT_WORKSPACE) ? config.defaultPath : config.defaultPath + sep + workspaceFolder,
-            {filter: (filterPath: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(filterPath)) && ((filterPath.endsWith(assignmentFolder)) ? true : (filterPath.startsWith(assignmentFolder + sep))))})
-            .then((buffer) => {
-              return buffer;
-            }, (err) => {
-              console.error('Could not export assignment');
-              console.error(err);
-              return Promise.reject('Could not export assignment');
-            });
-        });
-      }).then((buffer) => {
-        return setDateFinalized(assignmentFolder)
-          .then(() => buffer);
-      });
-    });
-
-  } catch (e) {
-    return Promise.reject( e.message);
-  }
-}
 
 
 function cleanupTemp(tmpDir: string) {
@@ -1008,62 +757,88 @@ function cleanupTemp(tmpDir: string) {
 }
 
 export function shareExport(event: IpcMainInvokeEvent, shareRequest: ShareAssignments): Promise<any> {
+  const tempDirectory = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
+  const exportTempDirectory = tempDirectory + sep + shareRequest.assignmentName;
 
-  try {
+  return Promise.all([
+    getAssignmentSettingsFor(shareRequest.workspaceFolder, shareRequest.assignmentName),
+    getAssignmentDirectoryAbsolutePath(shareRequest.workspaceFolder, shareRequest.assignmentName),
+    mkdir(exportTempDirectory)
+  ])
+    .then(([assignmentSettings, originalAssignmentDirectory]) => {
 
-    return getAssignmentDirectory(shareRequest.workspaceFolder, shareRequest.assignmentName).then((originalAssignmentDirectory) => {
-
-      return csvtojson({
-        noheader: true,
-        trim: false
-      }).fromFile(originalAssignmentDirectory + sep + GRADES_FILE).then((gradesJSON) => {
-        let tmpDir;
-        // Create a temp directory to construct files to zip
-        tmpDir = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
-
-        const tempAssignmentDirectory = tmpDir + sep + shareRequest.assignmentName;
-        mkdirSync(tempAssignmentDirectory);
-
-        // Now copy each submission
-        shareRequest.submissions.forEach((submission) => {
-          const submissionDirectoryName = submission.directoryName;
-          copySync(originalAssignmentDirectory + sep + submissionDirectoryName, tempAssignmentDirectory + sep + submissionDirectoryName);
-        });
-
-        const shareGradesJson = [
-          gradesJSON[0],
-          gradesJSON[1],
-          gradesJSON[2],
-        ];
-        for (let i = 3; i < gradesJSON.length; i++) {
-          const gradesStudentId = gradesJSON[i].field2;
-          const studentPredicate = (student) => student.studentNumber.toUpperCase() === gradesStudentId.toUpperCase();
-          const shouldExport = !isNil(find(shareRequest.submissions, studentPredicate));
-          if (shouldExport) {
-            shareGradesJson.push(gradesJSON[i]);
-          }
-        }
-
-        return json2csvAsync(shareGradesJson, {emptyFieldValue: '', prependHeader: false})
-          .then(csv => {
-            return writeFile(tempAssignmentDirectory + sep + GRADES_FILE, csv);
-          })
-          .then(() => {
-            return zipDir(tmpDir);
-          })
-          .then((buffer) => {
-            cleanupTemp(tmpDir);
-            return buffer;
-          }, (error) => {
-            cleanupTemp(tmpDir);
-            return Promise.reject(error.message);
-          });
+      const shareSubmissionDirectoryNames = map(shareRequest.submissions, 'directoryName');
+      const shareSubmissions: Submission[] = filter(assignmentSettings.submissions, (submission) => {
+        return shareSubmissionDirectoryNames.indexOf(submission.directoryName) >= 0;
       });
+
+      return readGradesCsv(originalAssignmentDirectory + sep + ASSIGNMENT_BACKUP_DIR + sep + GRADES_FILE).then((grades) => {
+        if (isNil(grades)) {
+          grades = {
+            header: null,
+            studentGrades: []
+          };
+        } else {
+          // Filter out the grades of students not being exported
+          grades.studentGrades = filter(grades.studentGrades, (studentGrade) => {
+            const foundSubmission = find(shareSubmissions, {studentId: studentGrade.id});
+            return !isNil(foundSubmission);
+          });
+        }
+        shareSubmissions.forEach((submission) => {
+          const studentGrade = find(grades.studentGrades, {id: submission.studentId});
+          if (isNil(studentGrade)) {
+            // Make sure a record exists for each student
+            grades.studentGrades.push({
+              displayId: submission.studentId,
+              id: submission.studentId,
+              firstName: submission.studentName,
+              lastName: submission.studentSurname,
+              submissionDate: null,
+              lateSubmission: null,
+              grade: submission.mark
+            });
+          } else {
+            studentGrade.grade = submission.mark;
+          }
+        });
+        return grades;
+      })
+        .then((grades) => writeGradesCsv(exportTempDirectory + sep + GRADES_FILE, grades))
+        .then(() => {
+          // Copy the backup contents for each student
+          const promises: Promise<any>[] = shareSubmissions.map((submission) => {
+            return copy(originalAssignmentDirectory + sep + ASSIGNMENT_BACKUP_DIR + sep + submission.directoryName, exportTempDirectory + sep + submission.directoryName);
+          });
+          return Promise.all(promises);
+        })
+        .then(() => {
+          // Copy all the submission files
+          const promises: Promise<any>[] = shareSubmissions.map((submission) => {
+            return copy(
+              originalAssignmentDirectory + sep + submission.directoryName,
+              exportTempDirectory + sep + submission.directoryName,
+              {
+                recursive: true,
+                filter: (src) => {
+                  return !src.endsWith(MARK_FILE);
+                }
+              }
+            );
+          });
+          return Promise.all(promises);
+        })
+        .then(() => {
+          return zipDir(tempDirectory);
+        })
+        .then((buffer) => {
+          cleanupTemp(tempDirectory);
+          return buffer;
+        }, (error) => {
+          cleanupTemp(tempDirectory);
+          return Promise.reject(error.message);
+        });
     });
-  } catch (e) {
-    console.error(e);
-    return Promise.reject('Error trying to export share');
-  }
 }
 
 
@@ -1073,12 +848,12 @@ export function updateAssignmentRubric(
   event: IpcMainInvokeEvent,
   workspaceName: string,
   assignmentName: string,
-  rubricName: string): Promise<IRubric> {
+  rubricName: string): Promise<AssignmentSettingsInfo> {
 
 
   return Promise.all([
     findRubric(rubricName),
-    getAssignmentDirectory(workspaceName, assignmentName)
+    getAssignmentDirectoryAbsolutePath(workspaceName, assignmentName)
   ]).then((results) => {
 
     const rubric: IRubric = results[0];
@@ -1093,42 +868,11 @@ export function updateAssignmentRubric(
     return getAssignmentSettingsFor(workspaceName, assignmentName)
       .then((originalSettings) => {
         originalSettings.rubric = rubric;
-        return writeAssignmentSettingsFor(originalSettings, workspaceName, assignmentName);
-      }).then(() => {
-        return checkAccess(assignmentDirectory + sep + GRADES_FILE).then(() => {
-          return csvtojson({noheader: true, trim: false}).fromFile(assignmentDirectory + sep + GRADES_FILE)
-            .then((gradesJSON) => {
-              let changed = false;
-              let assignmentHeader;
-              for (let i = 0; i < gradesJSON.length; i++) {
-                if (i === 0) {
-                  const keys = Object.keys(gradesJSON[i]);
-                  if (keys.length > 0) {
-                    assignmentHeader = keys[0];
-                  }
-                } else if (i > 1) {
-                  gradesJSON[i].field5 = '';
-                  changed = true;
-                }
-              }
-
-              if (changed) {
-                return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false}).then( ( csv) => {
-                  return writeToFile(assignmentDirectory + sep + GRADES_FILE, csv, 'Successfully saved marks!', 'Failed to save marks to ' + GRADES_FILE + ' file!').then(() => {
-                    return rubric;
-                  });
-                }, (err) => {
-                  return Promise.reject('Failed to convert json to csv!');
-                });
-              } else {
-                return Promise.reject('Failed to save mark');
-              }
-            }, reason => {
-              return Promise.reject( reason);
-            });
+        originalSettings.submissions.forEach((submission) => {
+          submission.mark = null;
         });
+        return writeAssignmentSettingsFor(originalSettings, workspaceName, assignmentName);
       });
-
   });
 }
 

@@ -1,5 +1,13 @@
 export const SettingInfoVersion = 1;
 
+export const DefaultSettings: SettingInfo = {
+  version: SettingInfoVersion,
+  folders: [],
+  markers: [],
+  groups: [],
+  groupMembers: []
+};
+
 export interface SettingInfo {
   /**
    * Version number of the settings file
@@ -9,9 +17,9 @@ export interface SettingInfo {
    * Marker for this application user
    */
   user?: Marker;
-  lmsSelection: string;
+  lmsSelection?: string;
 
-  defaultPath: string;
+  defaultPath?: string;
 
   folders: string[];
 

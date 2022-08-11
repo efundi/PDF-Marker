@@ -11,12 +11,14 @@ import {
   WorkspaceFile
 } from '@shared/info-objects/workspace';
 import {FlatTreeControl} from '@angular/cdk/tree';
-import {isNil, map} from 'lodash';
+import {find, isNil, map} from 'lodash';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {Router} from '@angular/router';
 import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {GRADES_FILE, PDFM_FILES_FILTER} from '@shared/constants/constants';
+import {SettingsService} from '../../services/settings.service';
+import {SettingInfo} from '@shared/info-objects/setting.info';
 
 let treeId = 0;
 
@@ -32,19 +34,6 @@ export interface DisplayTreeNode extends TreeNode {
   level?: number;
 }
 
-function buildTreeNodes(workspaces: Workspace[]) {
-  const treeNodes: DisplayTreeNode[] = [];
-  treeId = 0;
-  workspaces.forEach(workspace => {
-    // if (workspace.name === DEFAULT_WORKSPACE) {
-    //   // Default workspace items are placed at the root
-    //   treeNodes.push(...workspace.children.map(c => setParent(c, null)));
-    // } else {
-    treeNodes.push(setParent(workspace, null));
-    // }
-  });
-  return treeNodes;
-}
 
 function getIcon(treeNode: TreeNode): string {
 
@@ -75,6 +64,20 @@ function getIconOpen(treeNode: TreeNode): string {
   }
 }
 
+function buildTreeNodes(workspaces: Workspace[]): DisplayTreeNode[] {
+  const treeNodes: DisplayTreeNode[] = [];
+  treeId = 0;
+  workspaces.forEach(workspace => {
+    // if (workspace.name === DEFAULT_WORKSPACE) {
+    //   // Default workspace items are placed at the root
+    //   treeNodes.push(...workspace.children.map(c => setParent(c, null)));
+    // } else {
+    treeNodes.push(setParent(workspace, null));
+    // }
+  });
+  return treeNodes;
+}
+
 function setParent(treeNode: TreeNode, parentNode: DisplayTreeNode = null): DisplayTreeNode {
   const displayTreeNode: DisplayTreeNode = {
     ...treeNode,
@@ -97,7 +100,8 @@ function setParent(treeNode: TreeNode, parentNode: DisplayTreeNode = null): Disp
   styleUrls: ['./assignment-list.component.scss']
 })
 export class AssignmentListComponent implements OnInit, OnDestroy {
-  constructor(private assignmentService: AssignmentService,
+  constructor(private settingsService: SettingsService,
+              private assignmentService: AssignmentService,
               private router: Router) { }
 
 
@@ -116,9 +120,9 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
   treeNodes: DisplayTreeNode[] = [];
   activeNode: DisplayTreeNode;
 
-  FILE_TYPE = TreeNodeType.FILE;
-
+  private settings: SettingInfo;
   private workspacesSubscription: Subscription;
+  private selectedSubmissionSubscription: Subscription;
   private static transformer = (node: DisplayTreeNode, level: number) => {
     node.level = level;
     return node;
@@ -128,6 +132,10 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
   trackBy: TrackByFunction<DisplayTreeNode> = (index: number, treeNode: DisplayTreeNode) => treeNode.id;
 
   ngOnInit() {
+    this.settingsService.getConfigurations().subscribe((settings) => {
+      this.settings = settings;
+    });
+
     this.workspacesSubscription = this.assignmentService.workspaceList.subscribe(workspaces => {
 
       this.workspaces = workspaces;
@@ -137,7 +145,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
       this.treeNodes = nodes;
     });
 
-    this.assignmentService.selectedSubmissionChanged.subscribe((selectedSubmission) => {
+    this.selectedSubmissionSubscription = this.assignmentService.selectedSubmissionChanged.subscribe((selectedSubmission) => {
       if (selectedSubmission) {
         const treePath = PdfmUtilsService.buildTreePath(selectedSubmission.pdfFile);
         const treeNodes: DisplayTreeNode[] = findTreeNodes(treePath, this.treeNodes) as DisplayTreeNode[];
@@ -178,8 +186,8 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
 
   private openDocument(node: WorkspaceFile): void {
 
-    const submission = node.parent.parent as StudentSubmission;
-    const assignment = submission.parent as WorkspaceAssignment;
+    const studentSubmission = node.parent.parent as StudentSubmission;
+    const assignment = studentSubmission.parent as WorkspaceAssignment;
     const workspace = assignment.parent as Workspace;
 
     const assignmentName = assignment.name;
@@ -190,11 +198,17 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
       pdfFile: node
     });
     this.assignmentService.getAssignmentSettings(workspaceName, assignmentName).subscribe((assignmentSettingsInfo) => {
-      if (isNil(assignmentSettingsInfo.dateFinalized)) {
-        const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, node.parent.name, node.name);
+
+      const selfId = this.settings.user ? this.settings.user.id : null;
+      const submission = find(assignmentSettingsInfo.submissions, {studentId: studentSubmission.studentId});
+      const canMark = isNil(submission.allocation) || submission.allocation.id === selfId;
+
+
+      if (isNil(assignmentSettingsInfo.dateFinalized) && canMark) {
+        const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, studentSubmission.name, node.parent.name, node.name);
         this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
       } else {
-        const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, submission.name, node.parent.name, node.name);
+        const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, studentSubmission.name, node.parent.name, node.name);
         this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);
       }
     });
@@ -203,6 +217,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.workspacesSubscription.unsubscribe();
+    this.selectedSubmissionSubscription.unsubscribe();
   }
 
   public collapseAll() {

@@ -2,6 +2,7 @@ import {EventEmitter, Injectable, OnDestroy} from '@angular/core';
 import {IconInfo} from '../../info-objects/icon.info';
 import {isEqual} from 'lodash';
 import {DEFAULT_HIGHLIGHTER, HighlighterColor} from '../../info-objects/highlighter-color';
+import {DEFAULT_COLOR} from '@shared/constants/constants';
 
 
 export interface ZoomChangeEvent{
@@ -13,7 +14,7 @@ export interface ZoomChangeEvent{
 export class AssignmentMarkingSessionService implements OnDestroy {
 
 
-  static readonly DEFAULT_COLOR: string = '#6F327A';
+  static readonly DEFAULT_COLOR = DEFAULT_COLOR;
 
   highlighterColourChanged: EventEmitter<HighlighterColor> = new EventEmitter<HighlighterColor>();
   colourChanged: EventEmitter<string> = new EventEmitter<string>();
