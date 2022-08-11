@@ -11,16 +11,17 @@ import {
 } from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {AlertService} from '../../services/alert.service';
 import {SettingsService} from '../../services/settings.service';
-import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
+import {SettingInfo} from '@shared/info-objects/setting.info';
 import {
   AssignmentSettingsInfo,
+  DistributionFormat,
   Submission,
   SubmissionAllocation,
   SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {ImportService} from '../../services/import.service';
-import {UntypedFormBuilder, UntypedFormGroup} from '@angular/forms';
+import {UntypedFormBuilder} from '@angular/forms';
 import {RubricViewModalComponent} from '../rubric-view-modal/rubric-view-modal.component';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {SelectionModel} from '@angular/cdk/collections';
@@ -40,7 +41,7 @@ import {
 } from '@shared/info-objects/workspace';
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
 import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-markers-modal.component';
-import { DateTime } from 'luxon';
+import {DateTime} from 'luxon';
 
 export interface AssignmentDetails {
   index?: number;
@@ -498,6 +499,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     const dialogRef = this.appService.createDialog(AllocateMarkersModalComponent, config);
     dialogRef.afterClosed().subscribe((allocations: SubmissionAllocation[]) => {
       const settings = cloneDeep(this.assignmentSettings);
+      settings.owner = {
+        id: this.settings.user.id,
+        email: this.settings.user.email,
+      };
+      settings.distributionFormat = DistributionFormat.DISTRIBUTED;
       allocations.forEach((allocation) => {
         const submission = find(settings.submissions, {directoryName: allocation.submission});
         submission.allocation = allocation.marker;
