@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {filter, findIndex, isNil} from 'lodash';
+import {filter, find, findIndex, isNil} from 'lodash';
 import {StudentSubmission, TreeNodeType, WorkspaceFile} from '@shared/info-objects/workspace';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {RoutesEnum} from '../../utils/routes.enum';
@@ -8,6 +8,8 @@ import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {SelectedSubmission} from '../../info-objects/selected-submission';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
+import {SettingsService} from '../../services/settings.service';
+import {SettingInfo} from '@shared/info-objects/setting.info';
 
 export interface SubmissionItem {
   studentFullName: string;
@@ -54,11 +56,15 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
   private assignmentSubscription: Subscription;
 
   private assignmentSettings: AssignmentSettingsInfo;
+  private settings: SettingInfo;
 
   constructor(private assignmentService: AssignmentService,
+              private settingsService: SettingsService,
               private router: Router) { }
 
   ngOnInit(): void {
+    this.loadSettings();
+
     this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.subscribe((assignment) => {
       this.activeSubmission = assignment;
       this.loadAssignmentSettings();
@@ -70,6 +76,14 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
     this.assignmentSubscription.unsubscribe();
   }
 
+  private loadSettings(){
+    this.settingsService.getConfigurations()
+      .subscribe({
+        next: (settings) => {
+          this.settings = settings;
+        }
+      });
+  }
 
   private loadAssignmentSettings() {
     if (!isNil(this.activeSubmission)) {
@@ -136,7 +150,11 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
       pdfFile: activeMenuItem.pdfFile
     });
 
-    if (isNil(this.assignmentSettings.dateFinalized)) {
+    const selfId = this.settings.user ? this.settings.user.id : null;
+    const submission = find(this.assignmentSettings.submissions, {studentId: activeMenuItem.studentId});
+    const canMark = isNil(submission.allocation) || submission.allocation.id === selfId;
+
+    if (isNil(this.assignmentSettings.dateFinalized) && canMark) {
       this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
     } else {
       this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);

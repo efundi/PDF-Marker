@@ -254,7 +254,10 @@ export class ImportComponent implements OnInit, OnDestroy {
         this.alertService.success(msg);
         this.resetForm();
       },
-      error: () => this.busyService.stop()
+      error: (error) => {
+        this.alertService.error(error);
+        this.busyService.stop();
+      }
     });
   }
 

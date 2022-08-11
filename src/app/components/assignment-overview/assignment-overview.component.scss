@@ -40,17 +40,11 @@ table {
     color: #888 !important;
   }
 
-  .mat-header-cell {
-    width: calc(100% / 4);
-  }
-
-
   .mat-column-select{
     width: 2rem;
     min-width: 2rem;
   }
   .pdf-marker-assignment-overview-student-name {
-    cursor: pointer;
     font-weight: 500;
     color: #2B72A1 !important;
   }
@@ -70,7 +64,6 @@ table {
   }
 
   .pdf-marker-assignment-overview-select-assignment {
-    cursor: pointer;
     width: 100%;
     display: flex;
     align-items: center;

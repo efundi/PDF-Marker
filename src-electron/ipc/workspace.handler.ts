@@ -1,15 +1,17 @@
 import {forEach, isNil} from 'lodash';
 import {getConfig, updateConfigFile} from './config.handler';
 import {basename, sep} from 'path';
-import {writeFile} from 'fs/promises';
 import {CONFIG_DIR, CONFIG_FILE} from '../constants';
 import {existsSync, mkdirSync, readdirSync, renameSync, writeFileSync} from 'fs';
 import {IpcMainInvokeEvent, shell} from 'electron';
 import {moveSync} from 'fs-extra';
-import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
-import {DEFAULT_WORKSPACE, SETTING_FILE} from '@shared/constants/constants';
+import {DEFAULT_WORKSPACE,} from '@shared/constants/constants';
 
-export function getWorkingDirectory(workspaceName: string): Promise<string> {
+/**
+ * Get the absolute path of the workspace
+ * @param workspaceName
+ */
+export function getWorkingDirectoryAbsolutePath(workspaceName: string): Promise<string> {
   return getConfig().then((config) => {
     if (workspaceName === DEFAULT_WORKSPACE || isNil(workspaceName)) {
       return config.defaultPath;
@@ -19,23 +21,23 @@ export function getWorkingDirectory(workspaceName: string): Promise<string> {
   });
 }
 
-export function getAssignmentDirectory(workspaceName: string, assignmentName: string): Promise<string> {
-  return getWorkingDirectory(workspaceName).then((workingDirectory) => {
+/**
+ * Get the absolute path of an assignment
+ * @param workspaceName
+ * @param assignmentName
+ */
+export function getAssignmentDirectoryAbsolutePath(workspaceName: string, assignmentName: string): Promise<string> {
+  return getWorkingDirectoryAbsolutePath(workspaceName).then((workingDirectory) => {
     return workingDirectory + sep + assignmentName;
   });
 }
 
-export function writeAssignmentSettings(
-  workspaceName: string,
-  assignmentName: string,
-  settings: AssignmentSettingsInfo): Promise<AssignmentSettingsInfo> {
-  return getAssignmentDirectory(workspaceName, assignmentName).then((workingDirectory) => {
-    return writeFile(workingDirectory + sep + SETTING_FILE, JSON.stringify(settings));
-  }).then(() => settings);
-}
 
-
-
+/**
+ * Create a new working folder
+ * @param event
+ * @param workFolderName
+ */
 export function createWorkingFolder(event: IpcMainInvokeEvent, workFolderName: string): Promise<string> {
   return getConfig().then((config) => {
     const fullPath = config.defaultPath + sep + workFolderName;
@@ -77,8 +79,13 @@ export function updateWorkspaceName(event: IpcMainInvokeEvent, workspaceName: st
 }
 
 
-
-
+/**
+ * Move an assignment to a new workspace
+ * @param event
+ * @param currentWorkspaceName
+ * @param workspaceName
+ * @param assignments
+ */
 export function moveWorkspaceAssignments(
   event: IpcMainInvokeEvent,
   currentWorkspaceName: string,
@@ -116,7 +123,9 @@ export function moveWorkspaceAssignments(
   });
 }
 
-
+/**
+ * Get a list of all working folders
+ */
 export function getWorkspaces(): Promise<any> {
   return getConfig().then((config) => {
     return [DEFAULT_WORKSPACE].concat(config.folders || []);

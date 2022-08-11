@@ -1,10 +1,13 @@
 import {existsSync} from 'fs';
 import * as glob from 'glob';
 import {basename, sep} from 'path';
-import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
+import {
+  AssignmentSettingsInfo,
+  DEFAULT_ASSIGNMENT_SETTINGS
+} from '@shared/info-objects/assignment-settings.info';
 import {IpcMainInvokeEvent} from 'electron';
 import {ImportInfo} from '@shared/info-objects/import.info';
-import {isNil} from 'lodash';
+import {cloneDeep, isNil} from 'lodash';
 import {readFile} from 'fs/promises';
 import {getRubrics, writeRubricFile} from './rubric.handler';
 import {EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, NOT_PROVIDED_RUBRIC} from '../constants';
@@ -12,13 +15,19 @@ import {IRubric} from '@shared/info-objects/rubric.class';
 import {deleteFolderRecursive, extractAssignmentZipFile, isFolder} from '../utils';
 
 import JSZip from 'jszip';
-import {getWorkingDirectory, writeAssignmentSettings} from './workspace.handler';
-import {SakaiConstants} from '@shared/constants/sakai.constants';
+import {getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
+import {writeAssignmentSettingsFor} from './assignment.handler';
+import {getConfig} from './config.handler';
+import {SettingInfo} from '@shared/info-objects/setting.info';
+import {ASSIGNMENT_ROOT_FILES} from '@shared/constants/constants';
 
-
+/**
+ * Returns a list of existing folders in the workspace
+ * @param workspace
+ */
 function existingFolders(workspace: string): Promise<string[]> {
-  return getWorkingDirectory(workspace).then((workingDirectory) => {
+  return getWorkingDirectoryAbsolutePath(workspace).then((workingDirectory) => {
     const fileListing = glob.sync(workingDirectory + '/*');
 
     const folders = [];
@@ -47,74 +56,80 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
 
 
   return Promise.all([
+    getConfig(),
     existingFolders(req.workspace),
     readFile(req.file),
     getRubrics()
   ]).then((results) => {
-    const folders = results[0];
-    const zipFile: Buffer = results[1];
-    const rubrics: IRubric[] = results[2];
+    const config: SettingInfo = results[0];
+    const folders = results[1];
+    const zipFile: Buffer = results[2];
+    const rubrics: IRubric[] = results[3];
     const rubricIndex = rubrics.findIndex(r => r.name === rubricName);
 
 
 
     return new JSZip().loadAsync(zipFile)
-      .then(async (zipObject) => {
-        let entry = '';
-        zipObject.forEach((relativePath, zipEntry) => {
-          if (entry === '') {
-            entry = zipEntry.name;
-          }
-        });
-        const entryPath = entry.split('/');
-        if (entryPath.length > 0) {
-          const oldPath = entryPath[0];
-          let foundCount = 0;
-          for (let i = 0; i < folders.length; i++) {
-            if (oldPath.toLowerCase() === folders[i].toLowerCase()) {
-              foundCount++;
-            } else if ((oldPath.toLowerCase() + ' (' + (foundCount + 1) + ')') === folders[i].toLowerCase()) {
-              foundCount++;
-            }
-          }
-          let newFolder = '';
+      .then((zipObject) => {
 
-          // Default settings for the new assignment
-          const settings: AssignmentSettingsInfo = {defaultColour: '#6f327a', rubric: rubrics[rubricIndex], isCreated: false};
-
-          // By default the zip wil contain the name of the assignment directory
-          let assignmentDirectoryName = oldPath;
-          let renameOld = '';
-          if (foundCount !== 0) {
-            // If existing assignment directory exists, setup renames to extract the file
-            assignmentDirectoryName = oldPath + ' (' + (foundCount + 1) + ')';
-            newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
-            renameOld = oldPath + '/';
-          }
-
-          return getWorkingDirectory(req.workspace).then((workingDirectory) => {
-            return extractAssignmentZipFile(req.file, workingDirectory + sep, newFolder, renameOld, req.assignmentName, req.assignmentType).then(() => {
-              return writeAssignmentSettings(req.workspace, assignmentDirectoryName, settings).then(() => {
-                if (!isNil(rubricName)) {
-                  rubrics[rubricIndex].inUse = true;
-                  return writeRubricFile(rubrics).then(() => {
-                    return EXTRACTED_ZIP;
-                  }, () => {
-                    return Promise.reject(EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC);
-                  });
-                }
-                return EXTRACTED_ZIP;
-              });
-            }).catch((error) => {
-              if (existsSync(workingDirectory + sep + newFolder)) {
-                deleteFolderRecursive(workingDirectory + sep + newFolder);
-              }
-              return Promise.reject(error.message);
-            });
-          });
-        } else {
-          return Promise.reject('Zip Object contains no entries!');
+        if (Object.keys(zipObject.files).length === 0) {
+          return Promise.reject('Zip Object contains no files!');
         }
+        const entryPath = Object.keys(zipObject.files)[0].split('/');
+        if (entryPath.length === 0) {
+          return Promise.reject('Invalid zip structure!');
+        }
+
+        const oldPath = entryPath[0];
+        let foundCount = 0;
+        for (let i = 0; i < folders.length; i++) {
+          if (oldPath.toLowerCase() === folders[i].toLowerCase()) {
+            foundCount++;
+          } else if ((oldPath.toLowerCase() + ' (' + (foundCount + 1) + ')') === folders[i].toLowerCase()) {
+            foundCount++;
+          }
+        }
+
+
+        // Default settings for the new assignment
+        const settings: AssignmentSettingsInfo = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
+        settings.owner = null;
+        settings.rubric =  rubrics[rubricIndex];
+        settings.isCreated = false;
+        settings.assignmentName = req.assignmentName;
+
+        // By default, the zip wil contain the name of the assignment directory
+        let assignmentDirectoryName = oldPath;
+        let renameOld = assignmentDirectoryName + '/';
+        let newFolder = assignmentDirectoryName + '/';
+        if (foundCount !== 0) {
+          // If existing assignment directory exists, setup renames to extract the file
+          assignmentDirectoryName = oldPath + ' (' + (foundCount + 1) + ')';
+          newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
+          renameOld = oldPath + '/';
+        }
+
+        return getWorkingDirectoryAbsolutePath(req.workspace).then((workingDirectory) => {
+          return extractAssignmentZipFile(req.file, workingDirectory + sep, newFolder, renameOld, req.assignmentName, req.assignmentType).then((submissions) => {
+            settings.submissions = submissions;
+            return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName).then(() => {
+              if (!isNil(rubricName)) {
+                rubrics[rubricIndex].inUse = true;
+                return writeRubricFile(rubrics).then(() => {
+                  return EXTRACTED_ZIP;
+                }, () => {
+                  return Promise.reject(EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC);
+                });
+              }
+              return EXTRACTED_ZIP;
+            });
+          }).catch((error) => {
+            if (existsSync(workingDirectory + sep + newFolder)) {
+              deleteFolderRecursive(workingDirectory + sep + newFolder);
+            }
+            return Promise.reject(error.message);
+          });
+        });
       })
       .catch(error => {
         return Promise.reject(error.message);
@@ -175,28 +190,26 @@ function readZipFile(file: string): Promise<JSZip> {
 function validateZipAssignmentFile(file: string): Promise<any> {
   return readZipFile(file).then((zip) => {
     const filePaths = Object.keys(zip.files);
-    const fileNames = SakaiConstants.assignmentRootFiles;
     for (const filePath of filePaths) {
       const path = filePath.split('/');
-      if (path[1] !== undefined && fileNames.indexOf(path[1]) !== -1) {
+      if (path[1] !== undefined && ASSIGNMENT_ROOT_FILES.indexOf(path[1]) !== -1) {
         return true;
       }
     }
 
     // Could not find at least on sakai file
-   return Promise.reject(SakaiConstants.formatErrorMessage);
+    return Promise.reject('Invalid zip format. Please select a file exported from Sakai');
   });
 }
 
 function validateGenericZip(file: string): Promise<any> {
   return readZipFile(file).then((zip) => {
     const filePaths = Object.keys(zip.files).sort();
-    const sakaiFileNames = SakaiConstants.assignmentRootFiles;
     for (const filePath of filePaths) {
       const path = filePath.split('/');
 
       // Check if it is a sakai file
-      if (path[1] !== undefined && sakaiFileNames.indexOf(path[1]) !== -1) {
+      if (path[1] !== undefined && ASSIGNMENT_ROOT_FILES.indexOf(path[1]) !== -1) {
         return Promise.reject('Invalid zip format. Please select a file in the generic import format');
       }
 

@@ -4,11 +4,9 @@ import * as path from 'path';
 import {
   createAssignment,
   finalizeAssignment,
-  finalizeAssignmentRubric,
   getAssignmentGlobalSettings,
   getAssignments,
   getAssignmentSettings,
-  getGrades,
   getMarks,
   getPdfFile,
   updateAssignmentRubric,
@@ -46,6 +44,9 @@ import {
   saveFile
 } from './src-electron/ipc/application.handler';
 import {checkForUpdates, downloadUpdate} from './src-electron/ipc/update.handler';
+import {runSettingsMigration} from './src-electron/migration/settings.migration';
+import {migrateAssignmentSettings} from './src-electron/migration/assignment.migration';
+import {migrateMarks} from './src-electron/migration/marks.migration';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -53,10 +54,15 @@ serve = args.some(val => val === '--serve');
 
 const logger = require('electron-log');
 
-
 // Only auto download for full (non pre-releases)
 autoUpdater.autoDownload = !autoUpdater.allowPrerelease;
 
+runSettingsMigration()
+  .then(migrateAssignmentSettings)
+  .then(migrateMarks)
+  .then(() => {
+    logger.info('All migration done');
+  });
 
 function createWindow() {
 
@@ -171,13 +177,11 @@ try {
     ipcMain.handle('assignments:create', toIpcResponse(createAssignment));
     ipcMain.handle('assignments:saveMarks', toIpcResponse(saveMarks));
     ipcMain.handle('assignments:finalizeAssignment', toIpcResponse(finalizeAssignment));
-    ipcMain.handle('assignments:finalizeAssignmentRubric', toIpcResponse(finalizeAssignmentRubric));
     ipcMain.handle('assignments:getAssignmentSettings', toIpcResponse(getAssignmentSettings));
     ipcMain.handle('assignments:getAssignmentGlobalSettings', toIpcResponse(getAssignmentGlobalSettings));
     ipcMain.handle('assignments:updateAssignmentSettings', toIpcResponse(updateAssignmentSettings));
     ipcMain.handle('assignments:shareExport', toIpcResponse(shareExport));
     ipcMain.handle('assignments:getMarks', toIpcResponse(getMarks));
-    ipcMain.handle('assignments:getGrades', toIpcResponse(getGrades));
     ipcMain.handle('assignments:updateAssignmentRubric', toIpcResponse(updateAssignmentRubric));
     ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
 

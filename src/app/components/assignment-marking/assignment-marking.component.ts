@@ -10,8 +10,8 @@ import {
   ViewChildren,
 } from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
-import {from, mergeMap, Observable, Subscription, tap, throwError} from 'rxjs';
-import {ActivatedRoute, Router} from '@angular/router';
+import {filter, from, mergeMap, Observable, Subscription, tap, throwError} from 'rxjs';
+import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
@@ -27,7 +27,13 @@ import {AssignmentMarkingPageComponent} from './assignment-marking-page/assignme
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
-import {MarkingSubmissionInfo, PageSettings, SubmissionInfo} from '@shared/info-objects/submission.info';
+import {
+  MarkingSubmissionInfo,
+  PageSettings,
+  SubmissionInfo,
+  SubmissionType
+} from '@shared/info-objects/submission.info';
+import {RoutesEnum} from '../../utils/routes.enum';
 
 
 GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
@@ -66,6 +72,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private paramsSubscription: Subscription;
   private colorChangeSubscription: Subscription;
   private zoomChangeSubscription: Subscription;
+  private routeSubscription: Subscription;
   submissionInfo: SubmissionInfo;
   readonly defaultFullMark = 1;
   readonly defaultIncorrectMark = 0;
@@ -137,14 +144,28 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.zoomChangeSubscription = this.assignmentMarkingSessionService.zoomChanged.subscribe((zoomChangeEvent) => {
       this.zoomChanged(zoomChangeEvent);
     });
+
+    this.routeSubscription = this.router.events.pipe(
+      filter(e => e instanceof NavigationStart)
+    ).subscribe((event: NavigationStart) => {
+      if (!(event.url.startsWith(RoutesEnum.ASSIGNMENT_MARKER) || event.url.startsWith(RoutesEnum.PDF_VIEWER))) {
+        this.assignmentService.selectSubmission(null);
+      }
+    });
   }
 
 
   private loadPdf(data: Uint8Array): Observable<PDFDocumentProxy> {
-    const promise = getDocument(data).promise.then((pdf) => {
-      this.pdfDocument = pdf;
-      return pdf;
-    });
+    let promise: Promise<any> = Promise.resolve();
+    if (this.pdfDocument) {
+      promise = this.pdfDocument.cleanup(true);
+    }
+
+    promise = promise.then(() => getDocument(data).promise)
+      .then((pdf) => {
+        this.pdfDocument = pdf;
+        return pdf;
+      });
 
     return from(promise);
   }
@@ -162,6 +183,14 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         };
       }
     });
+
+    if (isNil(submissionInfo.type)) {
+      if (isNil(this.assignmentSettings.rubric)) {
+        submissionInfo.type = SubmissionType.MARK;
+      } else {
+        submissionInfo.type = SubmissionType.RUBRIC;
+      }
+    }
 
     if (isNil(this.assignmentSettings.rubric)) {
 
@@ -396,11 +425,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.paramsSubscription.unsubscribe();
     this.colorChangeSubscription.unsubscribe();
+    this.routeSubscription.unsubscribe();
 
     if (this.pdfDocument) {
       this.pdfDocument.cleanup();
     }
-    this.assignmentService.selectSubmission(null);
   }
 
   onSectionChange($event: string) {

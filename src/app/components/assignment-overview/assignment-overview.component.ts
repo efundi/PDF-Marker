@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {forkJoin, Observable, Subscription, tap} from 'rxjs';
+import {forkJoin, mergeMap, Observable, Subscription, tap} from 'rxjs';
 import {AppService} from '../../services/app.service';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
@@ -11,8 +11,13 @@ import {
 } from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {AlertService} from '../../services/alert.service';
 import {SettingsService} from '../../services/settings.service';
-import {SettingInfo} from '@shared/info-objects/setting.info';
-import {AssignmentSettingsInfo, SubmissionAllocation} from '@shared/info-objects/assignment-settings.info';
+import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
+import {
+  AssignmentSettingsInfo,
+  Submission,
+  SubmissionAllocation,
+  SubmissionState
+} from '@shared/info-objects/assignment-settings.info';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {ImportService} from '../../services/import.service';
 import {UntypedFormBuilder, UntypedFormGroup} from '@angular/forms';
@@ -35,7 +40,7 @@ import {
 } from '@shared/info-objects/workspace';
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
 import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-markers-modal.component';
-import { DateTime } from "luxon";
+import { DateTime } from 'luxon';
 
 export interface AssignmentDetails {
   index?: number;
@@ -50,13 +55,18 @@ export interface AssignmentDetails {
 
   grade?: number;
 
-  status?: string;
+  state?: string;
+
+  lmsStatusText?: string;
 
   date?: string;
+  time?: string;
 
   submissionDirectoryName?: string;
 
   pdfFile: WorkspaceFile;
+
+  marker?: string;
 }
 
 @Component({
@@ -65,12 +75,9 @@ export interface AssignmentDetails {
   styleUrls: ['./assignment-overview.component.scss']
 })
 export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
-  displayedColumns: string[] = ['select', 'fullName', 'assignment', 'grade', 'date', 'status'];
+  displayedColumns: string[] = ['select', 'fullName', 'assignment', 'grade', 'date', 'state', 'marker', 'lmsStatusText'];
   dataSource = new MatTableDataSource<AssignmentDetails>([]);
   assignmentsLength;
-  private assignmentGrades: any[] = [];
-  private assignmentHeader: string;
-
   selection = new SelectionModel<AssignmentDetails>(true, []);
 
 
@@ -81,7 +88,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   sort: MatSort;
 
   assignmentState: 'notstarted' | 'inprogress' | 'finalized' = 'notstarted';
-
+  SubmissionState = SubmissionState;
 
   private subscription: Subscription;
   private sortSubscription: Subscription;
@@ -133,7 +140,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   ngOnInit() {
     this.busyService.start();
-    this.initForm();
 
     forkJoin([
       this.loadRubrics(),
@@ -150,7 +156,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
         this.workspaceName = params['workspaceName'] || DEFAULT_WORKSPACE;
         this.assignmentName = params['id'];
-        this.getAssignmentSettings();
+        this.refresh();
       },
       error: () => {
         this.busyService.stop();
@@ -159,99 +165,105 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     });
   }
 
-  private initForm() {
-  }
-
-  private getAssignmentSettings() {
+  private refresh(): void {
     this.busyService.start();
     this.assignmentState = 'notstarted';
-    this.assignmentService.getAssignmentSettings(this.workspaceName, this.assignmentName)
-      .subscribe({
-        next: (assignmentSettings: AssignmentSettingsInfo) => {
-          this.assignmentSettings = assignmentSettings;
-          this.getGrades(this.workspaceName, this.assignmentName);
-          this.busyService.stop();
-        },
-        error:  () => {
-          this.appService.openSnackBar(false, 'Unable to read assignment settings');
-          this.busyService.stop();
-        }
-      });
-  }
-
-  private getGrades(workspace: string, assignmentName: string) {
-    this.busyService.start();
-    this.assignmentService.getAssignmentGrades(workspace, assignmentName).subscribe({
-      next: (grades: any[]) => {
-        this.assignmentGrades = grades;
-        if (this.assignmentGrades.length > 0) {
-          const keys = Object.keys(grades[0]);
-          if (keys.length > 0) {
-            this.assignmentHeader = keys[0];
-            this.generateDataFromModel();
-          }
-        }
+    this.getAssignmentSettings().pipe(
+      mergeMap(() => this.getAssignmentHierarchy())
+    ).subscribe({
+      next: () => {
+        this.generateDataFromModel();
         this.busyService.stop();
       },
-      error:  (error) => {
-        this.appService.openSnackBar(false, 'Unable to read assignment grades file');
+      error:  () => {
+        this.appService.openSnackBar(false, 'Unable to read assignment settings');
         this.busyService.stop();
       }
     });
+  }
+
+  private getAssignmentSettings(): Observable<AssignmentSettingsInfo> {
+    return this.assignmentService.getAssignmentSettings(this.workspaceName, this.assignmentName)
+      .pipe(
+        tap((assignmentSettings: AssignmentSettingsInfo) => {
+          this.assignmentSettings = assignmentSettings;
+        })
+      );
+  }
+
+  private getAssignmentHierarchy(): Observable<WorkspaceAssignment> {
+    return this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentName)
+      .pipe(
+        tap((workspaceAssignment) => {
+          this.workspaceAssignment = workspaceAssignment;
+        })
+      );
   }
 
   private generateDataFromModel() {
     const values: AssignmentDetails[] = [];
-    this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentName).subscribe((workspaceAssignment) => {
-      this.workspaceAssignment = workspaceAssignment;
-      if (!isNil(workspaceAssignment)) {
-        let index = 0;
-        filter(workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmission) => {
+    if (!isNil(this.workspaceAssignment)) {
 
-           const fullName = workspaceSubmission.studentSurname + (isNil(workspaceSubmission.studentName) ? '' : ', ' + workspaceSubmission.studentName);
 
-          const value: AssignmentDetails = {
-            submissionDirectoryName: workspaceSubmission.name,
-            index: index++,
-            fullName,
-            studentName: workspaceSubmission.studentName,
-            studentSurname: workspaceSubmission.studentSurname,
-            studentNumber: workspaceSubmission.studentId,
-            assignment: '',
-            grade: 0,
-            pdfFile: null,
-            status: '',
-          };
-          const submissionDirectory = find(workspaceSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
-          const feedbackDirectory = find(workspaceSubmission.children, {type: TreeNodeType.FEEDBACK_DIRECTORY});
-          const marksFile = find(workspaceSubmission.children, (c => c.name === MARK_FILE));
-          if (marksFile) {
-            this.assignmentState = 'inprogress';
-            value.date = DateTime.fromJSDate(marksFile.dateModified).toFormat('yyyy-MM-dd HH:mm:ss');
+      let index = 0;
+      const selfId = this.settings.user ? this.settings.user.id : null;
+      filter(this.workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmission) => {
+
+        const submission: Submission = find(this.assignmentSettings.submissions, {directoryName: workspaceSubmission.name});
+        const fullName = workspaceSubmission.studentSurname + (isNil(workspaceSubmission.studentName) ? '' : ', ' + workspaceSubmission.studentName);
+        let markerName: string;
+        if (submission.allocation) {
+
+          if (submission.allocation.id === selfId) {
+            markerName = 'Me';
+          } else {
+            const marker = find(this.settings.markers, {id: submission.allocation.id});
+            if (!isNil(marker)) {
+              markerName = marker.name;
+            }
           }
-          if (submissionDirectory && submissionDirectory.children.length > 0) {
-            value.pdfFile = submissionDirectory.children[0] as WorkspaceFile;
-          } else if (feedbackDirectory && feedbackDirectory.children.length > 0) {
-            value.pdfFile = feedbackDirectory.children[0] as WorkspaceFile;
-          }
-          if (!isNil(value.pdfFile)) {
-            value.assignment = value.pdfFile.name;
-          }
-          const gradesInfo = this.assignmentGrades
-            .find(grade => grade[this.assignmentHeader].toUpperCase() === value.studentNumber.toUpperCase());
-          value.grade = ((gradesInfo && gradesInfo.field5) ? gradesInfo.field5 : 0);
-          value.status = ((gradesInfo && gradesInfo.field7) ? gradesInfo.field7 : 'N/A');
-          values.push(value);
-        });
-        this.dataSource.data = sortBy(values, 'fullName');
-        this.assignmentsLength = values.length;
-        if (!isNil(this.assignmentSettings.dateFinalized)) {
-          this.assignmentState = 'finalized';
         }
-      } else {
-        this.router.navigate([RoutesEnum.MARKER]);
+        const value: AssignmentDetails = {
+          submissionDirectoryName: workspaceSubmission.name,
+          index: index++,
+          fullName,
+          studentName: workspaceSubmission.studentName,
+          studentSurname: workspaceSubmission.studentSurname,
+          studentNumber: workspaceSubmission.studentId,
+          assignment: '',
+          grade: submission.mark,
+          pdfFile: null,
+          lmsStatusText: submission.lmsStatusText ? submission.lmsStatusText : 'N/A',
+          marker: markerName ? markerName : '',
+          state: submission.state
+
+        };
+        const submissionDirectory = find(workspaceSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
+        const feedbackDirectory = find(workspaceSubmission.children, {type: TreeNodeType.FEEDBACK_DIRECTORY});
+        const marksFile = find(workspaceSubmission.children, (c => c.name === MARK_FILE));
+        if (marksFile) {
+          this.assignmentState = 'inprogress';
+          value.date = DateTime.fromJSDate(marksFile.dateModified).toFormat('d MMMM yyyy');
+          value.time = DateTime.fromJSDate(marksFile.dateModified).toFormat('HH:mm:ss');
+        }
+        if (submissionDirectory && submissionDirectory.children.length > 0) {
+          value.pdfFile = submissionDirectory.children[0] as WorkspaceFile;
+        } else if (feedbackDirectory && feedbackDirectory.children.length > 0) {
+          value.pdfFile = feedbackDirectory.children[0] as WorkspaceFile;
+        }
+        if (!isNil(value.pdfFile)) {
+          value.assignment = value.pdfFile.name;
+        }
+        values.push(value);
+      });
+      this.dataSource.data = sortBy(values, 'fullName');
+      this.assignmentsLength = values.length;
+      if (!isNil(this.assignmentSettings.dateFinalized)) {
+        this.assignmentState = 'finalized';
       }
-    });
+    } else {
+      this.router.navigate([RoutesEnum.MARKER]);
+    }
   }
 
 
@@ -270,7 +282,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       pdfFile
     });
 
-    if (isNil(this.assignmentSettings.dateFinalized)) {
+    const selfId = this.settings.user ? this.settings.user.id : null;
+    const submission = find(this.assignmentSettings.submissions, {studentId: element.studentNumber});
+    const canMark = isNil(submission.allocation) || submission.allocation.id === selfId;
+
+    if (isNil(this.assignmentSettings.dateFinalized) && canMark) {
       this.router.navigate([
         RoutesEnum.ASSIGNMENT_MARKER,
         workspace.name,
@@ -305,28 +321,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     const shouldFinalizeAndExportFn = (shouldFinalizeAndExport: boolean) => {
       if (shouldFinalizeAndExport) {
         this.busyService.start();
-        if (!isNil(this.assignmentSettings.rubric)) {
-          this.assignmentService.finalizeAndExportRubric(this.workspaceName, this.assignmentName, this.assignmentSettings.rubric)
-            .subscribe({
-              next: (data: Uint8Array) => {
-                this.onSuccessfulExport(data);
-              },
-              error: (responseError) => {
-                this.alertService.error(responseError);
-                this.busyService.stop();
-              }
-            });
-        } else {
-          this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName).subscribe({
-            next: (blob: Uint8Array) => {
-              this.onSuccessfulExport(blob);
-            },
-            error: (responseError) => {
-              this.alertService.error(responseError);
-              this.busyService.stop();
-            }
-          });
-        }
+        this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName).subscribe({
+          next: (blob: Uint8Array) => {
+            this.onSuccessfulExport(blob);
+          },
+          error: (responseError) => {
+            this.alertService.error(responseError);
+            this.busyService.stop();
+          }
+        });
       }
     };
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldFinalizeAndExportFn);
@@ -345,7 +348,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
         this.assignmentService.refreshWorkspaces().subscribe(() => {
           this.busyService.stop();
-          this.getAssignmentSettings();
+          this.refresh();
         });
       });
 
@@ -385,7 +388,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
     const dialogRef = this.appService.createDialog(RubricViewModalComponent, config);
     dialogRef.afterClosed().subscribe(() => {
-      this.getAssignmentSettings();
+      this.refresh();
     });
   }
 
@@ -495,7 +498,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     const dialogRef = this.appService.createDialog(AllocateMarkersModalComponent, config);
     dialogRef.afterClosed().subscribe((allocations: SubmissionAllocation[]) => {
       const settings = cloneDeep(this.assignmentSettings);
-      settings.allocations = allocations;
+      allocations.forEach((allocation) => {
+        const submission = find(settings.submissions, {directoryName: allocation.submission});
+        submission.allocation = allocation.marker;
+        submission.state = SubmissionState.ASSIGNED_TO_MARKER;
+      });
       this.updateAssignmentSettings(settings);
     });
   }
@@ -504,8 +511,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     this.busyService.start();
     this.assignmentService.updateAssignmentSettings(assignmentSettings, this.workspaceName, this.assignmentName)
       .subscribe({
-        next: (settings) => {
-          this.assignmentSettings = settings;
+        next: () => {
+          this.refresh();
           this.busyService.stop();
         },
         error: (error) => {

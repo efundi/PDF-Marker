@@ -1,22 +1,18 @@
 import {readFile, writeFile} from 'fs/promises';
 import {IComment} from '@shared/info-objects/comment.class';
-import {ensureConfigDirectory} from './config.handler';
-import {COMMENTS_FILE, COULD_NOT_READ_COMMENT_LIST} from '../constants';
+import {COMMENTS_FILE, CONFIG_DIR, COULD_NOT_READ_COMMENT_LIST} from '../constants';
 import {existsSync} from 'fs';
 import {isJson} from '../utils';
 import {IpcMainInvokeEvent} from 'electron';
 import {randomUUID} from 'crypto';
 
 function ensureCommentsFile(): Promise<string> {
-  return ensureConfigDirectory()
-    .then((configDirectory) => {
-      if (existsSync(configDirectory + COMMENTS_FILE)) {
-        return configDirectory + COMMENTS_FILE;
-      } else {
-        return writeFile(configDirectory + COMMENTS_FILE, '[]')
-          .then(() => configDirectory + COMMENTS_FILE);
-      }
-    });
+  if (existsSync(CONFIG_DIR + COMMENTS_FILE)) {
+    return Promise.resolve(CONFIG_DIR + COMMENTS_FILE);
+  } else {
+    return writeFile(CONFIG_DIR + COMMENTS_FILE, '[]')
+      .then(() => CONFIG_DIR + COMMENTS_FILE);
+  }
 }
 
 export function updateCommentsFile(comments: IComment[]): Promise<IComment[]> {
@@ -28,12 +24,12 @@ export function updateCommentsFile(comments: IComment[]): Promise<IComment[]> {
 
 export function getComments(): Promise<IComment[]> {
   return ensureCommentsFile().then((commentsFilePath) => {
-      return readFile(commentsFilePath).then((data) => {
-        if (!isJson(data)) {
-          return Promise.reject(COULD_NOT_READ_COMMENT_LIST);
-        }
-        return getCommentsDetails(JSON.parse(data.toString()));
-      });
+    return readFile(commentsFilePath).then((data) => {
+      if (!isJson(data)) {
+        return Promise.reject(COULD_NOT_READ_COMMENT_LIST);
+      }
+      return getCommentsDetails(JSON.parse(data.toString()));
+    });
   });
 }
 

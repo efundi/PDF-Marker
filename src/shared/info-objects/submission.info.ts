@@ -19,7 +19,7 @@ export class SubmissionInfo {
   type: SubmissionType;
   version = SubmissionInfoVersion;
   pageSettings: PageSettings[] = [];
-  marks: number[] | MarkInfo[][];
+  marks: number[] | MarkInfo[][] = [];
 
   constructor(version: number = SubmissionInfoVersion) {
     this.version = version;

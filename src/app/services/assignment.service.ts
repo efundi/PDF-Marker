@@ -91,10 +91,6 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.getAssignmentSettings(workspaceName, assignmentName));
   }
 
-  getAssignmentGrades(workspaceName: string, assignmentName: string): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.getGrades(workspaceName, assignmentName));
-  }
-
   getFile(pdfFileLocation: string): Observable<Uint8Array> {
     return fromIpcResponse(this.assignmentApi.getPdfFile(pdfFileLocation));
   }
@@ -161,10 +157,6 @@ export class AssignmentService {
 
   finalizeAndExport(workspaceName: string = null, assignmentName: string): Observable<Uint8Array> {
     return fromIpcResponse(this.assignmentApi.finalizeAssignment(workspaceName, assignmentName));
-  }
-
-  finalizeAndExportRubric(workspaceName: string, assignmentName: string, assignmentRubric: IRubric): Observable<Uint8Array> {
-    return fromIpcResponse(this.assignmentApi.finalizeAssignmentRubric(workspaceName, assignmentName, assignmentRubric.name));
   }
 
   createAssignment(createAssignmentInfo: CreateAssignmentInfo): Observable<any> {
