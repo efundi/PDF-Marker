@@ -67,3 +67,18 @@
     width: 100%;
   }
 }
+
+.member-item:hover {
+  background: #DDDDDD;
+  border-radius: 7px;
+  padding-right: 5px;
+}
+
+.no-members {
+  min-height: 10rem;
+}
+
+.member-item.cdk-drag-preview .drag-handle{
+  pointer-events: auto;
+  cursor: grabbing;
+}

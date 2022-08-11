@@ -1,4 +1,13 @@
-import {ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  QueryList,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
 import {UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NgForm, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
@@ -56,8 +65,14 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
   @ViewChild(CdkDropList)
   cdkDropList: CdkDropList;
 
+  @ViewChild('newGroupNameInput')
+  newGroupNameInput: ElementRef;
+
   @ViewChildren('membersList')
   groupDropLists: QueryList<CdkDropList>;
+
+  @ViewChildren('groupNameInput')
+  groupNameInputs: QueryList<ElementRef>;
 
   activeGroupIndex;
 
@@ -148,7 +163,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
       id,
       name: this.formGroup.value.groupName
     });
-    this.markersManageComponent.saveSettings(settings).subscribe({
+    this.markersManageComponent.saveSettings(settings, 'Group added').subscribe({
       next: () => {
         this.isEditing = false;
         this.formGroup.reset();
@@ -173,7 +188,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
       markerId,
       groupId
     });
-    this.markersManageComponent.saveSettings(settings).subscribe({
+    this.markersManageComponent.saveSettings(settings, 'Marker added to group').subscribe({
       next: () => {
       },
       error: () => {
@@ -190,7 +205,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
     remove(settings.groupMembers, (gm) => {
       return gm.groupId === groupId && gm.markerId === markerId;
     });
-    this.markersManageComponent.saveSettings(settings).subscribe({
+    this.markersManageComponent.saveSettings(settings, 'Marker removed from group').subscribe({
       next: () => {
       },
       error: () => {
@@ -253,14 +268,14 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
         remove(updateSettings.groups, (g) => g.id === groupItem.groupId);
         remove(updateSettings.groupMembers, (gm) => gm.groupId === groupItem.groupId);
 
-        this.markersManageComponent.saveSettings(updateSettings).subscribe(({
+        this.markersManageComponent.saveSettings(updateSettings, 'Group removed').subscribe({
           next: () => {
 
           },
           error: () => {
 
           }
-        }));
+        });
       }
     });
   }
@@ -274,9 +289,10 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
     return this.groupsFormArray.at(index).get(name) as UntypedFormControl;
   }
 
-  editGroup($event: MouseEvent, groupItem: GroupItem) {
+  editGroup($event: MouseEvent, index: number, groupItem: GroupItem) {
     $event.stopImmediatePropagation();
     groupItem.editing = true;
+    setTimeout(() => this.groupNameInputs.get(index).nativeElement.focus());
   }
 
   cancelEdit($event: MouseEvent, $index: number, groupItem: GroupItem) {
@@ -289,6 +305,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
     $event.stopImmediatePropagation();
     this.updateGroup(index, groupItem);
   }
+
   updateGroupClick($event: MouseEvent, index: number, groupItem: GroupItem) {
     $event.stopImmediatePropagation();
     this.updateGroup(index, groupItem);
@@ -300,7 +317,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
     const group = find(updateSettings.groups, {id: groupItem.groupId});
     group.name = formValue;
 
-    this.markersManageComponent.saveSettings(updateSettings).subscribe({
+    this.markersManageComponent.saveSettings(updateSettings, 'Group updated').subscribe({
       next: () => {
 
       },
@@ -308,5 +325,10 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
 
       }
     });
+  }
+
+  showAddGroup() {
+    this.isEditing = true;
+    setTimeout(() => this.newGroupNameInput.nativeElement.focus());
   }
 }
