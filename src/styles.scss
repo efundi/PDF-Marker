@@ -378,5 +378,7 @@ pdf-marker-rubric-criteria-level-block {
 }
 .cursor-not-allowed     { cursor: not-allowed; }
 .cursor-pointer     { cursor: pointer; }
+.cursor-grab     { cursor: grab; }
+.cursor-grabbing     { cursor: grabbing; }
 
 @import 'scss/compatibility';

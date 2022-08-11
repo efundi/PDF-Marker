@@ -31,7 +31,7 @@ import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
 import {MatSort, MatSortable} from '@angular/material/sort';
-import {cloneDeep, filter, find, isNil, sortBy} from 'lodash';
+import {cloneDeep, filter, find, isEmpty, isNil, sortBy} from 'lodash';
 import {
   StudentSubmission,
   TreeNodeType,
@@ -498,6 +498,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
     const dialogRef = this.appService.createDialog(AllocateMarkersModalComponent, config);
     dialogRef.afterClosed().subscribe((allocations: SubmissionAllocation[]) => {
+      if (isEmpty(allocations)) {
+        return; // Nothing to do if there is no allocations
+      }
       const settings = cloneDeep(this.assignmentSettings);
       settings.owner = {
         id: this.settings.user.id,

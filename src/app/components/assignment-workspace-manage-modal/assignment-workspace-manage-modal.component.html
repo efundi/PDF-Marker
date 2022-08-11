@@ -14,10 +14,11 @@
         <mat-icon>edit</mat-icon>
       </button>
       <button *ngIf="isEditing"
+              class="fw-bold"
               color="primary" type="button" matSuffix mat-icon-button matTooltip="Save" (click)="saveWorkspaceName()">
         <mat-icon>done</mat-icon>
       </button>
-      <button *ngIf="isEditing" type="button" color="accent" matSuffix  mat-icon-button matTooltip="Cancel" (click)="onCancel()">
+      <button *ngIf="isEditing" type="button" color="accent" matSuffix  class="fw-bold" mat-icon-button matTooltip="Cancel" (click)="onCancel()">
         <mat-icon>close</mat-icon>
       </button>
     </mat-form-field>

@@ -283,11 +283,11 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
       };
       this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, (accepted) => {
         if (accepted) {
-          this.saveSettings(updateSettings);
+          this.saveSettings(updateSettings, 'Marker added');
         }
       });
     } else {
-      this.saveSettings(updateSettings);
+      this.saveSettings(updateSettings, 'Marker added');
     }
   }
 
@@ -303,13 +303,14 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
       if (accepted) {
         const updateSettings = cloneDeep(this.originalSettings);
         updateSettings.markers = remove(updateSettings.markers, (item) => item.id !== element.id);
-        this.saveSettings(updateSettings);
+        updateSettings.groupMembers = remove(updateSettings.groupMembers, (item) => item.markerId !== element.id);
+        this.saveSettings(updateSettings, 'Marker removed');
       }
     });
   }
 
-  private saveSettings(settings: SettingInfo): void {
-    this.markersManageComponent.saveSettings(settings).subscribe({
+  private saveSettings(settings: SettingInfo, message: string): void {
+    this.markersManageComponent.saveSettings(settings, message).subscribe({
       next: () => {
         this.markerFormGroup.reset();
         this.markerForm.resetForm();
@@ -345,11 +346,11 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
       };
       this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, (accepted) => {
         if (accepted) {
-          this.saveSettings(updateSettings);
+          this.saveSettings(updateSettings, 'Marker updated');
         }
       });
     } else {
-      this.saveSettings(updateSettings);
+      this.saveSettings(updateSettings, 'Marker updated');
     }
   }
 }
