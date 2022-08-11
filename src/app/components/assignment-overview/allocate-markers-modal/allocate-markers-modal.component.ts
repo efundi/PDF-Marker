@@ -1,8 +1,8 @@
 import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
-import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {FormBuilder, FormControl, FormGroup, ValidatorFn, Validators} from '@angular/forms';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {SettingsService} from '../../../services/settings.service';
-import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
+import {GroupMember, Marker, SettingInfo} from '@shared/info-objects/setting.info';
 import {Subscription} from 'rxjs';
 import {filter, find, isNil, shuffle, sortBy} from 'lodash';
 import {StudentSubmission, TreeNodeType, WorkspaceAssignment, WorkspaceFile} from '@shared/info-objects/workspace';
@@ -41,15 +41,40 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
 
   private initForm(): void {
     this.formGroup = this.formBuilder.group({
-      groupId: [null as string, Validators.required],
+      groupId: [null as string, Validators.compose([Validators.required, this.formEmptyGroupValidator()])],
       includeMe: [false]
     });
 
     this.formSubscription = this.formGroup.valueChanges.subscribe((value) => {
       if (this.formGroup.valid) {
         this.calculateAllocation(value.groupId, value.includeMe);
+      } else {
+        this.allocations = [];
       }
     });
+  }
+
+  /**
+   * Creates a form validatorFn that can validate unique email
+   * @param existingId
+   * @private
+   */
+  private formEmptyGroupValidator(): ValidatorFn {
+    return (ac: FormControl<string>) => {
+      if (this.emptyGroupValidator(ac.value)) {
+        return null;
+      } else {
+        return {emptyGroup: 'Group has no members'};
+      }
+    };
+  }
+
+  private emptyGroupValidator(groupId: string): boolean{
+    if (isNil(groupId)) {
+      return true;
+    }
+    const groupMembers: GroupMember[] = filter(this.settings.groupMembers, {groupId});
+    return groupMembers.length > 0;
   }
 
   ngOnDestroy() {
