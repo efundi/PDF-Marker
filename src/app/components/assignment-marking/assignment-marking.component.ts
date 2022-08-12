@@ -14,7 +14,7 @@ import {filter, from, mergeMap, Observable, Subscription, tap, throwError} from 
 import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
-import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo, AssignmentState} from '@shared/info-objects/assignment-settings.info';
 import {getDocument, GlobalWorkerOptions, PDFDocumentProxy} from 'pdfjs-dist';
 import {cloneDeep, isNil, times} from 'lodash';
 import {MarkInfo} from '@shared/info-objects/mark.info';
@@ -34,6 +34,9 @@ import {
   SubmissionType
 } from '@shared/info-objects/submission.info';
 import {RoutesEnum} from '../../utils/routes.enum';
+import {SettingsService} from '../../services/settings.service';
+import {SettingInfo} from '@shared/info-objects/setting.info';
+import {PreviewMarksComponent} from './preview-marks/preview-marks.component';
 
 
 GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
@@ -50,10 +53,12 @@ GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
   }]
 })
 export class AssignmentMarkingComponent implements OnInit, OnDestroy {
+  private settings: SettingInfo;
 
   constructor(private renderer: Renderer2,
               private assignmentService: AssignmentService,
               private busyService: BusyService,
+              private settingsService: SettingsService,
               private el: ElementRef,
               private dialog: MatDialog,
               private activatedRoute: ActivatedRoute,
@@ -79,6 +84,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   rubric: IRubric;
   showRubric = false;
   showPdf = true;
+  editEnabled = true;
 
   private workspaceName: string;
   private assignmentName: string;
@@ -117,6 +123,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       next: () => {
         this.appService.initializeScrollPosition();
         this.isPdfLoaded = true;
+
+        this.editEnabled = this.assignmentSettings.state !== AssignmentState.SENT_FOR_REVIEW;
+
         this.busyService.stop();
       },
       error: (error) => {
@@ -129,13 +138,16 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
-      this.assignmentMarkingSessionService.reset();
-      this.workspaceName = params['workspaceName'];
-      this.assignmentName = params['assignmentName'];
-      this.pdf = params['pdf'];
-      this.loadAssignment();
+    this.loadSettings().subscribe(() => {
+      this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
+        this.assignmentMarkingSessionService.reset();
+        this.workspaceName = params['workspaceName'];
+        this.assignmentName = params['assignmentName'];
+        this.pdf = params['pdf'];
+        this.loadAssignment();
+      });
     });
+
 
     this.colorChangeSubscription = this.assignmentMarkingSessionService.colourChanged.subscribe((colour) => {
       this.onColourChanged(colour);
@@ -154,6 +166,13 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     });
   }
 
+
+  private loadSettings(): Observable<SettingInfo> {
+    return this.settingsService.getConfigurations()
+      .pipe(
+        tap((settings) => this.settings = settings)
+      )
+  }
 
   private loadPdf(data: Uint8Array): Observable<PDFDocumentProxy> {
     let promise: Promise<any> = Promise.resolve();
@@ -238,7 +257,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   private onColourChanged(colour: string) {
-    this.onAssignmentSettings({
+    this.updateAssignmentSettings({
       ...this.assignmentSettings,
       defaultColour: colour
     });
@@ -261,6 +280,8 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       case 'save'     :   this.saveMarks().subscribe();
         break;
       case 'clearAll' :   this.clearMarks();
+        break;
+      case 'previewMarks' :   this.previewMarks();
         break;
       case 'prevPage' :   this.onPagedChanged(this.currentPage - 1);
         break;
@@ -289,7 +310,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     }
   }
 
-  onAssignmentSettings(settings: AssignmentSettingsInfo) {
+  private updateAssignmentSettings(settings: AssignmentSettingsInfo) {
     this.busyService.start();
     this.assignmentService.updateAssignmentSettings(settings, this.workspaceName, this.assignmentName).subscribe({
       next: (assignmentSettings: AssignmentSettingsInfo) => {
@@ -404,6 +425,21 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
   }
 
+
+  private previewMarks() {
+    const config: MatDialogConfig = new MatDialogConfig();
+    config.width = '400px';
+    config.height = '500px';
+    config.disableClose = true;
+
+    config.data = {
+      assignmentPath: this.pdf,
+      submissionInfo: this.submissionInfo,
+      defaultTick: this.defaultFullMark,
+      incorrectTick: this.defaultIncorrectMark
+    };
+    this.appService.createDialog(PreviewMarksComponent, config);
+  }
 
   openNewMarkingCommentModal(): MatDialogConfig {
     const config = new MatDialogConfig();

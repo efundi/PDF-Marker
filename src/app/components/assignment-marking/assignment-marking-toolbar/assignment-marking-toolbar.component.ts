@@ -38,6 +38,12 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
   @Input()
   pages: number;
 
+  /**
+   * Indicator if editing is enabled
+   */
+  @Input()
+  editEnabled = true;
+
   @Input()
   containsRubric: boolean;
 

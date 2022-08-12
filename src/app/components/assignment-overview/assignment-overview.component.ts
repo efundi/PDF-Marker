@@ -5,7 +5,7 @@ import {forkJoin, mergeMap, Observable, Subscription, tap} from 'rxjs';
 import {AppService} from '../../services/app.service';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
-import {MatDialogConfig} from '@angular/material/dialog';
+import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {
   YesAndNoConfirmationDialogComponent
 } from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
@@ -14,7 +14,9 @@ import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {
   AssignmentSettingsInfo,
+  AssignmentState,
   DistributionFormat,
+  SourceFormat,
   Submission,
   SubmissionAllocation,
   SubmissionState
@@ -31,7 +33,7 @@ import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
 import {MatSort, MatSortable} from '@angular/material/sort';
-import {cloneDeep, filter, find, isEmpty, isNil, sortBy} from 'lodash';
+import {cloneDeep, filter, find, forEach, isEmpty, isNil, sortBy} from 'lodash';
 import {
   StudentSubmission,
   TreeNodeType,
@@ -88,8 +90,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   @ViewChild(MatSort, {static: true})
   sort: MatSort;
 
-  assignmentState: 'notstarted' | 'inprogress' | 'finalized' = 'notstarted';
   SubmissionState = SubmissionState;
+  AssignmentState = AssignmentState;
+  SourceFormat = SourceFormat;
 
   private subscription: Subscription;
   private sortSubscription: Subscription;
@@ -101,6 +104,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   private workspaceName: string;
   assignmentName: string;
+  isAssignmentOwner = false;
 
   constructor(private assignmentService: AssignmentService,
               private router: Router,
@@ -112,7 +116,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
               private busyService: BusyService,
               private rubricService: RubricService,
               private fb: UntypedFormBuilder,
-              private viewContainerRef: ViewContainerRef) {
+              private viewContainerRef: ViewContainerRef,
+              private dialog: MatDialog) {
   }
 
 
@@ -168,7 +173,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   private refresh(): void {
     this.busyService.start();
-    this.assignmentState = 'notstarted';
     this.getAssignmentSettings().pipe(
       mergeMap(() => this.getAssignmentHierarchy())
     ).subscribe({
@@ -201,10 +205,20 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       );
   }
 
+  private calculateIsAssignmentOwner(): boolean {
+    const isStandalone = this.assignmentSettings.distributionFormat === DistributionFormat.STANDALONE;
+    let isOwner = true;
+    if (!isStandalone) {
+      const user = this.settings.user;
+      isOwner = !isNil(user) && this.assignmentSettings.owner.id === this.settings.user.id;
+    }
+    return isStandalone || isOwner;
+  }
+
   private generateDataFromModel() {
     const values: AssignmentDetails[] = [];
     if (!isNil(this.workspaceAssignment)) {
-
+      this.isAssignmentOwner = this.calculateIsAssignmentOwner();
 
       let index = 0;
       const selfId = this.settings.user ? this.settings.user.id : null;
@@ -243,7 +257,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         const feedbackDirectory = find(workspaceSubmission.children, {type: TreeNodeType.FEEDBACK_DIRECTORY});
         const marksFile = find(workspaceSubmission.children, (c => c.name === MARK_FILE));
         if (marksFile) {
-          this.assignmentState = 'inprogress';
           value.date = DateTime.fromJSDate(marksFile.dateModified).toFormat('d MMMM yyyy');
           value.time = DateTime.fromJSDate(marksFile.dateModified).toFormat('HH:mm:ss');
         }
@@ -259,9 +272,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       });
       this.dataSource.data = sortBy(values, 'fullName');
       this.assignmentsLength = values.length;
-      if (!isNil(this.assignmentSettings.dateFinalized)) {
-        this.assignmentState = 'finalized';
-      }
     } else {
       this.router.navigate([RoutesEnum.MARKER]);
     }
@@ -287,7 +297,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     const submission = find(this.assignmentSettings.submissions, {studentId: element.studentNumber});
     const canMark = isNil(submission.allocation) || submission.allocation.id === selfId;
 
-    if (isNil(this.assignmentSettings.dateFinalized) && canMark) {
+    if (this.assignmentSettings.state !== AssignmentState.FINALIZED && (this.assignmentSettings.state === AssignmentState.SENT_FOR_REVIEW || canMark)) {
       this.router.navigate([
         RoutesEnum.ASSIGNMENT_MARKER,
         workspace.name,
@@ -439,7 +449,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     this.busyService.start();
     this.assignmentService.shareExport(shareRequest).subscribe({
       next: (data) => {
-        this.onSuccessfulShareExport(data);
+        this.saveData(data, this.assignmentName + '_share.zip');
         this.busyService.stop();
       },
       error: (error) => {
@@ -449,15 +459,14 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     });
   }
 
-  private onSuccessfulShareExport(data: Uint8Array) {
+  private saveData(data: Uint8Array, filename: string) {
     this.alertService.clear();
     this.busyService.start();
-    const fileName: string = this.assignmentName + '_share.zip';
-    this.appService.saveFile({ filename: fileName, buffer: data, name: 'Zip File', extension: ['zip']})
+    this.appService.saveFile({ filename, buffer: data, name: 'Zip File', extension: ['zip']})
       .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
         this.busyService.stop();
         if (appSelectedPathInfo.selectedPath) {
-          this.alertService.success(`Successfully exported ${fileName}.`);
+          this.alertService.success(`Successfully exported ${filename}.`);
         } else if (appSelectedPathInfo.error) {
           this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
         }
@@ -530,4 +539,49 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         }
       });
   }
+
+  private checkAllSubmissionsMarked(): boolean {
+    let marked = true;
+    forEach(this.assignmentSettings.submissions, ( submission) => {
+      marked = submission.state === SubmissionState.MARKED;
+      return marked;
+    });
+    return marked;
+  }
+
+  private exportForReview() {
+    this.busyService.start();
+    this.assignmentService.exportForReview(this.workspaceName, this.assignmentName).subscribe({
+      next: (buffer) => {
+        this.saveData(buffer, this.assignmentName + '_marked.zip');
+        this.refresh();
+        this.busyService.stop();
+      },
+      error: () => {
+        this.busyService.stop();
+      }
+    });
+  }
+
+  onExportForReview($event: MouseEvent) {
+    const allMarked = this.checkAllSubmissionsMarked();
+      const config = new MatDialogConfig();
+      config.width = '600px';
+      config.maxWidth = '600px';
+      let message = 'You are about to export the assignment for review, the assignment will be locked for marking after export. ';
+      if (allMarked) {
+        message += 'Do you want to continue?';
+      } else {
+        message += 'There are un-marked submissions, do you want to continue?';
+      }
+      config.data = {
+        title: 'Export for review',
+        message
+      };
+      this.dialog.open(YesAndNoConfirmationDialogComponent, config).afterClosed().subscribe((confirmed) => {
+        if (confirmed) {
+          this.exportForReview();
+        }
+      });
+    }
 }

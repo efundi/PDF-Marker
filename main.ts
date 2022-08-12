@@ -4,7 +4,6 @@ import * as path from 'path';
 import {
   createAssignment,
   finalizeAssignment,
-  getAssignmentGlobalSettings,
   getAssignments,
   getAssignmentSettings,
   getMarks,
@@ -13,7 +12,7 @@ import {
   saveMarks,
   shareExport,
   updateAssignment,
-  updateAssignmentSettings
+  updateAssignmentSettings, exportForReview
 } from './src-electron/ipc/assignment.handler';
 import {
   deleteRubric,
@@ -178,10 +177,10 @@ try {
     ipcMain.handle('assignments:saveMarks', toIpcResponse(saveMarks));
     ipcMain.handle('assignments:finalizeAssignment', toIpcResponse(finalizeAssignment));
     ipcMain.handle('assignments:getAssignmentSettings', toIpcResponse(getAssignmentSettings));
-    ipcMain.handle('assignments:getAssignmentGlobalSettings', toIpcResponse(getAssignmentGlobalSettings));
     ipcMain.handle('assignments:updateAssignmentSettings', toIpcResponse(updateAssignmentSettings));
     ipcMain.handle('assignments:shareExport', toIpcResponse(shareExport));
     ipcMain.handle('assignments:getMarks', toIpcResponse(getMarks));
+    ipcMain.handle('assignments:exportForReview', toIpcResponse(exportForReview));
     ipcMain.handle('assignments:updateAssignmentRubric', toIpcResponse(updateAssignmentRubric));
     ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
 

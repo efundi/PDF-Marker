@@ -8,13 +8,15 @@
     <div class="pdf-marker-assignment-overview-assignment-name">
       <h1 >{{ assignmentName }}</h1>
       <div>
-        <span class="badge text-bg-success" *ngIf="assignmentState === 'finalized'">Finalized</span>
-        <span class="badge text-bg-secondary" *ngIf="assignmentState === 'inprogress'">In Progress</span>
-        <span class="badge text-bg-secondary" *ngIf="assignmentState === 'notstarted'">Not Started</span>
+        <span class="badge text-bg-success" *ngIf="assignmentSettings?.state === AssignmentState.FINALIZED">Finalized</span>
+        <span class="badge text-bg-secondary" *ngIf="assignmentSettings?.state === AssignmentState.IN_PROGRESS">In Progress</span>
+        <span class="badge text-bg-secondary" *ngIf="assignmentSettings?.state === AssignmentState.NOT_STARTED">Not Started</span>
+        <span class="badge text-bg-success" *ngIf="assignmentSettings?.state === AssignmentState.SENT_FOR_REVIEW">Sent for Review</span>
       </div>
     </div>
     <div class="pdf-marker-assignment-overview-buttons">
       <button
+        [disabled]="!isAssignmentOwner"
         color="primary"
         mat-button
         mat-icon-button
@@ -33,16 +35,16 @@
       </button>
       <button
         color="primary"
-        [disabled]="!assignmentSettings?.isCreated"
+        [disabled]="!isAssignmentOwner || assignmentSettings?.sourceFormat !== SourceFormat.MANUAL"
         mat-button
         mat-icon-button
         matTooltip="Manage Submissions"
         (click)="manageStudents()">
-        <mat-icon [class.pdf-icon-disabled]="!assignmentSettings?.isCreated">person</mat-icon>
+        <mat-icon [class.pdf-icon-disabled]="assignmentSettings?.sourceFormat !== SourceFormat.MANUAL">person</mat-icon>
       </button>
       <button
         color="primary"
-        [disabled]="!assignmentSettings?.rubric"
+        [disabled]="!isAssignmentOwner || !assignmentSettings?.rubric"
         mat-button
         mat-icon-button
         matTooltip="Manage Rubric"
@@ -50,12 +52,23 @@
         <mat-icon [class.pdf-icon-disabled]="!assignmentSettings?.rubric">apps</mat-icon>
       </button>
       <button
+        *ngIf="isAssignmentOwner"
         color="primary"
         [disabled]="!isSettings"
         mat-button
         mat-icon-button
         matTooltip="Finalise and Export Assignment"
         (click)="onFinalizeAndExport($event)">
+        <mat-icon >archive</mat-icon>
+      </button>
+      <button
+        *ngIf="!isAssignmentOwner"
+        color="primary"
+        [disabled]="!isSettings"
+        mat-button
+        mat-icon-button
+        matTooltip="Export for review"
+        (click)="onExportForReview($event)">
         <mat-icon >archive</mat-icon>
       </button>
     </div>

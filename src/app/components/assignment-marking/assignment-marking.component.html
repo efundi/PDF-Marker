@@ -4,6 +4,7 @@
     (currentPageChange)="onPagedChanged($event)"
     [pages]="pdfDocument.numPages"
     [containsRubric]="!!rubric"
+    [editEnabled]="editEnabled"
     (control)="onControl($event)">
   </pdf-marker-assignment-marking-toolbar>
 </div>

@@ -46,6 +46,13 @@ mat-toolbar {
       line-height: normal;
     }
 
+
+    &[disabled]{
+      border-color: #B5B5B5;
+      .rotate-icons {
+        color: #B5B5B5;
+      }
+    }
   }
 
 
