@@ -28,7 +28,6 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   updateAssignment: (updateRequest: UpdateAssignment) => ipcRenderer.invoke('assignments:update', updateRequest),
   saveMarks: (location: string, submissionInfo: SubmissionInfo) => ipcRenderer.invoke('assignments:saveMarks', location, submissionInfo),
   getAssignmentSettings: (workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:getAssignmentSettings', workspaceName, assignmentName),
-  getAssignmentGlobalSettings: (location: string) => ipcRenderer.invoke('assignments:getAssignmentGlobalSettings', location),
   updateAssignmentSettings: (updatedSettings: any, workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:updateAssignmentSettings', updatedSettings, workspaceName, assignmentName),
   finalizeAssignment: (workspaceFolder: any, assignmentName: string) => ipcRenderer.invoke('assignments:finalizeAssignment', workspaceFolder, assignmentName),
   getMarks: (location: string) => ipcRenderer.invoke('assignments:getMarks', location),

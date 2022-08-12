@@ -538,11 +538,6 @@ export function getAssignmentSettings(
   return getAssignmentSettingsFor(workspaceName, assignmentName);
 }
 
-
-export function getAssignmentGlobalSettings(event: IpcMainInvokeEvent, location: string): Promise<AssignmentSettingsInfo> {
-  return getAssignmentSettingsAt(location);
-}
-
 export function writeAssignmentSettingsAt(
   assignmentSettings: AssignmentSettingsInfo,
   assignmentAbsolutePath: string): Promise<AssignmentSettingsInfo> {

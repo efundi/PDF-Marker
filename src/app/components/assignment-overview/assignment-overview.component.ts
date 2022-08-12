@@ -565,21 +565,23 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   onExportForReview($event: MouseEvent) {
     const allMarked = this.checkAllSubmissionsMarked();
-    if (!allMarked) {
       const config = new MatDialogConfig();
-      config.width = '400px';
-      config.maxWidth = '400px';
+      config.width = '600px';
+      config.maxWidth = '600px';
+      let message = 'You are about to export the assignment for review, the assignment will be locked for marking after export. ';
+      if (allMarked) {
+        message += 'Do you want to continue?';
+      } else {
+        message += 'There are un-marked submissions, do you want to continue?';
+      }
       config.data = {
         title: 'Export for review',
-        message: 'You are about to export the assignment for review, the assignment will be locked for marking after export. There are un-marked submissions, do you want to continue?',
+        message
       };
       this.dialog.open(YesAndNoConfirmationDialogComponent, config).afterClosed().subscribe((confirmed) => {
         if (confirmed) {
           this.exportForReview();
         }
       });
-    } else {
-      this.exportForReview();
     }
-  }
 }

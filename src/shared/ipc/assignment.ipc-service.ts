@@ -15,7 +15,6 @@ export interface AssignmentIpcService {
   finalizeAssignment(workspaceFolder: string, assignmentName: string): Promise<IpcResponse<Uint8Array>>;
   exportForReview(workspaceFolder: string, assignmentName: string): Promise<IpcResponse<Uint8Array>>;
   getAssignmentSettings(workspaceName: string, location: string): Promise<IpcResponse<any>>;
-  getAssignmentGlobalSettings(location: string): Promise<IpcResponse<any>>;
   getMarks(location: string): Promise<IpcResponse<SubmissionInfo>>;
   updateAssignmentSettings(updatedSettings: any, workspaceName: string, assignmentName: string): Promise<IpcResponse<any>>;
   shareExport(shareRequest: ShareAssignments): Promise<IpcResponse<any>>;

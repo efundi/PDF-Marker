@@ -4,7 +4,6 @@ import * as path from 'path';
 import {
   createAssignment,
   finalizeAssignment,
-  getAssignmentGlobalSettings,
   getAssignments,
   getAssignmentSettings,
   getMarks,
@@ -178,7 +177,6 @@ try {
     ipcMain.handle('assignments:saveMarks', toIpcResponse(saveMarks));
     ipcMain.handle('assignments:finalizeAssignment', toIpcResponse(finalizeAssignment));
     ipcMain.handle('assignments:getAssignmentSettings', toIpcResponse(getAssignmentSettings));
-    ipcMain.handle('assignments:getAssignmentGlobalSettings', toIpcResponse(getAssignmentGlobalSettings));
     ipcMain.handle('assignments:updateAssignmentSettings', toIpcResponse(updateAssignmentSettings));
     ipcMain.handle('assignments:shareExport', toIpcResponse(shareExport));
     ipcMain.handle('assignments:getMarks', toIpcResponse(getMarks));
