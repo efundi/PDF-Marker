@@ -4,6 +4,7 @@ import {fromIpcResponse} from './ipc.utils';
 import {ImportIpcService} from '@shared/ipc/import.ipc-service';
 import {Observable} from 'rxjs';
 import {TreeNode} from '@shared/info-objects/workspace';
+import {AssignmentValidateResultInfo} from '@shared/info-objects/assignment-validate-result.info';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +21,7 @@ export class ImportService {
     return fromIpcResponse(this.importService.importZip(data));
   }
 
-  validateZipFile(filePath: string, format: string): Observable<any> {
+  validateZipFile(filePath: string, format: string): Observable<AssignmentValidateResultInfo> {
     return fromIpcResponse(this.importService.validateZipFile(filePath, format));
   }
 

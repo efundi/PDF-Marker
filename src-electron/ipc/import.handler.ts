@@ -3,24 +3,28 @@ import * as glob from 'glob';
 import {basename, sep} from 'path';
 import {
   AssignmentSettingsInfo,
-  DEFAULT_ASSIGNMENT_SETTINGS, SourceFormat
+  AssignmentState,
+  DEFAULT_ASSIGNMENT_SETTINGS,
+  DistributionFormat,
+  SourceFormat
 } from '@shared/info-objects/assignment-settings.info';
 import {IpcMainInvokeEvent} from 'electron';
 import {ImportInfo} from '@shared/info-objects/import.info';
-import {cloneDeep, isNil} from 'lodash';
+import {cloneDeep, isNil, every} from 'lodash';
 import {readFile} from 'fs/promises';
 import {getRubrics, writeRubricFile} from './rubric.handler';
 import {EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, NOT_PROVIDED_RUBRIC} from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
-import {deleteFolderRecursive, extractAssignmentZipFile, isFolder} from '../utils';
+import {deleteFolderRecursive, extractAssignmentZipFile, isFolder, isNullOrUndefinedOrEmpty} from '../utils';
 
-import JSZip from 'jszip';
+import JSZip, {JSZipObject} from 'jszip';
 import {getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
 import {writeAssignmentSettingsFor} from './assignment.handler';
 import {getConfig} from './config.handler';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {ASSIGNMENT_ROOT_FILES} from '@shared/constants/constants';
+import {ASSIGNMENT_ROOT_FILES, SETTING_FILE} from '@shared/constants/constants';
+import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
 
 /**
  * Returns a list of existing folders in the workspace
@@ -173,7 +177,7 @@ export function getZipEntries(event: IpcMainInvokeEvent, file: string): Promise<
 }
 
 
-export function validateZipFile(event: IpcMainInvokeEvent, file: string, format: string): Promise<any> {
+export function validateZipFile(event: IpcMainInvokeEvent, file: string, format: string): Promise<AssignmentValidateResultInfo> {
   if (format === 'Assignment') {
     return validateZipAssignmentFile(file);
   } else {
@@ -187,22 +191,61 @@ function readZipFile(file: string): Promise<JSZip> {
     .catch(() => Promise.reject('Error trying to decipher zip file format validity!'));
 }
 
-function validateZipAssignmentFile(file: string): Promise<any> {
+function validateZipAssignmentFile(file: string): Promise<AssignmentValidateResultInfo> {
   return readZipFile(file).then((zip) => {
     const filePaths = Object.keys(zip.files);
-    for (const filePath of filePaths) {
-      const path = filePath.split('/');
-      if (path[1] !== undefined && ASSIGNMENT_ROOT_FILES.indexOf(path[1]) !== -1) {
-        return true;
-      }
-    }
+    const assignmentName = filePaths[0].split('/')[0];
+    if (zip.files[assignmentName + '/' + SETTING_FILE]) {
+      const settingsFileZip: JSZipObject = zip.files[assignmentName + '/' + SETTING_FILE];
+      // If the zip contains a settings file, we must check if it is for this marker
+      return settingsFileZip.async('nodebuffer').then((data) => {
+        const assignmentSettings: AssignmentSettingsInfo = JSON.parse(data.toString());
+        if (assignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
+          return Promise.reject('Assignment is not in the expected distribution type.');
+        }
+        if (assignmentSettings.state === AssignmentState.FINALIZED || assignmentSettings.state === AssignmentState.SENT_FOR_REVIEW) {
+          return Promise.reject('Assignment is not in the expected state.');
+        }
+        return getConfig().then((config) => {
+          const user = config.user;
+          if (isNullOrUndefinedOrEmpty(user.email)) {
+            return Promise.reject('Please configure your email before attempting to import for marking.');
+          }
 
-    // Could not find at least on sakai file
-    return Promise.reject('Invalid zip format. Please select a file exported from Sakai');
+          // Check that all the submissions are for this marker
+          const allSubmissionMatch = every(assignmentSettings.submissions, (submission) => {
+            return submission.allocation && submission.allocation.email === user.email;
+          });
+
+          if (!allSubmissionMatch) {
+            return Promise.reject('This assignment has not been assigned to you for marking. Please contact ' + assignmentSettings.owner.email);
+          }
+
+          return {
+            zipFileType: ZipFileType.MARKER_IMPORT,
+            hasRubric: !isNil(assignmentSettings.rubric)
+          };
+        });
+      });
+    } else {
+
+      for (const filePath of filePaths) {
+        const path = filePath.split('/');
+        if (path[1] !== undefined && ASSIGNMENT_ROOT_FILES.indexOf(path[1]) !== -1) {
+          return {
+            zipFileType: ZipFileType.ASSIGNMENT_IMPORT,
+            hasRubric: false
+          };
+        }
+      }
+
+      // Could not find at least on sakai file
+      return Promise.reject('Invalid zip format. Please select a file exported from Sakai');
+    }
   });
 }
 
-function validateGenericZip(file: string): Promise<any> {
+function validateGenericZip(file: string): Promise<AssignmentValidateResultInfo> {
   return readZipFile(file).then((zip) => {
     const filePaths = Object.keys(zip.files).sort();
     for (const filePath of filePaths) {
@@ -219,6 +262,10 @@ function validateGenericZip(file: string): Promise<any> {
       }
 
       // Check if the file is a directory
+      return {
+        zipFileType: ZipFileType.GENERIC_IMPORT,
+        hasRubric: false
+      };
     }
   });
 }

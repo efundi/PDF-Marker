@@ -240,7 +240,7 @@ export function extractAssignmentZipFile(
             if (!existsSync(directory)) {
               mkdirSync(directory, {recursive: true});
             }
-            entry.autodrain(); // TODO what does this do?
+            entry.autodrain(); // Dispose zip entry contents
           }
         })).promise()
         .then(() => {

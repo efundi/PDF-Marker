@@ -40,7 +40,7 @@
   </mat-form-field>
   <mat-label class="pdf-marker-form-labels">Rubric</mat-label>
   <div class="pdf-marker-rubric-container">
-    <mat-checkbox formControlName="noRubric" color="primary">No Rubric</mat-checkbox>
+    <mat-checkbox formControlName="noRubric" color="primary" [disabled]>No Rubric</mat-checkbox>
     <br>
     <mat-form-field [hideRequiredMarker]="importForm.get('noRubric').value === true">
       <mat-label>Select Rubric</mat-label>
@@ -49,8 +49,7 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <div class="pdf-spacer"></div>
-  <div class="pdf-marker-submit">
+  <div class="pdf-marker-submit mt-3">
     <button type="button" color="primary" mat-raised-button [disabled]="!importForm.valid || !isValidFormat" (click)="onSubmit()">Submit</button>
   </div>
 </form>
