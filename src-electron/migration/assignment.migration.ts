@@ -5,7 +5,9 @@ import {basename, relative, sep} from 'path';
 import {
   AssignmentSettingsInfo,
   AssignmentSettingsVersion,
+  AssignmentState,
   DistributionFormat,
+  SourceFormat,
   Submission,
   SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
@@ -19,7 +21,7 @@ import {
   SETTING_FILE,
   SUBMISSION_REL_PATH_REGEX
 } from '@shared/constants/constants';
-import {getAllFiles} from '../utils';
+import {getAllFiles, isNullOrUndefinedOrEmpty} from '../utils';
 import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX} from '../constants';
 
 const logger = require('electron-log');
@@ -127,10 +129,13 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
   if (assignmentSettings.version !== AssignmentSettingsVersion) {
 
     if (!assignmentSettings.hasOwnProperty('version')) {
+      const isCreated: boolean = (assignmentSettings as any).isCreated;
+      delete (assignmentSettings as any).isCreated;
       // This is the first upgrade, set all the new fields
       migrationSettings.version = 1;
       migrationSettings.distributionFormat = DistributionFormat.STANDALONE;
-      migrationSettings.dateFinalized = null;
+      migrationSettings.state = AssignmentState.NOT_STARTED;
+      migrationSettings.stateDate = new Date().toISOString();
       migrationSettings.submissions = [];
       migrationSettings.owner = null;
 
@@ -175,12 +180,37 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
         return Promise.all(filePromises);
       }).then(() => {
         return readGradesCsv(assignmentFolder + sep + GRADES_FILE).then((grades) => {
+          let hasMarks = false;
+          let isSakai = false;
           grades.studentGrades.forEach((studentGrade) => {
-            const submission: Submission = find(migrationSettings.submissions, {studentId: studentGrade.id});
+            const submission: Submission = find(migrationSettings.submissions, (submissionItem) => {
+              return submissionItem.studentId.toUpperCase() === studentGrade.id.toUpperCase();
+            });
             submission.mark = studentGrade.grade;
             submission.lmsStatusText = studentGrade.lateSubmission;
+            // LateSubmission and submission date isn't filled in for generic imports
+            isSakai = isSakai || !isNullOrUndefinedOrEmpty(studentGrade.lateSubmission) || !isNullOrUndefinedOrEmpty(studentGrade.submissionDate);
+            hasMarks = hasMarks || !isNil(submission.mark);
           });
-        });
+
+          if (isCreated) {
+            migrationSettings.sourceFormat = SourceFormat.MANUAL;
+          } else if (isSakai) {
+            migrationSettings.sourceFormat = SourceFormat.SAKAI;
+          } else {
+            migrationSettings.sourceFormat = SourceFormat.GENERIC;
+          }
+
+          if (hasMarks) {
+            assignmentSettings.state = AssignmentState.IN_PROGRESS;
+          }
+          if (assignmentSettings.hasOwnProperty('dateFinalized')) {
+            if (!isNil((assignmentSettings as any).dateFinalized)) {
+              assignmentSettings.state = AssignmentState.FINALIZED;
+            }
+            delete (assignmentSettings as any).dateFinalized;
+          }
+        })
       }).then(() => writeAssignmentSettingsAt(migrationSettings, assignmentFolder));
 
 

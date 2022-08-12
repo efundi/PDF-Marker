@@ -3,6 +3,12 @@ import {DEFAULT_COLOR} from '@shared/constants/constants';
 
 export const AssignmentSettingsVersion = 1;
 
+export enum SourceFormat {
+  MANUAL = 'MANUAL',
+  SAKAI = 'SAKAI',
+  GENERIC = 'GENERIC',
+}
+
 /**
  * An enum defining the format in which an assignment is in.
  * Assignments can be imported, shared, and exported for marking.
@@ -22,6 +28,13 @@ export enum DistributionFormat {
    */
   STANDALONE = 'STANDALONE'
 
+}
+
+export enum AssignmentState {
+  NOT_STARTED = 'NOT_STARTED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  FINALIZED = 'FINALIZED',
+  SENT_FOR_REVIEW = 'SENT_FOR_REVIEW',
 }
 
 /**
@@ -127,14 +140,19 @@ export interface AssignmentSettingsInfo {
   rubric?: IRubric;
 
   /**
-   * true if from a lms, imported via import zip, false if created by upload pdf
+   * Format of the source for this assignment
    */
-  isCreated?: boolean;
+  sourceFormat?: SourceFormat;
 
   /**
-   * Date when this assignment was finalized
+   * Current state of the assignment
    */
-  dateFinalized?: string;
+  state: AssignmentState;
+
+  /**
+   * Date when the assignment state changed
+   */
+  stateDate?: string;
 }
 
 export const DEFAULT_ASSIGNMENT_SETTINGS: AssignmentSettingsInfo = {
@@ -142,10 +160,11 @@ export const DEFAULT_ASSIGNMENT_SETTINGS: AssignmentSettingsInfo = {
   version: AssignmentSettingsVersion,
   distributionFormat: DistributionFormat.STANDALONE,
   owner: null,
-  dateFinalized: null,
+  state: AssignmentState.NOT_STARTED,
+  stateDate: null,
   defaultColour: DEFAULT_COLOR,
   rubric: null,
-  isCreated: false,
+  sourceFormat: SourceFormat.MANUAL,
   submissions: []
 };
 

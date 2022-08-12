@@ -7,7 +7,7 @@ import {AssignmentService} from '../../services/assignment.service';
 import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {SelectedSubmission} from '../../info-objects/selected-submission';
-import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo, AssignmentState} from '@shared/info-objects/assignment-settings.info';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 
@@ -154,7 +154,7 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
     const submission = find(this.assignmentSettings.submissions, {studentId: activeMenuItem.studentId});
     const canMark = isNil(submission.allocation) || submission.allocation.id === selfId;
 
-    if (isNil(this.assignmentSettings.dateFinalized) && canMark) {
+    if (this.assignmentSettings.state !== AssignmentState.FINALIZED && (this.assignmentSettings.state === AssignmentState.SENT_FOR_REVIEW || canMark)) {
       this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
     } else {
       this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);

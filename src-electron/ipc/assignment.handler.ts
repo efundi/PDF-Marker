@@ -1,4 +1,4 @@
-import {accessSync, constants, existsSync, mkdtempSync, rmSync, statSync, unlinkSync, writeFileSync} from 'fs';
+import {accessSync, constants, existsSync, mkdtempSync, rmSync, Stats, statSync, unlinkSync, writeFileSync} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
 import {checkAccess, isFolder, isJson, writeToFile} from '../utils';
@@ -20,7 +20,9 @@ import {IRubric} from '@shared/info-objects/rubric.class';
 import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-assignment.info';
 import {
   AssignmentSettingsInfo,
+  AssignmentState,
   DEFAULT_ASSIGNMENT_SETTINGS,
+  SourceFormat,
   Submission,
   SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
@@ -309,6 +311,10 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
           } else {
             submission.state = SubmissionState.MARKED;
           }
+          if (assignmentSettings.state !== AssignmentState.IN_PROGRESS) {
+            assignmentSettings.state = AssignmentState.IN_PROGRESS;
+            assignmentSettings.stateDate = new Date().toISOString();
+          }
           return writeAssignmentSettingsAt(assignmentSettings, assignmentPath);
         });
       });
@@ -360,7 +366,7 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
     getAssignmentSettingsFor(updateRequest.workspace, updateRequest.assignmentName),
     getAssignmentDirectoryAbsolutePath(updateRequest.workspace, updateRequest.assignmentName)
   ]).then(([assignmentSettings, assignmentAbsolutePath]) => {
-    if (!assignmentSettings.isCreated) {
+    if (assignmentSettings.sourceFormat !== SourceFormat.MANUAL) {
       return Promise.reject('Operation not permitted on this type of assignment!');
     }
 
@@ -460,7 +466,7 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
     const settings: AssignmentSettingsInfo = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
     settings.assignmentName = assignmentName;
     settings.rubric = rubric;
-    settings.isCreated = true;
+    settings.sourceFormat = SourceFormat.MANUAL;
 
     const submissionPromises: Promise<any>[] = studentDetails.map((studentInfo, index) => {
       const file: any = createInfo.files[index];
@@ -496,7 +502,8 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
 
 function setDateFinalized(assignmentFolder: string): Promise<AssignmentSettingsInfo> {
   return getAssignmentSettingsAt(assignmentFolder).then((assignmentSettings) => {
-    assignmentSettings.dateFinalized = new Date().toISOString();
+    assignmentSettings.state = AssignmentState.FINALIZED;
+    assignmentSettings.stateDate = new Date().toISOString();
     return writeAssignmentSettingsAt(assignmentSettings, assignmentFolder);
   });
 }
@@ -654,6 +661,61 @@ function writeGrades(outputDirectory: string, submissions: Submission[], assignm
     });
 }
 
+
+function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
+  return Promise.all([
+    getAssignmentDirectoryAbsolutePath(workspaceFolder, assignmentName),
+    getAssignmentSettingsFor(workspaceFolder, assignmentName)
+  ]).then(([assignmentFolder, assignmentSettings]) => {
+    const files = glob.sync(assignmentFolder + sep + '/*');
+    const promises: Promise<any>[] = files.map((file) => {
+      if (statSync(file).isDirectory()) {
+        const regEx = /(.*)\((.+)\)$/;
+        if (!regEx.test(file)) {
+          return Promise.reject(INVALID_STUDENT_FOLDER + ' ' + basename(file));
+        }
+
+        const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
+        const submissionPromisses: Promise<any>[] = submissionFiles.map((submission) => {
+          try {
+            accessSync(submission, constants.F_OK);
+            const studentFolder = dirname(dirname(submission));
+            return loadMarksAt(studentFolder).then((submissionInfo: SubmissionInfo) => {
+              if (submissionInfo.marks.length > 0) {
+                const ext = path.extname(submission);
+                let fileName = path.basename(submission, ext);
+                let promise: Promise<any>;
+                if (submissionInfo.type === SubmissionType.MARK) {
+                  promise = annotatePdfFile(submission, submissionInfo as MarkingSubmissionInfo);
+                } else {
+                  promise = annotatePdfRubric(submission, submissionInfo as RubricSubmissionInfo, assignmentSettings.rubric);
+                }
+
+                return promise.then((data) => {
+                  fileName += '_MARK';
+                  writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
+                  unlinkSync(submission);
+                }, (error) => {
+                  return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
+                });
+              }
+            });
+
+          } catch (e) {
+            return Promise.reject(e.message);
+          }
+        });
+
+        return Promise.all(submissionPromisses);
+      }
+      return Promise.resolve();
+    });
+
+    return Promise.all(promises)
+      .then(() => setDateFinalized(assignmentFolder))
+  });
+}
+
 export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: string, assignmentName: string): Promise<any> {
   try {
     return Promise.all([
@@ -662,54 +724,10 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
       getAssignmentSettingsFor(workspaceFolder, assignmentName)
     ]).then(([config, assignmentFolder, assignmentSettings]) => {
       // Finalize the pdfs in the workspace
-      const files = glob.sync(assignmentFolder + sep + '/*');
+
       const tempDirectory = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
       const exportTempDirectory = tempDirectory + sep + assignmentName;
-      const promises: Promise<any>[] = files.map((file) => {
-        if (statSync(file).isDirectory()) {
-          const regEx = /(.*)\((.+)\)$/;
-          if (!regEx.test(file)) {
-            return Promise.reject(INVALID_STUDENT_FOLDER + ' ' + basename(file));
-          }
-
-          const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
-          const submissionPromisses: Promise<any>[] = submissionFiles.map((submission) => {
-            try {
-              accessSync(submission, constants.F_OK);
-              const studentFolder = dirname(dirname(submission));
-              return loadMarksAt(studentFolder).then((submissionInfo: SubmissionInfo) => {
-                if (submissionInfo.marks.length > 0) {
-                  const ext = path.extname(submission);
-                  let fileName = path.basename(submission, ext);
-                  let promise: Promise<any>;
-                  if (isNil(assignmentSettings.rubric)) {
-                    promise = annotatePdfFile(submission, submissionInfo as MarkingSubmissionInfo);
-                  } else {
-                    promise = annotatePdfRubric(submission, submissionInfo as RubricSubmissionInfo, assignmentSettings.rubric);
-                  }
-
-                  return promise.then((data) => {
-                    fileName += '_MARK';
-                    writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
-                    unlinkSync(submission);
-                  }, (error) => {
-                    return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
-                  });
-                }
-              });
-
-            } catch (e) {
-              return Promise.reject(e.message);
-            }
-          });
-
-          return Promise.all(submissionPromisses);
-        }
-        return Promise.resolve();
-      });
-
-      // Create temp directory
-      return Promise.all(promises).then(() => {
+      return finalizeSubmissions(workspaceFolder, assignmentName).then(() => {
         return mkdir(exportTempDirectory);
       }).then(() => copy(assignmentFolder + sep + ASSIGNMENT_BACKUP_DIR, exportTempDirectory))
         .then(() => {
@@ -727,7 +745,6 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
           );
         })
         .then(() => writeGrades(exportTempDirectory, assignmentSettings.submissions, assignmentName))
-        .then(() => setDateFinalized(assignmentFolder))
         .then(() => zipDir(exportTempDirectory))
         .then((buffer) => {
           return rmdir(tempDirectory, {recursive: true}).then(() => buffer);
@@ -897,4 +914,23 @@ export function workspaceRelativePathToAbsolute(relativePath: string): Promise<s
     relativePath = relativePath.replace(/\//g, sep);
     return config.defaultPath + sep + relativePath;
   });
+}
+
+export function exportForReview(event: IpcMainInvokeEvent,
+                                workspaceName: string,
+                                assignmentName: string): Promise<any> {
+  return getAssignmentSettingsFor(workspaceName, assignmentName)
+    .then(assignmentSettings => {
+      assignmentSettings.state = AssignmentState.SENT_FOR_REVIEW;
+      assignmentSettings.stateDate = new Date().toISOString();
+      return writeAssignmentSettingsFor(assignmentSettings, workspaceName, assignmentName);
+    })
+    .then(() => getAssignmentDirectoryAbsolutePath(workspaceName, assignmentName))
+    .then((assignmentDirectory) => {
+      return zipDir(assignmentDirectory, {
+        filter: (fullPath: string, stats: Stats) => {
+          return !/\.backup$/.test(fullPath);
+        }
+      });
+    });
 }

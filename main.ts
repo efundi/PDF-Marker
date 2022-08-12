@@ -13,7 +13,7 @@ import {
   saveMarks,
   shareExport,
   updateAssignment,
-  updateAssignmentSettings
+  updateAssignmentSettings, exportForReview
 } from './src-electron/ipc/assignment.handler';
 import {
   deleteRubric,
@@ -182,6 +182,7 @@ try {
     ipcMain.handle('assignments:updateAssignmentSettings', toIpcResponse(updateAssignmentSettings));
     ipcMain.handle('assignments:shareExport', toIpcResponse(shareExport));
     ipcMain.handle('assignments:getMarks', toIpcResponse(getMarks));
+    ipcMain.handle('assignments:exportForReview', toIpcResponse(exportForReview));
     ipcMain.handle('assignments:updateAssignmentRubric', toIpcResponse(updateAssignmentRubric));
     ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
 

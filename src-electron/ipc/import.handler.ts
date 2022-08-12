@@ -3,7 +3,7 @@ import * as glob from 'glob';
 import {basename, sep} from 'path';
 import {
   AssignmentSettingsInfo,
-  DEFAULT_ASSIGNMENT_SETTINGS
+  DEFAULT_ASSIGNMENT_SETTINGS, SourceFormat
 } from '@shared/info-objects/assignment-settings.info';
 import {IpcMainInvokeEvent} from 'electron';
 import {ImportInfo} from '@shared/info-objects/import.info';
@@ -95,7 +95,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
         const settings: AssignmentSettingsInfo = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
         settings.owner = null;
         settings.rubric =  rubrics[rubricIndex];
-        settings.isCreated = false;
+        settings.sourceFormat = settings.sourceFormat = SourceFormat.SAKAI;
         settings.assignmentName = req.assignmentName;
 
         // By default, the zip wil contain the name of the assignment directory

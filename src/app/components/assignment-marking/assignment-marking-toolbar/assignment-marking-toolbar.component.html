@@ -3,17 +3,18 @@
   <ng-container *ngFor="let iconData of markIcons">
     <button
       color="primary"
-      [disabled]="containsRubric"
+      [disabled]="!editEnabled"
       *ngIf="iconData.icon !== 'halfTick' && iconData.icon !== 'brush'"
       [matTooltip]="iconData.toolTip"
       [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
       (click)="onIconClick(iconData, $event)"
       mat-button
       mat-icon-button>
-      <mat-icon [class.pdf-icon-disabled]="containsRubric">{{ iconData.icon }}</mat-icon>
+      <mat-icon [class.pdf-icon-disabled]="!editEnabled">{{ iconData.icon }}</mat-icon>
     </button>
     <button
       color="primary"
+      [disabled]="!editEnabled"
       *ngIf="iconData.icon === 'halfTick' && iconData.icon !== 'brush'"
       [matTooltip]="iconData.toolTip"
       [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
@@ -22,13 +23,14 @@
       mat-icon-button>
       <mat-icon class="pdf-marker-icons-svg-class"
                 [svgIcon]="iconData.icon"
-                [class.pdf-icon-disabled]="containsRubric" >
+                [class.pdf-icon-disabled]="!editEnabled" >
       </mat-icon>
     </button>
     <div
       *ngIf="iconData.icon === 'brush'"
       class="pdf-marker-assignment-marking-settings-highlighter">
       <button
+        [disabled]="!editEnabled"
         color="primary"
         [matTooltip]="iconData.toolTip"
         (click)="onIconClick(iconData, $event)"
@@ -43,8 +45,8 @@
       </button>
       <span
         [matMenuTriggerFor]="highlightMenu"
-        [style.pointer-events]="containsRubric ? 'none': ''"
-        [style.background]="(containsRubric) ? 'rgba(0,0,0,.26)':selectedHighlightColour"
+        [style.pointer-events]="!editEnabled ? 'none': ''"
+        [style.background]="!editEnabled ? 'rgba(0,0,0,.26)' : selectedHighlightColour"
         class="pdf-marker-assignment-marking-settings-highlighter-choice">
     </span>
     </div>
@@ -54,8 +56,8 @@
     matTooltip="Preview Marks"
     mat-button
     mat-icon-button
-    (click)="onControl($event, 'finalise')">
-    <mat-icon [class.pdf-icon-disabled]="containsRubric">announcement</mat-icon>
+    (click)="onControl($event, 'previewMarks')">
+    <mat-icon>announcement</mat-icon>
   </button>
   </div>
 
@@ -109,6 +111,7 @@
   </form>
 
   <button
+    [disabled]="!editEnabled"
     matTooltip="Rotate Clockwise"
     mat-button
     mat-icon-button
@@ -117,6 +120,7 @@
     <mat-icon class="rotate-icons">rotate_right</mat-icon>
   </button>
   <button
+    [disabled]="!editEnabled"
     matTooltip="Rotate Counter-Clockwise"
     mat-button
     mat-icon-button
@@ -159,8 +163,9 @@
 
   <div class="pdf-marker-assignment-marking-settings-color" *ngIf="!containsRubric">
     <button
+      [disabled]="!editEnabled"
       #picker="ngxColorPicker"
-      [style.border-color]="selectedColour"
+      [style.border-color]="editEnabled ? selectedColour : 'rgba(0,0,0,.26)'"
       class="pdf-marker-assignment-marking-settings-color-pallette"
       mat-button
       mat-icon-button
@@ -170,18 +175,19 @@
       (colorPickerClose)="onColourChange($event)">
       <mat-icon
         matTooltip="Mark Color"
-          [style.color]="selectedColour">
+        [style.color]="editEnabled ? selectedColour : 'rgba(0,0,0,.26)'">
         palette
       </mat-icon>
     </button>
     <span
-      (click)="picker.openDialog()"
-      [style.background]="selectedColour"
-      [style.border-color]="selectedColour"
+      (click)="editEnabled && picker.openDialog()"
+      [style.background]="editEnabled ? selectedColour : 'rgba(0,0,0,.26)'"
+      [style.border-color]="editEnabled ? selectedColour : 'rgba(0,0,0,.26)'"
       class="pdf-marker-assignment-marking-settings-color-choice">
     </span>
   </div>
   <button
+    [disabled]="!editEnabled"
     color="primary"
     matTooltip="Clear All"
     mat-button
