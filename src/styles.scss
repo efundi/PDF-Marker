@@ -381,4 +381,8 @@ pdf-marker-rubric-criteria-level-block {
 .cursor-grab     { cursor: grab; }
 .cursor-grabbing     { cursor: grabbing; }
 
+.mat-stroked-button.mat-primary{
+  border-color: var(--pdf-marker-primary);
+}
+
 @import 'scss/compatibility';

@@ -724,7 +724,14 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
       const exportTempDirectory = tempDirectory + sep + assignmentName;
       return finalizeSubmissions(workspaceFolder, assignmentName).then(() => {
         return mkdir(exportTempDirectory);
-      }).then(() => copy(assignmentFolder + sep + ASSIGNMENT_BACKUP_DIR, exportTempDirectory))
+      }).then(() => {
+        return stat(assignmentFolder + sep + ASSIGNMENT_BACKUP_DIR)
+          .then(() => {
+            return copy(assignmentFolder + sep + ASSIGNMENT_BACKUP_DIR, exportTempDirectory)
+          }, () => {
+            // It's fine if the directory does not exist
+          });
+      })
         .then(() => {
           return copy(
             assignmentFolder,
