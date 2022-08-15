@@ -41,8 +41,6 @@ export class ImportComponent implements OnInit, OnDestroy {
 
   private formSubscriptions: Subscription[] = [];
 
-  isModalOpened = false;
-
   isValidFormat: boolean;
 
   rubrics: IRubricName[];
@@ -200,7 +198,6 @@ export class ImportComponent implements OnInit, OnDestroy {
       next: (assignmentValidateResultInfo) => {
         this.assignmentValidateResultInfo = assignmentValidateResultInfo;
         if (assignmentValidateResultInfo.zipFileType === ZipFileType.MARKER_IMPORT) {
-
             this.importForm.patchValue({
               noRubric: !assignmentValidateResultInfo.hasRubric
             }, {emitEvent: false});
@@ -209,7 +206,6 @@ export class ImportComponent implements OnInit, OnDestroy {
             this.importForm.controls.rubric.validator = null;
             this.importForm.updateValueAndValidity();
         } else {
-          // TODO check control states
           this.importForm.controls.noRubric.enable();
           this.importForm.controls.rubric.enable();
         }
@@ -226,12 +222,6 @@ export class ImportComponent implements OnInit, OnDestroy {
   }
 
 
-  get fc() {
-    return this.importForm.controls;
-  }
-
-
-
   onPreview() {
     this.busyService.start();
     this.importService.getZipEntries(this.actualFilePath)
@@ -241,18 +231,11 @@ export class ImportComponent implements OnInit, OnDestroy {
         const config = new MatDialogConfig();
         config.data = {
           treeNodes,
-          filename : treeNodes[0].name
+          filename: treeNodes[0].name
         };
 
-        const isModalOpenedFn = () => {
-          this.isModalOpened = !this.isModalOpened;
-        };
-
-        const reference = this.appService.createDialog(FileExplorerModalComponent, config, isModalOpenedFn);
-        reference.beforeClosed().subscribe(() => {
-        });
+        this.appService.createDialog(FileExplorerModalComponent, config);
       });
-    this.isModalOpened = !this.isModalOpened;
   }
 
   onSubmit() {
@@ -262,7 +245,7 @@ export class ImportComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const formValue = this.importForm.value;
+    const formValue = this.importForm.getRawValue();
 
     const importData: ImportInfo = {
       file: this.actualFilePath,
@@ -270,7 +253,7 @@ export class ImportComponent implements OnInit, OnDestroy {
       noRubric: formValue.noRubric,
       rubricName: formValue.rubric,
       assignmentName: formValue.assignmentName,
-      assignmentType: formValue.assignmentType
+      zipFileType: this.assignmentValidateResultInfo.zipFileType
     };
     this.busyService.start();
     this.importService.importAssignmentFile(importData).subscribe({
@@ -290,10 +273,11 @@ export class ImportComponent implements OnInit, OnDestroy {
     this.importForm.reset();
     this.actualFilePath = null;
     this.isFileLoaded = false;
-    this.isModalOpened = false;
     this.isValidFormat = false;
-    this.fc.noRubric.setValue(false);
-    this.fc.rubric.enable();
+    this.importForm.reset({
+      noRubric: false
+    });
+
     this.assignmentService.refreshWorkspaces().subscribe();
   }
 }

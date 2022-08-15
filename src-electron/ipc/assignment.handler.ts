@@ -740,7 +740,7 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
           );
         })
         .then(() => writeGrades(exportTempDirectory, assignmentSettings.submissions, assignmentName))
-        .then(() => zipDir(exportTempDirectory))
+        .then(() => zipDir(tempDirectory))
         .then((buffer) => {
           return rmdir(tempDirectory, {recursive: true}).then(() => buffer);
         }, (err) => {
@@ -920,11 +920,15 @@ export function exportForReview(event: IpcMainInvokeEvent,
       assignmentSettings.stateDate = new Date().toISOString();
       return writeAssignmentSettingsFor(assignmentSettings, workspaceName, assignmentName);
     })
-    .then(() => getAssignmentDirectoryAbsolutePath(workspaceName, assignmentName))
-    .then((assignmentDirectory) => {
-      return zipDir(assignmentDirectory, {
-        filter: (fullPath: string, stats: Stats) => {
-          return !/\.backup$/.test(fullPath);
+    .then(() => Promise.all([
+      getWorkingDirectoryAbsolutePath(workspaceName),
+      getAssignmentDirectoryAbsolutePath(workspaceName, assignmentName)
+    ]))
+    .then(([workspaceDirectory, assignmentDirectory]) => {
+      return zipDir(workspaceDirectory, {
+        filter: (filterPath: string, stats: Stats) => {
+          return !/\.backup$/.test(filterPath) &&
+            (filterPath.endsWith(assignmentDirectory)  || (filterPath.startsWith(assignmentDirectory + sep)));
         }
       });
     });

@@ -1,30 +1,47 @@
-import {existsSync} from 'fs';
+import {createWriteStream, existsSync, mkdirSync} from 'fs';
 import * as glob from 'glob';
-import {basename, sep} from 'path';
+import {basename, dirname, sep} from 'path';
 import {
   AssignmentSettingsInfo,
   AssignmentState,
   DEFAULT_ASSIGNMENT_SETTINGS,
   DistributionFormat,
-  SourceFormat
+  SourceFormat,
+  Submission,
+  SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
 import {IpcMainInvokeEvent} from 'electron';
 import {ImportInfo} from '@shared/info-objects/import.info';
-import {cloneDeep, isNil, every} from 'lodash';
-import {readFile} from 'fs/promises';
-import {getRubrics, writeRubricFile} from './rubric.handler';
-import {EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, NOT_PROVIDED_RUBRIC} from '../constants';
+import {cloneDeep, every, find, forEach, isNil} from 'lodash';
+import {mkdir, readFile, stat, writeFile} from 'fs/promises';
+import {getRubrics, markRubricInUse} from './rubric.handler';
+import {
+  EXTRACTED_ZIP,
+  EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
+  NOT_PROVIDED_RUBRIC,
+  STUDENT_DIRECTORY_NO_NAME_REGEX,
+  STUDENT_DIRECTORY_REGEX
+} from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
-import {deleteFolderRecursive, extractAssignmentZipFile, isFolder, isNullOrUndefinedOrEmpty} from '../utils';
+import {deleteFolderRecursive, isFolder, isNullOrUndefinedOrEmpty, stream2buffer} from '../utils';
 
-import JSZip, {JSZipObject} from 'jszip';
+import JSZip, {JSZipObject } from 'jszip';
 import {getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
-import {writeAssignmentSettingsFor} from './assignment.handler';
+import {readGradesCsv, writeAssignmentSettingsFor} from './assignment.handler';
 import {getConfig} from './config.handler';
-import {SettingInfo} from '@shared/info-objects/setting.info';
-import {ASSIGNMENT_ROOT_FILES, SETTING_FILE} from '@shared/constants/constants';
+import {
+  ASSIGNMENT_BACKUP_DIR,
+  ASSIGNMENT_ROOT_FILES,
+  FEEDBACK_FOLDER,
+  FEEDBACK_ZIP_ENTRY_REGEX,
+  GRADES_FILE,
+  SETTING_FILE,
+  SUBMISSION_FOLDER,
+  SUBMISSION_ZIP_ENTRY_REGEX
+} from '@shared/constants/constants';
 import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
+import {PDFDocument} from 'pdf-lib';
 
 /**
  * Returns a list of existing folders in the workspace
@@ -44,6 +61,7 @@ function existingFolders(workspace: string): Promise<string[]> {
   });
 }
 
+
 export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<any> {
 
   if (isNil(req.file)) {
@@ -60,16 +78,13 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
 
 
   return Promise.all([
-    getConfig(),
     existingFolders(req.workspace),
     readFile(req.file),
     getRubrics()
   ]).then((results) => {
-    const config: SettingInfo = results[0];
-    const folders = results[1];
-    const zipFile: Buffer = results[2];
-    const rubrics: IRubric[] = results[3];
-    const rubricIndex = rubrics.findIndex(r => r.name === rubricName);
+    const folders = results[0];
+    const zipFile: Buffer = results[1];
+    const rubrics: IRubric[] = results[2];
 
 
 
@@ -95,13 +110,6 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
         }
 
 
-        // Default settings for the new assignment
-        const settings: AssignmentSettingsInfo = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
-        settings.owner = null;
-        settings.rubric =  rubrics[rubricIndex];
-        settings.sourceFormat = settings.sourceFormat = SourceFormat.SAKAI;
-        settings.assignmentName = req.assignmentName;
-
         // By default, the zip wil contain the name of the assignment directory
         let assignmentDirectoryName = oldPath;
         let renameOld = assignmentDirectoryName + '/';
@@ -113,20 +121,47 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
           renameOld = oldPath + '/';
         }
 
+
+        let rubricIndex;
+        let settings: AssignmentSettingsInfo;
+        // Default settings for the new assignment
+        if (req.zipFileType !== ZipFileType.MARKER_IMPORT) {
+          settings = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
+          rubricIndex = rubrics.findIndex(r => r.name === rubricName);
+          settings.rubric =  rubrics[rubricIndex] || null;
+          settings.assignmentName = req.assignmentName;
+        }
         return getWorkingDirectoryAbsolutePath(req.workspace).then((workingDirectory) => {
-          return extractAssignmentZipFile(req.file, workingDirectory + sep, newFolder, renameOld, req.assignmentName, req.assignmentType).then((submissions) => {
-            settings.submissions = submissions;
-            return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName).then(() => {
-              if (!isNil(rubricName)) {
-                rubrics[rubricIndex].inUse = true;
-                return writeRubricFile(rubrics).then(() => {
-                  return EXTRACTED_ZIP;
-                }, () => {
-                  return Promise.reject(EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC);
-                });
-              }
-              return EXTRACTED_ZIP;
+
+          let promise: Promise<any>;
+          if (req.zipFileType === ZipFileType.GENERIC_IMPORT) {
+            settings.sourceFormat = SourceFormat.GENERIC;
+            promise = extractGenericImport(zipObject, workingDirectory + sep, newFolder, renameOld)
+              .then((submissions) => {
+                settings.submissions = submissions;
+                return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
+              });
+
+          } else if (req.zipFileType === ZipFileType.ASSIGNMENT_IMPORT) {
+            settings.sourceFormat = SourceFormat.SAKAI;
+            promise = extractAssignmentZipFile(zipObject, workingDirectory + sep, newFolder, renameOld).then((submissions) => {
+              settings.submissions = submissions;
+              return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
             });
+          } else {
+            promise = extractMarkerZip(zipObject, workingDirectory + sep, newFolder, renameOld);
+          }
+
+
+          return promise.then(() => {
+            if (!isNil(rubricIndex) && rubricIndex >= 0) {
+              return markRubricInUse(rubricName).then(() => {
+                return EXTRACTED_ZIP;
+              }, () => {
+                return Promise.reject(EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC);
+              });
+            }
+            return EXTRACTED_ZIP;
           }).catch((error) => {
             if (existsSync(workingDirectory + sep + newFolder)) {
               deleteFolderRecursive(workingDirectory + sep + newFolder);
@@ -134,11 +169,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
             return Promise.reject(error.message);
           });
         });
-      })
-      .catch(error => {
-        return Promise.reject(error.message);
       });
-
   });
 }
 
@@ -268,4 +299,202 @@ function validateGenericZip(file: string): Promise<AssignmentValidateResultInfo>
       };
     }
   });
+}
+
+
+function extractGenericImport(
+  zipObject: JSZip,
+  destination: string,
+  newFolder: string,
+  oldFolder: string): Promise<Submission[]> {
+  const submissions: Submission[] = [];
+  let promise: Promise<any> = Promise.resolve();
+  zipObject.forEach((zipRelativePath, file) => {
+    const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replace('/', sep);
+    const fileFullPath = destination + zipFilePath;
+    const directory = dirname(fileFullPath);
+    if (!file.dir) {
+
+      if (!existsSync(directory)) {
+        mkdirSync(directory, {recursive: true});
+      }
+      const tempDetails = zipRelativePath.substring((zipRelativePath.indexOf('/') + 1));
+      const splitArray = tempDetails.split('_');
+
+      const studentName = splitArray[1];
+      const studentSurname = splitArray[0];
+      const studentId = splitArray[2];
+      const studentDirectory = studentSurname + ', ' + studentName + ' (' + studentId + ')';
+      submissions.push({
+        mark: null,
+        allocation: null,
+        directoryName: studentDirectory,
+        state: SubmissionState.NEW,
+        studentId,
+        studentName,
+        studentSurname
+      });
+
+      promise = promise.then(() => Promise.all([
+        mkdir(directory + sep + studentDirectory, {recursive: true}),
+        mkdir(directory + sep + studentDirectory + sep + FEEDBACK_FOLDER, {recursive: true}),
+        mkdir(directory + sep + studentDirectory + sep + SUBMISSION_FOLDER, {recursive: true})
+      ]).then(() => {
+        return stream2buffer(file.nodeStream())
+          .then((content) => PDFDocument.load(content))
+          .then((pdfDoc) => pdfDoc.save())
+          .then((pdfBytes) => {
+            return writeFile(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + '/' + tempDetails, pdfBytes);
+          });
+      }));
+    } else {
+      promise = promise.then(() => {
+        return stat(fileFullPath).then(() => {
+
+        }, () => {
+          return mkdir(fileFullPath, {recursive: true});
+        });
+      });
+    }
+  });
+  return promise
+    .then(() => submissions);
+}
+
+function extractAssignmentZipFile(
+  zipObject: JSZip,
+  destination: string,
+  newFolder: string,
+  oldFolder: string): Promise<Submission[]> {
+
+  const submissions: Submission[] = [];
+
+  const backupDirPath = destination + newFolder + ASSIGNMENT_BACKUP_DIR;
+  return mkdir(backupDirPath, {recursive: true}).then(() => {
+
+    let promise: Promise<any> = Promise.resolve();
+    zipObject.forEach((zipRelativePath, file) => {
+      const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replace('/', sep);
+      const fileFullPath = destination + zipFilePath;
+      const directory = dirname(fileFullPath);
+
+      if (!file.dir) {
+        // Check if its a submission file
+        const match = zipRelativePath.match(FEEDBACK_ZIP_ENTRY_REGEX) || zipRelativePath.match(SUBMISSION_ZIP_ENTRY_REGEX);
+        if (match) {
+
+          if (!existsSync(directory)) {
+            mkdirSync(directory, {recursive: true});
+          }
+
+          const studentDirectory = match[1];
+          let studentId;
+          let studentName;
+          let studentSurname;
+
+          let matches = STUDENT_DIRECTORY_REGEX.exec(studentDirectory);
+          if (matches !== null) {
+            studentId = matches[3];
+            studentName =  matches[2];
+            studentSurname = matches[1];
+          } else {
+            matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(studentDirectory);
+            if (matches !== null) {
+              studentId = matches[2];
+              studentSurname =  matches[1];
+            }
+          }
+
+          submissions.push({
+            mark: null,
+            allocation: null,
+            directoryName: studentDirectory,
+            state: SubmissionState.NEW,
+            studentId,
+            studentName,
+            studentSurname
+          });
+
+          return promise.then(() => {
+            return stream2buffer(file.nodeStream())
+              .then((content) => PDFDocument.load(content))
+              .then((pdfDoc) => pdfDoc.save())
+              .then((pdfBytes) => writeFile(fileFullPath, pdfBytes));
+          });
+
+        } else {
+          console.log('Unknown file, saving to backup... ' + zipFilePath);
+          promise = promise.then(() => {
+            return stream2buffer(file.nodeStream())
+              .then(content => {
+                const p = backupDirPath + zipRelativePath.replace(oldFolder, sep);
+                const d = dirname(p);
+                if (!existsSync(d)) {
+                  mkdirSync(d, {recursive: true});
+                }
+                return writeFile(p, content);
+              });
+          });
+        }
+      } else {
+        promise = promise.then(() => {
+          return stat(fileFullPath).then(() => {
+
+          }, () => {
+            return mkdir(fileFullPath, {recursive: true});
+          });
+        });
+      }
+    });
+    return promise;
+  })
+    .then(() => {
+      // Now that the workspace is extracted, read the grades file to sync to the submissions
+      return readGradesCsv(backupDirPath + sep + GRADES_FILE)
+        .then((grades) => {
+          forEach(grades.studentGrades, (studentGrade) => {
+            const submission = find(submissions, {studentId: studentGrade.id});
+            submission.mark = studentGrade.grade;
+            submission.lmsStatusText = studentGrade.lateSubmission;
+          });
+        });
+    }).then(() => submissions);
+}
+
+function extractMarkerZip(
+  zipObject: JSZip,
+  destination: string,
+  newFolder: string,
+  oldFolder: string): Promise<any> {
+
+
+  let markerImportPromise: Promise<any> = Promise.resolve();
+  zipObject.forEach((zipRelativePath, file) => {
+    const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replace('/', sep);
+    const fileFullPath = destination + zipFilePath;
+
+    if (file.dir) {
+      markerImportPromise = markerImportPromise.then(() => {
+        return stat(fileFullPath).then(() => {
+          // Directory already exist
+        }, () => {
+          return mkdir(fileFullPath, {recursive: true});
+        });
+      });
+    } else {
+      markerImportPromise = markerImportPromise.then(() => {
+        return new Promise<any>((resolve, reject) => {
+          return file.nodeStream()
+            .pipe(createWriteStream(fileFullPath))
+            .on('error', () => {
+              reject();
+            })
+            .on('finish', () => {
+              resolve({}); // Return value doesn't matter
+            });
+        });
+      });
+    }
+  });
+  return markerImportPromise;
 }
