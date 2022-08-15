@@ -40,9 +40,9 @@ export function migrateAssignmentSettings(): Promise<any> {
           const fullPath = settingsInfo.defaultPath + sep + directory;
           // Check if the directory is a working directory
           if (workspaceFolders.includes(fullPath)) {
-            return readdir(fullPath).then((workspaceDirectories) => {
-              const workspacePromises: Promise<any>[] = map(workspaceDirectories, (workspaceDirectory) => {
-                return migrateAssignment(directory + sep + workspaceDirectory);
+            return readdir(fullPath).then((assignmentDirectories) => {
+              const workspacePromises: Promise<any>[] = map(assignmentDirectories, (assignmentDirectory) => {
+                return migrateAssignment(fullPath + sep + assignmentDirectory);
               });
               return Promise.all(workspacePromises);
             });

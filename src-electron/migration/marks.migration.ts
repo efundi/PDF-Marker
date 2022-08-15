@@ -32,9 +32,9 @@ export function migrateMarks(): Promise<any> {
           const fullPath = settingsInfo.defaultPath + sep + directory;
           // Check if the directory is a working directory
           if (workspaceFolders.includes(fullPath)) {
-            return readdir(fullPath).then((workspaceDirectories) => {
-              const workspacePromises: Promise<any>[] = map(workspaceDirectories, (workspaceDirectory) => {
-                return migrateAssignmentMarks(directory + sep + workspaceDirectory);
+            return readdir(fullPath).then((assignmentDirectories) => {
+              const workspacePromises: Promise<any>[] = map(assignmentDirectories, (assignmentDirectory) => {
+                return migrateAssignmentMarks(fullPath + sep + assignmentDirectory);
               });
               return Promise.all(workspacePromises);
             });
@@ -45,7 +45,7 @@ export function migrateMarks(): Promise<any> {
         return Promise.all(promises).then(() => {
           LOG.info('Migration done');
         }, (error) => {
-          LOG.error('Error while migrating assignments');
+          LOG.error('Error while migrating marks');
           LOG.error(error);
           return Promise.reject(error);
         });
