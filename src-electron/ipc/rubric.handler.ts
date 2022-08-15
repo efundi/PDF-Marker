@@ -9,7 +9,7 @@ import {
   CONFIG_DIR,
   COULD_NOT_CREATE_CONFIG_DIRECTORY,
   COULD_NOT_CREATE_RUBRIC_FILE,
-  COULD_NOT_READ_RUBRIC_LIST,
+  COULD_NOT_READ_RUBRIC_LIST, EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
   INVALID_RUBRIC_JSON_FILE,
   NOT_CONFIGURED_CONFIG_DIRECTORY,
   RUBRICS_FILE,
@@ -288,6 +288,15 @@ export function deleteRubric(event: IpcMainInvokeEvent, rubricName: string): Pro
   });
 }
 
+export function markRubricInUse(rubricName: string): Promise<any>{
+  return getRubrics().then((rubrics) => {
+    const rubricIndex = rubrics.findIndex(r => r.name === rubricName);
+    rubrics[rubricIndex].inUse = true;
+    return writeRubricFile(rubrics).then(() => {
+      return EXTRACTED_ZIP;
+    });
+  });
+}
 
 export function findRubric(rubricName: string): Promise<IRubric> {
   return getRubrics().then((rubrics) => {

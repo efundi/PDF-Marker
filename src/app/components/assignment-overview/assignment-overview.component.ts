@@ -221,6 +221,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       this.isAssignmentOwner = this.calculateIsAssignmentOwner();
 
       let index = 0;
+      const selfEmail = this.settings.user ? this.settings.user.email : null;
       const selfId = this.settings.user ? this.settings.user.id : null;
       filter(this.workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmission) => {
 
@@ -229,7 +230,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         let markerName: string;
         if (submission.allocation) {
 
-          if (submission.allocation.id === selfId) {
+          if (submission.allocation.id === selfId || submission.allocation.email === selfEmail) {
             markerName = 'Me';
           } else {
             const marker = find(this.settings.markers, {id: submission.allocation.id});
