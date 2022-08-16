@@ -44,6 +44,7 @@ import {
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
 import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-markers-modal.component';
 import {DateTime} from 'luxon';
+import {checkOpenInMarker} from '../../utils/utils';
 
 export interface AssignmentDetails {
   index?: number;
@@ -294,11 +295,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       pdfFile
     });
 
-    const selfId = this.settings.user ? this.settings.user.id : null;
     const submission = find(this.assignmentSettings.submissions, {studentId: element.studentNumber});
-    const canMark = isNil(submission.allocation) || submission.allocation.id === selfId;
-
-    if (this.assignmentSettings.state !== AssignmentState.FINALIZED && (this.assignmentSettings.state === AssignmentState.SENT_FOR_REVIEW || canMark)) {
+    const openInMarker = checkOpenInMarker(this.settings.user, submission, this.assignmentSettings.state);
+    if (openInMarker) {
       this.router.navigate([
         RoutesEnum.ASSIGNMENT_MARKER,
         workspace.name,

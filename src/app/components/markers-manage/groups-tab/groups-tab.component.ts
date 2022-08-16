@@ -12,14 +12,14 @@ import {UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGro
 import {Subscription} from 'rxjs';
 import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
 import {MarkersManageComponent} from '../markers-manage.component';
-import {cloneDeep, filter, find, findIndex, indexOf, isNil, remove} from 'lodash';
-import {uuidv4} from '../../../utils/utils';
-import {CdkDrag, CdkDragDrop, CdkDragStart, CdkDropList} from '@angular/cdk/drag-drop';
+import {cloneDeep, filter, find, findIndex, isNil, remove} from 'lodash';
+import {CdkDrag, CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {
   YesAndNoConfirmationDialogComponent
 } from '../../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
 import {AppService} from '../../../services/app.service';
+import {uuidv4} from '@shared/constants/constants';
 
 function nameSort(a, b): number {
   return a.name.localeCompare(b.name);

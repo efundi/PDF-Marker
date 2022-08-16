@@ -18,6 +18,14 @@ export const SUBMISSION_REL_PATH_REGEX = /Submission attachment\(s\)\/(.*)\.pdf/
 
 export const PDFM_FILES = [MARK_FILE, SETTING_FILE];
 
+
+export function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 export function PDFM_FILES_FILTER(treeNode: TreeNode): boolean {
   return !(treeNode.type === TreeNodeType.FILE && PDFM_FILES.indexOf(treeNode.name) >= 0);
 }
