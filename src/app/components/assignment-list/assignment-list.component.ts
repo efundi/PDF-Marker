@@ -20,6 +20,7 @@ import {GRADES_FILE, PDFM_FILES_FILTER} from '@shared/constants/constants';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {AssignmentState} from '@shared/info-objects/assignment-settings.info';
+import {checkOpenInMarker} from '../../utils/utils';
 
 let treeId = 0;
 
@@ -200,12 +201,9 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     });
     this.assignmentService.getAssignmentSettings(workspaceName, assignmentName).subscribe((assignmentSettingsInfo) => {
 
-      const selfId = this.settings.user ? this.settings.user.id : null;
       const submission = find(assignmentSettingsInfo.submissions, {studentId: studentSubmission.studentId});
-      const canMark = isNil(submission.allocation) || submission.allocation.id === selfId;
-
-
-      if (assignmentSettingsInfo.state !== AssignmentState.FINALIZED && ( assignmentSettingsInfo.state === AssignmentState.SENT_FOR_REVIEW || canMark)) {
+      const openInMarker = checkOpenInMarker(this.settings.user, submission, assignmentSettingsInfo.state);
+      if (openInMarker) {
         const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, studentSubmission.name, node.parent.name, node.name);
         this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
       } else {

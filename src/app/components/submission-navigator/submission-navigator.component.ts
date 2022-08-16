@@ -10,6 +10,7 @@ import {SelectedSubmission} from '../../info-objects/selected-submission';
 import {AssignmentSettingsInfo, AssignmentState} from '@shared/info-objects/assignment-settings.info';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
+import {checkOpenInMarker} from '../../utils/utils';
 
 export interface SubmissionItem {
   studentFullName: string;
@@ -150,11 +151,9 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
       pdfFile: activeMenuItem.pdfFile
     });
 
-    const selfId = this.settings.user ? this.settings.user.id : null;
     const submission = find(this.assignmentSettings.submissions, {studentId: activeMenuItem.studentId});
-    const canMark = isNil(submission.allocation) || submission.allocation.id === selfId;
-
-    if (this.assignmentSettings.state !== AssignmentState.FINALIZED && (this.assignmentSettings.state === AssignmentState.SENT_FOR_REVIEW || canMark)) {
+    const openInMarker = checkOpenInMarker(this.settings.user, submission, this.assignmentSettings.state);
+    if (openInMarker) {
       this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
     } else {
       this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);

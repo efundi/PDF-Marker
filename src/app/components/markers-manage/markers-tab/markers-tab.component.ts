@@ -17,7 +17,7 @@ import {MatPaginator} from '@angular/material/paginator';
 import {MatSort} from '@angular/material/sort';
 import {Subscription} from 'rxjs';
 import {AppService} from '../../../services/app.service';
-import {uuidv4} from '../../../utils/utils';
+import {uuidv4} from '@shared/constants/constants';
 
 
 

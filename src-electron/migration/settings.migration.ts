@@ -1,9 +1,9 @@
 import {DefaultSettings, SettingInfo, SettingInfoVersion} from '@shared/info-objects/setting.info';
-import {uuidv4} from '../../src/app/utils/utils';
 import {getConfig, updateConfigFile} from '../ipc/config.handler';
 import {mkdir, writeFile} from 'fs/promises';
 import {CONFIG_DIR, CONFIG_FILE} from '../constants';
 import {existsSync} from 'fs';
+import {uuidv4} from '@shared/constants/constants';
 
 const logger = require('electron-log');
 const LOG = logger.scope('SettingsMigration');
