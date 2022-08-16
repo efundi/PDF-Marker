@@ -210,7 +210,7 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
             }
             delete (assignmentSettings as any).dateFinalized;
           }
-        })
+        });
       }).then(() => writeAssignmentSettingsAt(migrationSettings, assignmentFolder));
 
 
