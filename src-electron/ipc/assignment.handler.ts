@@ -595,6 +595,15 @@ function writeGradesCsv(outputFile: string, grades: GradesCSV): Promise<any> {
   gradesJSON.push({
     field1: ''
   });
+  gradesJSON.push({
+    field1: 'Display ID',
+    field2: 'ID',
+    field3: 'Last Name',
+    field4: 'First Name',
+    field5: 'grade',
+    field6: 'Submission date',
+    field7: 'Late submission'
+  });
   forEach(grades.studentGrades, (studentGrade) => {
     gradesJSON.push({
       field1: studentGrade.displayId,
@@ -607,7 +616,10 @@ function writeGradesCsv(outputFile: string, grades: GradesCSV): Promise<any> {
     });
   });
 
-  return json2csvAsync(gradesJSON, {emptyFieldValue: '', prependHeader: false})
+  return json2csvAsync(gradesJSON, {
+    emptyFieldValue: '',
+    prependHeader: false
+  })
     .then(csv => {
       return writeFile(outputFile, csv);
     }, (error) => {
@@ -724,7 +736,14 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
       const exportTempDirectory = tempDirectory + sep + assignmentName;
       return finalizeSubmissions(workspaceFolder, assignmentName).then(() => {
         return mkdir(exportTempDirectory);
-      }).then(() => copy(assignmentFolder + sep + ASSIGNMENT_BACKUP_DIR, exportTempDirectory))
+      }).then(() => {
+        return stat(assignmentFolder + sep + ASSIGNMENT_BACKUP_DIR)
+          .then(() => {
+            return copy(assignmentFolder + sep + ASSIGNMENT_BACKUP_DIR, exportTempDirectory)
+          }, () => {
+            // It's fine if the directory does not exist
+          });
+      })
         .then(() => {
           return copy(
             assignmentFolder,
