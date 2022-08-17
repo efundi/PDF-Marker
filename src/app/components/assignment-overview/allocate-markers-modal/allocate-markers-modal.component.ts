@@ -12,6 +12,7 @@ import {
   SubmissionAllocation,
   SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
+import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 
 interface Allocation {
   marker: Marker;
@@ -25,17 +26,18 @@ interface Allocation {
 })
 export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
 
-
   settings: SettingInfo;
   formGroup: FormGroup<{
     groupId: FormControl<string | null>,
     includeMe: FormControl<boolean>,
+    exportPath: FormControl<string>,
   }>;
   submissions: Submission[] = [];
   allocations: Allocation[] = [];
   assignmentName: string;
   studentCount: number;
   private formSubscription: Subscription;
+  private workspaceName: string;
 
   constructor(private formBuilder: FormBuilder,
               public settingsService: SettingsService,
@@ -47,7 +49,8 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
   private initForm(): void {
     this.formGroup = this.formBuilder.group({
       groupId: [null as string, Validators.compose([Validators.required, this.formEmptyGroupValidator()])],
-      includeMe: [false]
+      includeMe: [false],
+      exportPath: [null as string]
     });
 
     this.formSubscription = this.formGroup.valueChanges.subscribe((value) => {
@@ -151,7 +154,6 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
       allocations.push(myAllocation);
     }
     this.allocations = sortBy(allocations, 'marker.name');
-
   }
 
   private loadSettings(): void {
@@ -185,5 +187,16 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
     });
 
     this.dialogRef.close(allocations);
+  }
+
+  setExportDirectory() {
+    // this.appService.getFolder()
+    //   .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+    //     if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
+    //       this.settingsForm.controls.defaultPath.setValue((appSelectedPathInfo.selectedPath) ? appSelectedPathInfo.selectedPath : null);
+    //     } else if (appSelectedPathInfo.error) {
+    //       this.alertService.error(appSelectedPathInfo.error.message);
+    //     }
+    //   });
   }
 }

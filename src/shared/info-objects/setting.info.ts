@@ -20,6 +20,7 @@ export interface SettingInfo {
   lmsSelection?: string;
 
   defaultPath?: string;
+  exportPath?: string;
 
   folders: string[];
 
