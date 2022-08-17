@@ -45,6 +45,7 @@ import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
 import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-markers-modal.component';
 import {DateTime} from 'luxon';
 import {checkOpenInMarker} from '../../utils/utils';
+import {ImportMarkerModalComponent} from './import-marker-modal/import-marker-modal.component';
 
 export interface AssignmentDetails {
   index?: number;
@@ -106,6 +107,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   private workspaceName: string;
   assignmentName: string;
   isAssignmentOwner = false;
+
+  /**
+   * Flag if the user can import assignments exported by markers
+   */
+  canImport = false;
 
   constructor(private assignmentService: AssignmentService,
               private router: Router,
@@ -216,11 +222,19 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     return isStandalone || isOwner;
   }
 
+  private calculateCanImport(): boolean {
+    if (this.assignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED){
+      return false;
+    }
+    const user = this.settings.user;
+    return !isNil(user) && this.assignmentSettings.owner.id === this.settings.user.id;
+  }
+
   private generateDataFromModel() {
     const values: AssignmentDetails[] = [];
     if (!isNil(this.workspaceAssignment)) {
       this.isAssignmentOwner = this.calculateIsAssignmentOwner();
-
+      this.canImport = this.calculateCanImport();
       let index = 0;
       const selfEmail = this.settings.user ? this.settings.user.email : null;
       const selfId = this.settings.user ? this.settings.user.id : null;
@@ -584,4 +598,21 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         }
       });
     }
+
+
+  importMarkerFile(): void {
+    const config = new MatDialogConfig();
+    config.width = '400px';
+    config.maxWidth = '400px';
+    config.data = {
+      assignmentName: this.assignmentName,
+      workspaceName: this.workspaceName,
+      assignmentSettings: this.assignmentSettings,
+      settings: this.settings
+    };
+    this.dialog.open(ImportMarkerModalComponent, config).afterClosed().subscribe((result) => {
+
+    });
+  }
+
 }

@@ -71,6 +71,15 @@
         (click)="onExportForReview($event)">
         <mat-icon >archive</mat-icon>
       </button>
+      <button
+        *ngIf="canImport"
+        color="primary"
+        mat-button
+        mat-icon-button
+        matTooltip="Import from Marker"
+        (click)="importMarkerFile()">
+        <mat-icon>unarchive</mat-icon>
+      </button>
     </div>
   </div>
 

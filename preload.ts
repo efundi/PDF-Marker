@@ -15,6 +15,8 @@ import {SettingInfo} from '@shared/info-objects/setting.info';
 import {ApplicationIpcService} from './src/shared/ipc/application.ipc-service';
 import {SubmissionInfo} from './src/shared/info-objects/submission.info';
 import {UpdateIpcService} from './src/shared/ipc/update.ipc-service';
+import {LectureImportInfo} from './src/shared/info-objects/lecture-import.info';
+import {validateLectureImport} from './src-electron/ipc/import.handler';
 
 contextBridge.exposeInMainWorld('updateApi', {
   checkForUpdate: () => ipcRenderer.invoke('update:check'),
@@ -53,6 +55,8 @@ contextBridge.exposeInMainWorld('importApi', {
   importZip: (importInfo: ImportInfo) => ipcRenderer.invoke('import:importZip', importInfo),
   getZipEntries: (filePath: string) => ipcRenderer.invoke('import:getZipEntries', filePath),
   validateZipFile: (filePath: string, format: string) => ipcRenderer.invoke('import:validateZipFile', filePath, format),
+  lectureImport: (importInfo: LectureImportInfo) => ipcRenderer.invoke('import:lectureImport', importInfo),
+  validateLectureImport: (importInfo: LectureImportInfo) => ipcRenderer.invoke('import:validateLectureImport', importInfo),
 } as ImportIpcService);
 
 

@@ -24,7 +24,13 @@ import {
   selectRubricFile
 } from './src-electron/ipc/rubric.handler';
 import {toIpcResponse} from './src-electron/utils';
-import {getZipEntries, importZip, validateZipFile} from './src-electron/ipc/import.handler';
+import {
+  getZipEntries,
+  importZip,
+  lectureImport,
+  validateLectureImport,
+  validateZipFile
+} from './src-electron/ipc/import.handler';
 import {
   createWorkingFolder,
   deleteWorkspace,
@@ -197,6 +203,8 @@ try {
     ipcMain.handle('import:importZip', toIpcResponse(importZip));
     ipcMain.handle('import:validateZipFile', toIpcResponse(validateZipFile));
     ipcMain.handle('import:getZipEntries', toIpcResponse(getZipEntries));
+    ipcMain.handle('import:lectureImport', toIpcResponse(lectureImport));
+    ipcMain.handle('import:validateLectureImport', toIpcResponse(validateLectureImport));
 
     // Workspace API
     ipcMain.handle('workspace:moveWorkspaceAssignments', toIpcResponse(moveWorkspaceAssignments));

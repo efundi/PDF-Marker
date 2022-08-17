@@ -1,0 +1,42 @@
+<div mat-dialog-title class="mt-3">
+  <h2>Import from marker</h2>
+  <span class="pdf-marker-fill-space"></span>
+  <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
+</div>
+<mat-dialog-content>
+  <p class="text-black-50 small">Select the marker whose work you want to import</p>
+<form [formGroup]="formGroup" class="d-flex flex-column">
+  <mat-form-field>
+    <mat-select formControlName="markerId" >
+      <mat-option *ngFor="let marker of markers" [value]="marker.id">
+        {{marker.name}}
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="formGroup.controls.markerId.errors?.required">
+      Marker is required
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field floatLabel="always">
+    <div class="pdf-spacer"></div>
+    <mat-label>Select File</mat-label>
+    <div class="pdf-spacer"></div>
+    <div class="pdf-marker-file-upload">
+      <button type="button" mat-raised-button (click)="selectFile()">Browse</button>
+      &nbsp;&nbsp;
+      <input type="text" matInput formControlName="zipFile" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
+    </div>
+  </mat-form-field>
+  <mat-error *ngIf="formGroup.errors?.invalidZip">
+    {{formGroup.errors?.invalidZip}}
+  </mat-error>
+</form>
+</mat-dialog-content>
+<div mat-dialog-actions class="justify-content-end">
+  <button
+    color="primary"
+    type="submit"
+    mat-button
+    mat-raised-button
+    (click)="submit()">Submit</button>&nbsp;&nbsp;&nbsp;
+</div>

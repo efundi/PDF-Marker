@@ -525,7 +525,7 @@ export function getAssignmentSettingsAt(assignmentFolder: string): Promise<Assig
 }
 
 
-function getAssignmentSettingsFor(workspaceName: string, assignmentName: string): Promise<AssignmentSettingsInfo> {
+export function getAssignmentSettingsFor(workspaceName: string, assignmentName: string): Promise<AssignmentSettingsInfo> {
   return getAssignmentDirectoryAbsolutePath(workspaceName, assignmentName)
     .then((directory) => getAssignmentSettingsAt(directory));
 }

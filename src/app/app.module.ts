@@ -95,6 +95,7 @@ import { PopoverDirective } from './directives/popover.directive';
 import { UpdateModalComponent } from './components/update-modal/update-modal.component';
 import { AllocateMarkersModalComponent } from './components/assignment-overview/allocate-markers-modal/allocate-markers-modal.component';
 import {PreviewMarksComponent} from './components/assignment-marking/preview-marks/preview-marks.component';
+import { ImportMarkerModalComponent } from './components/assignment-overview/import-marker-modal/import-marker-modal.component';
 
 @NgModule({
   declarations: [
@@ -141,7 +142,8 @@ import {PreviewMarksComponent} from './components/assignment-marking/preview-mar
     PopoverDirective,
     UpdateModalComponent,
     AllocateMarkersModalComponent,
-    PreviewMarksComponent
+    PreviewMarksComponent,
+    ImportMarkerModalComponent
   ],
   imports: [
     HttpClientModule,
