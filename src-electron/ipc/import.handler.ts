@@ -25,7 +25,7 @@ import {
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {deleteFolderRecursive, isFolder, isNullOrUndefinedOrEmpty, stream2buffer} from '../utils';
 
-import JSZip, {JSZipObject } from 'jszip';
+import JSZip, {JSZipObject} from 'jszip';
 import {getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
 import {readGradesCsv, writeAssignmentSettingsFor} from './assignment.handler';
@@ -42,6 +42,7 @@ import {
 } from '@shared/constants/constants';
 import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
 import {PDFDocument} from 'pdf-lib';
+import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 
 /**
  * Returns a list of existing folders in the workspace
@@ -497,4 +498,41 @@ function extractMarkerZip(
     }
   });
   return markerImportPromise;
+}
+
+
+export function lectureImport(event: IpcMainInvokeEvent, importInfo: LectureImportInfo): Promise<any> {
+  return Promise.resolve(true);
+}
+
+
+export function validateLectureImport(event: IpcMainInvokeEvent, importInfo: LectureImportInfo): Promise<any> {
+
+  return readFile(importInfo.filename)
+    .then((zipData) => new JSZip().loadAsync(zipData))
+    .then((zipObject) => {
+      const settingsFilePath = importInfo.assignmentName + '/' + SETTING_FILE;
+      const settingsFileZip = zipObject.file(settingsFilePath);
+      if (isNil(settingsFileZip)) {
+        return Promise.reject('Zip file does not contain expected assignment settings file');
+      }
+      return settingsFileZip.async('nodebuffer').then((data) => {
+        const assignmentSettings: AssignmentSettingsInfo = JSON.parse(data.toString());
+
+        if (assignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
+          return Promise.reject('Assignment is not in the expected distribution type.');
+        }
+        if (assignmentSettings.state !== AssignmentState.SENT_FOR_REVIEW) {
+          return Promise.reject('Assignment is not in the expected state.');
+        }
+      });
+    })
+    .then(() => null /* Returning null means no errors */);
+  //
+  // return getAssignmentSettingsFor(importInfo.workspaceName, importInfo.assignmentName).then((assignmentSettings) => {
+  //   const errors = {};
+  //
+  //
+  //   return errors;
+  // });
 }

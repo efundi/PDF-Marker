@@ -63,6 +63,7 @@
     "electron-log": "^4.4.8",
     "electron-updater": "^4.6.5",
     "fs-extra": "^10.1.0",
+    "glob": "^8.0.3",
     "json-2-csv": "^3.17.1",
     "jszip": "^3.10.1",
     "lodash": "^4.17.21",

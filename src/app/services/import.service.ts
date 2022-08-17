@@ -5,6 +5,7 @@ import {ImportIpcService} from '@shared/ipc/import.ipc-service';
 import {Observable} from 'rxjs';
 import {TreeNode} from '@shared/info-objects/workspace';
 import {AssignmentValidateResultInfo} from '@shared/info-objects/assignment-validate-result.info';
+import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +28,14 @@ export class ImportService {
 
   getZipEntries(filePath: string): Observable<TreeNode[]> {
     return fromIpcResponse(this.importService.getZipEntries(filePath));
+  }
+
+  validateLectureImport(importInfo: LectureImportInfo): Observable<any> {
+    return fromIpcResponse(this.importService.validateLectureImport(importInfo));
+  }
+
+  lectureImport(importInfo: LectureImportInfo): Observable<any> {
+    return fromIpcResponse(this.importService.lectureImport(importInfo));
   }
 
 
