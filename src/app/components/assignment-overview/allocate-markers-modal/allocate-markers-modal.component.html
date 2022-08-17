@@ -26,6 +26,18 @@
     </mat-form-field>
 
     <mat-checkbox formControlName="includeMe" color="primary" class="ms-2">Include Me</mat-checkbox>
+
+    <div>
+      <mat-form-field floatLabel="always">
+        <mat-label>Export Directory</mat-label>
+        <div class="pdf-marker-file-upload">
+          <button type="button" mat-raised-button (click)="setExportDirectory()">Browse</button>
+          &nbsp;&nbsp;
+          <input type="text" matInput formControlName="defaultPath" id="pdf-marker-upload-display" readonly placeholder="Export Directory">
+        </div>
+      </mat-form-field>
+    </div>
+
   </form>
   <div *ngIf="allocations.length > 0">
     <div class="d-flex mb-2"><mat-icon color="primary">workspaces</mat-icon>&nbsp;Submissions Allocated</div>
