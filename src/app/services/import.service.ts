@@ -6,6 +6,7 @@ import {Observable} from 'rxjs';
 import {TreeNode} from '@shared/info-objects/workspace';
 import {AssignmentValidateResultInfo} from '@shared/info-objects/assignment-validate-result.info';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
+import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 
 @Injectable({
   providedIn: 'root'
@@ -34,7 +35,7 @@ export class ImportService {
     return fromIpcResponse(this.importService.validateLectureImport(importInfo));
   }
 
-  lectureImport(importInfo: LectureImportInfo): Observable<any> {
+  lectureImport(importInfo: LectureImportInfo): Observable<AssignmentSettingsInfo> {
     return fromIpcResponse(this.importService.lectureImport(importInfo));
   }
 

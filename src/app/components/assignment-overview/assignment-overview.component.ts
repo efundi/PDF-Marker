@@ -46,6 +46,7 @@ import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-m
 import {DateTime} from 'luxon';
 import {checkOpenInMarker} from '../../utils/utils';
 import {ImportMarkerModalComponent} from './import-marker-modal/import-marker-modal.component';
+import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 
 export interface AssignmentDetails {
   index?: number;
@@ -602,16 +603,25 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   importMarkerFile(): void {
     const config = new MatDialogConfig();
-    config.width = '400px';
-    config.maxWidth = '400px';
+    config.width = '600px';
+    config.maxWidth = '600px';
     config.data = {
       assignmentName: this.assignmentName,
       workspaceName: this.workspaceName,
       assignmentSettings: this.assignmentSettings,
       settings: this.settings
     };
-    this.dialog.open(ImportMarkerModalComponent, config).afterClosed().subscribe((result) => {
-
+    this.dialog.open(ImportMarkerModalComponent, config).afterClosed().subscribe((result: LectureImportInfo) => {
+      if (result) {
+        this.importService.lectureImport(result).subscribe({
+          next: (importResult) => {
+            this.refresh();
+          },
+          error: (error) => {
+            console.error(error);
+          }
+        });
+      }
     });
   }
 
