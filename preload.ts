@@ -17,6 +17,7 @@ import {SubmissionInfo} from './src/shared/info-objects/submission.info';
 import {UpdateIpcService} from './src/shared/ipc/update.ipc-service';
 import {LectureImportInfo} from './src/shared/info-objects/lecture-import.info';
 import {validateLectureImport} from './src-electron/ipc/import.handler';
+import {IpcResponse} from './src/shared/ipc/ipc-response';
 
 contextBridge.exposeInMainWorld('updateApi', {
   checkForUpdate: () => ipcRenderer.invoke('update:check'),
@@ -36,7 +37,8 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   shareExport: (shareRequest: ShareAssignments) => ipcRenderer.invoke('assignments:shareExport', shareRequest),
   updateAssignmentRubric: (workspaceName: string, assignmentName: string, rubricName: string, ) => ipcRenderer.invoke('assignments:updateAssignmentRubric', workspaceName, assignmentName, rubricName),
   getPdfFile: (location: string) => ipcRenderer.invoke('assignments:getPdfFile', location),
-  exportForReview: (workspaceFolder: string, assignmentName: string) => ipcRenderer.invoke('assignments:exportForReview', workspaceFolder, assignmentName)
+  exportForReview: (workspaceFolder: string, assignmentName: string) => ipcRenderer.invoke('assignments:exportForReview', workspaceFolder, assignmentName),
+  generateAllocationZipFiles: (workspaceName: string, assignmentName: string, exportPath: string) => ipcRenderer.invoke('assignments:generateAllocationZipFiles', workspaceName, assignmentName, exportPath)
 } as AssignmentIpcService);
 
 

@@ -20,4 +20,5 @@ export interface AssignmentIpcService {
   shareExport(shareRequest: ShareAssignments): Promise<IpcResponse<any>>;
   updateAssignmentRubric(workspaceName: string, assignmentName: string, rubricName: string): Promise<IpcResponse<IRubric>>;
   getPdfFile(location: string): Promise<IpcResponse<Uint8Array>>;
+  generateAllocationZipFiles(workspaceName: string, assignmentName: string, exportPath: string): Promise<IpcResponse<string>>;
 }

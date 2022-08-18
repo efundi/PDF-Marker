@@ -4,3 +4,34 @@
   background: #fff;
   margin-bottom: 0;
 }
+
+.pdf-marker-file-upload {
+  display: flex;
+
+  #pdf-marker-upload-display {
+    display: flex;
+    width: 100%;
+    border: 0;
+    background: transparent;
+  }
+
+  button {
+    position: relative;
+
+    .pdf-marker-upload {
+      width: 100%;
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      margin: 0;
+      padding: 0;
+      z-index: 10;
+      font-size: 20px;
+      height: 36px;
+      opacity: 0;
+      filter: alpha(opacity=0);
+      background-color: #fff;
+    }
+  }
+}

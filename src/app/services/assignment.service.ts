@@ -181,4 +181,7 @@ export class AssignmentService {
       );
   }
 
+  generateAllocationZipFiles(workspaceName: string, assignmentName: string, exportPath: string): Observable<string> {
+    return fromIpcResponse(this.assignmentApi.generateAllocationZipFiles(workspaceName, assignmentName, exportPath));
+  }
 }
