@@ -12,7 +12,7 @@ import {
 } from '@shared/info-objects/assignment-settings.info';
 import {IpcMainInvokeEvent} from 'electron';
 import {ImportInfo} from '@shared/info-objects/import.info';
-import {cloneDeep, every, find, forEach, isEmpty, isNil} from 'lodash';
+import {cloneDeep, every, find, forEach, indexOf, isEmpty, isNil, map} from 'lodash';
 import {mkdir, readFile, stat, writeFile} from 'fs/promises';
 import {getRubrics, markRubricInUse} from './rubric.handler';
 import {
@@ -318,7 +318,7 @@ function extractGenericImport(
   const submissions: Submission[] = [];
   let promise: Promise<any> = Promise.resolve();
   zipObject.forEach((zipRelativePath, file) => {
-    const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replace('/', sep);
+    const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replaceAll('/', sep);
     const fileFullPath = destination + zipFilePath;
     const directory = dirname(fileFullPath);
     if (!file.dir) {
@@ -382,7 +382,7 @@ function extractAssignmentZipFile(
 
     let promise: Promise<any> = Promise.resolve();
     zipObject.forEach((zipRelativePath, file) => {
-      const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replace('/', sep);
+      const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replaceAll('/', sep);
       const fileFullPath = destination + zipFilePath;
       const directory = dirname(fileFullPath);
 
@@ -478,7 +478,7 @@ function extractMarkerZip(
 
   let markerImportPromise: Promise<any> = Promise.resolve();
   zipObject.forEach((zipRelativePath, file) => {
-    const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replace('/', sep);
+    const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replaceAll('/', sep);
     const fileFullPath = destination + zipFilePath;
 
     if (file.dir) {
@@ -519,8 +519,20 @@ export function lectureImport(event: IpcMainInvokeEvent, importInfo: LectureImpo
   return readFile(importInfo.filename)
     .then((zipData) => new JSZip().loadAsync(zipData))
     .then((zipObject) => {
-      const settingsFilePath = importInfo.assignmentName + '/' + SETTING_FILE;
+      if (Object.keys(zipObject.files).length === 0) {
+        return Promise.reject('Zip Object contains no files!');
+      }
+      const firstEntryPath = Object.keys(zipObject.files)[0].split('/');
+      if (firstEntryPath.length === 0) {
+        return Promise.reject('Invalid zip structure!');
+      }
+
+      // Name of the root directory in the zip
+      const zipAssignmentName = firstEntryPath[0];
+
+      const settingsFilePath = zipAssignmentName + '/' + SETTING_FILE;
       const settingsFileZip = zipObject.file(settingsFilePath);
+
       if (isNil(settingsFileZip)) {
         return Promise.reject('Zip file does not contain expected assignment settings file');
       }
@@ -544,9 +556,10 @@ export function lectureImport(event: IpcMainInvokeEvent, importInfo: LectureImpo
             return Promise.resolve();
           }
 
-          const fullPath = dirname(assignmentDirectory) + sep + zipFile.name.replace('/', sep);
+          const fullPath = dirname(assignmentDirectory) + sep + zipFile.name
+            .replace(zipAssignmentName + '/', importInfo.assignmentName + '/')
+            .replaceAll('/', sep);
 
-          // TODO check the submission directory name if its actually a submission we want to extract
           if (zipFile.name.endsWith(MARK_FILE)) {
             return extractFile(zipFile, fullPath)
               .then(() => {
@@ -585,10 +598,10 @@ export function validateLectureImport(event: IpcMainInvokeEvent, importInfo: Lec
       // Name of the root directory in the zip
       const zipAssignmentName = firstEntryPath[0];
 
-      const settingsFilePath = importInfo.assignmentName + '/' + SETTING_FILE;
+      const settingsFilePath = zipAssignmentName + '/' + SETTING_FILE;
       const settingsFileZip = zipObject.file(settingsFilePath);
       if (isNil(settingsFileZip)) {
-        return Promise.reject('Zip file does not contain expected assignment settings file');
+        return Promise.reject('Zip file does not contain expected assignment settings file.');
       }
       return extractAssignmentSettings(settingsFileZip).then((zipAssignmentSettings) => {
 
@@ -632,6 +645,21 @@ export function validateLectureImport(event: IpcMainInvokeEvent, importInfo: Lec
             return Promise.reject(`The file you selected to import is for the assignment titled "${zipAssignmentSettings.assignmentName}"`);
           }
 
+          // Check that the submission fields match the original assignment
+          const allSubmissionsMatch = every(zipAssignmentSettings.submissions, (submission) => {
+            const mainSubmission = find(assignmentSettings.submissions, {
+              studentId: submission.studentId,
+              directoryName: submission.directoryName,
+              studentName: submission.studentName,
+              studentSurname: submission.studentSurname
+            });
+            // If it's null then the fields do not match the original submission
+            return !isNil(mainSubmission);
+          });
+          if (!allSubmissionsMatch) {
+            return Promise.reject('Some of the submissions details does not match the assignment\s submissions\' details.');
+          }
+
           // Check that the assignment is still allocated to the user
           const allMatch = every(zipAssignmentSettings.submissions, (submission) => {
             const mainSubmission = find(assignmentSettings.submissions, {studentId: submission.studentId});
@@ -640,6 +668,8 @@ export function validateLectureImport(event: IpcMainInvokeEvent, importInfo: Lec
           if (!allMatch) {
             return Promise.reject('Some of the submissions are not allocated to the selected marker.');
           }
+
+          const zipSubmissionDirectoryNames: string[] = [];
 
           // Check the files in the zip
           for (const zipFilePath in zipObject.files) {
@@ -662,9 +692,13 @@ export function validateLectureImport(event: IpcMainInvokeEvent, importInfo: Lec
               continue; // We found assignment settings file
             }
 
-            if (!(zipFilePathParts[1].match(STUDENT_DIRECTORY_REGEX) || zipFilePath[1].match(STUDENT_DIRECTORY_NO_NAME_REGEX))){
+            if (!(zipFilePathParts[1].match(STUDENT_DIRECTORY_REGEX) || zipFilePath[1].match(STUDENT_DIRECTORY_NO_NAME_REGEX))) {
               // Check that the second path is a student submission path
               return Promise.reject(`Zip contains directories that are not submissions. ${zipFilePath}`);
+            }
+
+            if (indexOf(zipSubmissionDirectoryNames, zipFilePathParts[1]) < 0) {
+              zipSubmissionDirectoryNames.push(zipFilePathParts[1]);
             }
 
             if (zipFile.dir && zipFilePathParts.length === 3) {
@@ -695,6 +729,24 @@ export function validateLectureImport(event: IpcMainInvokeEvent, importInfo: Lec
             }
           }
 
+          // Check that the zip only contains directories for which there are a matching submission
+          const allHaveSubmissions = every(zipSubmissionDirectoryNames, (directoryName) => {
+            const submission = find(assignmentSettings.submissions, {directoryName});
+            return !isNil(submission);
+          });
+          if (!allHaveSubmissions) {
+            return Promise.reject(`Zip contains submission directories that are not in the assignment settings.`);
+          }
+
+
+          // Check that all submission have a directory in the zip
+          const submissionDirectoryNames = map(assignmentSettings.submissions, 'directoryName');
+          const allHaveDirectory = every(submissionDirectoryNames, (directoryName) => {
+            return indexOf(zipSubmissionDirectoryNames, directoryName) >= 0;
+          });
+          if (!allHaveDirectory) {
+            return Promise.reject(`Zip assignment settings contains submission directories that are not included in the zip.`);
+          }
         });
       });
     })
