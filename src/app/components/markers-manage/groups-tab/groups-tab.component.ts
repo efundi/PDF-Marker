@@ -8,7 +8,14 @@ import {
   ViewChild,
   ViewChildren
 } from '@angular/core';
-import {UntypedFormArray, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, NgForm, Validators} from '@angular/forms';
+import {
+  NgForm,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
 import {MarkersManageComponent} from '../markers-manage.component';
@@ -311,7 +318,8 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
     this.updateGroup(index, groupItem);
   }
 
-  updateGroup(index: number, groupItem: GroupItem) {
+  private updateGroup(index: number, groupItem: GroupItem) {
+    this.activeGroupIndex = null;
     const formValue = this.getFormControl(index, 'name').value;
     const updateSettings = cloneDeep(this.originalSettings);
     const group = find(updateSettings.groups, {id: groupItem.groupId});
