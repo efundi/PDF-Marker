@@ -46,6 +46,7 @@ import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-m
 import {DateTime} from 'luxon';
 import {checkOpenInMarker} from '../../utils/utils';
 import {ImportMarkerModalComponent} from './import-marker-modal/import-marker-modal.component';
+import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 
 export interface AssignmentDetails {
   index?: number;
@@ -223,11 +224,23 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   private calculateCanImport(): boolean {
-    if (this.assignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED){
+    if (this.assignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
+      return false;
+    }
+    if (this.assignmentSettings.state === AssignmentState.FINALIZED) {
       return false;
     }
     const user = this.settings.user;
-    return !isNil(user) && this.assignmentSettings.owner.id === this.settings.user.id;
+    if (isNil(user) || this.assignmentSettings.owner.id !== this.settings.user.id) {
+      return false;
+    }
+
+    // Check that there is atleast one more submission not allocated to me, and in an assigned state
+    const pendingSubmission = find(this.assignmentSettings.submissions, (submission) => {
+      return submission.state === SubmissionState.ASSIGNED_TO_MARKER && submission.allocation.id !== this.settings.user.id;
+    });
+
+    return !isNil(pendingSubmission);
   }
 
   private generateDataFromModel() {
@@ -602,16 +615,34 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   importMarkerFile(): void {
     const config = new MatDialogConfig();
-    config.width = '400px';
-    config.maxWidth = '400px';
+    config.width = '600px';
+    config.maxWidth = '600px';
     config.data = {
       assignmentName: this.assignmentName,
       workspaceName: this.workspaceName,
       assignmentSettings: this.assignmentSettings,
       settings: this.settings
     };
-    this.dialog.open(ImportMarkerModalComponent, config).afterClosed().subscribe((result) => {
+    this.busyService.start();
+    this.dialog.open(ImportMarkerModalComponent, config).afterClosed().subscribe((result: LectureImportInfo) => {
+      if (result) {
+        this.importService.lectureImport(result).subscribe({
+          next: () => {
+            this.assignmentService.refreshWorkspaces().subscribe(() => {
 
+              this.alertService.success(`Marker file imported.`);
+              this.busyService.stop();
+              this.refresh();
+            });
+          },
+          error: (error) => {
+            this.busyService.stop();
+            this.alertService.error(error);
+          }
+        });
+      } else {
+        this.busyService.stop();
+      }
     });
   }
 

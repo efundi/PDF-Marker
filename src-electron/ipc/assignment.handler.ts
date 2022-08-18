@@ -50,7 +50,7 @@ import {
   MARK_FILE,
   PDFM_FILE_SORT,
   SETTING_FILE,
-  SUBMISSION_FOLDER
+  SUBMISSION_FOLDER, uuidv4
 } from '@shared/constants/constants';
 import {
   MarkingSubmissionInfo,
@@ -464,6 +464,7 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
 
     const studentDetails: StudentInfo[] = createInfo.studentRow;
     const settings: AssignmentSettingsInfo = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
+    settings.sourceId = uuidv4();
     settings.assignmentName = assignmentName;
     settings.rubric = rubric;
     settings.sourceFormat = SourceFormat.MANUAL;

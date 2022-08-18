@@ -103,6 +103,14 @@ export interface Submission {
 }
 
 export interface AssignmentSettingsInfo {
+  /**
+   * Unique identifier of this assignment from the source.
+   * It can happen that markers have allocation imports that are
+   * from the same source, but imported as different assignments.
+   * This id should not be used to check for unique assignments in a workspace,
+   * it should instead be used to match a marker's export with the original source assignment
+   */
+  sourceId: string;
 
   /**
    * Version of the settings assignment settings file
@@ -157,6 +165,7 @@ export interface AssignmentSettingsInfo {
 
 export const DEFAULT_ASSIGNMENT_SETTINGS: AssignmentSettingsInfo = {
   assignmentName: null,
+  sourceId: null,
   version: AssignmentSettingsVersion,
   distributionFormat: DistributionFormat.STANDALONE,
   owner: null,

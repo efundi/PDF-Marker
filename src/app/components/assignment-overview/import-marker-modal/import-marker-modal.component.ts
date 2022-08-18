@@ -121,7 +121,12 @@ export class ImportMarkerModalComponent implements OnInit {
   }
 
   submit() {
-    this.dialogRef.close();
+    this.dialogRef.close({
+      markerId: this.formGroup.value.markerId,
+      filename: this.formGroup.value.zipFile,
+      assignmentName: this.data.assignmentName,
+      workspaceName: this.data.workspaceName
+    });
   }
 
   selectFile() {

@@ -72,7 +72,7 @@
         <mat-icon >archive</mat-icon>
       </button>
       <button
-        *ngIf="canImport"
+        [disabled]="!canImport"
         color="primary"
         mat-button
         mat-icon-button
