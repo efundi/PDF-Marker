@@ -540,7 +540,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     };
 
     const dialogRef = this.appService.createDialog(AllocateMarkersModalComponent, config);
-    dialogRef.afterClosed().subscribe((allocations: SubmissionAllocation[]) => {
+    dialogRef.afterClosed().subscribe((result) => {
+      const allocations: SubmissionAllocation[] = result.allocations;
+      const exportPath: string = result.exportPath;
       if (isEmpty(allocations)) {
         return; // Nothing to do if there is no allocations
       }
@@ -558,8 +560,18 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         }
       });
       this.updateAssignmentSettings(settings);
+      this.assignmentService.generateAllocationZipFiles(this.workspaceName, this.assignmentName, exportPath).subscribe({
+        next: (generateResult) => {
+          console.log(generateResult);
+        },
+        error: (error) => {
+          this.alertService.error(error);
+        }
+      });;
     });
   }
+
+
 
   private updateAssignmentSettings(assignmentSettings: AssignmentSettingsInfo) {
     this.busyService.start();

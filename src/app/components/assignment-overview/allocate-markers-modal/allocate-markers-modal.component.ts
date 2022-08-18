@@ -13,6 +13,9 @@ import {
   SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
+import {AppService} from '../../../services/app.service';
+import {BusyService} from '../../../services/busy.service';
+import {AlertService} from '../../../services/alert.service';
 
 interface Allocation {
   marker: Marker;
@@ -42,7 +45,10 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
   constructor(private formBuilder: FormBuilder,
               public settingsService: SettingsService,
               public dialogRef: MatDialogRef<AllocateMarkersModalComponent>,
-              @Inject(MAT_DIALOG_DATA) public data: any) {
+              @Inject(MAT_DIALOG_DATA) public data: any,
+              private alertService: AlertService,
+              private busyService: BusyService,
+              private appService: AppService) {
     this.initForm();
   }
 
@@ -186,17 +192,24 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
       });
     });
 
-    this.dialogRef.close(allocations);
+    this.dialogRef.close({
+      allocations,
+      exportPath : this.formGroup.value.exportPath
+    });
   }
 
   setExportDirectory() {
-    // this.appService.getFolder()
-    //   .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-    //     if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
-    //       this.settingsForm.controls.defaultPath.setValue((appSelectedPathInfo.selectedPath) ? appSelectedPathInfo.selectedPath : null);
-    //     } else if (appSelectedPathInfo.error) {
-    //       this.alertService.error(appSelectedPathInfo.error.message);
-    //     }
-    //   });
+    this.busyService.start();
+    this.appService.getFolder()
+      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+        this.busyService.stop();
+        if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
+          this.formGroup.patchValue({
+            exportPath: appSelectedPathInfo.selectedPath
+          });
+        } else if (appSelectedPathInfo.error) {
+          this.alertService.error(appSelectedPathInfo.error.message);
+        }
+      });
   }
 }

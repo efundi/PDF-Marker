@@ -940,3 +940,13 @@ export function exportForReview(event: IpcMainInvokeEvent,
       });
     });
 }
+
+export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
+                                           workspaceName: string,
+                                           assignmentName: string,
+                                           exportPath: string): Promise<any> {
+  console.log(workspaceName);
+  console.log(assignmentName);
+  console.log(exportPath);
+  return Promise.resolve("success");
+}
