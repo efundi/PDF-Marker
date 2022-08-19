@@ -19,7 +19,8 @@ import {
   GRADES_FILE,
   MARK_FILE,
   SETTING_FILE,
-  SUBMISSION_REL_PATH_REGEX, uuidv4
+  SUBMISSION_REL_PATH_REGEX,
+  uuidv4
 } from '@shared/constants/constants';
 import {getAllFiles, isNullOrUndefinedOrEmpty} from '../utils';
 import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX} from '../constants';
@@ -189,9 +190,12 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
             });
             submission.mark = studentGrade.grade;
             submission.lmsStatusText = studentGrade.lateSubmission;
+            if (!isNil(submission.mark)) {
+              hasMarks = true;
+              submission.state = SubmissionState.MARKED;
+            }
             // LateSubmission and submission date isn't filled in for generic imports
             isSakai = isSakai || !isNullOrUndefinedOrEmpty(studentGrade.lateSubmission) || !isNullOrUndefinedOrEmpty(studentGrade.submissionDate);
-            hasMarks = hasMarks || !isNil(submission.mark);
           });
 
           if (isCreated) {
