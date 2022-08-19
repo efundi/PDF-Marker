@@ -544,9 +544,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       };
       settings.distributionFormat = DistributionFormat.DISTRIBUTED;
       allocations.forEach((allocation) => {
-        const submission = find(settings.submissions, {directoryName: allocation.submission});
+        const submission = find(settings.submissions, {studentId: allocation.studentId});
         submission.allocation = allocation.marker;
-        submission.state = SubmissionState.ASSIGNED_TO_MARKER;
+        if (submission.state !== SubmissionState.MARKED) {
+          submission.state = SubmissionState.ASSIGNED_TO_MARKER;
+        }
       });
       this.updateAssignmentSettings(settings);
     });

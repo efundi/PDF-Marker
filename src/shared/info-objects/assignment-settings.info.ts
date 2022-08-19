@@ -57,9 +57,9 @@ export interface MakerReference {
  */
 export interface SubmissionAllocation {
   /**
-   * Name of the submission directory
+   *  Student ID of the submission to allocate
    */
-  submission: string;
+  studentId: string;
 
   /**
    * Reference to the marker for the submission
