@@ -15,14 +15,17 @@ import {getAssignmentSettingsAt, readGradesCsv, writeAssignmentSettingsAt} from 
 import {mkdir, stat} from 'fs/promises';
 import {
   ASSIGNMENT_BACKUP_DIR,
-  FEEDBACK_REL_PATH_REGEX,
   GRADES_FILE,
   MARK_FILE,
   SETTING_FILE,
-  SUBMISSION_REL_PATH_REGEX, uuidv4
+  uuidv4
 } from '@shared/constants/constants';
 import {getAllFiles, isNullOrUndefinedOrEmpty} from '../utils';
 import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX} from '../constants';
+
+const escapedSep = sep === '\\' ? '\\\\' : '/';
+const FEEDBACK_REL_PATH_REGEX = new RegExp('Feedback Attachment\\(s\\)' + escapedSep  + '(. * )\\.pdf');
+const SUBMISSION_REL_PATH_REGEX = new RegExp('Submission attachment\\(s\\)' + escapedSep + '(.*)\\.pdf');
 
 const logger = require('electron-log');
 const LOG = logger.scope('AssignmentMigration');
@@ -129,8 +132,8 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
   if (assignmentSettings.version !== AssignmentSettingsVersion) {
 
     if (!assignmentSettings.hasOwnProperty('version')) {
-      const isCreated: boolean = (assignmentSettings as any).isCreated;
-      delete (assignmentSettings as any).isCreated;
+      const isCreated: boolean = (migrationSettings as any).isCreated;
+      delete (migrationSettings as any).isCreated;
       // This is the first upgrade, set all the new fields
       migrationSettings.version = 1;
       migrationSettings.sourceId = uuidv4();
@@ -189,9 +192,12 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
             });
             submission.mark = studentGrade.grade;
             submission.lmsStatusText = studentGrade.lateSubmission;
+            if (!isNil(submission.mark)) {
+              hasMarks = true;
+              submission.state = SubmissionState.MARKED;
+            }
             // LateSubmission and submission date isn't filled in for generic imports
             isSakai = isSakai || !isNullOrUndefinedOrEmpty(studentGrade.lateSubmission) || !isNullOrUndefinedOrEmpty(studentGrade.submissionDate);
-            hasMarks = hasMarks || !isNil(submission.mark);
           });
 
           if (isCreated) {
@@ -203,13 +209,13 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
           }
 
           if (hasMarks) {
-            assignmentSettings.state = AssignmentState.IN_PROGRESS;
+            migrationSettings.state = AssignmentState.IN_PROGRESS;
           }
           if (assignmentSettings.hasOwnProperty('dateFinalized')) {
-            if (!isNil((assignmentSettings as any).dateFinalized)) {
-              assignmentSettings.state = AssignmentState.FINALIZED;
+            if (!isNil((migrationSettings as any).dateFinalized)) {
+              migrationSettings.state = AssignmentState.FINALIZED;
             }
-            delete (assignmentSettings as any).dateFinalized;
+            delete (migrationSettings as any).dateFinalized;
           }
         });
       }).then(() => writeAssignmentSettingsAt(migrationSettings, assignmentFolder));
