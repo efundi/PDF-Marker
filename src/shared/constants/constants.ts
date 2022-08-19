@@ -13,8 +13,6 @@ export const ASSIGNMENT_ROOT_FILES = [GRADES_FILE, 'grades.xls', 'grades.xlsx'];
 export const ASSIGNMENT_BACKUP_DIR = '.backup';
 export const FEEDBACK_ZIP_ENTRY_REGEX = /\/(.*)\/Feedback Attachment\(s\)\/(.*)\.pdf/;
 export const SUBMISSION_ZIP_ENTRY_REGEX = /\/(.*)\/Submission attachment\(s\)\/(.*)\.pdf/;
-export const FEEDBACK_REL_PATH_REGEX = /Feedback Attachment\(s\)\/(.*)\.pdf/;
-export const SUBMISSION_REL_PATH_REGEX = /Submission attachment\(s\)\/(.*)\.pdf/;
 
 export const PDFM_FILES = [MARK_FILE, SETTING_FILE];
 

@@ -15,15 +15,17 @@ import {getAssignmentSettingsAt, readGradesCsv, writeAssignmentSettingsAt} from 
 import {mkdir, stat} from 'fs/promises';
 import {
   ASSIGNMENT_BACKUP_DIR,
-  FEEDBACK_REL_PATH_REGEX,
   GRADES_FILE,
   MARK_FILE,
   SETTING_FILE,
-  SUBMISSION_REL_PATH_REGEX,
   uuidv4
 } from '@shared/constants/constants';
 import {getAllFiles, isNullOrUndefinedOrEmpty} from '../utils';
 import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX} from '../constants';
+
+const escapedSep = sep === '\\' ? '\\\\' : '/';
+const FEEDBACK_REL_PATH_REGEX = new RegExp('Feedback Attachment\\(s\\)' + escapedSep  + '(. * )\\.pdf');
+const SUBMISSION_REL_PATH_REGEX = new RegExp('Submission attachment\\(s\\)' + escapedSep + '(.*)\\.pdf');
 
 const logger = require('electron-log');
 const LOG = logger.scope('AssignmentMigration');
