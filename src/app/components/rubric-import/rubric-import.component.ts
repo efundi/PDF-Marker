@@ -6,8 +6,8 @@ import {AlertService} from '../../services/alert.service';
 import {AppService} from '../../services/app.service';
 import {ImportService} from '../../services/import.service';
 import {
-  YesAndNoConfirmationDialogComponent
-} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+  ConfirmationDialogComponent
+} from '../confirmation-dialog/confirmation-dialog.component';
 import {RubricViewModalComponent} from '../rubric-view-modal/rubric-view-modal.component';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {Subscription} from 'rxjs';
@@ -153,7 +153,7 @@ export class RubricImportComponent implements OnInit, OnDestroy {
             }
           };
 
-          this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+          this.appService.createDialog(ConfirmationDialogComponent, config, shouldDeleteFn);
         } else {
           this.deleteRubricImpl(item.name);
         }

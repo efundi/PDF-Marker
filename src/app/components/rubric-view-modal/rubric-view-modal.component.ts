@@ -8,8 +8,8 @@ import {ImportService} from '../../services/import.service';
 import {Subscription} from 'rxjs';
 import {AssignmentService} from '../../services/assignment.service';
 import {
-  YesAndNoConfirmationDialogComponent
-} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+  ConfirmationDialogComponent
+} from '../confirmation-dialog/confirmation-dialog.component';
 import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {BusyService} from '../../services/busy.service';
@@ -121,7 +121,7 @@ export class RubricViewModalComponent implements OnInit, OnDestroy {
       }
     };
 
-    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldChangeRubricFn);
+    this.appService.createDialog(ConfirmationDialogComponent, config, shouldChangeRubricFn);
   }
 
   saveRubricChange() {

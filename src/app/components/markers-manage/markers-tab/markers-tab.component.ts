@@ -2,8 +2,8 @@ import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild} from '@angular/c
 import {cloneDeep, find, isNil, remove, findIndex, filter} from 'lodash';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {
-  YesAndNoConfirmationDialogComponent
-} from '../../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+  ConfirmationDialogComponent
+} from '../../confirmation-dialog/confirmation-dialog.component';
 import {MarkersManageComponent} from '../markers-manage.component';
 import {
   NgForm,
@@ -281,7 +281,7 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
         title: 'Duplicate marker',
         message: `A marker named "${marker.name}" already exists, continue?`,
       };
-      this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, (accepted) => {
+      this.appService.createDialog(ConfirmationDialogComponent, config, (accepted) => {
         if (accepted) {
           this.saveSettings(updateSettings, 'Marker added');
         }
@@ -299,7 +299,7 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
       title: 'Remove user',
       message: 'Are you sure you want to remove user?',
     };
-    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, (accepted) => {
+    this.appService.createDialog(ConfirmationDialogComponent, config, (accepted) => {
       if (accepted) {
         const updateSettings = cloneDeep(this.originalSettings);
         updateSettings.markers = remove(updateSettings.markers, (item) => item.id !== element.id);
@@ -344,7 +344,7 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
         title: 'Duplicate marker',
         message: `A marker named "${marker.name}" already exists, continue?`,
       };
-      this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, (accepted) => {
+      this.appService.createDialog(ConfirmationDialogComponent, config, (accepted) => {
         if (accepted) {
           this.saveSettings(updateSettings, 'Marker updated');
         }

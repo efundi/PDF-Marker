@@ -28,8 +28,8 @@ import {ScrollVisibilityDirective} from '../../../directives/scroll-visibility.d
 import {BusyService} from '../../../services/busy.service';
 import {PageSettings, SubmissionType} from '@shared/info-objects/submission.info';
 import {
-  YesAndNoConfirmationDialogComponent
-} from '../../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+  ConfirmationDialogComponent
+} from '../../confirmation-dialog/confirmation-dialog.component';
 import {MatDialogConfig} from '@angular/material/dialog';
 
 const eventBus = new EventBus();
@@ -496,7 +496,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     let resolve;
     const promise = new Promise<boolean>((r) => resolve = r);
 
-    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, resolve);
+    this.appService.createDialog(ConfirmationDialogComponent, config, resolve);
 
     return promise.then((remove) => {
       if (!remove) {

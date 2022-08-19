@@ -23,8 +23,8 @@ import {cloneDeep, filter, find, findIndex, isNil, remove} from 'lodash';
 import {CdkDrag, CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {
-  YesAndNoConfirmationDialogComponent
-} from '../../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+  ConfirmationDialogComponent
+} from '../../confirmation-dialog/confirmation-dialog.component';
 import {AppService} from '../../../services/app.service';
 import {uuidv4} from '@shared/constants/constants';
 
@@ -268,7 +268,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
       title: 'Delete group',
       message: `Are you sure you want to delete group ${groupItem.name}?`,
     };
-    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, (accepted) => {
+    this.appService.createDialog(ConfirmationDialogComponent, config, (accepted) => {
       if (accepted) {
         this.activeGroupIndex = undefined;
         const updateSettings = cloneDeep(this.originalSettings);

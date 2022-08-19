@@ -7,8 +7,8 @@ import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {
-  YesAndNoConfirmationDialogComponent
-} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+  ConfirmationDialogComponent, ConfirmationDialogData
+} from '../confirmation-dialog/confirmation-dialog.component';
 import {AlertService} from '../../services/alert.service';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
@@ -370,7 +370,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         });
       }
     };
-    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldFinalizeAndExportFn);
+    this.appService.createDialog(ConfirmationDialogComponent, config, shouldFinalizeAndExportFn);
   }
 
   private onSuccessfulExport(blob: Uint8Array) {
@@ -520,7 +520,29 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     this.dataSource.paginator = this.paginator;
   }
 
+  private checkUserSet(): boolean {
+    if (isNil(this.settings.user.email) || isNil(this.settings.user.name) ||
+      this.settings.user.email === '' || this.settings.user.name === '') {
+      const config = new MatDialogConfig<ConfirmationDialogData>();
+      config.data = {
+        title: 'Configure user',
+        yesText: 'Ok',
+        message: 'Please first configure your user details at application settings',
+        showNo: false
+      };
+      this.dialog.open(ConfirmationDialogComponent, config);
+
+      return false;
+    }
+
+    return true;
+  }
+
   allocateMarkers(): void {
+    if (!this.checkUserSet()) {
+      return;
+    }
+
     const config = new MatDialogConfig();
     config.width = '600px';
     config.maxWidth = '800px';
@@ -544,9 +566,11 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       };
       settings.distributionFormat = DistributionFormat.DISTRIBUTED;
       allocations.forEach((allocation) => {
-        const submission = find(settings.submissions, {directoryName: allocation.submission});
+        const submission = find(settings.submissions, {studentId: allocation.studentId});
         submission.allocation = allocation.marker;
-        submission.state = SubmissionState.ASSIGNED_TO_MARKER;
+        if (submission.state !== SubmissionState.MARKED) {
+          submission.state = SubmissionState.ASSIGNED_TO_MARKER;
+        }
       });
       this.updateAssignmentSettings(settings);
     });
@@ -605,7 +629,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         title: 'Export for review',
         message
       };
-      this.dialog.open(YesAndNoConfirmationDialogComponent, config).afterClosed().subscribe((confirmed) => {
+      this.dialog.open(ConfirmationDialogComponent, config).afterClosed().subscribe((confirmed) => {
         if (confirmed) {
           this.exportForReview();
         }

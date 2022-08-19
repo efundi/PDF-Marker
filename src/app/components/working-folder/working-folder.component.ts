@@ -6,7 +6,7 @@ import {AlertService} from '../../services/alert.service';
 import {AssignmentService} from '../../services/assignment.service';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
-import {YesAndNoConfirmationDialogComponent} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {ConfirmationDialogComponent} from '../confirmation-dialog/confirmation-dialog.component';
 import {WorkspaceService} from '../../services/workspace.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
@@ -125,7 +125,7 @@ export class WorkingFolderComponent implements OnInit {
           }
         };
 
-        this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+        this.appService.createDialog(ConfirmationDialogComponent, config, shouldDeleteFn);
 
       },
       error: () => {
