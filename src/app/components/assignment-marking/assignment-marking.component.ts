@@ -20,8 +20,8 @@ import {cloneDeep, isNil, times} from 'lodash';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {catchError, map} from 'rxjs/operators';
 import {
-  YesAndNoConfirmationDialogComponent
-} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+  ConfirmationDialogComponent
+} from '../confirmation-dialog/confirmation-dialog.component';
 import {AssignmentMarkingSessionService, ZoomChangeEvent} from './assignment-marking-session.service';
 import {AssignmentMarkingPageComponent} from './assignment-marking-page/assignment-marking-page.component';
 import {IRubric} from '@shared/info-objects/rubric.class';
@@ -422,7 +422,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
           });
       }
     };
-    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+    this.appService.createDialog(ConfirmationDialogComponent, config, shouldDeleteFn);
   }
 
 

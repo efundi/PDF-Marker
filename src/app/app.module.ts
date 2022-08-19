@@ -9,8 +9,8 @@ import {FileExplorerModalComponent} from './components/file-explorer-modal/file-
 import {AlertComponent} from './components/alert/alert.component';
 import {SideNavigationComponent} from './components/side-navigation/side-navigation.component';
 import {
-  YesAndNoConfirmationDialogComponent
-} from './components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+  ConfirmationDialogComponent
+} from './components/confirmation-dialog/confirmation-dialog.component';
 import {SnackBarComponent} from './components/snack-bar/snack-bar.component';
 import {RubricCriteriaComponent} from './components/rubric-criteria/rubric-criteria.component';
 import {RubricComponent} from './components/rubric/rubric.component';
@@ -106,7 +106,7 @@ import { ImportMarkerModalComponent } from './components/assignment-overview/imp
     AlertComponent,
     AssignmentListComponent,
     SideNavigationComponent,
-    YesAndNoConfirmationDialogComponent,
+    ConfirmationDialogComponent,
     MarkingCommentModalComponent,
     SnackBarComponent,
     RubricViewModalComponent,

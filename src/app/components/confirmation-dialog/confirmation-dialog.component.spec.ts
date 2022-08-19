@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { YesAndNoConfirmationDialogComponent } from './yes-and-no-confirmation-dialog.component';
+import { ConfirmationDialogComponent } from './confirmation-dialog.component';
 
 describe('YesAndNoConfirmationDialogComponent', () => {
-  let component: YesAndNoConfirmationDialogComponent;
-  let fixture: ComponentFixture<YesAndNoConfirmationDialogComponent>;
+  let component: ConfirmationDialogComponent;
+  let fixture: ComponentFixture<ConfirmationDialogComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ YesAndNoConfirmationDialogComponent ]
+      declarations: [ ConfirmationDialogComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(YesAndNoConfirmationDialogComponent);
+    fixture = TestBed.createComponent(ConfirmationDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

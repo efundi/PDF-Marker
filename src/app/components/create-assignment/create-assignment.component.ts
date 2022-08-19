@@ -12,8 +12,8 @@ import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.i
 import {AssignmentDetails} from '../assignment-overview/assignment-overview.component';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {
-  YesAndNoConfirmationDialogComponent
-} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+  ConfirmationDialogComponent
+} from '../confirmation-dialog/confirmation-dialog.component';
 import {WorkspaceService} from '../../services/workspace.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {UpdateAssignment, UpdateAssignmentStudentDetails} from '@shared/info-objects/update-assignment';
@@ -342,7 +342,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         }
       };
 
-      this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldContinueFn);
+      this.appService.createDialog(ConfirmationDialogComponent, config, shouldContinueFn);
     } else {
       this.studentRow.controls.splice(studentIndex, 1);
       this.studentFiles.splice(studentIndex, 1);

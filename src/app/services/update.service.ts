@@ -6,7 +6,7 @@ import {fromIpcResponse} from './ipc.utils';
 import {Observable} from 'rxjs';
 import {UpdateCheckResult, UpdateInfo} from '@shared/info-objects/update-info';
 import {isNil} from 'lodash';
-import {YesAndNoConfirmationDialogComponent} from '../components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {ConfirmationDialogComponent} from '../components/confirmation-dialog/confirmation-dialog.component';
 
 @Injectable({
   providedIn: 'root'

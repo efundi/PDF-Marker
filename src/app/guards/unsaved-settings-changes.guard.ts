@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, CanDeactivate, RouterStateSnapshot, UrlTree } f
 import { Observable } from 'rxjs';
 import {SettingsComponent} from '../components/settings/settings.component';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
-import {YesAndNoConfirmationDialogComponent} from '../components/yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {ConfirmationDialogComponent} from '../components/confirmation-dialog/confirmation-dialog.component';
 
 @Injectable({
   providedIn: 'root'
@@ -22,7 +22,7 @@ export class UnsavedSettingsChangesGuard implements CanDeactivate<SettingsCompon
         title : 'Unsaved changes',
         message : 'You have unsaved changes. Do you wish to continue?'
       };
-      const dialog = this.dialog.open(YesAndNoConfirmationDialogComponent, config);
+      const dialog = this.dialog.open(ConfirmationDialogComponent, config);
       return dialog.afterClosed();
     } else {
       return true;

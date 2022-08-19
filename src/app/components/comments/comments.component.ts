@@ -6,7 +6,7 @@ import { IComment } from '@shared/info-objects/comment.class';
 import { CommentService } from '../../services/comment.service';
 import { SettingsService } from '../../services/settings.service';
 import {MatDialogConfig} from '@angular/material/dialog';
-import {YesAndNoConfirmationDialogComponent} from '../yes-and-no-confirmation-dialog/yes-and-no-confirmation-dialog.component';
+import {ConfirmationDialogComponent} from '../confirmation-dialog/confirmation-dialog.component';
 import {MatTableDataSource} from '@angular/material/table';
 import {BusyService} from '../../services/busy.service';
 import {MatPaginator} from '@angular/material/paginator';
@@ -114,7 +114,7 @@ export class GenericCommentsComponent implements OnInit, AfterViewInit {
       }
     };
 
-    this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldDeleteFn);
+    this.appService.createDialog(ConfirmationDialogComponent, config, shouldDeleteFn);
 
   }
 
