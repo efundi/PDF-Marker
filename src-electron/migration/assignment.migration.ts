@@ -129,8 +129,8 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
   if (assignmentSettings.version !== AssignmentSettingsVersion) {
 
     if (!assignmentSettings.hasOwnProperty('version')) {
-      const isCreated: boolean = (assignmentSettings as any).isCreated;
-      delete (assignmentSettings as any).isCreated;
+      const isCreated: boolean = (migrationSettings as any).isCreated;
+      delete (migrationSettings as any).isCreated;
       // This is the first upgrade, set all the new fields
       migrationSettings.version = 1;
       migrationSettings.sourceId = uuidv4();
@@ -203,13 +203,13 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
           }
 
           if (hasMarks) {
-            assignmentSettings.state = AssignmentState.IN_PROGRESS;
+            migrationSettings.state = AssignmentState.IN_PROGRESS;
           }
           if (assignmentSettings.hasOwnProperty('dateFinalized')) {
-            if (!isNil((assignmentSettings as any).dateFinalized)) {
-              assignmentSettings.state = AssignmentState.FINALIZED;
+            if (!isNil((migrationSettings as any).dateFinalized)) {
+              migrationSettings.state = AssignmentState.FINALIZED;
             }
-            delete (assignmentSettings as any).dateFinalized;
+            delete (migrationSettings as any).dateFinalized;
           }
         });
       }).then(() => writeAssignmentSettingsAt(migrationSettings, assignmentFolder));
