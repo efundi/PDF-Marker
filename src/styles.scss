@@ -20,6 +20,8 @@
 @import "../node_modules/bootstrap/scss/tables";
 @import "../node_modules/bootstrap/scss/grid";
 @import "../node_modules/bootstrap/scss/badge";
+@import "../node_modules/bootstrap/scss/alert";
+@import "../node_modules/bootstrap/scss/close";
 @import "../node_modules/bootstrap/scss/helpers";
 
 // 7. Optionally include utilities API last to generate classes based on the Sass map in `_utilities.scss`
@@ -134,63 +136,6 @@ pdf-marker-file-explorer-modal {
 
 .mat-expansion-indicator {
   display: none !important;
-}
-
-.alert {
-  padding: 15px;
-  margin-bottom: 20px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  display: flex;
-  align-items: flex-start;
-
-  .close {
-    cursor: pointer;
-  }
-}
-
-.alert-dismissable {
-  padding-right: 15px;
-}
-
-.alert-success {
-  color: #3c763d;
-  background-color: #dff0d8;
-  border-color: #d6e9c6;
-
-  * {
-    color: #3c763d !important;
-  }
-}
-
-.alert-info {
-  color: #31708f;
-  background-color: #d9edf7;
-  border-color: #bce8f1;
-
-  * {
-    color: #31708f !important;
-  }
-}
-
-.alert-warning {
-  color: #8a6d3b;
-  background-color: #fcf8e3;
-  border-color: #faebcc;
-
-  * {
-    color: #8a6d3b !important;
-  }
-}
-
-.alert-danger {
-  color: #a94442;
-  background-color: #f2dede;
-  border-color: #ebccd1;
-
-  * {
-    color: #a94442 !important;
-  }
 }
 
 .pdf-page-title {

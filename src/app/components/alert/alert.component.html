@@ -1,9 +1,10 @@
-<div *ngFor="let alert of alerts" class="{{cssClass(alert)}} alert-dismissable">
-  <mat-icon *ngIf="alert.type === alertInfoTypes.Error">report_problem</mat-icon>
-  <mat-icon *ngIf="alert.type === alertInfoTypes.Warning">warning</mat-icon>
-  <mat-icon *ngIf="alert.type === alertInfoTypes.Info">info</mat-icon>
-  <mat-icon *ngIf="alert.type === alertInfoTypes.Success">check_circle</mat-icon>
-  <span class="pdf-marker-alert">{{alert.message}}</span>
-  <span class="pdf-marker-fill-space"></span>
-  <mat-icon class="close" (click)="removeAlert(alert)">close</mat-icon>
+<div *ngFor="let alert of alerts" class="{{cssClass(alert)}} alert-dismissible mt-3">
+  <div class="d-flex">
+    <mat-icon *ngIf="alert.type === alertInfoTypes.Error">report_problem</mat-icon>
+    <mat-icon *ngIf="alert.type === alertInfoTypes.Warning">warning</mat-icon>
+    <mat-icon *ngIf="alert.type === alertInfoTypes.Info">info</mat-icon>
+    <mat-icon *ngIf="alert.type === alertInfoTypes.Success">check_circle</mat-icon>
+    <span class="pdf-marker-alert">{{alert.message}}</span>
+  </div>
+  <button type="button" class="btn-close" (click)="removeAlert(alert)" aria-label="Close"></button>
 </div>
