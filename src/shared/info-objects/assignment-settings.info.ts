@@ -86,6 +86,12 @@ export enum SubmissionState {
    * text: "Marked"
    */
   MARKED = 'MARKED',
+
+  /**
+   * An assignment that has not been marked, but has been finalized or exported for review
+   * text: 'Not Marked'
+   */
+  NOT_MARKED = 'NOT_MARKED'
 }
 
 export interface Submission {

@@ -14,9 +14,9 @@ import {filter, from, mergeMap, Observable, Subscription, tap, throwError} from 
 import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
-import {AssignmentSettingsInfo, AssignmentState} from '@shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo, AssignmentState, SubmissionState} from '@shared/info-objects/assignment-settings.info';
 import {getDocument, GlobalWorkerOptions, PDFDocumentProxy} from 'pdfjs-dist';
-import {cloneDeep, isNil, times} from 'lodash';
+import {cloneDeep, find, isNil, times} from 'lodash';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {catchError, map} from 'rxjs/operators';
 import {
@@ -124,7 +124,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         this.appService.initializeScrollPosition();
         this.isPdfLoaded = true;
 
-        this.editEnabled = this.assignmentSettings.state !== AssignmentState.SENT_FOR_REVIEW;
+        const submissionDirectory = PdfmUtilsService.basename(PdfmUtilsService.dirname(this.pdf, 2));
+        const submission = find(this.assignmentSettings.submissions, {directoryName: submissionDirectory});
+
+        this.editEnabled = (this.assignmentSettings.state !== AssignmentState.SENT_FOR_REVIEW && submission.state !== SubmissionState.NOT_MARKED);
 
         this.busyService.stop();
       },

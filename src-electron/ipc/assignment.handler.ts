@@ -11,7 +11,7 @@ import {
 import * as path from 'path';
 import {basename, dirname, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
-import {mkdir, readFile, rmdir, stat, writeFile} from 'fs/promises';
+import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
 import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, remove, sortBy} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
@@ -50,7 +50,8 @@ import {
   MARK_FILE,
   PDFM_FILE_SORT,
   SETTING_FILE,
-  SUBMISSION_FOLDER, uuidv4
+  SUBMISSION_FOLDER,
+  uuidv4
 } from '@shared/constants/constants';
 import {
   MarkingSubmissionInfo,
@@ -403,7 +404,7 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
       } else {
         if (studentInfo.remove) {
           remove(assignmentSettings.submissions, {studentId: studentInfo.studentId.toUpperCase()});
-          return rmdir(assignmentAbsolutePath + sep + studentFolder, {recursive: true});
+          return rm(assignmentAbsolutePath + sep + studentFolder, {recursive: true});
         } else {
           return Promise.resolve();
         }
@@ -721,6 +722,15 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
 
     return Promise.all(promises)
       .then(() => setDateFinalized(assignmentFolder))
+      .then((updatedAssignmentSettings) => {
+        // Set status of all assignments that has not been marked
+        forEach(updatedAssignmentSettings.submissions, (submission) => {
+          if (isNil(submission.mark)) {
+            submission.state = SubmissionState.NOT_MARKED;
+          }
+        });
+        return writeAssignmentSettingsFor(updatedAssignmentSettings, workspaceFolder, assignmentName);
+      });
   });
 }
 
@@ -762,11 +772,11 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
         .then(() => writeGrades(exportTempDirectory, assignmentSettings.submissions, assignmentName))
         .then(() => zipDir(tempDirectory))
         .then((buffer) => {
-          return rmdir(tempDirectory, {recursive: true}).then(() => buffer);
+          return rm(tempDirectory, {recursive: true}).then(() => buffer);
         }, (err) => {
           console.error('Could not export assignment');
           console.error(err);
-          return rmdir(tempDirectory, {recursive: true}).then(() => () => {
+          return rm(tempDirectory, {recursive: true}).then(() => () => {
             return Promise.reject('Could not export assignment');
           });
         });
@@ -938,6 +948,14 @@ export function exportForReview(event: IpcMainInvokeEvent,
     .then(assignmentSettings => {
       assignmentSettings.state = AssignmentState.SENT_FOR_REVIEW;
       assignmentSettings.stateDate = new Date().toISOString();
+
+      // Set status of all assignments that has not been marked
+      forEach(assignmentSettings.submissions, (submission) => {
+        if (isNil(submission.mark)) {
+          submission.state = SubmissionState.NOT_MARKED;
+        }
+      });
+
       return writeAssignmentSettingsFor(assignmentSettings, workspaceName, assignmentName);
     })
     .then(() => Promise.all([
