@@ -1,5 +1,6 @@
 <div
   cdkDrag
+  [class.disabled]="!editEnabled"
   [cdkDragDisabled]="!editEnabled"
   cdkDragRootElement=".mark-icon-container"
   class="pdf-marker-mark-type-icon-container"
@@ -27,6 +28,7 @@
         class="comment-circle"
         [style.background]="mark.totalMark == null ? 'transparent' : mark.colour">
         <input
+          [readonly]="!editEnabled"
           class="mark-input"
           type="text"
           formControlName="totalMark"

@@ -219,17 +219,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       );
   }
 
-  private calculateIsAssignmentOwner(): boolean {
-    const isStandalone = this.assignmentSettings.distributionFormat === DistributionFormat.STANDALONE;
-    let isOwner = true;
-    if (!isStandalone) {
-      const user = this.settings.user;
-      isOwner = !isNil(user) && this.assignmentSettings.owner.id === this.settings.user.id;
-    }
-    return isStandalone || isOwner;
-  }
-
-
   private generateDataFromModel() {
     const values: AssignmentDetails[] = [];
     if (!isNil(this.workspaceAssignment)) {
