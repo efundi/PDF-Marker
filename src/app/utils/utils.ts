@@ -1,8 +1,11 @@
 import {Marker} from '@shared/info-objects/setting.info';
-import {AssignmentState, Submission} from '@shared/info-objects/assignment-settings.info';
+import {AssignmentState, Submission, SubmissionState} from '@shared/info-objects/assignment-settings.info';
 import {isNil} from 'lodash';
 
 export function checkOpenInMarker(marker: Marker, submission: Submission, assignmentState: AssignmentState): boolean {
+  if (submission.state === SubmissionState.NOT_MARKED) {
+    return true;
+  }
   const selfId = marker ? marker.id : null;
   const selfEmail = marker ? marker.email : null;
   const isNotFinalized = assignmentState !== AssignmentState.FINALIZED;
