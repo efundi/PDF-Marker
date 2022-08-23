@@ -27,7 +27,7 @@
 
 .pdf-marker-mark-type-highlight-container{
 
-  &:hover, &.pallet-open{
+  &:not(.disabled):hover, &.pallet-open{
 
     .highlight {
       border: 1px dotted #888;

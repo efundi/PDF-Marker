@@ -23,18 +23,17 @@
   display: flex;
   flex-direction: column;
 
-
+  &:not(.disabled) .mark-icon-container{
+    cursor: move;
+  }
 
   .mark-icon-container {
     border: 1px dotted transparent;
     width: 34px;
     height: 34px;
-    cursor: move;
     position: relative;
 
-
     mat-icon{
-      cursor: move;
       position: absolute;
       left: 50%;
       top: 50%;
@@ -91,7 +90,7 @@
     }
   }
 
-  &:hover{
+  &:not(.disabled):hover{
 
     .mark-icon-container {
       border: 1px dotted #888;

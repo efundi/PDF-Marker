@@ -16,7 +16,7 @@
     </div>
     <div class="pdf-marker-assignment-overview-buttons">
       <button
-        [disabled]="!isAssignmentOwner"
+        [disabled]="!permissions.canAllocate"
         color="primary"
         mat-button
         mat-icon-button
@@ -26,16 +26,7 @@
       </button>
       <button
         color="primary"
-        [disabled]="selection.isEmpty()"
-        mat-button
-        mat-icon-button
-        matTooltip="Share"
-        (click)="share()">
-        <mat-icon [class.pdf-icon-disabled]="selection.isEmpty()">share</mat-icon>
-      </button>
-      <button
-        color="primary"
-        [disabled]="!isAssignmentOwner || assignmentSettings?.sourceFormat !== SourceFormat.MANUAL"
+        [disabled]="!permissions.canManageSubmissions || assignmentSettings?.sourceFormat !== SourceFormat.MANUAL"
         mat-button
         mat-icon-button
         matTooltip="Manage Submissions"
@@ -44,7 +35,7 @@
       </button>
       <button
         color="primary"
-        [disabled]="!isAssignmentOwner || !assignmentSettings?.rubric"
+        [disabled]="!assignmentSettings?.rubric"
         mat-button
         mat-icon-button
         matTooltip="Manage Rubric"
@@ -52,9 +43,9 @@
         <mat-icon [class.pdf-icon-disabled]="!assignmentSettings?.rubric">apps</mat-icon>
       </button>
       <button
-        *ngIf="isAssignmentOwner"
+        *ngIf="!permissions.canExportReview"
         color="primary"
-        [disabled]="!isSettings"
+        [disabled]="!isSettings || !permissions.canFinalize"
         mat-button
         mat-icon-button
         matTooltip="Finalise and Export Assignment"
@@ -62,7 +53,7 @@
         <mat-icon >archive</mat-icon>
       </button>
       <button
-        *ngIf="!isAssignmentOwner"
+        *ngIf="permissions.canExportReview                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "
         color="primary"
         [disabled]="!isSettings"
         mat-button
@@ -72,7 +63,7 @@
         <mat-icon >archive</mat-icon>
       </button>
       <button
-        [disabled]="!canImport"
+        [disabled]="!permissions.canImport"
         color="primary"
         mat-button
         mat-icon-button

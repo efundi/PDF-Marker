@@ -7,7 +7,8 @@ import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
 import {
-  ConfirmationDialogComponent, ConfirmationDialogData
+  ConfirmationDialogComponent,
+  ConfirmationDialogData
 } from '../confirmation-dialog/confirmation-dialog.component';
 import {AlertService} from '../../services/alert.service';
 import {SettingsService} from '../../services/settings.service';
@@ -44,7 +45,7 @@ import {
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
 import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-markers-modal.component';
 import {DateTime} from 'luxon';
-import {checkOpenInMarker} from '../../utils/utils';
+import {calculateOpenInMarking, checkPermissions, Permissions} from '../../utils/utils';
 import {ImportMarkerModalComponent} from './import-marker-modal/import-marker-modal.component';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 
@@ -107,12 +108,17 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   private workspaceName: string;
   assignmentName: string;
-  isAssignmentOwner = false;
+  permissions: Permissions = {
+    canAllocate: false,
+    canReAllocate: false,
+    canImport: false,
+    canManageSubmissions: false,
+    canManageRubric: false,
+    canFinalize: false,
+    canExportReview: false,
+  };
 
-  /**
-   * Flag if the user can import assignments exported by markers
-   */
-  canImport = false;
+
 
   constructor(private assignmentService: AssignmentService,
               private router: Router,
@@ -213,41 +219,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       );
   }
 
-  private calculateIsAssignmentOwner(): boolean {
-    const isStandalone = this.assignmentSettings.distributionFormat === DistributionFormat.STANDALONE;
-    let isOwner = true;
-    if (!isStandalone) {
-      const user = this.settings.user;
-      isOwner = !isNil(user) && this.assignmentSettings.owner.id === this.settings.user.id;
-    }
-    return isStandalone || isOwner;
-  }
-
-  private calculateCanImport(): boolean {
-    if (this.assignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
-      return false;
-    }
-    if (this.assignmentSettings.state === AssignmentState.FINALIZED) {
-      return false;
-    }
-    const user = this.settings.user;
-    if (isNil(user) || this.assignmentSettings.owner.id !== this.settings.user.id) {
-      return false;
-    }
-
-    // Check that there is atleast one more submission not allocated to me, and in an assigned state
-    const pendingSubmission = find(this.assignmentSettings.submissions, (submission) => {
-      return submission.state === SubmissionState.ASSIGNED_TO_MARKER && submission.allocation.id !== this.settings.user.id;
-    });
-
-    return !isNil(pendingSubmission);
-  }
-
   private generateDataFromModel() {
     const values: AssignmentDetails[] = [];
     if (!isNil(this.workspaceAssignment)) {
-      this.isAssignmentOwner = this.calculateIsAssignmentOwner();
-      this.canImport = this.calculateCanImport();
+      this.permissions = checkPermissions(this.assignmentSettings, this.settings.user);
       let index = 0;
       const selfEmail = this.settings.user ? this.settings.user.email : null;
       const selfId = this.settings.user ? this.settings.user.id : null;
@@ -322,9 +297,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       pdfFile
     });
 
-    const submission = find(this.assignmentSettings.submissions, {studentId: element.studentNumber});
-    const openInMarker = checkOpenInMarker(this.settings.user, submission, this.assignmentSettings.state);
-    if (openInMarker) {
+    if (calculateOpenInMarking(this.assignmentSettings)) {
       this.router.navigate([
         RoutesEnum.ASSIGNMENT_MARKER,
         workspace.name,
@@ -461,6 +434,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   share() {
+    // TODO replace with moderation
     const shareRequest: ShareAssignments = {
       assignmentName: this.assignmentName,
       workspaceFolder: this.workspaceName,

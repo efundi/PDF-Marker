@@ -1,7 +1,46 @@
 table {
-  border-spacing: 0;
+  font-size: 0.8rem;
 }
 
 .rubricName{
   color: var(--pdf-marker-secondary);
 }
+.criteria-row {
+
+  .criteria-row-data {
+    vertical-align: top;
+    width: 200px;
+    min-width: 200px;
+    background: #eee;
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: 1px solid #d3d3d3;
+    margin-left: -1px;
+  }
+}
+
+.rubric-criteria-block-header {
+  text-align: center;
+  font-weight: bold !important;
+}
+
+.pdf-selected-block {
+  background: thistle;
+}
+
+
+.rubric-level-block-full {
+  width: 200px;
+  min-width: 200px;
+  font-weight: lighter;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  overflow: hidden;
+  text-align: center;
+  vertical-align: top;
+
+  .rubric-level-block-header {
+    text-align: center;
+  }
+}
+

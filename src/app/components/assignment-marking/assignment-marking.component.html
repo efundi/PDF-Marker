@@ -24,6 +24,7 @@
       [attr.id]="pageIndex"
       #pdfPage
       *ngFor="let item of repeatPerPage(); let pageIndex = index"
+      [editEnabled]="editEnabled"
       [pageIndex]="pageIndex"
       [marks]="submissionInfo.marks[pageIndex]"
       [pageSettings]="submissionInfo.pageSettings[pageIndex]"
@@ -34,6 +35,7 @@
   <div class="rubric-wrapper" *ngIf="isPdfLoaded && !!rubric" >
     <pdf-marker-rubric
       style="margin: 1rem"
+      [editEnabled]="editEnabled"
       [rubric]="rubric"
       [rubricSelections]="submissionInfo.marks">
     </pdf-marker-rubric>

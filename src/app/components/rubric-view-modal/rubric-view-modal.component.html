@@ -1,11 +1,11 @@
 <div mat-dialog-title>
-  <h2>Manage Rubric</h2>
+  <h2 class="mt-3">Manage Rubric</h2>
   <span class="pdf-marker-fill-space"></span>
   <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
 </div>
 
 <mat-dialog-content>
-  <div *ngIf="overviewPage" class="pdf-marker-rubric-container">
+  <div *ngIf="canEdit" class="pdf-marker-rubric-container mb-4">
     <form [formGroup]="rubricForm">
       <mat-form-field>
         <mat-label>Select Rubric</mat-label>
@@ -18,7 +18,6 @@
       <button type="button" mat-raised-button color="primary" (click)="saveRubricChangeClick()">Submit</button>&nbsp;&nbsp;
       <button type="button" mat-button color="accent" (click)="onCancel()">Cancel</button>
     </div>
-    <div class="pdf-spacer"></div>
   </div>
 
   <pdf-marker-rubric [rubric]="currentRubric"></pdf-marker-rubric>

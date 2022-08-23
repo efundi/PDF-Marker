@@ -14,6 +14,7 @@ import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {BusyService} from '../../services/busy.service';
 import {map} from 'lodash';
+import {calculateCanManageRubric} from '../../utils/utils';
 
 
 @Component({
@@ -39,8 +40,7 @@ export class RubricViewModalComponent implements OnInit, OnDestroy {
   rubricForm: UntypedFormGroup;
   rubricsNames: string[] = [];
   private assignmentName = 'No Assignment';
-  isRubric: boolean;
-  overviewPage: boolean;
+  canEdit: boolean;
   constructor(private appService: AppService,
               private dialogRef: MatDialogRef<RubricViewModalComponent>,
               private settingsService: SettingsService,
@@ -57,7 +57,7 @@ export class RubricViewModalComponent implements OnInit, OnDestroy {
         this.originalRubric = config.assignmentSettingsInfo.rubric;
         this.currentRubric = config.assignmentSettingsInfo.rubric;
         this.assignmentName = config.assignmentName;
-        this.overviewPage = true;
+        this.canEdit = calculateCanManageRubric(this.assignmentSettingsInfo);
 
 
       } else {
@@ -79,7 +79,7 @@ export class RubricViewModalComponent implements OnInit, OnDestroy {
 
     this.formSubscription = this.rubricForm.controls.rubricName.valueChanges.subscribe(rubricName => this.onRubricChange(rubricName));
 
-    if (this.overviewPage) {
+    if (this.canEdit) {
 
       this.rubricService.getRubricNames().subscribe((rubrics: IRubricName[]) => {
         this.rubricsNames = map(rubrics, 'name');

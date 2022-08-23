@@ -25,6 +25,9 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
 
   static readonly widthAndHeight: number = 36;
 
+  @Input()
+  editEnabled: boolean;
+
   iconForm: UntypedFormGroup;
 
   config: MatDialogConfig;

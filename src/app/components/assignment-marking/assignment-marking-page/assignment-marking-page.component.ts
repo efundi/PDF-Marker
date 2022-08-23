@@ -78,6 +78,12 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   pageSettings: PageSettings;
 
   /**
+   * Flag if editing is allowed on the page
+   */
+  @Input()
+  editEnabled: boolean;
+
+  /**
    * Reference to the annotation layer
    * @private
    */

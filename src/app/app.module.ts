@@ -12,12 +12,8 @@ import {
   ConfirmationDialogComponent
 } from './components/confirmation-dialog/confirmation-dialog.component';
 import {SnackBarComponent} from './components/snack-bar/snack-bar.component';
-import {RubricCriteriaComponent} from './components/rubric-criteria/rubric-criteria.component';
 import {RubricComponent} from './components/rubric/rubric.component';
 import {AssignmentListComponent} from './components/assignment-list/assignment-list.component';
-import {
-  RubricCriteriaLevelBlockComponent
-} from './components/rubric-criteria-level-block/rubric-criteria-level-block.component';
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {MatTooltipModule} from '@angular/material/tooltip';
@@ -110,10 +106,8 @@ import { ImportMarkerModalComponent } from './components/assignment-overview/imp
     MarkingCommentModalComponent,
     SnackBarComponent,
     RubricViewModalComponent,
-    RubricCriteriaLevelBlockComponent,
     AssignmentMarkingToolbarComponent,
     AssignmentMarkingPageComponent,
-    RubricCriteriaComponent,
     RubricComponent,
     MarkingHighlightModalComponent,
     AssignmentMarkingComponent,
