@@ -1,16 +1,29 @@
 
 <h4 class="rubricName">{{rubric?.name}}</h4>
 
-<div><p>Total: {{ (isMarkingRubricPage) ? totalTally +" / " :""}} {{maxScore}}</p></div>
+<div><p>Total: {{ (showTotals) ? totalTally +" / " :""}} {{maxScore}}</p></div>
 
 <div class="table-responsive">
   <table class="table table-bordered">
-    <pdf-marker-rubric-criteria
-      [selectedCriteriaLevel]="getSelectionIndex(criteriaIndex)"
-      [isMarkingRubricPage]="isMarkingRubricPage"
-      *ngFor="let criteria of rubric.criterias; let criteriaIndex = index"
-      [criteria]="criteria"
-      (selectedCriteriaLevelIndex)="selectedCriteria($event, criteriaIndex)">
-    </pdf-marker-rubric-criteria>
+    <tbody>
+    <tr class="criteria-row"
+        *ngFor="let criteria of rubric.criterias; let criteriaIndex = index">
+      <td class="criteria-row-data">
+        <div class="rubric-criteria-block-header">{{ criteria?.name }}</div>
+        <span class="rubric-criteria-block-description">{{ criteria?.description }}</span>
+      </td>
+      <td
+        *ngFor="let level of criteria.levels; let levelIndex = index"
+        [class.cursor-pointer]="editEnabled"
+        [class.pdf-selected-block]="getSelectionIndex(criteriaIndex) === levelIndex"
+        class="rubric-level-block-full"
+        (click)="selectedCriteria(levelIndex, criteriaIndex)">
+        <div class="rubric-level-block-header">
+          <p>{{ level.label }} - Marks: {{ level.score }}</p>
+        </div>
+        <div class="rubric-level-block-description">{{ level.description }}</div>
+      </td>
+    </tr>
+    </tbody>
   </table>
 </div>

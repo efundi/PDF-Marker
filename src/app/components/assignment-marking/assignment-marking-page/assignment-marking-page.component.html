@@ -19,12 +19,14 @@
 
       <pdf-marker-mark-type-highlight
         *ngIf="mark.iconType === IconTypeEnum.HIGHLIGHT"
+        [editEnabled]="editEnabled"
         [mark]="mark"
         [index]="i">
       </pdf-marker-mark-type-highlight>
 
       <pdf-marker-mark-type-icon
         *ngIf="mark.iconType !== IconTypeEnum.HIGHLIGHT"
+        [editEnabled]="editEnabled"
         class="pdf-marker-mark-type-icon"
         [mark]="mark"
         [index]="i">

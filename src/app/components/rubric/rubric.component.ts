@@ -22,7 +22,10 @@ export class RubricComponent implements OnInit, OnChanges {
 
   totalTally = 0;
 
-  isMarkingRubricPage: boolean;
+  @Input()
+  editEnabled = false;
+
+  showTotals = false;
 
   constructor(private router: Router,
               private assignmentService: AssignmentService,
@@ -30,10 +33,10 @@ export class RubricComponent implements OnInit, OnChanges {
   }
 
   ngOnInit() {
-    this.isMarkingRubricPage = isArray(this.rubricSelections);
+    this.showTotals = isArray(this.rubricSelections);
   }
 
-  getHighestScore() {
+  private calculateHighestScore() {
     let maxScore = 0;
     this.rubric.criterias.forEach((value) => {
       let curHighest = -1;
@@ -47,7 +50,7 @@ export class RubricComponent implements OnInit, OnChanges {
     this.maxScore = maxScore;
   }
 
-  getTotalMark() {
+  private calculateTotalMark() {
     this.totalTally = 0;
     if (isArray(this.rubricSelections)) {
       this.rubricSelections.forEach((criteriaLevelIndexValue, index) => {
@@ -58,15 +61,15 @@ export class RubricComponent implements OnInit, OnChanges {
     }
   }
 
-  selectedCriteria(criteriaLevelIndex: number, criteriaIndex) {
-    if (this.isMarkingRubricPage) {
+  selectedCriteria(criteriaLevelIndex: number, criteriaIndex: number) {
+    if (this.editEnabled) {
       const marks = cloneDeep(this.rubricSelections);
       if (marks[criteriaIndex] === criteriaLevelIndex) {
         marks[criteriaIndex] = null;
       } else {
         marks[criteriaIndex] = criteriaLevelIndex;
       }
-      this.getTotalMark();
+      this.calculateTotalMark();
       this.assignmentMarkingComponent.saveMarks(marks).subscribe();
     }
   }
@@ -80,10 +83,8 @@ export class RubricComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    this.getHighestScore();
-    this.getTotalMark();
+    this.calculateHighestScore();
+    this.calculateTotalMark();
   }
-
-
 
 }

@@ -37,6 +37,7 @@ import {RoutesEnum} from '../../utils/routes.enum';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {PreviewMarksComponent} from './preview-marks/preview-marks.component';
+import {calculateCanEditMarking} from '../../utils/utils';
 
 
 GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
@@ -127,7 +128,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         const submissionDirectory = PdfmUtilsService.basename(PdfmUtilsService.dirname(this.pdf, 2));
         const submission = find(this.assignmentSettings.submissions, {directoryName: submissionDirectory});
 
-        this.editEnabled = (this.assignmentSettings.state !== AssignmentState.SENT_FOR_REVIEW && submission.state !== SubmissionState.NOT_MARKED);
+        this.editEnabled = calculateCanEditMarking(this.assignmentSettings, this.settings.user, submission);
 
         this.busyService.stop();
       },

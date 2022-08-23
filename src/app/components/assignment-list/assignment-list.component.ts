@@ -11,7 +11,7 @@ import {
   WorkspaceFile
 } from '@shared/info-objects/workspace';
 import {FlatTreeControl} from '@angular/cdk/tree';
-import {find, isNil, map} from 'lodash';
+import {isNil, map} from 'lodash';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {Router} from '@angular/router';
 import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
@@ -19,8 +19,7 @@ import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {GRADES_FILE, PDFM_FILES_FILTER} from '@shared/constants/constants';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {AssignmentState} from '@shared/info-objects/assignment-settings.info';
-import {checkOpenInMarker} from '../../utils/utils';
+import {calculateOpenInMarking} from '../../utils/utils';
 
 let treeId = 0;
 
@@ -200,10 +199,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
       pdfFile: node
     });
     this.assignmentService.getAssignmentSettings(workspaceName, assignmentName).subscribe((assignmentSettingsInfo) => {
-
-      const submission = find(assignmentSettingsInfo.submissions, {studentId: studentSubmission.studentId});
-      const openInMarker = checkOpenInMarker(this.settings.user, submission, assignmentSettingsInfo.state);
-      if (openInMarker) {
+      if (calculateOpenInMarking(assignmentSettingsInfo)) {
         const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, studentSubmission.name, node.parent.name, node.name);
         this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
       } else {

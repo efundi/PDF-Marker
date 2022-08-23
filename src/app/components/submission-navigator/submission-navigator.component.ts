@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {filter, find, findIndex, isNil} from 'lodash';
+import {filter, findIndex, isNil} from 'lodash';
 import {StudentSubmission, TreeNodeType, WorkspaceFile} from '@shared/info-objects/workspace';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {RoutesEnum} from '../../utils/routes.enum';
@@ -7,10 +7,10 @@ import {AssignmentService} from '../../services/assignment.service';
 import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {SelectedSubmission} from '../../info-objects/selected-submission';
-import {AssignmentSettingsInfo, AssignmentState} from '@shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {checkOpenInMarker} from '../../utils/utils';
+import {calculateOpenInMarking} from '../../utils/utils';
 
 export interface SubmissionItem {
   studentFullName: string;
@@ -151,9 +151,7 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
       pdfFile: activeMenuItem.pdfFile
     });
 
-    const submission = find(this.assignmentSettings.submissions, {studentId: activeMenuItem.studentId});
-    const openInMarker = checkOpenInMarker(this.settings.user, submission, this.assignmentSettings.state);
-    if (openInMarker) {
+    if (calculateOpenInMarking(this.assignmentSettings)) {
       this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
     } else {
       this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);

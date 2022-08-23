@@ -32,6 +32,9 @@ export class MarkTypeHighlightComponent implements OnInit, AfterViewInit, OnDest
   @Input()
   index: number;
 
+  @Input()
+  editEnabled: boolean;
+
   private zoomSubscription: Subscription;
 
   @ViewChild('highlight', {static: true})
