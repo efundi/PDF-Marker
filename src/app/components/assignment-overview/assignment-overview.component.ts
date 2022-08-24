@@ -12,7 +12,7 @@ import {
 } from '../confirmation-dialog/confirmation-dialog.component';
 import {AlertService} from '../../services/alert.service';
 import {SettingsService} from '../../services/settings.service';
-import {SettingInfo} from '@shared/info-objects/setting.info';
+import {Marker, SettingInfo} from '@shared/info-objects/setting.info';
 import {
   AssignmentSettingsInfo,
   AssignmentState,
@@ -28,13 +28,13 @@ import {UntypedFormBuilder} from '@angular/forms';
 import {RubricViewModalComponent} from '../rubric-view-modal/rubric-view-modal.component';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {SelectionModel} from '@angular/cdk/collections';
-import {ShareAssignments} from '@shared/info-objects/share-assignments';
+import {ExportAssignmentsRequest, ExportFormat} from '@shared/info-objects/export-assignments-request';
 import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
 import {MatSort, MatSortable} from '@angular/material/sort';
-import {cloneDeep, filter, find, forEach, isEmpty, isNil, sortBy} from 'lodash';
+import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, sortBy, uniq} from 'lodash';
 import {
   StudentSubmission,
   TreeNodeType,
@@ -45,9 +45,17 @@ import {
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
 import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-markers-modal.component';
 import {DateTime} from 'luxon';
-import {calculateOpenInMarking, checkPermissions, Permissions} from '../../utils/utils';
+import {
+  calculateCanReAllocateSubmission,
+  calculateOpenInMarking,
+  checkPermissions,
+  Permissions
+} from '../../utils/utils';
 import {ImportMarkerModalComponent} from './import-marker-modal/import-marker-modal.component';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
+import {
+  ReallocateSubmissionsModalComponent
+} from './reallocate-submissions-modal/reallocate-submissions-modal.component';
 
 export interface AssignmentDetails {
   index?: number;
@@ -74,6 +82,7 @@ export interface AssignmentDetails {
   pdfFile: WorkspaceFile;
 
   marker?: string;
+  canReAllocate?: boolean;
 }
 
 @Component({
@@ -82,7 +91,7 @@ export interface AssignmentDetails {
   styleUrls: ['./assignment-overview.component.scss']
 })
 export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
-  displayedColumns: string[] = ['select', 'fullName', 'assignment', 'grade', 'date', 'state', 'marker', 'lmsStatusText'];
+  displayedColumns: string[] = [/*'select', */'fullName', 'assignment', 'grade', 'date', 'state', 'marker', 'lmsStatusText'];
   dataSource = new MatTableDataSource<AssignmentDetails>([]);
   assignmentsLength;
   selection = new SelectionModel<AssignmentDetails>(true, []);
@@ -117,6 +126,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     canFinalize: false,
     canExportReview: false,
   };
+  allowSelection = false;
 
 
 
@@ -160,7 +170,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   ngOnInit() {
     this.busyService.start();
-
     forkJoin([
       this.loadRubrics(),
       this.loadSettings()
@@ -187,6 +196,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   private refresh(): void {
     this.busyService.start();
+    this.selection.clear();
     this.getAssignmentSettings().pipe(
       mergeMap(() => this.getAssignmentHierarchy())
     ).subscribe({
@@ -223,6 +233,12 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     const values: AssignmentDetails[] = [];
     if (!isNil(this.workspaceAssignment)) {
       this.permissions = checkPermissions(this.assignmentSettings, this.settings.user);
+      const hasSelectors = this.displayedColumns[0] === 'select';
+      if (this.permissions.canReAllocate && !hasSelectors) {
+        this.displayedColumns.unshift('select');
+      } else if (!this.permissions.canReAllocate && hasSelectors){
+        this.displayedColumns.shift();
+      }
       let index = 0;
       const selfEmail = this.settings.user ? this.settings.user.email : null;
       const selfId = this.settings.user ? this.settings.user.id : null;
@@ -254,8 +270,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           pdfFile: null,
           lmsStatusText: submission.lmsStatusText ? submission.lmsStatusText : 'N/A',
           marker: markerName ? markerName : '',
-          state: submission.state
-
+          state: submission.state,
+          canReAllocate: calculateCanReAllocateSubmission(submission)
         };
         const submissionDirectory = find(workspaceSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
         const feedbackDirectory = find(workspaceSubmission.children, {type: TreeNodeType.FEEDBACK_DIRECTORY});
@@ -411,7 +427,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   /** Whether the number of selected elements matches the total number of rows. */
   isAllSelected() {
     const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.data.length;
+    const numRows = this.dataSource.data.filter((r) => r.canReAllocate).length;
     return numSelected === numRows;
   }
 
@@ -422,7 +438,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       return;
     }
 
-    this.selection.select(...this.dataSource.data);
+    this.selection.select(...this.dataSource.data.filter((r) => r.canReAllocate));
   }
 
   /** The label for the checkbox on the passed row */
@@ -433,22 +449,17 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.index + 1}`;
   }
 
-  share() {
-    // TODO replace with moderation
-    const shareRequest: ShareAssignments = {
+  exportForModeration() {
+    const shareRequest: ExportAssignmentsRequest = {
+      format: ExportFormat.MODERATION,
       assignmentName: this.assignmentName,
       workspaceFolder: this.workspaceName,
-      submissions : this.selection.selected.map((selection) => {
-        return {
-          directoryName: selection.submissionDirectoryName,
-          studentName: selection.studentName,
-          studentNumber: selection.studentNumber
-        };
-      })
+      studentIds : map(this.selection.selected, 'studentNumber')
     };
 
+    // TODO mark assignments and update settings
     this.busyService.start();
-    this.assignmentService.shareExport(shareRequest).subscribe({
+    this.assignmentService.exportAssignment(shareRequest).subscribe({
       next: (data) => {
         this.saveData(data, this.assignmentName + '_share.zip');
         this.busyService.stop();
@@ -590,25 +601,25 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   onExportForReview($event: MouseEvent) {
     const allMarked = this.checkAllSubmissionsMarked();
-      const config = new MatDialogConfig();
-      config.width = '600px';
-      config.maxWidth = '600px';
-      let message = 'You are about to export the assignment for review, the assignment will be locked for marking after export. ';
-      if (allMarked) {
-        message += 'Do you want to continue?';
-      } else {
-        message += 'There are un-marked submissions, do you want to continue?';
-      }
-      config.data = {
-        title: 'Export for review',
-        message
-      };
-      this.dialog.open(ConfirmationDialogComponent, config).afterClosed().subscribe((confirmed) => {
-        if (confirmed) {
-          this.exportForReview();
-        }
-      });
+    const config = new MatDialogConfig();
+    config.width = '600px';
+    config.maxWidth = '600px';
+    let message = 'You are about to export the assignment for review, the assignment will be locked for marking after export. ';
+    if (allMarked) {
+      message += 'Do you want to continue?';
+    } else {
+      message += 'There are un-marked submissions, do you want to continue?';
     }
+    config.data = {
+      title: 'Export for review',
+      message
+    };
+    this.dialog.open(ConfirmationDialogComponent, config).afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.exportForReview();
+      }
+    });
+  }
 
 
   importMarkerFile(): void {
@@ -644,4 +655,95 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     });
   }
 
+  reallocateMarkers() {
+    this.busyService.start();
+    const selectedSubmissions = this.selection.selected.map((value) => {
+      return find(this.assignmentSettings.submissions, {studentId: value.studentNumber});
+    });
+
+    const markerIds = uniq(map(selectedSubmissions, 'allocation.id'));
+    if (markerIds.length > 1) {
+      const confirmationModalConfig = new MatDialogConfig<ConfirmationDialogData>();
+      confirmationModalConfig.width = '600px';
+      confirmationModalConfig.maxWidth = '800px';
+      confirmationModalConfig.disableClose = true;
+      confirmationModalConfig.data = {
+        yesText: 'Ok',
+        title: 'Different Markers',
+        message: 'Please select submissions for re-allocation that are assigned to the same marker',
+        showNo: false
+      };
+      this.appService.createDialog(ConfirmationDialogComponent, confirmationModalConfig).afterClosed().subscribe({
+        next: () => this.busyService.stop()
+      });
+
+      return;
+    }
+
+    const config = new MatDialogConfig();
+    config.width = '600px';
+    config.maxWidth = '800px';
+    config.disableClose = true;
+    config.data = {
+      assignmentName: this.assignmentName,
+      workspaceName: this.workspaceName,
+      assignmentSettings: this.assignmentSettings,
+      workspaceAssignment: this.workspaceAssignment,
+      submissions: selectedSubmissions
+    };
+
+    const dialogRef = this.appService.createDialog(ReallocateSubmissionsModalComponent, config);
+    dialogRef.afterClosed().subscribe((marker: Marker) => {
+      if (isNil(marker)) {
+        this.busyService.stop();
+        // If no marker was selected, nothing further to do
+        return;
+      }
+
+      const updateAssignmentSettings = cloneDeep(this.assignmentSettings);
+
+      selectedSubmissions.forEach((selectedSubmission) => {
+        const submission = find(updateAssignmentSettings.submissions, {studentId: selectedSubmission.studentId});
+        submission.allocation = {
+          id: marker.id,
+          email: marker.email
+        };
+        submission.state = SubmissionState.ASSIGNED_TO_MARKER;
+      });
+
+
+      this.assignmentService.updateAssignmentSettings(updateAssignmentSettings, this.workspaceName, this.assignmentName).subscribe({
+        next: () => {
+          this.refresh();
+          if (marker.id === this.settings.user.id) {
+            // If re-allocated to user there is no zips to create
+            this.busyService.stop();
+            return;
+          }
+
+          const shareRequest: ExportAssignmentsRequest = {
+            format: ExportFormat.PDFM,
+            assignmentName: this.assignmentName,
+            workspaceFolder: this.workspaceName,
+            studentIds : map(selectedSubmissions, 'studentId')
+          };
+
+          this.assignmentService.exportAssignment(shareRequest).subscribe({
+            next: (data) => {
+              this.saveData(data, this.assignmentName + '_' + marker.email + '_reallocation.zip');
+              this.busyService.stop();
+            },
+            error: (error) => {
+              this.alertService.error(error);
+              this.busyService.stop();
+            }
+          });
+
+        }, error: (error) => {
+          this.alertService.error(error);
+        }
+      });
+
+    });
+  }
 }

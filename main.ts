@@ -10,7 +10,7 @@ import {
   getPdfFile,
   updateAssignmentRubric,
   saveMarks,
-  shareExport,
+  exportAssignment,
   updateAssignment,
   updateAssignmentSettings, exportForReview
 } from './src-electron/ipc/assignment.handler';
@@ -184,7 +184,7 @@ try {
     ipcMain.handle('assignments:finalizeAssignment', toIpcResponse(finalizeAssignment));
     ipcMain.handle('assignments:getAssignmentSettings', toIpcResponse(getAssignmentSettings));
     ipcMain.handle('assignments:updateAssignmentSettings', toIpcResponse(updateAssignmentSettings));
-    ipcMain.handle('assignments:shareExport', toIpcResponse(shareExport));
+    ipcMain.handle('assignments:exportAssignment', toIpcResponse(exportAssignment));
     ipcMain.handle('assignments:getMarks', toIpcResponse(getMarks));
     ipcMain.handle('assignments:exportForReview', toIpcResponse(exportForReview));
     ipcMain.handle('assignments:updateAssignmentRubric', toIpcResponse(updateAssignmentRubric));

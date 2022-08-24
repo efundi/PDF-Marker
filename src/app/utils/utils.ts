@@ -7,7 +7,7 @@ import {
   SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
 import {Marker} from '@shared/info-objects/setting.info';
-import {every, find, isNil} from 'lodash';
+import {every, find, isNil, some} from 'lodash';
 
 export interface Permissions {
   /**
@@ -63,6 +63,11 @@ function calculateCanAllocate(assignmentSettings: AssignmentSettingsInfo): boole
   return true;
 }
 
+export function calculateCanReAllocateSubmission(submission: Submission): boolean {
+  // Check for assignments that has not been marked
+  return submission.state === SubmissionState.ASSIGNED_TO_MARKER || submission.state === SubmissionState.NOT_MARKED;
+}
+
 function calculateCanReAllocate(assignmentSettings: AssignmentSettingsInfo, user: Marker): boolean {
   if (assignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
     // Assignment must already be in a DISTRIBUTED form to be re-allocate
@@ -74,8 +79,13 @@ function calculateCanReAllocate(assignmentSettings: AssignmentSettingsInfo, user
     return false;
   }
 
-  // User is the owner of the assignment
-  return !isNil(user) && assignmentSettings.owner.id === user.id;
+
+  if (isNil(user) || assignmentSettings.owner.id !== user.id) {
+    // User is not the owner of the assignment
+    return false;
+  }
+
+  return some(assignmentSettings.submissions, calculateCanReAllocateSubmission);
 }
 
 function calculateCanImport(assignmentSettings: AssignmentSettingsInfo, user: Marker): boolean {

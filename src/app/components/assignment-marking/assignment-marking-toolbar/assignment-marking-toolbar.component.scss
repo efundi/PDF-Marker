@@ -1,3 +1,5 @@
+@import '/src/scss/variables';
+
 mat-toolbar {
   padding-left: 0;
   font-family: Roboto,"Helvetica Neue",sans-serif !important;
@@ -15,7 +17,7 @@ mat-toolbar {
   }
 
   .pdf-marker-icons-selected {
-    background: violet;
+    background: lighten($pdf-marker-primary, 55%);;
   }
 
   .pdf-marker-icons-pdf-nav-buttons {

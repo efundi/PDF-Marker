@@ -16,12 +16,23 @@
     </div>
     <div class="pdf-marker-assignment-overview-buttons">
       <button
+        *ngIf="!permissions.canReAllocate"
         [disabled]="!permissions.canAllocate"
         color="primary"
         mat-button
         mat-icon-button
         matTooltip="Allocate Markers"
         (click)="allocateMarkers()">
+        <mat-icon>workspaces</mat-icon>
+      </button>
+      <button
+        *ngIf="permissions.canReAllocate"
+        [disabled]="!selection.hasValue()"
+        color="primary"
+        mat-button
+        mat-icon-button
+        matTooltip="Reallocate Markers"
+        (click)="reallocateMarkers()">
         <mat-icon>workspaces</mat-icon>
       </button>
       <button
@@ -89,6 +100,7 @@
       </th>
       <td mat-cell *matCellDef="let row">
         <mat-checkbox
+          *ngIf="row.canReAllocate"
           color="primary"
           (click)="$event.stopPropagation()"
           (change)="$event ? selection.toggle(row) : null"

@@ -3,7 +3,7 @@ import {FileFilterInfo} from '@shared/info-objects/file-filter.info';
 import {AssignmentIpcService} from './src/shared/ipc/assignment.ipc-service';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info';
-import {ShareAssignments} from '@shared/info-objects/share-assignments';
+import {ExportAssignmentsRequest} from './src/shared/info-objects/export-assignments-request';
 import {RubricIpcService} from './src/shared/ipc/rubric.ipc-service';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {ImportInfo} from '@shared/info-objects/import.info';
@@ -33,7 +33,7 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   updateAssignmentSettings: (updatedSettings: any, workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:updateAssignmentSettings', updatedSettings, workspaceName, assignmentName),
   finalizeAssignment: (workspaceFolder: any, assignmentName: string) => ipcRenderer.invoke('assignments:finalizeAssignment', workspaceFolder, assignmentName),
   getMarks: (location: string) => ipcRenderer.invoke('assignments:getMarks', location),
-  shareExport: (shareRequest: ShareAssignments) => ipcRenderer.invoke('assignments:shareExport', shareRequest),
+  exportAssignment: (shareRequest: ExportAssignmentsRequest) => ipcRenderer.invoke('assignments:exportAssignment', shareRequest),
   updateAssignmentRubric: (workspaceName: string, assignmentName: string, rubricName: string, ) => ipcRenderer.invoke('assignments:updateAssignmentRubric', workspaceName, assignmentName, rubricName),
   getPdfFile: (location: string) => ipcRenderer.invoke('assignments:getPdfFile', location),
   exportForReview: (workspaceFolder: string, assignmentName: string) => ipcRenderer.invoke('assignments:exportForReview', workspaceFolder, assignmentName)
