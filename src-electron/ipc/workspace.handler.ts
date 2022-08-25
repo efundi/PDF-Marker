@@ -5,7 +5,7 @@ import {CONFIG_DIR, CONFIG_FILE} from '../constants';
 import {existsSync, mkdirSync, readdirSync, renameSync, writeFileSync} from 'fs';
 import {IpcMainInvokeEvent, shell} from 'electron';
 import {moveSync} from 'fs-extra';
-import {DEFAULT_WORKSPACE,} from '@shared/constants/constants';
+import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 
 /**
  * Get the absolute path of the workspace
@@ -50,7 +50,7 @@ export function createWorkingFolder(event: IpcMainInvokeEvent, workFolderName: s
     if (isNil(config.folders)) {
       config.folders = [];
     }
-    config.folders.push(fullPath);
+    config.folders.push(basename(fullPath));
     return updateConfigFile(config).then(() => fullPath);
   });
 }
