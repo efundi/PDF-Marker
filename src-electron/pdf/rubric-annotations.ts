@@ -24,7 +24,7 @@ function rotatePages(pdfDoc: PDFDocument, submissionInfo: RubricSubmissionInfo) 
     });
 }
 
-export function annotatePdfRubric(filePath: string, submissionInfo: RubricSubmissionInfo, rubric: IRubric): Promise<{ pdfBytes: Uint8Array, totalMark: number }> {
+export function annotatePdfRubric(filePath: string, submissionInfo: RubricSubmissionInfo, rubric: IRubric): Promise<Uint8Array> {
   return readFile(filePath)
     .then(data => PDFDocument.load(data))
     .then(pdfDoc => {
@@ -174,8 +174,6 @@ export function annotatePdfRubric(filePath: string, submissionInfo: RubricSubmis
       });
 
 
-      return pdfDoc.save().then((data) => {
-        return { pdfBytes: data, totalMark };
-      });
+      return pdfDoc.save();
     });
 }

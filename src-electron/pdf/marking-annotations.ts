@@ -401,7 +401,7 @@ function addResultsPage(session: AnnotationSession, pdfDoc: PDFDocument) {
 
 export function annotatePdfFile(
   filePath: string,
-  submissionInfo: MarkingSubmissionInfo): Promise<{ pdfBytes: Uint8Array, totalMark: number }> {
+  submissionInfo: MarkingSubmissionInfo): Promise<Uint8Array> {
   return readFile(filePath)
     .then((data) => {
       const session: AnnotationSession = {
@@ -418,9 +418,6 @@ export function annotatePdfFile(
     })
     .then((session) => addPdfMarks(session, submissionInfo.marks))
     .then((session) => {
-      return {
-        pdfBytes: session.data,
-        totalMark: session.totalMark
-      };
+      return session.data;
     });
 }

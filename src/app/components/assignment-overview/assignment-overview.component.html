@@ -16,6 +16,25 @@
     </div>
     <div class="pdf-marker-assignment-overview-buttons">
       <button
+        color="primary"
+        *ngIf="assignmentSettings?.sourceFormat === SourceFormat.MANUAL"
+        [disabled]="!permissions.canManageSubmissions"
+        mat-button
+        mat-icon-button
+        matTooltip="Manage Submissions"
+        (click)="manageStudents()">
+        <mat-icon [class.pdf-icon-disabled]="assignmentSettings?.sourceFormat !== SourceFormat.MANUAL">person</mat-icon>
+      </button>
+      <button
+        color="primary"
+        *ngIf="assignmentSettings?.rubric"
+        mat-button
+        mat-icon-button
+        matTooltip="Manage Rubric"
+        (click)="viewRubric()">
+        <mat-icon [class.pdf-icon-disabled]="!assignmentSettings?.rubric">apps</mat-icon>
+      </button>
+      <button
         *ngIf="!permissions.canReAllocate"
         [disabled]="!permissions.canAllocate"
         color="primary"
@@ -35,23 +54,15 @@
         (click)="reallocateMarkers()">
         <mat-icon>workspaces</mat-icon>
       </button>
+
       <button
+        [disabled]="!permissions.canImport"
         color="primary"
-        [disabled]="!permissions.canManageSubmissions || assignmentSettings?.sourceFormat !== SourceFormat.MANUAL"
         mat-button
         mat-icon-button
-        matTooltip="Manage Submissions"
-        (click)="manageStudents()">
-        <mat-icon [class.pdf-icon-disabled]="assignmentSettings?.sourceFormat !== SourceFormat.MANUAL">person</mat-icon>
-      </button>
-      <button
-        color="primary"
-        [disabled]="!assignmentSettings?.rubric"
-        mat-button
-        mat-icon-button
-        matTooltip="Manage Rubric"
-        (click)="viewRubric()">
-        <mat-icon [class.pdf-icon-disabled]="!assignmentSettings?.rubric">apps</mat-icon>
+        matTooltip="Import from Marker"
+        (click)="importMarkerFile()">
+        <mat-icon>upload_file</mat-icon>
       </button>
       <button
         *ngIf="!permissions.canExportReview"
@@ -64,6 +75,16 @@
         <mat-icon >archive</mat-icon>
       </button>
       <button
+        *ngIf="permissions.canSendForModeration"
+        [disabled]="!selection.hasValue()"
+        color="primary"
+        mat-button
+        mat-icon-button
+        matTooltip="Send for moderation"
+        (click)="exportForModeration()">
+        <mat-icon>verified</mat-icon>
+      </button>
+      <button
         *ngIf="permissions.canExportReview                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "
         color="primary"
         [disabled]="!isSettings"
@@ -72,15 +93,6 @@
         matTooltip="Export for review"
         (click)="onExportForReview($event)">
         <mat-icon >archive</mat-icon>
-      </button>
-      <button
-        [disabled]="!permissions.canImport"
-        color="primary"
-        mat-button
-        mat-icon-button
-        matTooltip="Import from Marker"
-        (click)="importMarkerFile()">
-        <mat-icon>unarchive</mat-icon>
       </button>
     </div>
   </div>
@@ -100,7 +112,7 @@
       </th>
       <td mat-cell *matCellDef="let row">
         <mat-checkbox
-          *ngIf="row.canReAllocate"
+          *ngIf="row.canReAllocate || row.canModerate"
           color="primary"
           (click)="$event.stopPropagation()"
           (change)="$event ? selection.toggle(row) : null"
@@ -166,6 +178,8 @@
         <span *ngIf="element.state === SubmissionState.NEW">--</span>
         <span *ngIf="element.state === SubmissionState.MARKED">Marked</span>
         <span *ngIf="element.state === SubmissionState.NOT_MARKED">Not Marked</span>
+        <span *ngIf="element.state === SubmissionState.SENT_FOR_MODERATION">Sent for Moderation</span>
+        <span *ngIf="element.state === SubmissionState.MODERATED">Moderated</span>
       </td>
     </ng-container>
 
