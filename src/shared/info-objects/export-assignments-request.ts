@@ -1,10 +1,13 @@
-export interface ShareAssignmentSubmission {
-  studentName: string;
-  studentNumber: string;
-  directoryName: string;
+
+export enum ExportFormat {
+  PDFM,
+  MODERATION
 }
 
-export interface ShareAssignments {
+export interface ExportAssignmentsRequest {
+
+  format: ExportFormat;
+
   /**
    * Name of the workspace in which the assignment is.
    * Null if default workspace
@@ -19,5 +22,5 @@ export interface ShareAssignments {
   /**
    * Submissions to share
    */
-  submissions: ShareAssignmentSubmission[];
+  studentIds: string[];
 }

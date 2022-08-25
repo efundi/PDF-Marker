@@ -92,6 +92,7 @@ import { UpdateModalComponent } from './components/update-modal/update-modal.com
 import { AllocateMarkersModalComponent } from './components/assignment-overview/allocate-markers-modal/allocate-markers-modal.component';
 import {PreviewMarksComponent} from './components/assignment-marking/preview-marks/preview-marks.component';
 import { ImportMarkerModalComponent } from './components/assignment-overview/import-marker-modal/import-marker-modal.component';
+import { ReallocateSubmissionsModalComponent } from './components/assignment-overview/reallocate-submissions-modal/reallocate-submissions-modal.component';
 
 @NgModule({
   declarations: [
@@ -137,7 +138,8 @@ import { ImportMarkerModalComponent } from './components/assignment-overview/imp
     UpdateModalComponent,
     AllocateMarkersModalComponent,
     PreviewMarksComponent,
-    ImportMarkerModalComponent
+    ImportMarkerModalComponent,
+    ReallocateSubmissionsModalComponent
   ],
   imports: [
     HttpClientModule,

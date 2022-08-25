@@ -1,3 +1,4 @@
+@import '/src/scss/variables';
 table {
   font-size: 0.8rem;
 }
@@ -25,7 +26,7 @@ table {
 }
 
 .pdf-selected-block {
-  background: thistle;
+  background: lighten($pdf-marker-primary, 55%);
 }
 
 

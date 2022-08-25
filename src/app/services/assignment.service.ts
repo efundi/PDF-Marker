@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {first, map, mergeMap, Observable, ReplaySubject, tap, throwError} from 'rxjs';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
-import {ShareAssignments} from '@shared/info-objects/share-assignments';
+import {ExportAssignmentsRequest} from '@shared/info-objects/export-assignments-request';
 import {AssignmentIpcService} from '@shared/ipc/assignment.ipc-service';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info';
@@ -151,8 +151,8 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.getMarks(location));
   }
 
-  shareExport(shareRequest: ShareAssignments): Observable<Uint8Array> {
-    return fromIpcResponse(this.assignmentApi.shareExport(shareRequest));
+  exportAssignment(exportAssignmentsRequest: ExportAssignmentsRequest): Observable<Uint8Array> {
+    return fromIpcResponse(this.assignmentApi.exportAssignment(exportAssignmentsRequest));
   }
 
   finalizeAndExport(workspaceName: string, assignmentName: string): Observable<Uint8Array> {
