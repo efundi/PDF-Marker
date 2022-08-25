@@ -12,6 +12,7 @@ import {basename, dirname, extname, join, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
 import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
 import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, reduce, remove, sortBy} from 'lodash';
+import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, remove, some, sortBy} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {PDFDocument} from 'pdf-lib';
@@ -21,6 +22,7 @@ import {
   AssignmentSettingsInfo,
   AssignmentState,
   DEFAULT_ASSIGNMENT_SETTINGS,
+  DistributionFormat,
   SourceFormat,
   Submission,
   SubmissionState
@@ -1067,4 +1069,55 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
           return Promise.reject(error);
         });
     });
+}
+
+
+function markerAllocatedInAssignment(assignmentSettings: AssignmentSettingsInfo, markerId: string): boolean{
+  if (assignmentSettings.distributionFormat === DistributionFormat.STANDALONE){
+    return false;
+  } else {
+    return map(assignmentSettings.submissions, 'allocation.id')
+      .filter(m => m === markerId).length > 0;
+  }
+}
+
+/**
+ * Returns true if a marker is allocated to an assignment
+ */
+export function isMarkerAllocated(event: IpcMainInvokeEvent, markerId: string): Promise<boolean> {
+  return getConfig().then((settingsInfo) => {
+    const workspaceFolders = settingsInfo.folders || [];
+    return readdir(settingsInfo.defaultPath).then((foundDirectories) => {
+      const allAssignmentDirectories: string[] = [];
+
+      // First we calculate all the assignment directories to scan through to find allocations
+      const directoryPromises: Promise<any>[] = map(foundDirectories, (directory) => {
+        const fullPath = settingsInfo.defaultPath + sep + directory;
+        if (workspaceFolders.includes(directory)) {
+          // Check if the directory is a working directory
+          return readdir(fullPath).then((assignmentDirectories) => {
+            forEach(assignmentDirectories, (assignmentDirectory) => {
+              allAssignmentDirectories.push(fullPath + sep + assignmentDirectory);
+            });
+          });
+        } else {
+          allAssignmentDirectories.push(fullPath);
+          return Promise.resolve();
+        }
+      });
+
+      // Function to recursively chain promises until we found an allocation, or ran out of directories
+      function generatePromise(found: boolean, index: number) {
+        if (!found && index < allAssignmentDirectories.length) {
+          return getAssignmentSettingsAt(allAssignmentDirectories[index])
+            .then((assignmentSettings) => markerAllocatedInAssignment(assignmentSettings, markerId))
+            .then((allocated) => generatePromise(allocated, index + 1));
+        }
+        return Promise.resolve(found);
+      }
+      return Promise.all(directoryPromises).then(() => {
+        return generatePromise(false, 0);
+      });
+    });
+  });
 }

@@ -184,4 +184,8 @@ export class AssignmentService {
   generateAllocationZipFiles(workspaceName: string, assignmentName: string, exportPath: string): Observable<string> {
     return fromIpcResponse(this.assignmentApi.generateAllocationZipFiles(workspaceName, assignmentName, exportPath));
   }
+  isMarkerAllocated(markerId: string): Observable<boolean>{
+    return fromIpcResponse(this.assignmentApi.isMarkerAllocated(markerId));
+  }
+
 }
