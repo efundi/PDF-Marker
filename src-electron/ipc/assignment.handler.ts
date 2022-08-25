@@ -12,7 +12,7 @@ import * as path from 'path';
 import {basename, dirname, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
 import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
-import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, remove, sortBy} from 'lodash';
+import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, reduce, remove, sortBy} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {PDFDocument} from 'pdf-lib';
@@ -945,8 +945,66 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
                                            workspaceName: string,
                                            assignmentName: string,
                                            exportPath: string): Promise<any> {
-  console.log(workspaceName);
-  console.log(assignmentName);
-  console.log(exportPath);
-  return Promise.resolve("success");
+
+  const tempDirectory = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
+  const exportTempDirectory = tempDirectory + sep + assignmentName;
+
+  return Promise.all([
+    getAssignmentSettingsFor(workspaceName, assignmentName),
+    getAssignmentDirectoryAbsolutePath(workspaceName, assignmentName),
+    mkdir(exportTempDirectory)
+  ])
+    .then(([assignmentSettings, originalAssignmentDirectory]) => {
+
+      const allocationSubmissionsMap = reduce(assignmentSettings.submissions, (submissionsMap, submission) => {
+        if (!submissionsMap.hasOwnProperty(submission.allocation.email)) {
+          submissionsMap [ submission.allocation.email ] = [];
+        }
+        submissionsMap[submission.allocation.email].push(submission);
+        return submissionsMap;
+      }, {});
+
+      const promises: Promise<any>[] = map(Object.keys(allocationSubmissionsMap), (markerEmail) => {
+
+        // temp/piet@mail.com
+        const markerDirectory = exportTempDirectory + sep + markerEmail;
+        // temp/piet@mail.com/assignmentName
+        const markerAssignmentDirectory = markerDirectory + sep + assignmentName;
+
+        return mkdir(markerAssignmentDirectory, {recursive: true})
+          .then(() => {
+          const submissions: Submission[] = allocationSubmissionsMap[markerEmail];
+
+          const submissionPromises: Promise<any>[] = map(submissions, (submission) => {
+            return copy(originalAssignmentDirectory + sep +  submission.directoryName,
+              markerAssignmentDirectory + sep + submission.directoryName);
+          });
+
+          return Promise.all(submissionPromises);
+        })
+          .then(() => {
+            const markerAssignmentSettings = cloneDeep(assignmentSettings);
+            markerAssignmentSettings.submissions = markerAssignmentSettings.submissions.filter((submission) => {
+              return submission.allocation.email === markerEmail;
+            });
+
+            return writeAssignmentSettingsAt(markerAssignmentSettings, markerAssignmentDirectory);
+          })
+          .then(() => {
+            return zipDir(markerDirectory);
+          })
+          .then((buffer) => {
+            // TODO fix filename
+            return writeFile(exportPath + sep + markerEmail + '.zip', buffer);
+          })
+      });
+
+      return Promise.all(promises)
+        .then(() => {
+          cleanupTemp(tempDirectory);
+        }),
+        (error) => {
+          cleanupTemp(tempDirectory);
+        };
+    });
 }
