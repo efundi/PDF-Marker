@@ -1,6 +1,5 @@
 import {app, BrowserWindow, HandlerDetails, ipcMain, Menu, MenuItemConstructorOptions, screen, shell} from 'electron';
 import {autoUpdater} from 'electron-updater';
-import * as path from 'path';
 import {
   createAssignment,
   finalizeAssignment,
@@ -10,9 +9,11 @@ import {
   getPdfFile,
   updateAssignmentRubric,
   saveMarks,
-  exportAssignment,
   updateAssignment,
-  updateAssignmentSettings, exportForReview, generateAllocationZipFiles, isMarkerAllocated
+  updateAssignmentSettings,
+  generateAllocationZipFiles,
+  isMarkerAllocated,
+  handleExportAssignment
 } from './src-electron/ipc/assignment.handler';
 import {
   deleteRubric,
@@ -52,6 +53,7 @@ import {checkForUpdates, downloadUpdate} from './src-electron/ipc/update.handler
 import {runSettingsMigration} from './src-electron/migration/settings.migration';
 import {migrateAssignmentSettings} from './src-electron/migration/assignment.migration';
 import {migrateMarks} from './src-electron/migration/marks.migration';
+import { join } from 'path';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -80,7 +82,7 @@ function createWindow() {
     width: size.width,
     height: size.height,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: join(__dirname, 'preload.js'),
     },
   });
 
@@ -97,7 +99,7 @@ function createWindow() {
     });
 
   } else {
-    mainWindow.loadFile(path.join(__dirname, 'dist/browser/index.html'));
+    mainWindow.loadFile(join(__dirname, 'dist/browser/index.html'));
   }
 
   // Emitted when the window is closed.
@@ -184,9 +186,8 @@ try {
     ipcMain.handle('assignments:finalizeAssignment', toIpcResponse(finalizeAssignment));
     ipcMain.handle('assignments:getAssignmentSettings', toIpcResponse(getAssignmentSettings));
     ipcMain.handle('assignments:updateAssignmentSettings', toIpcResponse(updateAssignmentSettings));
-    ipcMain.handle('assignments:exportAssignment', toIpcResponse(exportAssignment));
+    ipcMain.handle('assignments:exportAssignment', toIpcResponse(handleExportAssignment));
     ipcMain.handle('assignments:getMarks', toIpcResponse(getMarks));
-    ipcMain.handle('assignments:exportForReview', toIpcResponse(exportForReview));
     ipcMain.handle('assignments:updateAssignmentRubric', toIpcResponse(updateAssignmentRubric));
     ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
     ipcMain.handle('assignments:isMarkerAllocated', toIpcResponse(isMarkerAllocated));

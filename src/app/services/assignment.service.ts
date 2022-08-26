@@ -167,10 +167,6 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.updateAssignment(updateAssignmentInfo));
   }
 
-  exportForReview(workspaceName: string, assignmentName: string): Observable<Uint8Array> {
-    return fromIpcResponse(this.assignmentApi.exportForReview(workspaceName, assignmentName));
-  }
-
   updateAssignmentRubric(workspaceName: string, assignmentName: string, rubricName: string): Observable<IRubric> {
     return fromIpcResponse(this.assignmentApi.updateAssignmentRubric(workspaceName, assignmentName, rubricName))
       .pipe(

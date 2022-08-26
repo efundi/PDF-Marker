@@ -56,7 +56,7 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
     this.formGroup = this.formBuilder.group({
       groupId: [null as string, Validators.compose([Validators.required, this.formEmptyGroupValidator()])],
       includeMe: [false],
-      exportPath: [null as string]
+      exportPath: [null as string, Validators.required]
     });
 
     this.formSubscription = this.formGroup.valueChanges.subscribe((value) => {
