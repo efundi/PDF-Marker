@@ -21,6 +21,7 @@ export interface ExportAssignmentsRequest {
 
   /**
    * Submissions to share
+   * If the value is null, all submissions will be exported
    */
   studentIds: string[];
 }

@@ -489,7 +489,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           return;
         }
         this.busyService.start();
-        const studentIds = map(this.selection.selected, 'studentNumber')
+        const studentIds = map(this.selection.selected, 'studentNumber');
         const shareRequest: ExportAssignmentsRequest = {
           format: ExportFormat.MODERATION,
           assignmentName: this.assignmentName,
@@ -596,6 +596,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
     const dialogRef = this.appService.createDialog(AllocateMarkersModalComponent, config);
     dialogRef.afterClosed().subscribe((result) => {
+      if (isNil(result)) {
+        return;
+      }
+
       const allocations: SubmissionAllocation[] = result.allocations;
       const exportPath: string = result.exportPath;
       if (isEmpty(allocations)) {
@@ -622,7 +626,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         error: (error) => {
           this.alertService.error(error);
         }
-      });;
+      });
     });
   }
 
@@ -654,15 +658,34 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   private exportForReview() {
     this.busyService.start();
-    this.assignmentService.exportForReview(this.workspaceName, this.assignmentName).subscribe({
-      next: (buffer) => {
-        this.saveData(buffer, this.assignmentName + '_marked.zip');
-        this.refresh();
-        this.busyService.stop();
-      },
-      error: () => {
-        this.busyService.stop();
+
+    const assignmentSettings = cloneDeep(this.assignmentSettings);
+    assignmentSettings.state = AssignmentState.SENT_FOR_REVIEW;
+    assignmentSettings.stateDate = new Date().toISOString();
+
+    // Set status of all assignments that has not been marked
+    forEach(assignmentSettings.submissions, (submission) => {
+      if (isNil(submission.mark)) {
+        submission.state = SubmissionState.NOT_MARKED;
       }
+    });
+
+    this.assignmentService.updateAssignmentSettings(assignmentSettings, this.workspaceName, this.assignmentName).subscribe(() => {
+      this.assignmentService.exportAssignment({
+        assignmentName: this.assignmentName,
+        workspaceFolder: this.workspaceName,
+        format: ExportFormat.PDFM,
+        studentIds: null // Export all
+      }).subscribe({
+        next: (buffer) => {
+          this.saveData(buffer, this.assignmentName + '_marked.zip');
+          this.refresh();
+          this.busyService.stop();
+        },
+        error: () => {
+          this.busyService.stop();
+        }
+      });
     });
   }
 

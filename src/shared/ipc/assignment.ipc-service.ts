@@ -13,7 +13,6 @@ export interface AssignmentIpcService {
   updateAssignment(updateRequest: UpdateAssignment): Promise<IpcResponse<any>>;
   saveMarks(location: string, marks: SubmissionInfo): Promise<IpcResponse<any>>;
   finalizeAssignment(workspaceFolder: string, assignmentName: string): Promise<IpcResponse<Uint8Array>>;
-  exportForReview(workspaceFolder: string, assignmentName: string): Promise<IpcResponse<Uint8Array>>;
   getAssignmentSettings(workspaceName: string, location: string): Promise<IpcResponse<any>>;
   getMarks(location: string): Promise<IpcResponse<SubmissionInfo>>;
   updateAssignmentSettings(updatedSettings: any, workspaceName: string, assignmentName: string): Promise<IpcResponse<any>>;
