@@ -996,15 +996,16 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
           .then((buffer) => {
             // TODO fix filename
             return writeFile(exportPath + sep + markerEmail + '.zip', buffer);
-          })
+          });
       });
 
       return Promise.all(promises)
         .then(() => {
           cleanupTemp(tempDirectory);
-        }),
+        },
         (error) => {
           cleanupTemp(tempDirectory);
-        };
+          return Promise.reject(error);
+        });
     });
 }
