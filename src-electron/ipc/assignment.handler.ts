@@ -1,7 +1,7 @@
 import {accessSync, constants, existsSync, mkdtempSync, rmSync, statSync, unlinkSync, writeFileSync} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
-import {checkAccess, isFolder, isJson, writeToFile} from '../utils';
+import {checkAccess, isFolder, isJson, isNullOrUndefinedOrEmpty, writeToFile} from '../utils';
 import {
   INVALID_STUDENT_FOLDER,
   NOT_PROVIDED_RUBRIC,
@@ -225,6 +225,10 @@ function loadWorkspaces(): Promise<Workspace[]> {
     };
     const workspaceFolders = config.folders || [];
     const workspaces: Workspace[] = [defaultWorkspace];
+
+    if (isNullOrUndefinedOrEmpty(config.defaultPath)) {
+      return workspaces;
+    }
 
     return readdir(config.defaultPath).then((foundDirectories) => {
       const promises: Promise<any>[] = map(foundDirectories, (directory) => {
