@@ -12,7 +12,7 @@ import {
   saveMarks,
   exportAssignment,
   updateAssignment,
-  updateAssignmentSettings, exportForReview, generateAllocationZipFiles
+  updateAssignmentSettings, exportForReview, generateAllocationZipFiles, isMarkerAllocated
 } from './src-electron/ipc/assignment.handler';
 import {
   deleteRubric,
@@ -189,6 +189,7 @@ try {
     ipcMain.handle('assignments:exportForReview', toIpcResponse(exportForReview));
     ipcMain.handle('assignments:updateAssignmentRubric', toIpcResponse(updateAssignmentRubric));
     ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
+    ipcMain.handle('assignments:isMarkerAllocated', toIpcResponse(isMarkerAllocated));
     ipcMain.handle('assignments:generateAllocationZipFiles', toIpcResponse(generateAllocationZipFiles));
 
     // Rubric API

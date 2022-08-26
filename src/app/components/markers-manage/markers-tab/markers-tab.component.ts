@@ -2,7 +2,7 @@ import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild} from '@angular/c
 import {cloneDeep, find, isNil, remove, findIndex, filter} from 'lodash';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {
-  ConfirmationDialogComponent
+  ConfirmationDialogComponent, ConfirmationDialogData
 } from '../../confirmation-dialog/confirmation-dialog.component';
 import {MarkersManageComponent} from '../markers-manage.component';
 import {
@@ -18,6 +18,7 @@ import {MatSort} from '@angular/material/sort';
 import {Subscription} from 'rxjs';
 import {AppService} from '../../../services/app.service';
 import {uuidv4} from '@shared/constants/constants';
+import {AssignmentService} from '../../../services/assignment.service';
 
 
 
@@ -90,6 +91,7 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(private formBuilder: FormBuilder,
               private markersManageComponent: MarkersManageComponent,
+              private assignmentService: AssignmentService,
               private appService: AppService) {
     this.initForm();
   }
@@ -292,20 +294,39 @@ export class MarkersTabComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   removeMarker(element: MarkersTableData) {
-    const config = new MatDialogConfig();
-    config.width = '400px';
-    config.maxWidth = '400px';
-    config.data = {
-      title: 'Remove user',
-      message: 'Are you sure you want to remove user?',
-    };
-    this.appService.createDialog(ConfirmationDialogComponent, config, (accepted) => {
-      if (accepted) {
-        const updateSettings = cloneDeep(this.originalSettings);
-        updateSettings.markers = remove(updateSettings.markers, (item) => item.id !== element.id);
-        updateSettings.groupMembers = remove(updateSettings.groupMembers, (item) => item.markerId !== element.id);
-        this.saveSettings(updateSettings, 'Marker removed');
+
+    this.assignmentService.isMarkerAllocated(element.id).subscribe((isAllocated) => {
+
+      if (isAllocated) {
+        const allocatedModalConfig = new MatDialogConfig<ConfirmationDialogData>();
+        allocatedModalConfig.width = '400px';
+        allocatedModalConfig.maxWidth = '400px';
+        allocatedModalConfig.data = {
+          title: 'Allocated marker',
+          message: 'Maker is currently allocated to an assignment and cannot be removed.',
+          yesText: 'Ok',
+          showNo: false
+        };
+        this.appService.createDialog(ConfirmationDialogComponent, allocatedModalConfig);
+        return;
       }
+
+
+      const config = new MatDialogConfig();
+      config.width = '400px';
+      config.maxWidth = '400px';
+      config.data = {
+        title: 'Remove user',
+        message: 'Are you sure you want to remove user?',
+      };
+      this.appService.createDialog(ConfirmationDialogComponent, config, (accepted) => {
+        if (accepted) {
+          const updateSettings = cloneDeep(this.originalSettings);
+          updateSettings.markers = remove(updateSettings.markers, (item) => item.id !== element.id);
+          updateSettings.groupMembers = remove(updateSettings.groupMembers, (item) => item.markerId !== element.id);
+          this.saveSettings(updateSettings, 'Marker removed');
+        }
+      });
     });
   }
 

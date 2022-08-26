@@ -21,4 +21,5 @@ export interface AssignmentIpcService {
   updateAssignmentRubric(workspaceName: string, assignmentName: string, rubricName: string): Promise<IpcResponse<IRubric>>;
   getPdfFile(location: string): Promise<IpcResponse<Uint8Array>>;
   generateAllocationZipFiles(workspaceName: string, assignmentName: string, exportPath: string): Promise<IpcResponse<string>>;
+  isMarkerAllocated(markerId: string): Promise<IpcResponse<boolean>>;
 }
