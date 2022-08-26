@@ -7,7 +7,7 @@ import {
   SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
 import {Marker} from '@shared/info-objects/setting.info';
-import {every, find, isNil, some} from 'lodash';
+import {every, find, isNil, property, some} from 'lodash';
 
 export interface Permissions {
   /**
@@ -45,8 +45,15 @@ export interface Permissions {
    */
   canExportReview: boolean;
 
+  /**
+   * Can the assignment export for review
+   */
+  canSendForModeration: boolean;
+
 }
 
+const ASSIGNMENT_OWNER_ID = property('owner.id');
+const USER_ID = property('user.id');
 
 function calculateCanAllocate(assignmentSettings: AssignmentSettingsInfo): boolean {
   if (assignmentSettings.distributionFormat !== DistributionFormat.STANDALONE) {
@@ -144,7 +151,9 @@ function calculateCanFinalize(assignmentSettings: AssignmentSettingsInfo, user: 
   }
 
   const allMatch = every(assignmentSettings.submissions, (submission) => {
-    return submission.state === SubmissionState.MARKED; // TODO add moderator stuff
+    return submission.state === SubmissionState.MARKED ||
+      submission.state === SubmissionState.MODERATED ||
+      submission.state === SubmissionState.SENT_FOR_MODERATION;
   });
 
 
@@ -157,7 +166,7 @@ function calculateCanExportReview(assignmentSettings: AssignmentSettingsInfo, us
     return false;
   }
 
-  if (isNil(user) || assignmentSettings.owner.id === user.id) {
+  if (isNil(user) || ASSIGNMENT_OWNER_ID(assignmentSettings) === user.id) {
     // If the user is the owner it can't export for review
     return false;
   }
@@ -187,6 +196,31 @@ export function calculateCanEditMarking(assignmentSettings: AssignmentSettingsIn
   return true;
 }
 
+export function calculateCanModerateSubmission(submission: Submission): boolean {
+  return submission.state === SubmissionState.MARKED ||
+    submission.state === SubmissionState.SENT_FOR_MODERATION;
+}
+
+function calculateCanSendForReview(assignmentSettings: AssignmentSettingsInfo, user: Marker): boolean {
+
+  if (assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED) {
+    if (isNil(user) || user.id !== assignmentSettings.owner.id) {
+      return false;
+    }
+  }
+
+  if (assignmentSettings.state === AssignmentState.FINALIZED) {
+    return false;
+  }
+
+  const allMatch = every(assignmentSettings.submissions, (submission) => {
+    // Not marked state checked here separately because the function should be enabled as a whole
+    return calculateCanModerateSubmission(submission) || submission.state === SubmissionState.NOT_MARKED ;
+  });
+
+  return allMatch;
+}
+
 export function checkPermissions(assignmentSettings: AssignmentSettingsInfo, user: Marker): Permissions {
   return {
     canAllocate: calculateCanAllocate(assignmentSettings),
@@ -195,6 +229,7 @@ export function checkPermissions(assignmentSettings: AssignmentSettingsInfo, use
     canManageSubmissions: calculateCanManageSubmissions(assignmentSettings),
     canManageRubric: calculateCanManageRubric(assignmentSettings),
     canFinalize: calculateCanFinalize(assignmentSettings, user),
-    canExportReview: calculateCanExportReview(assignmentSettings, user)
+    canExportReview: calculateCanExportReview(assignmentSettings, user),
+    canSendForModeration: calculateCanSendForReview(assignmentSettings, user),
   };
 }

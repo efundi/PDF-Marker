@@ -1,4 +1,4 @@
-import {accessSync, constants, existsSync, mkdtempSync, rmSync, Stats, statSync, unlinkSync, writeFileSync} from 'fs';
+import {accessSync, constants, existsSync, mkdtempSync, rmSync, statSync, unlinkSync, writeFileSync} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
 import {checkAccess, isFolder, isJson, writeToFile} from '../utils';
@@ -8,8 +8,7 @@ import {
   STUDENT_DIRECTORY_NO_NAME_REGEX,
   STUDENT_DIRECTORY_REGEX,
 } from '../constants';
-import * as path from 'path';
-import {basename, dirname, sep} from 'path';
+import {basename, dirname, extname, join, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
 import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
 import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, reduce, remove, sortBy} from 'lodash';
@@ -377,7 +376,8 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
 
     const promises: Promise<any>[] = updateRequest.studentDetails.map((studentInfo, index) => {
       const file: any = updateRequest.files[index];
-      const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
+      const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() +
+        '(' + studentInfo.studentId.toUpperCase() + ')';
       const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
       const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
 
@@ -447,7 +447,7 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
     let foundCount = 0;
     for (let i = 0; i < folders.length; i++) {
       if (isFolder(folders[i])) {
-        const assignmentDirectoryName = path.basename(folders[i]);
+        const assignmentDirectoryName = basename(folders[i]);
         // Doing a casesensitive check on the directory names - for Window's sake
         if (assignmentName.toLowerCase() === assignmentDirectoryName.toLowerCase()) {
           foundCount++;
@@ -473,7 +473,8 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
     const submissionPromises: Promise<any>[] = studentDetails.map((studentInfo, index) => {
       const file: any = createInfo.files[index];
       const filename = basename(file);
-      const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() + '(' + studentInfo.studentId.toUpperCase() + ')';
+      const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() +
+        '(' + studentInfo.studentId.toUpperCase() + ')';
       const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
       const submissionFolder = studentFolder + sep + SUBMISSION_FOLDER;
 
@@ -493,11 +494,11 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
         .then(() => readFile(file))
         .then((content) => PDFDocument.load(content))
         .then((pdfDocument) => pdfDocument.save())
-        .then((pdfBytes) => writeFile(workspaceAbsolutePath + sep + assignmentName + sep + submissionFolder + sep + filename, pdfBytes))
+        .then((pdfBytes) => writeFile(workspaceAbsolutePath + sep + assignmentName + sep + submissionFolder + sep + filename, pdfBytes));
     });
 
     return Promise.all(submissionPromises)
-      .then(() => writeFile(workspaceAbsolutePath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings)))
+      .then(() => writeFile(workspaceAbsolutePath + sep + assignmentName + sep + SETTING_FILE, JSON.stringify(settings)));
 
   });
 }
@@ -630,7 +631,7 @@ function writeGradesCsv(outputFile: string, grades: GradesCSV): Promise<any> {
     });
 }
 
-function writeGrades(outputDirectory: string, submissions: Submission[], assignmentName: string): Promise<any>{
+function writeGrades(outputDirectory: string, submissions: Submission[], assignmentName: string): Promise<any> {
   return stat(outputDirectory + sep + GRADES_FILE)
     .then(_ => true, _ => false)
     .then((exists) => {
@@ -670,6 +671,21 @@ function writeGrades(outputDirectory: string, submissions: Submission[], assignm
     });
 }
 
+function annotatePdf(sourceSubmissionFile: string, assignmentSettings: AssignmentSettingsInfo): Promise<Uint8Array> {
+  const studentFolder = dirname(dirname(sourceSubmissionFile));
+  return loadMarksAt(studentFolder).then((submissionInfo: SubmissionInfo) => {
+    if (submissionInfo.marks.length > 0) {
+      if (submissionInfo.type === SubmissionType.MARK) {
+        return annotatePdfFile(sourceSubmissionFile, submissionInfo as MarkingSubmissionInfo);
+      } else {
+        return annotatePdfRubric(sourceSubmissionFile, submissionInfo as RubricSubmissionInfo, assignmentSettings.rubric);
+      }
+    }
+
+    // Nothing to save
+    return Promise.resolve(null);
+  });
+}
 
 function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
   return Promise.all([
@@ -689,27 +705,16 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
           try {
             accessSync(submission, constants.F_OK);
             const studentFolder = dirname(dirname(submission));
-            return loadMarksAt(studentFolder).then((submissionInfo: SubmissionInfo) => {
-              if (submissionInfo.marks.length > 0) {
-                const ext = path.extname(submission);
-                let fileName = path.basename(submission, ext);
-                let promise: Promise<any>;
-                if (submissionInfo.type === SubmissionType.MARK) {
-                  promise = annotatePdfFile(submission, submissionInfo as MarkingSubmissionInfo);
-                } else {
-                  promise = annotatePdfRubric(submission, submissionInfo as RubricSubmissionInfo, assignmentSettings.rubric);
-                }
-
-                return promise.then((data) => {
-                  fileName += '_MARK';
-                  writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data.pdfBytes);
-                  unlinkSync(submission);
-                }, (error) => {
-                  return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
-                });
-              }
-            });
-
+            const ext = extname(submission);
+            let fileName = basename(submission, ext);
+            return annotatePdf(submission, assignmentSettings)
+              .then((data) => {
+                fileName += '_MARK';
+                writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data);
+                unlinkSync(submission);
+              }, (error) => {
+                return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
+              });
           } catch (e) {
             return Promise.reject(e.message);
           }
@@ -742,7 +747,7 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
     ]).then(([ assignmentFolder, assignmentSettings]) => {
       // Finalize the pdfs in the workspace
 
-      const tempDirectory = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
+      const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
       const exportTempDirectory = tempDirectory + sep + assignmentName;
       return finalizeSubmissions(workspaceFolder, assignmentName).then(() => {
         return mkdir(exportTempDirectory);
@@ -798,7 +803,13 @@ function cleanupTemp(tmpDir: string) {
 }
 
 export function exportAssignment(event: IpcMainInvokeEvent, exportAssignmentsRequest: ExportAssignmentsRequest): Promise<any> {
-  const tempDirectory = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
+
+  if (exportAssignmentsRequest.format === ExportFormat.MODERATION) {
+    return exportForModeration(exportAssignmentsRequest);
+  }
+
+
+  const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
   const exportTempDirectory = tempDirectory + sep + exportAssignmentsRequest.assignmentName;
 
   return Promise.all([
@@ -828,7 +839,7 @@ export function exportAssignment(event: IpcMainInvokeEvent, exportAssignmentsReq
       return Promise.all(promises)
         .then(() => {
 
-          if (exportAssignmentsRequest.format === ExportFormat.MODERATION){
+          if (exportAssignmentsRequest.format === ExportFormat.MODERATION) {
             // Nothing extra to do at this step
             return Promise.resolve({});
           }
@@ -933,11 +944,59 @@ export function exportForReview(event: IpcMainInvokeEvent,
     ]))
     .then(([workspaceDirectory, assignmentDirectory]) => {
       return zipDir(workspaceDirectory, {
-        filter: (filterPath: string, stats: Stats) => {
+        filter: (filterPath: string) => {
           return !/\.backup$/.test(filterPath) &&
             (filterPath.endsWith(assignmentDirectory)  || (filterPath.startsWith(assignmentDirectory + sep)));
         }
       });
+    });
+}
+
+function exportForModeration(exportReviewRequestInfo: ExportAssignmentsRequest): Promise<any> {
+  return Promise.all([
+    getAssignmentSettingsFor(exportReviewRequestInfo.workspaceFolder, exportReviewRequestInfo.assignmentName),
+    getAssignmentDirectoryAbsolutePath(exportReviewRequestInfo.workspaceFolder, exportReviewRequestInfo.assignmentName)
+  ])
+    .then(([assignmentSettings, assignmentPath]) => {
+
+      const exportSubmissions: Submission[] = filter(assignmentSettings.submissions, (submission) => {
+        return exportReviewRequestInfo.studentIds.indexOf(submission.studentId) >= 0;
+      });
+      const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
+      const zipAssignmentDirectory = tempDirectory + sep + exportReviewRequestInfo.assignmentName;
+      return mkdir(zipAssignmentDirectory).then(() => {
+        const promises: Promise<any>[] = exportSubmissions.map((submission) => {
+          const submissionPath = assignmentPath + sep + submission.directoryName + sep + SUBMISSION_FOLDER;
+          return readdir(submissionPath).then((files) => {
+            if (files.length === 0) {
+              // No submission files
+              return Promise.resolve();
+            }
+            const sourceFilePath = submissionPath + sep + files[0];
+            const ext = extname(sourceFilePath);
+            const fileName = basename(sourceFilePath, ext);
+            return annotatePdf(sourceFilePath, assignmentSettings).then((data) => {
+              if (isNil(data)) {
+                // nothing to save
+                return Promise.resolve();
+              }
+
+              const destFilePath = zipAssignmentDirectory + sep + submission.studentName + '_' + submission.studentSurname
+                + '_' + submission.studentId + '_' + fileName + '_MARK.pdf';
+              return writeFile(destFilePath, data);
+            });
+          });
+        });
+
+        return Promise.all(promises);
+      })
+        .then(() => zipDir(tempDirectory))
+        .then((buffer) => {
+          cleanupTemp(tempDirectory);
+          return buffer;
+        }, () => {
+          cleanupTemp(tempDirectory);
+        });
     });
 }
 

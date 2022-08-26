@@ -91,7 +91,11 @@ export enum SubmissionState {
    * An assignment that has not been marked, but has been finalized or exported for review
    * text: 'Not Marked'
    */
-  NOT_MARKED = 'NOT_MARKED'
+  NOT_MARKED = 'NOT_MARKED',
+
+  SENT_FOR_MODERATION = 'SENT_FOR_MODERATION',
+
+  MODERATED = 'MODERATED'
 }
 
 export interface Submission {

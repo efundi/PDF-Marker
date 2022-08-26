@@ -70,7 +70,6 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
 
   /**
    * Creates a form validatorFn that can validate unique email
-   * @param existingId
    * @private
    */
   private formEmptyGroupValidator(): ValidatorFn {
@@ -83,7 +82,7 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
     };
   }
 
-  private emptyGroupValidator(groupId: string): boolean{
+  private emptyGroupValidator(groupId: string): boolean {
     if (isNil(groupId)) {
       return true;
     }
@@ -138,7 +137,9 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
     // Allocate submission that user already started with
     let availableSubmissionsToAllocate = cloneDeep(this.submissions);
     myAllocation.submissions = filter(availableSubmissionsToAllocate, (submission) => {
-      return submission.state === SubmissionState.MARKED;
+      return submission.state === SubmissionState.MARKED ||
+        submission.state === SubmissionState.SENT_FOR_MODERATION ||
+        submission.state === SubmissionState.MODERATED;
     });
     availableSubmissionsToAllocate = without(availableSubmissionsToAllocate, ...myAllocation.submissions);
 
