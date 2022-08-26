@@ -4,6 +4,7 @@ import {mkdir, writeFile} from 'fs/promises';
 import {CONFIG_DIR, CONFIG_FILE} from '../constants';
 import {existsSync} from 'fs';
 import {uuidv4} from '@shared/constants/constants';
+import {basename} from 'path';
 
 const logger = require('electron-log');
 const LOG = logger.scope('SettingsMigration');
@@ -58,6 +59,7 @@ function upgradeSettings(settings: SettingInfo): Promise<SettingInfo> {
       settings.markers = settings.markers || [];
       settings.groups = settings.groups || [];
       settings.groupMembers = settings.groupMembers || [];
+      settings.folders = (settings.folders || []).map((folder) => basename(folder));
       promise = updateConfigFile(settings);
     }
 

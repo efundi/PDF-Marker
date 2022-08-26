@@ -99,9 +99,7 @@ export class ImportComponent implements OnInit, OnDestroy {
         catchError(() => throwError(() => 'Unable to retrieve workspaces')),
         tap((workspaces) => {
           if (workspaces) {
-            this.workspaces = workspaces.map(item => {
-              return PdfmUtilsService.basename(item);
-            });
+            this.workspaces = workspaces;
           }
           if (this.workspaces.length <= 1) {
             this.importForm.controls.workspaceFolder.setValue(DEFAULT_WORKSPACE);

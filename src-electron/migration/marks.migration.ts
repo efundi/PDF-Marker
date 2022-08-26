@@ -31,7 +31,7 @@ export function migrateMarks(): Promise<any> {
         const promises: Promise<any>[] = map(foundDirectories, (directory) => {
           const fullPath = settingsInfo.defaultPath + sep + directory;
           // Check if the directory is a working directory
-          if (workspaceFolders.includes(fullPath)) {
+          if (workspaceFolders.includes(directory)) {
             return readdir(fullPath).then((assignmentDirectories) => {
               const workspacePromises: Promise<any>[] = map(assignmentDirectories, (assignmentDirectory) => {
                 return migrateAssignmentMarks(fullPath + sep + assignmentDirectory);

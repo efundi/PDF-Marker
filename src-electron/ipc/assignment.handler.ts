@@ -230,7 +230,7 @@ function loadWorkspaces(): Promise<Workspace[]> {
       const promises: Promise<any>[] = map(foundDirectories, (directory) => {
         const fullPath = config.defaultPath + sep + directory;
         // Check if the directory is a working directory
-        if (workspaceFolders.includes(fullPath)) {
+        if (workspaceFolders.includes(directory)) {
           return loadWorkspaceContents(fullPath)
             .then(workspace => workspaces.push(workspace));
         } else {
