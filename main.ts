@@ -12,9 +12,7 @@ import {
   saveMarks,
   exportAssignment,
   updateAssignment,
-  updateAssignmentSettings, exportForReview, generateAllocationZipFiles,isMarkerAllocated
-  updateAssignmentSettings, exportForReview, generateAllocationZipFiles
-  updateAssignmentSettings, exportForReview, isMarkerAllocated
+  updateAssignmentSettings, exportForReview, generateAllocationZipFiles, isMarkerAllocated
 } from './src-electron/ipc/assignment.handler';
 import {
   deleteRubric,

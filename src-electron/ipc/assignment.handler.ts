@@ -12,7 +12,6 @@ import {basename, dirname, extname, join, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
 import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
 import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, reduce, remove, sortBy} from 'lodash';
-import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, remove, some, sortBy} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {PDFDocument} from 'pdf-lib';
@@ -1007,7 +1006,7 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
                                            assignmentName: string,
                                            exportPath: string): Promise<any> {
 
-  const tempDirectory = mkdtempSync(path.join(os.tmpdir(), 'pdfm-'));
+  const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
   const exportTempDirectory = tempDirectory + sep + assignmentName;
 
   return Promise.all([
@@ -1072,8 +1071,8 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
 }
 
 
-function markerAllocatedInAssignment(assignmentSettings: AssignmentSettingsInfo, markerId: string): boolean{
-  if (assignmentSettings.distributionFormat === DistributionFormat.STANDALONE){
+function markerAllocatedInAssignment(assignmentSettings: AssignmentSettingsInfo, markerId: string): boolean {
+  if (assignmentSettings.distributionFormat === DistributionFormat.STANDALONE) {
     return false;
   } else {
     return map(assignmentSettings.submissions, 'allocation.id')
