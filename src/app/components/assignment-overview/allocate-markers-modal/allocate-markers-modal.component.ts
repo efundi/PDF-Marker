@@ -12,6 +12,10 @@ import {
   SubmissionAllocation,
   SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
+import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
+import {AppService} from '../../../services/app.service';
+import {BusyService} from '../../../services/busy.service';
+import {AlertService} from '../../../services/alert.service';
 
 interface Allocation {
   marker: Marker;
@@ -25,29 +29,34 @@ interface Allocation {
 })
 export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
 
-
   settings: SettingInfo;
   formGroup: FormGroup<{
     groupId: FormControl<string | null>,
     includeMe: FormControl<boolean>,
+    exportPath: FormControl<string>,
   }>;
   submissions: Submission[] = [];
   allocations: Allocation[] = [];
   assignmentName: string;
   studentCount: number;
   private formSubscription: Subscription;
+  private workspaceName: string;
 
   constructor(private formBuilder: FormBuilder,
               public settingsService: SettingsService,
               public dialogRef: MatDialogRef<AllocateMarkersModalComponent>,
-              @Inject(MAT_DIALOG_DATA) public data: any) {
+              @Inject(MAT_DIALOG_DATA) public data: any,
+              private alertService: AlertService,
+              private busyService: BusyService,
+              private appService: AppService) {
     this.initForm();
   }
 
   private initForm(): void {
     this.formGroup = this.formBuilder.group({
       groupId: [null as string, Validators.compose([Validators.required, this.formEmptyGroupValidator()])],
-      includeMe: [false]
+      includeMe: [false],
+      exportPath: [null as string]
     });
 
     this.formSubscription = this.formGroup.valueChanges.subscribe((value) => {
@@ -151,7 +160,6 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
       allocations.push(myAllocation);
     }
     this.allocations = sortBy(allocations, 'marker.name');
-
   }
 
   private loadSettings(): void {
@@ -184,6 +192,24 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
       });
     });
 
-    this.dialogRef.close(allocations);
+    this.dialogRef.close({
+      allocations,
+      exportPath : this.formGroup.value.exportPath
+    });
+  }
+
+  setExportDirectory() {
+    this.busyService.start();
+    this.appService.getFolder()
+      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+        this.busyService.stop();
+        if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
+          this.formGroup.patchValue({
+            exportPath: appSelectedPathInfo.selectedPath
+          });
+        } else if (appSelectedPathInfo.error) {
+          this.alertService.error(appSelectedPathInfo.error.message);
+        }
+      });
   }
 }

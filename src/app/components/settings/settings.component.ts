@@ -8,7 +8,7 @@ import {AssignmentService} from '../../services/assignment.service';
 import {BusyService} from '../../services/busy.service';
 import {mergeMap, tap} from 'rxjs';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {cloneDeep, isEqual} from 'lodash';
+import {cloneDeep, isEqual, isNil} from 'lodash';
 
 @Component({
   selector: 'pdf-marker-settings',
@@ -84,8 +84,12 @@ export class SettingsComponent implements OnInit {
   private populateSettings(): SettingInfo {
     const settings = cloneDeep(this.originalSettings);
     const formValue = this.settingsForm.value;
-    settings.user.name = SettingsComponent.removeTrailingSlashes(formValue.name);
-    settings.user.email = SettingsComponent.removeTrailingSlashes(formValue.email);
+    if (!isNil(formValue.name)) {
+      settings.user.name = SettingsComponent.removeTrailingSlashes(formValue.name);
+    }
+    if (!isNil(formValue.email)) {
+      settings.user.email = SettingsComponent.removeTrailingSlashes(formValue.email);
+    }
     settings.lmsSelection = formValue.lmsSelection;
     settings.defaultPath = SettingsComponent.removeTrailingSlashes(formValue.defaultPath);
     return settings;

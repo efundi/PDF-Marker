@@ -1,3 +1,5 @@
+import {uuidv4} from '@shared/constants/constants';
+
 export const SettingInfoVersion = 1;
 
 export const DefaultSettings: SettingInfo = {
@@ -5,7 +7,10 @@ export const DefaultSettings: SettingInfo = {
   folders: [],
   markers: [],
   groups: [],
-  groupMembers: []
+  groupMembers: [],
+  user: {
+    id: uuidv4()
+  }
 };
 
 export interface SettingInfo {
