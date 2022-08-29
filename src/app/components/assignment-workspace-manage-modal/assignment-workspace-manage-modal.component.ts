@@ -1,12 +1,11 @@
 import {Component, Inject, OnInit} from '@angular/core';
-import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
-import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {WorkspaceService} from '../../services/workspace.service';
 import {AppService} from '../../services/app.service';
 import {AssignmentService} from '../../services/assignment.service';
 import {WorkspaceDetails} from '../assignment-workspace-overview/assignment-workspace-overview.component';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
-import {BusyService} from '../../services/busy.service';
 import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 
 export interface WorkspaceDialogResult {
@@ -25,7 +24,11 @@ export interface WorkspaceDialogResult {
 })
 export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
-  manageForm: UntypedFormGroup;
+  manageForm: FormGroup<{
+    workspaceName: FormControl<string>,
+    newWorkspaceFolder: FormControl<string>,
+    selectedAssignments: FormControl<any[]>
+  }>;
 
   /**
    * Flag if we can rename this folder
@@ -43,11 +46,10 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
   selectedOptions: string[] = [];
   movedAssignments: string[] = [];
 
-  constructor(private formBuilder: UntypedFormBuilder,
+  constructor(private formBuilder: FormBuilder,
               public dialogRef: MatDialogRef<AssignmentWorkspaceManageModalComponent>,
               private appService: AppService,
               private assignmentService: AssignmentService,
-              private busyService: BusyService,
               private workspaceService: WorkspaceService,
               @Inject(MAT_DIALOG_DATA) public data: any) {
 
@@ -56,7 +58,6 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
 
   ngOnInit() {
-    // this.returnSelectedAssignments = [];
     this.isEditing = false;
     this.workspaceName = this.data.workspaceName;
     this.prevWorkspaceName = this.data.workspaceName;
@@ -85,7 +86,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
       workspaceName: '',
       movedAssignments: []
     };
-    const workspace = this.manageForm.controls.workspaceName.value;
+    const workspace = this.manageForm.value.workspaceName;
     if (workspace !== this.prevWorkspaceName) {
       returnVar.workspaceName = workspace;
     }
@@ -97,26 +98,23 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
   private initForm() {
     this.manageForm = this.formBuilder.group({
-      workspaceName: [null, Validators.required],
-      newWorkspaceFolder: [null],
-      selectedAssignments: [null]
+      workspaceName: [null as string, Validators.required],
+      newWorkspaceFolder: [null as string],
+      selectedAssignments: [[]]
     });
   }
 
   saveWorkspaceName() {
     if (this.manageForm.valid) {
-      const newName = this.manageForm.controls.workspaceName.value;
+      const newName = this.manageForm.value.workspaceName;
       this.workspaceService.updateWorkspaceName(this.data.workspaceName, newName).subscribe({
         next: (workspaceName: string) => {
           this.appService.openSnackBar(true, 'Successfully updated workspace name');
           this.data.workspaceName = workspaceName;
           this.workspaceName = workspaceName;
-          this.busyService.stop();
         },
         error: (error) => {
-          this.busyService.stop();
-          console.log(error);
-          this.appService.openSnackBar(false, 'Unable to update workspace name');
+          this.appService.openSnackBar(false, error);
         }
       });
     }
@@ -135,30 +133,27 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
   onMove() {
     if (this.manageForm.valid) {
-      const assignments = this.manageForm.get('selectedAssignments').value;
-      const newFolder = this.manageForm.get('newWorkspaceFolder').value;
+      const assignments = this.manageForm.value.selectedAssignments;
+      const newFolder = this.manageForm.value.newWorkspaceFolder;
       let folder = this.data.workspaceName;
-      if (this.manageForm.get('workspaceName').value) {
-        folder = this.manageForm.get('workspaceName').value;
+      if (this.manageForm.value.workspaceName) {
+        folder = this.manageForm.value.workspaceName;
       }
       if (folder && newFolder && (assignments && assignments.length > 0)) {
         this.workspaceService.moveWorkspaceAssignments(folder, newFolder, assignments).subscribe({
           next: () => {
             this.appService.openSnackBar(true, 'Successfully moved selected assignments');
-            this.busyService.stop();
             if (assignments && assignments.length > 0) {
 
               assignments.forEach(assignment => {
                 this.returnSelectedAssignments.push(assignment);
                 const foundIndex = this.assignments.findIndex(x => x.assignmentTitle === assignment.assignmentTitle);
                 this.assignments.splice(foundIndex, 1);
-                this.manageForm.get('selectedAssignments').patchValue('');
+                this.manageForm.get('selectedAssignments').patchValue([]);
               });
             }
           },
           error: (error) => {
-            this.busyService.stop();
-            console.log(error);
             this.appService.openSnackBar(false, error);
           }
         });

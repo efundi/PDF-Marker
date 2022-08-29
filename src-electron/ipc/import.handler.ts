@@ -266,7 +266,7 @@ function validateZipAssignmentFile(file: string): Promise<AssignmentValidateResu
             return {
               zipFileType: ZipFileType.MARKER_IMPORT,
               hasRubric: !isNil(zipAssignmentSettings.rubric)
-            }
+            };
           });
         });
       });
@@ -303,13 +303,13 @@ function validateGenericZip(file: string): Promise<AssignmentValidateResultInfo>
         // Too many nested directories
         return Promise.reject('Invalid zip format. Please select a file in the generic import format');
       }
-
-      // Check if the file is a directory
-      return {
-        zipFileType: ZipFileType.GENERIC_IMPORT,
-        hasRubric: false
-      };
     }
+
+    // Check if the file is a directory
+    return {
+      zipFileType: ZipFileType.GENERIC_IMPORT,
+      hasRubric: false
+    };
   });
 }
 

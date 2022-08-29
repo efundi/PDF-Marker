@@ -61,11 +61,9 @@ export class WorkingFolderComponent implements OnInit {
         return PdfmUtilsService.basename(item);
       });
       this.folderNameList.forEach(folder => {
-        const value: any = {
-          folder: ''
-        };
-        value.folder = folder;
-        values.push(value);
+        values.push({
+          folder
+        });
       });
     }
     this.dataSource = new MatTableDataSource<string>(values);

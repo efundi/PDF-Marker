@@ -1,11 +1,10 @@
-import {forEach, isNil} from 'lodash';
+import {indexOf, isEmpty, isNil, noop} from 'lodash';
 import {getConfig, updateConfigFile} from './config.handler';
 import {basename, sep} from 'path';
-import {CONFIG_DIR, CONFIG_FILE} from '../constants';
-import {existsSync, mkdirSync, readdirSync, renameSync, writeFileSync} from 'fs';
 import {IpcMainInvokeEvent, shell} from 'electron';
-import {moveSync} from 'fs-extra';
+import {move} from 'fs-extra';
 import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
+import {mkdir, readdir, rename, stat} from 'fs/promises';
 
 /**
  * Get the absolute path of the workspace
@@ -41,17 +40,18 @@ export function getAssignmentDirectoryAbsolutePath(workspaceName: string, assign
 export function createWorkingFolder(event: IpcMainInvokeEvent, workFolderName: string): Promise<string> {
   return getConfig().then((config) => {
     const fullPath = config.defaultPath + sep + workFolderName;
-    if (!existsSync(fullPath)) {
-      mkdirSync(fullPath);
-    } else {
-      return Promise.reject('Folder with name \'' + workFolderName + '\' already exists.');
-    }
 
-    if (isNil(config.folders)) {
-      config.folders = [];
-    }
-    config.folders.push(basename(fullPath));
-    return updateConfigFile(config).then(() => fullPath);
+    return stat(fullPath).then(() => {
+      return Promise.reject('Folder with name \'' + workFolderName + '\' already exists.');
+    }, () => {
+      return mkdir(fullPath);
+    }).then(() => {
+      if (isNil(config.folders)) {
+        config.folders = [];
+      }
+      config.folders.push(basename(fullPath));
+      return updateConfigFile(config).then(() => fullPath);
+    });
   });
 }
 
@@ -59,22 +59,20 @@ export function createWorkingFolder(event: IpcMainInvokeEvent, workFolderName: s
 
 export function updateWorkspaceName(event: IpcMainInvokeEvent, workspaceName: string, newWorkspaceName: string): Promise<string> {
   return getConfig().then((config) => {
-    const folders = config.folders;
     const currPath = config.defaultPath + sep + workspaceName;
     const newPath = config.defaultPath + sep + newWorkspaceName;
-    if (existsSync(newPath)) {
+    return stat(newPath).then(() => {
       return Promise.reject('Folder name already exists.');
-    }
-    try {
-      renameSync(currPath, newPath);
-      const foundIndex = folders.findIndex(x => x === currPath);
-      folders[foundIndex] = newPath;
-      config.folders = folders;
-      writeFileSync(CONFIG_DIR + CONFIG_FILE, JSON.stringify(config));
-      return newPath;
-    } catch (e) {
-      return Promise.reject(e.message);
-    }
+    }, noop)
+      .then(() => {
+        return rename(currPath, newPath);
+      })
+      .then(() => {
+        const folderIndex = indexOf(config.folders, workspaceName);
+        config.folders[folderIndex] = newWorkspaceName;
+        return updateConfigFile(config);
+      })
+      .then(() => newPath);
   });
 }
 
@@ -90,37 +88,28 @@ export function moveWorkspaceAssignments(
   event: IpcMainInvokeEvent,
   currentWorkspaceName: string,
   workspaceName: string,
-  assignments: any[] = []): Promise<any> {
+  assignments: any[] = []): Promise<string> {
   return getConfig().then((config) => {
-    const currentDirectory = currentWorkspaceName.replace(/\//g, sep);
-    const newDirectory = workspaceName.replace(/\//g, sep);
     const currentIsDefault = currentWorkspaceName === DEFAULT_WORKSPACE;
     const newIsDefault = workspaceName === DEFAULT_WORKSPACE;
 
-    const workspacePath = currentIsDefault ? config.defaultPath :  config.defaultPath + sep + currentDirectory;
-    const newWorkspacePath = newIsDefault ? config.defaultPath : config.defaultPath + sep + newDirectory;
-    let error = null;
-    forEach(assignments, (assignment) => {
+    const workspacePath = currentIsDefault ? config.defaultPath : config.defaultPath + sep + currentWorkspaceName;
+    const newWorkspacePath = newIsDefault ? config.defaultPath : config.defaultPath + sep + workspaceName;
+    const promises: Promise<any>[] = assignments.map((assignment) => {
       const assignmentPath = workspacePath + sep + assignment.assignmentTitle;
       const newAssignmentPath = newWorkspacePath + sep + assignment.assignmentTitle;
-      if (!existsSync(newAssignmentPath)) {
-        try {
-          moveSync(assignmentPath, newAssignmentPath);
-        } catch (e) {
-          error = e.message;
-          return false; // Stop looping
-        }
-      } else {
-        error = 'Assignment with the same name already exists.';
-        return false; // Stop looping
-      }
+
+      return stat(newAssignmentPath)
+        .then(
+          () => Promise.reject('Assignment with the same name already exists.'),
+          () => move(assignmentPath, newAssignmentPath)
+        )
+        .then(noop, (error) => Promise.reject(error.message));
     });
-    if (!error) {
-      return 'Successfully renamed the directory.';
-    } else {
-      return Promise.reject(error);
-    }
-  });
+
+    return Promise.all(promises);
+  })
+    .then(() => 'Successfully renamed the directory.');
 }
 
 /**
@@ -137,72 +126,50 @@ export function getWorkspaces(): Promise<any> {
 export function deleteWorkspace(event: IpcMainInvokeEvent, deleteFolder: string): Promise<string[]> {
   return getConfig().then((config) => {
     const folders = config.folders;
-    const workspaceNames = folders.map(item => {
-      return basename(item);
-    });
-    if (Array.isArray(workspaceNames)) {
-      let indexFound = -1;
-      for (let i = 0; i < workspaceNames.length; i++) {
-        if (workspaceNames[i].toUpperCase() === deleteFolder.toUpperCase()) {
-          indexFound = i;
-          break;
-        }
-      }
+    if (!Array.isArray(folders)) {
+      return Promise.resolve([]);
+    }
+    const indexFound = indexOf(folders, deleteFolder);
 
-      if (indexFound === -1) {
-        return Promise.reject('Could not find folder ' + deleteFolder);
-      }
+    if (indexFound === -1) {
+      return Promise.reject('Could not find folder ' + deleteFolder);
+    }
 
-      let promise = Promise.resolve();
-      if (existsSync(folders[indexFound])) {
-        try {
-          promise = shell.trashItem(folders[indexFound]);
-        } catch (e) {
-          return Promise.reject(e);
-        }
-      }
-      return promise.then(() => {
+    return stat(config.defaultPath + sep + deleteFolder)
+      .then(() => {
+        return shell.trashItem(config.defaultPath + sep + deleteFolder);
+      }, () => {
+        // Ignore if the actual directory does not exist
+      })
+      .then(() => {
         folders.splice(indexFound, 1);
         config.folders = folders;
       })
-        .then(() => updateConfigFile(config))
-        .then(() => folders);
-    }
-    return Promise.resolve([]);
+      .then(() => updateConfigFile(config))
+      .then(() => folders);
   });
 }
 
 
 export function deleteWorkspaceCheck(event: IpcMainInvokeEvent, deleteFolder: string): Promise<boolean> {
-  let found = false;
-  let hasAssignments = false;
-
   return getConfig().then((config) => {
-    const workspaces: string[] = config.folders;
-    const workspaceNames = workspaces.map(item => {
-      return basename(item);
-    });
     const currPath = config.defaultPath + sep + deleteFolder;
-    try {
-      for (let i = 0; i < workspaceNames.length; i++) {
-        if (workspaceNames[i].toUpperCase() === deleteFolder.toUpperCase()) {
-          found = true;
-          break;
-        }
-      }
-      // Check if there are assignments in folder
-      if (found) {
 
-        if (existsSync(currPath)) {
-          const folders: string[] = readdirSync(currPath);
-          if (folders.length > 0) {
-            hasAssignments = true;
-          }
-        }
-      }
-      return hasAssignments;
-    } catch (e) {
-      return Promise.reject(e.message);
+    const index = indexOf(config.folders, deleteFolder);
+    if (index < 0) {
+      // If this directory is not a working directory
+      return Promise.resolve(false);
     }
+
+    return stat(currPath)
+      .then(() => {
+        return readdir(currPath);
+      }, () => {
+        // Ignore if the actual directory does not exist
+        return [];
+      })
+      .then((directoryContents) => {
+        return !isEmpty(directoryContents);
+      });
   });
 }

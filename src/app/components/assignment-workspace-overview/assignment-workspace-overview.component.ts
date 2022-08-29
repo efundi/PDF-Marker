@@ -43,8 +43,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy, 
   workspaceRows: WorkspaceDetails[] = [];
   workspaceName = 'Workspace Name';
   assignmentsLength;
-  assignmentPageSizeOptions: number[];
-  readonly pageSize: number = 10;
   private workspace: Workspace;
   private sortSubscription: Subscription;
   subscription: Subscription;
@@ -173,17 +171,6 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy, 
     });
     this.dataSource.data = this.workspaceRows;
     this.assignmentsLength = this.workspaceRows.length;
-    const range = [];
-    let i = 0;
-    while (i <= this.assignmentsLength) {
-      i += this.pageSize;
-      range.push(i);
-
-      if (i > this.assignmentsLength) {
-        break;
-      }
-    }
-    this.assignmentPageSizeOptions = range;
   }
 
   ngOnDestroy(): void {
