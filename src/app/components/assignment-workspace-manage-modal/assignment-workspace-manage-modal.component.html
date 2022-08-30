@@ -1,13 +1,13 @@
 <div mat-dialog-title>
-  <h2>Manage Workspace</h2>
+  <h2 class="mt-3">Manage Workspace</h2>
   <span class="pdf-marker-fill-space"></span>
   <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
 </div>
 <mat-dialog-content>
   <form [formGroup]="manageForm">
-    <mat-label class="pdf-marker-form-labels">Workspace name </mat-label>
     <div class="pdf-spacer"></div>
     <mat-form-field>
+      <mat-label class="pdf-marker-form-labels">Workspace name </mat-label>
       <input [readonly]="!isEditing" formControlName="workspaceName" id="workspaceName" type="text" matInput required
              [autocomplete]="false">
       <button *ngIf="canRenameFolder && !isEditing" type="button" matSuffix mat-icon-button matTooltip="Edit" (click)="onEdit()">
