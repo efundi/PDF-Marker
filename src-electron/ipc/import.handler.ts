@@ -569,22 +569,18 @@ export function lectureImport(event: IpcMainInvokeEvent, importInfo: LectureImpo
             .replace(zipAssignmentName + '/', importInfo.assignmentName + '/')
             .replaceAll('/', sep);
 
-          if (zipFile.name.endsWith(MARK_FILE)) {
-            return extractFile(zipFile, fullPath)
-              .then(() => {
-                const submissionDirectory = basename(dirname(fullPath));
-                const zipSubmission = find(zipAssignmentSettings.submissions, {directoryName: submissionDirectory});
-                const submission = find(assignmentSettings.submissions, {directoryName: submissionDirectory});
-                submission.mark = zipSubmission.mark;
-                submission.state = zipSubmission.state;
-              });
-          } else {
-            // Extract submission file
-            return extractFile(zipFile, fullPath);
-          }
+          return extractFile(zipFile, fullPath);
         });
         return Promise.all(promises)
-          .then(() => writeAssignmentSettingsAt(assignmentSettings, assignmentDirectory));
+          .then(() => {
+            // Merge over submissions
+            zipAssignmentSettings.submissions.forEach((zipSubmission) => {
+              const submission = find(assignmentSettings.submissions, {studentId: zipSubmission.studentId});
+              submission.mark = zipSubmission.mark;
+              submission.state = zipSubmission.state;
+            });
+            return writeAssignmentSettingsAt(assignmentSettings, assignmentDirectory);
+          })
       });
     });
 }

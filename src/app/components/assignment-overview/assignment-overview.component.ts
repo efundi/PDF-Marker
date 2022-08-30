@@ -695,7 +695,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     config.width = '600px';
     config.maxWidth = '600px';
     let message = 'You are about to export the assignment for review, the assignment will be locked for marking after export. ';
-    if (allMarked) {
+    if(this.assignmentSettings.state === AssignmentState.SENT_FOR_REVIEW) {
+      message = 'This assignment has already been exported for review, do you want to export it again?';
+    } else if (allMarked) {
       message += 'Do you want to continue?';
     } else {
       message += 'There are un-marked submissions, do you want to continue?';

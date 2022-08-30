@@ -266,15 +266,18 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
         saveSubmissionInfo(submissionPath, submissionInfo)
       ]).then(([assignmentSettings]) => {
         let savePromise: Promise<any> = Promise.resolve();
+
         if (submissionInfo.type === SubmissionType.MARK) {
 
           const marksPerPage = submissionInfo.marks as MarkInfo[][];
-
+          let hadMarks = false;
           savePromise = getComments().then((comments) => {
             let updateComments = false;
+
             marksPerPage.forEach((pageMarks) => {
               if (Array.isArray(pageMarks)) {
                 for (let i = 0; i < pageMarks.length; i++) {
+                  hadMarks = true;
                   totalMark += (pageMarks[i] && pageMarks[i].totalMark) ? pageMarks[i].totalMark : 0;
 
                   comments.forEach(comment => {
@@ -288,6 +291,11 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
               }
             });
 
+            if (!hadMarks) {
+              // No pages contained marks
+              totalMark = null;
+            }
+
             if (updateComments) {
               return updateCommentsFile(comments);
             }
@@ -297,12 +305,18 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
             return Promise.reject('Assignment\'s settings does not contain a rubric!');
           }
 
+          let hadMarks = false;
           const marks = submissionInfo.marks as number[];
           marks.forEach((levelIndex: number, index: number) => {
             if (levelIndex !== null) {
+              hadMarks = true;
               totalMark += parseFloat('' + assignmentSettings.rubric.criterias[index].levels[levelIndex].score);
             }
           });
+
+          if (!hadMarks) {
+            totalMark = null;
+          }
 
         } else {
           return Promise.reject('Unknown submission info type');
@@ -311,7 +325,7 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
         return savePromise.then(() => {
           const submission = find(assignmentSettings.submissions, {directoryName: submissionDirectoryName});
           submission.mark = totalMark;
-          if (isEmpty(submissionInfo.marks)) {
+          if (isNil(totalMark)) {
             submission.state = isNil(submission.allocation) ? SubmissionState.NEW : SubmissionState.ASSIGNED_TO_MARKER;
           } else {
             submission.state = SubmissionState.MARKED;
