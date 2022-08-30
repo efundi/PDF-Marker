@@ -186,6 +186,16 @@ export function calculateCanEditMarking(assignmentSettings: AssignmentSettingsIn
       return false;
     }
 
+    if (!isNil(user) && assignmentSettings.owner.id === user.id) {
+      // User is the owner of the assignment
+      if (submission.state === SubmissionState.NOT_MARKED
+        || submission.state === SubmissionState.MARKED
+        || submission.state === SubmissionState.SENT_FOR_MODERATION) {
+        // Submission state indicate that it has been returned from the marker
+        return true;
+      }
+    }
+
     if (isNil(user) || submission.allocation.email !== user.email) {
       // If you are not allocated user for the assignment
       return false;
