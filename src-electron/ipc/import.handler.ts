@@ -50,14 +50,15 @@ import {
 import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
 import {PDFDocument} from 'pdf-lib';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
-
+const logger = require('electron-log');
+const LOG = logger.scope('ImportHandler');
 /**
  * Returns a list of existing folders in the workspace
  * @param workspace
  */
 function existingFolders(workspace: string): Promise<string[]> {
   return getWorkingDirectoryAbsolutePath(workspace).then((workingDirectory) => {
-    const fileListing = glob.sync(workingDirectory + '/*');
+    const fileListing = glob.sync(workingDirectory.replace(/\\/g, '/') + '/*');
 
     const folders = [];
     fileListing.forEach(folder => {
@@ -466,8 +467,12 @@ function extractAssignmentZipFile(
         .then((grades) => {
           forEach(grades.studentGrades, (studentGrade) => {
             const submission = find(submissions, {studentId: studentGrade.id});
-            submission.mark = studentGrade.grade;
-            submission.lmsStatusText = studentGrade.lateSubmission;
+            if (isNil(submission)) {
+              LOG.warn(`Found student ID in grades.csv which is not in the assignment submissions list "${studentGrade.id}"`)
+            } else {
+              submission.mark = studentGrade.grade;
+              submission.lmsStatusText = studentGrade.lateSubmission;
+            }
           });
         });
     }).then(() => submissions);
