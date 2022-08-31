@@ -58,5 +58,5 @@ preload.js
 preload.js.map
 main.js
 main.js.map
-export-marker-task.js
-export-marker-task.js.map
+exportMarkerTask.js
+exportMarkerTask.js.map
