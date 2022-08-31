@@ -7,16 +7,26 @@ const envToMode = (env) => {
   }
   return "development";
 };
+const envToSourceMap = (env) => {
+  if (env.production) {
+    return false;
+  }
+  return "source-map";
+};
 
 module.exports = env => {
   return {
     entry: {
       preload: "./preload.ts",
-      main: "./main.ts"
+      main: "./main.ts",
+      exportMarkerTask: "./src-electron/export-marker-task.ts"
     },
     output: {
       filename: "[name].js",
       path: path.resolve("./")
+    },
+    optimization: {
+      sideEffects: false,
     },
     target: "electron-renderer",
     mode: envToMode(env),
@@ -33,7 +43,7 @@ module.exports = env => {
       ]
     },
     externals: [nodeExternals()],
-    devtool: "source-map",
+    devtool: envToSourceMap(env),
     module: {
       rules: [
         {

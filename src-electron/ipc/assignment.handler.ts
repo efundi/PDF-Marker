@@ -1,7 +1,7 @@
 import {accessSync, constants, existsSync, mkdtempSync, rmSync, statSync, unlinkSync, writeFileSync} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
-import {checkAccess, isFolder, isJson, isNullOrUndefinedOrEmpty, writeToFile} from '../utils';
+import {checkAccess, isFolder, isJson, isNullOrUndefinedOrEmpty} from '../utils';
 import {
   INVALID_STUDENT_FOLDER,
   NOT_PROVIDED_RUBRIC,
@@ -11,7 +11,7 @@ import {
 import {basename, dirname, extname, join, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
 import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
-import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, noop, reduce, remove, sortBy} from 'lodash';
+import {cloneDeep, filter, find, forEach, isNil, map, reduce, remove, sortBy} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {PDFDocument} from 'pdf-lib';
@@ -30,6 +30,7 @@ import {MarkInfo} from '@shared/info-objects/mark.info';
 import {annotatePdfRubric} from '../pdf/rubric-annotations';
 import {ExportAssignmentsRequest, ExportFormat} from '@shared/info-objects/export-assignments-request';
 import * as os from 'os';
+import {cpus} from 'os';
 import {copy, readdir} from 'fs-extra';
 import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {
@@ -63,12 +64,10 @@ import {getComments, updateCommentsFile} from './comment.handler';
 import {findRubric} from './rubric.handler';
 import {GradesCSV, StudentGrade} from '@shared/info-objects/grades';
 import {annotatePdfFile} from '../pdf/marking-annotations';
+import {WorkerPool} from '../worker-pool';
 
 const zipDir = require('zip-dir');
-
 const csvtojson = require('csvtojson');
-
-
 
 export function getAssignments(): Promise<Workspace[]> {
   return loadWorkspaces();
@@ -565,8 +564,10 @@ export function writeAssignmentSettingsAt(
   assignmentAbsolutePath: string): Promise<AssignmentSettingsInfo> {
   const buffer = new Uint8Array(Buffer.from(JSON.stringify(assignmentSettings)));
 
-  return writeToFile(assignmentAbsolutePath + sep + SETTING_FILE, buffer, null, 'Failed to save assignment settings!').then(() => {
+  return writeFile(assignmentAbsolutePath + sep + SETTING_FILE, buffer).then(() => {
     return assignmentSettings;
+  }, () => {
+    return Promise.reject('Failed to save assignment settings!');
   });
 }
 
@@ -809,8 +810,6 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
   }
 }
 
-
-
 function cleanupTemp(tmpDir: string) {
   try {
     if (tmpDir) {
@@ -1015,21 +1014,24 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
         return submissionsMap;
       }, {});
 
-      const promises: Promise<any>[] = map(Object.keys(allocationSubmissionsMap), (markerEmail) => {
 
-        // Export the assignment for each marker
-        return exportAssignment({
+      let pool = new WorkerPool(cpus().length);
+      const promises: Promise<any>[] = map(Object.keys(allocationSubmissionsMap), (markerEmail) => {
+        return pool.queueTask({
           format: ExportFormat.PDFM,
           studentIds: allocationSubmissionsMap[markerEmail],
           workspaceFolder: workspaceName,
-          assignmentName: assignmentName
-        }).then((buffer) => {
-            // TODO fix filename
-            return writeFile(exportPath + sep + assignmentName + '-' + markerEmail + '.zip', buffer);
-          });
+          assignmentName: assignmentName,
+          exportPath,
+          markerEmail
+        });
       });
 
-      return Promise.all(promises);
+      return Promise.all(promises)
+        .then(() => {
+          pool.close();
+          pool = null;
+        });
     }).then(() => Promise.resolve()); // End with noop to make it return no value
 }
 
