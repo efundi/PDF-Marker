@@ -41,6 +41,7 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
   studentCount: number;
   private formSubscription: Subscription;
   private workspaceName: string;
+  zipFileCount: number;
 
   constructor(private formBuilder: FormBuilder,
               public settingsService: SettingsService,
@@ -143,8 +144,6 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
     });
     availableSubmissionsToAllocate = without(availableSubmissionsToAllocate, ...myAllocation.submissions);
 
-
-
     // Check if there is someone to assign to
     if (allocations.length > 0) {
       const allocationSubmissions = shuffle(availableSubmissionsToAllocate);
@@ -161,6 +160,11 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
       allocations.push(myAllocation);
     }
     this.allocations = sortBy(allocations, 'marker.name');
+    this.calculateZipFileCount();
+  }
+
+  private calculateZipFileCount(): void {
+    this.zipFileCount = this.allocations.filter((allocation) => allocation.marker.id !== this.settings.user.id).length;
   }
 
   private loadSettings(): void {

@@ -27,29 +27,39 @@
 
     <mat-checkbox formControlName="includeMe" color="primary" class="ms-2">Include Me</mat-checkbox>
 
-    <div>
-      <mat-form-field floatLabel="always" class="w-100">
-        <mat-label>Export Directory</mat-label>
-        <div class="pdf-marker-file-upload">
-          <button type="button" mat-raised-button (click)="setExportDirectory()">Browse</button>
-          &nbsp;&nbsp;
-          <input type="text" matInput formControlName="exportPath" id="pdf-marker-upload-display" readonly placeholder="Export Directory">
+    <div *ngIf="allocations.length > 0">
+      <div class="d-flex mb-2"><mat-icon color="primary">workspaces</mat-icon>&nbsp;Submissions Allocated</div>
+      <table class="table ms-4 mb-0">
+        <tbody>
+        <tr *ngFor="let allocation of allocations" class="text-black-50">
+          <td style="width: 1rem;" class="border-0 p-1">{{allocation.submissions.length}}</td>
+          <td class="border-0 p-1">{{allocation.marker.name}} ({{allocation.marker.email}})</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pdf-spacer"></div>
+
+    <div id="pdf-marker-file-export-wrapper">
+      <mat-form-field class="w-100">
+        <div class="export-path-setup">
+          <input type="text" matInput formControlName="exportPath" id="pdf-marker-export-display" readonly placeholder="Export Directory">
         </div>
       </mat-form-field>
+      <div class="pdf-marker-export-upload">
+        <button type="button" mat-raised-button (click)="setExportDirectory()">Browse</button>
+      </div>
+    </div>
+
+    <div class="pdf-spacer"></div>
+
+    <div *ngIf="zipFileCount">
+      <span id="zip-file-count">{{ zipFileCount }} zip files will be downloaded to your chosen directory.</span>
     </div>
 
   </form>
-  <div *ngIf="allocations.length > 0">
-    <div class="d-flex mb-2"><mat-icon color="primary">workspaces</mat-icon>&nbsp;Submissions Allocated</div>
-    <table class="table ms-4 mb-0">
-      <tbody>
-      <tr *ngFor="let allocation of allocations" class="text-black-50">
-        <td style="width: 1rem;" class="border-0 p-1">{{allocation.submissions.length}}</td>
-        <td class="border-0 p-1">{{allocation.marker.name}} ({{allocation.marker.email}})</td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
+
 </mat-dialog-content>
 <div mat-dialog-actions class="justify-content-end">
   <button
