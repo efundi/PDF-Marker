@@ -617,19 +617,31 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           submission.state = SubmissionState.ASSIGNED_TO_MARKER;
         }
       });
-      this.updateAssignmentSettings(settings);
-      this.assignmentService.generateAllocationZipFiles(this.workspaceName, this.assignmentName, exportPath).subscribe({
-        next: (generateResult) => {
-          console.log(generateResult);
-        },
-        error: (error) => {
-          this.alertService.error(error);
-        }
-      });
+      this.busyService.start();
+      this.assignmentService.updateAssignmentSettings(settings, this.workspaceName, this.assignmentName)
+        .subscribe({
+          next: () => {
+            this.assignmentService.generateAllocationZipFiles(this.workspaceName, this.assignmentName, exportPath).subscribe({
+              next: (generateResult) => {
+                this.refresh();
+                this.alertService.success(`Markers have been allocated.`);
+                console.log(generateResult);
+                this.busyService.stop();
+              },
+              error: (error) => {
+                this.refresh();
+                this.alertService.error(error);
+                this.busyService.stop();
+              }
+            });
+          },
+          error: (error) => {
+            this.alertService.error(error);
+            this.busyService.stop();
+          }
+        });
     });
   }
-
-
 
   private updateAssignmentSettings(assignmentSettings: AssignmentSettingsInfo) {
     this.busyService.start();

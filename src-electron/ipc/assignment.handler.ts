@@ -1005,10 +1005,13 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
 
       // Map of marker email to student Id
       const allocationSubmissionsMap: {[key: string]: string[]} = reduce(assignmentSettings.submissions, (submissionsMap, submission) => {
-        if (!submissionsMap.hasOwnProperty(submission.allocation.email)) {
-          submissionsMap [ submission.allocation.email ] = [];
+        // Dont add owner of assignment
+        if (assignmentSettings.owner.id !== submission.allocation.id) {
+          if (!submissionsMap.hasOwnProperty(submission.allocation.email) ) {
+            submissionsMap [ submission.allocation.email ] = [];
+          }
+          submissionsMap[submission.allocation.email].push(submission.studentId);
         }
-        submissionsMap[submission.allocation.email].push(submission.studentId);
         return submissionsMap;
       }, {});
 
@@ -1022,7 +1025,7 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
           assignmentName: assignmentName
         }).then((buffer) => {
             // TODO fix filename
-            return writeFile(exportPath + sep + markerEmail + '.zip', buffer);
+            return writeFile(exportPath + sep + assignmentName + '-' + markerEmail + '.zip', buffer);
           });
       });
 
