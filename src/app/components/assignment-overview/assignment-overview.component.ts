@@ -129,7 +129,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     canExportReview: false,
     canSendForModeration: false,
   };
-  allowSelection = false;
 
 
 
