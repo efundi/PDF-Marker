@@ -12,7 +12,8 @@ module.exports = env => {
   return {
     entry: {
       preload: "./preload.ts",
-      main: "./main.ts"
+      main: "./main.ts",
+      taskProcessor: "./src-electron/task_processer.ts"
     },
     output: {
       filename: "[name].js",

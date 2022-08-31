@@ -63,11 +63,12 @@ import {getComments, updateCommentsFile} from './comment.handler';
 import {findRubric} from './rubric.handler';
 import {GradesCSV, StudentGrade} from '@shared/info-objects/grades';
 import {annotatePdfFile} from '../pdf/marking-annotations';
+import {WorkerPool} from '../worker_pool';
+import {cpus} from 'os';
 
 const zipDir = require('zip-dir');
 
 const csvtojson = require('csvtojson');
-
 
 
 export function getAssignments(): Promise<Workspace[]> {
@@ -565,7 +566,7 @@ export function writeAssignmentSettingsAt(
   assignmentAbsolutePath: string): Promise<AssignmentSettingsInfo> {
   const buffer = new Uint8Array(Buffer.from(JSON.stringify(assignmentSettings)));
 
-  return writeToFile(assignmentAbsolutePath + sep + SETTING_FILE, buffer, null, 'Failed to save assignment settings!').then(() => {
+  return writeFile(assignmentAbsolutePath + sep + SETTING_FILE, buffer).then(() => {
     return assignmentSettings;
   });
 }
@@ -831,61 +832,66 @@ export function exportAssignment(exportAssignmentsRequest: ExportAssignmentsRequ
     return exportForModeration(exportAssignmentsRequest);
   }
 
+  return new Promise<void>((resolve, reject) => {
 
-  const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
-  const exportTempDirectory = tempDirectory + sep + exportAssignmentsRequest.assignmentName;
+  });
 
-  return Promise.all([
-    getAssignmentSettingsFor(exportAssignmentsRequest.workspaceFolder, exportAssignmentsRequest.assignmentName),
-    getAssignmentDirectoryAbsolutePath(exportAssignmentsRequest.workspaceFolder, exportAssignmentsRequest.assignmentName),
-    mkdir(exportTempDirectory)
-  ])
-    .then(([assignmentSettings, originalAssignmentDirectory]) => {
-      let exportSubmissions: Submission[] = assignmentSettings.submissions;
 
-      if (!isNil(exportAssignmentsRequest.studentIds)) {
-        // If a list of student ids was supplied we'll filter only those
-        exportSubmissions = filter(assignmentSettings.submissions, (submission) => {
-          return exportAssignmentsRequest.studentIds.indexOf(submission.studentId) >= 0;
-        });
-      }
-
-      // Copy all the submission files
-      const promises: Promise<any>[] = exportSubmissions.map((submission) => {
-        return copy(
-          originalAssignmentDirectory + sep + submission.directoryName,
-          exportTempDirectory + sep + submission.directoryName,
-          {
-            recursive: true,
-            //   filter: (src) => {
-            //     return !src.endsWith(MARK_FILE);
-            //   }
-          }
-        );
-      });
-      return Promise.all(promises)
-        .then(() => {
-          // We need to create a settings file
-          const exportSettings = cloneDeep(assignmentSettings);
-          if (!isNil(exportAssignmentsRequest.studentIds)) {
-            // Filter out submissions if required
-            exportSettings.submissions = exportSettings.submissions.filter((submission) => {
-              return exportAssignmentsRequest.studentIds.indexOf(submission.studentId) >= 0;
-            });
-          }
-          return writeAssignmentSettingsAt(exportSettings, exportTempDirectory);
-        })
-        .then(() => {
-          return zipDir(tempDirectory);
-        })
-        .then((buffer) => {
-          cleanupTemp(tempDirectory);
-          return buffer;
-        }, (error) => {
-          cleanupTemp(tempDirectory);
-          return Promise.reject(error.message);
-        });
-    });
+  //
+  // const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
+  // const exportTempDirectory = tempDirectory + sep + exportAssignmentsRequest.assignmentName;
+  //
+  // return Promise.all([
+  //   getAssignmentSettingsFor(exportAssignmentsRequest.workspaceFolder, exportAssignmentsRequest.assignmentName),
+  //   getAssignmentDirectoryAbsolutePath(exportAssignmentsRequest.workspaceFolder, exportAssignmentsRequest.assignmentName),
+  //   mkdir(exportTempDirectory)
+  // ])
+  //   .then(([assignmentSettings, originalAssignmentDirectory]) => {
+  //     let exportSubmissions: Submission[] = assignmentSettings.submissions;
+  //
+  //     if (!isNil(exportAssignmentsRequest.studentIds)) {
+  //       // If a list of student ids was supplied we'll filter only those
+  //       exportSubmissions = filter(assignmentSettings.submissions, (submission) => {
+  //         return exportAssignmentsRequest.studentIds.indexOf(submission.studentId) >= 0;
+  //       });
+  //     }
+  //
+  //     // Copy all the submission files
+  //     const promises: Promise<any>[] = exportSubmissions.map((submission) => {
+  //       return copy(
+  //         originalAssignmentDirectory + sep + submission.directoryName,
+  //         exportTempDirectory + sep + submission.directoryName,
+  //         {
+  //           recursive: true,
+  //           //   filter: (src) => {
+  //           //     return !src.endsWith(MARK_FILE);
+  //           //   }
+  //         }
+  //       );
+  //     });
+  //     return Promise.all(promises)
+  //       .then(() => {
+  //         // We need to create a settings file
+  //         const exportSettings = cloneDeep(assignmentSettings);
+  //         if (!isNil(exportAssignmentsRequest.studentIds)) {
+  //           // Filter out submissions if required
+  //           exportSettings.submissions = exportSettings.submissions.filter((submission) => {
+  //             return exportAssignmentsRequest.studentIds.indexOf(submission.studentId) >= 0;
+  //           });
+  //         }
+  //         return writeAssignmentSettingsAt(exportSettings, exportTempDirectory);
+  //       })
+  //       .then(() => {
+  //         return zipDir(tempDirectory);
+  //       })
+  //       .then((buffer) => {
+  //         cleanupTemp(tempDirectory);
+  //         return buffer;
+  //       }, (error) => {
+  //         cleanupTemp(tempDirectory);
+  //         return Promise.reject(error.message);
+  //       });
+  //   });
 }
 
 
@@ -1015,21 +1021,33 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
         return submissionsMap;
       }, {});
 
-      const promises: Promise<any>[] = map(Object.keys(allocationSubmissionsMap), (markerEmail) => {
 
-        // Export the assignment for each marker
-        return exportAssignment({
-          format: ExportFormat.PDFM,
-          studentIds: allocationSubmissionsMap[markerEmail],
-          workspaceFolder: workspaceName,
-          assignmentName: assignmentName
-        }).then((buffer) => {
-            // TODO fix filename
-            return writeFile(exportPath + sep + assignmentName + '-' + markerEmail + '.zip', buffer);
+      const pool = new WorkerPool(cpus().length);
+
+
+
+      const promises: Promise<any>[] = map(Object.keys(allocationSubmissionsMap), (markerEmail) => {
+        return new Promise<void>((resolve, reject) => {
+          pool.runTask({
+            format: ExportFormat.PDFM,
+            studentIds: allocationSubmissionsMap[markerEmail],
+            workspaceFolder: workspaceName,
+            assignmentName: assignmentName,
+            exportPath,
+            markerEmail
+          }, (err, result) => {
+            console.log("task done");
+            console.log(err, result);
+            resolve();
           });
+        });
       });
 
-      return Promise.all(promises);
+      return Promise.all(promises)
+        .then(() => {
+          console.log("All done");
+          pool.close();
+        });
     }).then(() => Promise.resolve()); // End with noop to make it return no value
 }
 

@@ -254,8 +254,12 @@ export class ImportComponent implements OnInit, OnDestroy {
       zipFileType: this.assignmentValidateResultInfo.zipFileType
     };
     this.busyService.start();
+
+    console.log(new Date().toISOString() + ' import start');
     this.importService.importAssignmentFile(importData).subscribe({
       next: (msg) => {
+
+        console.log(new Date().toISOString() + ' import done');
         this.busyService.stop();
         this.alertService.success(msg);
         this.resetForm();
