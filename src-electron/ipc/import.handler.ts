@@ -321,16 +321,13 @@ function extractGenericImport(
   newFolder: string,
   oldFolder: string): Promise<Submission[]> {
   const submissions: Submission[] = [];
-  let promise: Promise<any> = Promise.resolve();
+  const promises: Promise<any>[] = [];
   zipObject.forEach((zipRelativePath, file) => {
     const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replaceAll('/', sep);
     const fileFullPath = destination + zipFilePath;
     const directory = dirname(fileFullPath);
     if (!file.dir) {
 
-      if (!existsSync(directory)) {
-        mkdirSync(directory, {recursive: true});
-      }
       const tempDetails = zipRelativePath.substring((zipRelativePath.indexOf('/') + 1));
       const splitArray = tempDetails.split('_');
 
@@ -348,29 +345,18 @@ function extractGenericImport(
         studentSurname
       });
 
-      promise = promise.then(() => Promise.all([
+      const promise = Promise.all([
         mkdir(directory + sep + studentDirectory, {recursive: true}),
         mkdir(directory + sep + studentDirectory + sep + FEEDBACK_FOLDER, {recursive: true}),
         mkdir(directory + sep + studentDirectory + sep + SUBMISSION_FOLDER, {recursive: true})
       ]).then(() => {
-        return stream2buffer(file.nodeStream())
-          .then((content) => PDFDocument.load(content))
-          .then((pdfDoc) => pdfDoc.save())
-          .then((pdfBytes) => {
-            return writeFile(directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + '/' + tempDetails, pdfBytes);
-          });
-      }));
-    } else {
-      promise = promise.then(() => {
-        return stat(fileFullPath).then(() => {
-
-        }, () => {
-          return mkdir(fileFullPath, {recursive: true});
-        });
+        return extractFile(file, directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + '/' + tempDetails);
       });
+
+      promises.push(promise);
     }
   });
-  return promise
+  return Promise.all(promises)
     .then(() => submissions);
 }
 
