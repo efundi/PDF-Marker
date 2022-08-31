@@ -124,6 +124,10 @@ function calculateCanManageSubmissions(assignmentSettings: AssignmentSettingsInf
     return false;
   }
 
+  if (assignmentSettings.state === AssignmentState.FINALIZED) {
+    return false;
+  }
+
   return assignmentSettings.distributionFormat === DistributionFormat.STANDALONE;
 }
 
