@@ -54,7 +54,6 @@ import {runSettingsMigration} from './src-electron/migration/settings.migration'
 import {migrateAssignmentSettings} from './src-electron/migration/assignment.migration';
 import {migrateMarks} from './src-electron/migration/marks.migration';
 import { join } from 'path';
-
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -71,21 +70,6 @@ runSettingsMigration()
   .then(() => {
     logger.info('All migration done');
   });
-
-
-
-
-// const pool = new WorkerPool(cpus().length);
-
-// let finished = 0;
-// for (let i = 0; i < 10; i++) {
-//   pool.runTask({ a: 42, b: 100 }, (err, result) => {
-//     console.log(i, err, result);
-//     if (++finished === 10)
-//       pool.close();
-//   });
-// }
-
 
 function createWindow() {
 

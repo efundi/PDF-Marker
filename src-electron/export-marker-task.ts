@@ -1,5 +1,13 @@
+/**
+ * ##################################################
+ *
+ *  BE REALLY CAREFUL WHAT YOU IMPORT HERE
+ *  THIS FILE IS BUILD AS A WEB WORKER
+ *
+ * ##################################################
+ */
 import {parentPort} from 'node:worker_threads';
-import {existsSync, mkdtempSync} from 'fs';
+import {existsSync, mkdtempSync, rmSync} from 'fs';
 import {join, sep} from 'path';
 import {mkdir, readFile, writeFile} from 'fs/promises';
 import {AssignmentSettingsInfo, Submission} from '../src/shared/info-objects/assignment-settings.info';
@@ -10,9 +18,16 @@ import {DEFAULT_WORKSPACE, SETTING_FILE} from '../src/shared/constants/constants
 import {SettingInfo} from '../src/shared/info-objects/setting.info';
 import {CONFIG_DIR, CONFIG_FILE} from './constants';
 import {isJson, writeToFile} from './utils';
-
 const zipDir = require('zip-dir');
 
+/**
+ * ##################################################
+ *
+ *  BE REALLY CAREFUL WHAT YOU IMPORT HERE
+ *  THIS FILE IS BUILD AS A WEB WORKER
+ *
+ * ##################################################
+ */
 function getConfig(): Promise<SettingInfo> {
   return readFile(CONFIG_DIR + CONFIG_FILE).then((data) => {
     if (!isJson(data)) {
@@ -70,6 +85,16 @@ function writeAssignmentSettingsAt(
   });
 }
 
+function cleanupTemp(tmpDir: string) {
+  try {
+    if (tmpDir) {
+      rmSync(tmpDir, { recursive: true });
+    }
+  } catch (e) {
+    console.error(`An error has occurred while removing the temp folder at ${tmpDir}. Please remove it manually. Error: ${e}`);
+  }
+}
+
 parentPort.on('message', (exportAssignmentsRequest: any) => {
 
     const tempDirectory = mkdtempSync(join(tmpdir(), 'pdfm-'));
@@ -96,10 +121,7 @@ parentPort.on('message', (exportAssignmentsRequest: any) => {
             originalAssignmentDirectory + sep + submission.directoryName,
             exportTempDirectory + sep + submission.directoryName,
             {
-              recursive: true,
-              //   filter: (src) => {
-              //     return !src.endsWith(MARK_FILE);
-              //   }
+              recursive: true
             }
           );
         });
@@ -119,19 +141,18 @@ parentPort.on('message', (exportAssignmentsRequest: any) => {
             return zipDir(tempDirectory);
           })
           .then((buffer) => {
-            // TODO cleanupTemp(tempDirectory);
+            cleanupTemp(tempDirectory);
             return buffer;
           }, (error) => {
-            // TODO cleanupTemp(tempDirectory);
+            cleanupTemp(tempDirectory);
             return Promise.reject(error.message);
           });
       })
       .then((buffer) => {
-        // TODO fix filename
         return writeFile(exportAssignmentsRequest.exportPath + sep + exportAssignmentsRequest.markerEmail + '.zip', buffer);
       })
       .then(() => {
-        parentPort.postMessage("done ");
+        parentPort.postMessage('Created zip: ' + exportAssignmentsRequest.exportPath + sep + exportAssignmentsRequest.markerEmail + '.zip');
       });
 
 

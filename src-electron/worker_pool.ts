@@ -6,7 +6,7 @@ import {sep} from 'path';
 const kTaskInfo = Symbol('kTaskInfo');
 const kWorkerFreedEvent = Symbol('kWorkerFreedEvent');
 
-class WorkerPoolTaskInfo extends AsyncResource {
+class WorkerPoolTaskInfo<R> extends AsyncResource {
   private callback: any;
 
   constructor(callback) {
@@ -14,7 +14,7 @@ class WorkerPoolTaskInfo extends AsyncResource {
     this.callback = callback;
   }
 
-  done(err, result) {
+  done(err, result: R) {
     this.runInAsyncScope(this.callback, null, err, result);
     this.emitDestroy();  // `TaskInfo`s are used only once.
   }
@@ -33,8 +33,9 @@ export class WorkerPool extends EventEmitter {
     this.freeWorkers = [];
     this.tasks = [];
 
-    for (let i = 0; i < numThreads; i++)
+    for (let i = 0; i < numThreads; i++) {
       this.addNewWorker();
+    }
 
     // Any time the kWorkerFreedEvent is emitted, dispatch
     // the next task pending in the queue, if any.
@@ -47,8 +48,7 @@ export class WorkerPool extends EventEmitter {
   }
 
   addNewWorker() {
-    console.log(__dirname);
-    const worker = new Worker(__dirname + sep + 'taskProcessor.js');
+    const worker = new Worker(__dirname + sep + 'export-marker-task.js');
     worker.on('message', (result) => {
       // In case of success: Call the callback that was passed to `runTask`,
       // remove the `TaskInfo` associated with the Worker, and mark it as free
@@ -61,10 +61,11 @@ export class WorkerPool extends EventEmitter {
     worker.on('error', (err) => {
       // In case of an uncaught exception: Call the callback that was passed to
       // `runTask` with the error.
-      if (worker[kTaskInfo])
+      if (worker[kTaskInfo]) {
         worker[kTaskInfo].done(err, null);
-      else
+      } else {
         this.emit('error', err);
+      }
       // Remove the worker from the list and start a new Worker to replace the
       // current one.
       this.workers.splice(this.workers.indexOf(worker), 1);
@@ -75,7 +76,7 @@ export class WorkerPool extends EventEmitter {
     this.emit(kWorkerFreedEvent);
   }
 
-  runTask(task, callback) {
+  private runTask(task, callback) {
     if (this.freeWorkers.length === 0) {
       // No free threads, wait until a worker thread becomes free.
       this.tasks.push({ task, callback });
@@ -87,7 +88,19 @@ export class WorkerPool extends EventEmitter {
     worker.postMessage(task);
   }
 
+  queueTask(task) {
+    return new Promise((resolve, reject) => {
+      this.runTask(task, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+
   close() {
-    for (const worker of this.workers) worker.terminate();
+    for (const worker of this.workers) { worker.terminate(); }
   }
 }

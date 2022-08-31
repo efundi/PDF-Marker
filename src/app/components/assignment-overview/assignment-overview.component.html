@@ -35,6 +35,8 @@
         <mat-icon [class.pdf-icon-disabled]="!assignmentSettings?.rubric">apps</mat-icon>
       </button>
       <button
+        *ngIf="!permissions.canReAllocate"
+        [disabled]="!permissions.canAllocate"
         color="primary"
         mat-button
         mat-icon-button
