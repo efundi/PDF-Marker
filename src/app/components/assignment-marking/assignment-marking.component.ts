@@ -175,13 +175,14 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     return this.settingsService.getConfigurations()
       .pipe(
         tap((settings) => this.settings = settings)
-      )
+      );
   }
 
   private loadPdf(data: Uint8Array): Observable<PDFDocumentProxy> {
     let promise: Promise<any> = Promise.resolve();
     if (this.pdfDocument) {
-      promise = this.pdfDocument.cleanup(true);
+      promise = this.pdfDocument.cleanup()
+        .then(() => this.pdfDocument.destroy());
     }
 
     promise = promise.then(() => getDocument(data).promise)
@@ -466,9 +467,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.paramsSubscription.unsubscribe();
     this.colorChangeSubscription.unsubscribe();
     this.routeSubscription.unsubscribe();
-
     if (this.pdfDocument) {
-      this.pdfDocument.cleanup();
+      this.pdfDocument.cleanup().then(() => {
+        return this.pdfDocument.destroy();
+      }).then(() => this.pdfDocument = null);
     }
   }
 

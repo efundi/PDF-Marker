@@ -31,6 +31,7 @@ import {
   ConfirmationDialogComponent
 } from '../../confirmation-dialog/confirmation-dialog.component';
 import {MatDialogConfig} from '@angular/material/dialog';
+import {RenderTask} from 'pdfjs-dist/types/src/display/api';
 
 const eventBus = new EventBus();
 
@@ -147,6 +148,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   renderState: 'WAITING' | 'RENDERING' | 'RENDERED' = 'WAITING';
 
   private viewport: PageViewport;
+  private renderTask: RenderTask;
 
   constructor(private renderer: Renderer2,
               public elementRef: ElementRef,
@@ -159,7 +161,9 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
 
   ngOnDestroy() {
     this.iconSubscription.unsubscribe();
-
+    if (this.renderTask) {
+      this.renderTask.cancel();
+    }
     this.page.cleanup();
   }
 
@@ -285,13 +289,16 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       ? [DPI_SCALE, 0, 0, DPI_SCALE, 0, 0]
       : null;
 
-    const renderTask = this.page.render({
+    this.renderTask = this.page.render({
       canvasContext: ctx,
       viewport: this.viewport,
       transform
     });
-    return renderTask.promise.then(() => {
+    return this.renderTask.promise.then(() => {
+      this.renderTask = null;
       this.renderState = 'RENDERED';
+    }, () => {
+      this.renderTask = null;
     });
   }
 
