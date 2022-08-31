@@ -637,7 +637,7 @@ node_worker_threads__WEBPACK_IMPORTED_MODULE_0__.parentPort.on('message', (expor
         });
     })
         .then((buffer) => {
-        return (0,fs_promises__WEBPACK_IMPORTED_MODULE_3__.writeFile)(exportAssignmentsRequest.exportPath + path__WEBPACK_IMPORTED_MODULE_2__.sep + exportAssignmentsRequest.markerEmail + '.zip', buffer);
+        return (0,fs_promises__WEBPACK_IMPORTED_MODULE_3__.writeFile)(exportAssignmentsRequest.exportPath + path__WEBPACK_IMPORTED_MODULE_2__.sep + exportAssignmentsRequest.assignmentName + '-' + exportAssignmentsRequest.markerEmail + '.zip', buffer);
     })
         .then(() => {
         node_worker_threads__WEBPACK_IMPORTED_MODULE_0__.parentPort.postMessage('Created zip: ' + exportAssignmentsRequest.exportPath + path__WEBPACK_IMPORTED_MODULE_2__.sep + exportAssignmentsRequest.markerEmail + '.zip');

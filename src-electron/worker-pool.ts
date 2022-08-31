@@ -48,7 +48,7 @@ export class WorkerPool extends EventEmitter {
   }
 
   addNewWorker() {
-    const worker = new Worker(__dirname + sep + 'export-marker-task.js');
+    const worker = new Worker(__dirname + sep + 'exportMarkerTask.js');
     worker.on('message', (result) => {
       // In case of success: Call the callback that was passed to `runTask`,
       // remove the `TaskInfo` associated with the Worker, and mark it as free

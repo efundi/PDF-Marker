@@ -1,7 +1,7 @@
 import {accessSync, constants, existsSync, mkdtempSync, rmSync, statSync, unlinkSync, writeFileSync} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
-import {checkAccess, isFolder, isJson, isNullOrUndefinedOrEmpty, writeToFile} from '../utils';
+import {checkAccess, isFolder, isJson, isNullOrUndefinedOrEmpty} from '../utils';
 import {
   INVALID_STUDENT_FOLDER,
   NOT_PROVIDED_RUBRIC,
@@ -11,7 +11,7 @@ import {
 import {basename, dirname, extname, join, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
 import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
-import {cloneDeep, filter, find, forEach, isEmpty, isNil, map, noop, reduce, remove, sortBy} from 'lodash';
+import {cloneDeep, filter, find, forEach, isNil, map, reduce, remove, sortBy} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {PDFDocument} from 'pdf-lib';
@@ -30,6 +30,7 @@ import {MarkInfo} from '@shared/info-objects/mark.info';
 import {annotatePdfRubric} from '../pdf/rubric-annotations';
 import {ExportAssignmentsRequest, ExportFormat} from '@shared/info-objects/export-assignments-request';
 import * as os from 'os';
+import {cpus} from 'os';
 import {copy, readdir} from 'fs-extra';
 import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {
@@ -63,8 +64,7 @@ import {getComments, updateCommentsFile} from './comment.handler';
 import {findRubric} from './rubric.handler';
 import {GradesCSV, StudentGrade} from '@shared/info-objects/grades';
 import {annotatePdfFile} from '../pdf/marking-annotations';
-import {WorkerPool} from '../worker_pool';
-import {cpus} from 'os';
+import {WorkerPool} from '../worker-pool';
 
 const zipDir = require('zip-dir');
 const csvtojson = require('csvtojson');

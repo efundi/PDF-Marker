@@ -149,7 +149,7 @@ parentPort.on('message', (exportAssignmentsRequest: any) => {
           });
       })
       .then((buffer) => {
-        return writeFile(exportAssignmentsRequest.exportPath + sep + exportAssignmentsRequest.markerEmail + '.zip', buffer);
+        return writeFile(exportAssignmentsRequest.exportPath + sep + exportAssignmentsRequest.assignmentName + '-' + exportAssignmentsRequest.markerEmail + '.zip', buffer);
       })
       .then(() => {
         parentPort.postMessage('Created zip: ' + exportAssignmentsRequest.exportPath + sep + exportAssignmentsRequest.markerEmail + '.zip');
