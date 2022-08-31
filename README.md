@@ -1,4 +1,4 @@
-# PdfMarker [![Node.js CI](https://github.com/efundi/PDF-Marker/actions/workflows/node.js.yml/badge.svg)](https://github.com/efundi/PDF-Marker/actions/workflows/node.js.yml)
+# PDF Marker [![Node.js CI](https://github.com/efundi/PDF-Marker/actions/workflows/node.js.yml/badge.svg)](https://github.com/efundi/PDF-Marker/actions/workflows/node.js.yml)
 
 An application to mark PDF assignments. Assignments can be sourced from Sakai, a generic zip file, 
 or individually imported PDF files.
