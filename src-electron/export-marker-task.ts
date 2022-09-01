@@ -10,7 +10,7 @@ import {parentPort} from 'node:worker_threads';
 import {existsSync, mkdtempSync, rmSync} from 'fs';
 import {join, sep} from 'path';
 import {mkdir, readFile, writeFile} from 'fs/promises';
-import {AssignmentSettingsInfo, Submission} from '../src/shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo, AssignmentState, Submission} from '../src/shared/info-objects/assignment-settings.info';
 import {cloneDeep, filter, isNil} from 'lodash';
 import {copy} from 'fs-extra';
 import {tmpdir} from 'os';
@@ -129,6 +129,7 @@ parentPort.on('message', (exportAssignmentsRequest: any) => {
           .then(() => {
             // We need to create a settings file
             const exportSettings = cloneDeep(assignmentSettings);
+            exportSettings.state = AssignmentState.NOT_STARTED;
             if (!isNil(exportAssignmentsRequest.studentIds)) {
               // Filter out submissions if required
               exportSettings.submissions = exportSettings.submissions.filter((submission) => {
