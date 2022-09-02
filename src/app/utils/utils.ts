@@ -72,6 +72,13 @@ export interface Permissions {
    */
   canSendForModeration: boolean;
 
+  /**
+   * Should the verify moderation button be shown
+   */
+  canVerifyModeration: boolean;
+
+
+  showModerationVerified: boolean;
 }
 
 const ASSIGNMENT_OWNER_ID = property('owner.id');
@@ -279,14 +286,28 @@ function isDistributedAndOwner(assignmentSettings: AssignmentSettingsInfo, user:
 }
 
 function calculateShowSendForModeration(assignmentSettings: AssignmentSettingsInfo, user: Marker): boolean {
-  if (assignmentSettings.distributionFormat === DistributionFormat.STANDALONE) {
-    return true;
+  if (assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED) {
+    if (isNil(user) || user.id !== ASSIGNMENT_OWNER_ID(assignmentSettings)) {
+      return false;
+    }
   }
 
-  return !(isNil(user) || user.id !== ASSIGNMENT_OWNER_ID(assignmentSettings));
+  return !some(assignmentSettings.submissions, (submission) => {
+    // As soon as submissions are marked as moderation, no more submission can be sent
+    return submission.state === SubmissionState.MODERATED;
+  });
 }
 
+function calculateCanVerifyModeration(assignmentSettings: AssignmentSettingsInfo) {
+  return some(assignmentSettings.submissions, {state: SubmissionState.SENT_FOR_MODERATION});
+}
+
+function calculateShowModerationVerified(assignmentSettings: AssignmentSettingsInfo) {
+  return some(assignmentSettings.submissions, {state: SubmissionState.MODERATED});
+}
 export function checkPermissions(assignmentSettings: AssignmentSettingsInfo, user: Marker): Permissions {
+
+
   return {
     showAllocate: calculateShowAllocate(assignmentSettings),
     canAllocate: calculateCanAllocate(assignmentSettings),
@@ -300,5 +321,7 @@ export function checkPermissions(assignmentSettings: AssignmentSettingsInfo, use
     canExportReview: calculateCanExportReview(assignmentSettings, user),
     showSendForModeration: calculateShowSendForModeration(assignmentSettings, user),
     canSendForModeration: calculateCanSendForModeration(assignmentSettings, user),
+    canVerifyModeration: calculateCanVerifyModeration(assignmentSettings),
+    showModerationVerified: calculateShowModerationVerified(assignmentSettings)
   };
 }
