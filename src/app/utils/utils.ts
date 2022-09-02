@@ -95,10 +95,10 @@ function calculateCanAllocate(assignmentSettings: AssignmentSettingsInfo): boole
   }
 
   const pendingSubmission = find(assignmentSettings.submissions, (submission) => {
-    if(assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED) {
+    if (assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED) {
       return submission.state === SubmissionState.ASSIGNED_TO_MARKER || submission.state === SubmissionState.NOT_MARKED;
     } else {
-      return submission.state === SubmissionState.NEW
+      return submission.state === SubmissionState.NEW;
     }
   });
 
