@@ -16,38 +16,37 @@
     </div>
   </mat-form-field>
   <div class="pdf-spacer"></div>
-  <mat-form-field floatLabel="always">
-    <div class="pdf-spacer"></div>
-    <mat-label>Select File</mat-label>
-    <div class="pdf-spacer"></div>
-    <div class="pdf-marker-file-upload">
-      <button type="button" mat-raised-button (click)="selectFile()">Browse</button>
-      &nbsp;&nbsp;
-      <input type="text" matInput formControlName="assignmentZipFileText" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File">
-      <button type="button" mat-button color="primary" *ngIf="isFileLoaded && isValidFormat" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
-    </div>
-  </mat-form-field>
+
+  <div id="pdf-marker-file-upload-wrapper">
+    <button type="button" mat-raised-button (click)="selectFile()">Browse</button>
+    &nbsp;&nbsp;
+    <mat-form-field class="w-75">
+      <input type="text" matInput formControlName="assignmentZipFileText" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File" required>
+    </mat-form-field>
+    <button type="button" mat-button color="primary" *ngIf="isFileLoaded && isValidFormat" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
+  </div>
+
   <div class="pdf-spacer" *ngIf="isFileLoaded && isValidFormat"></div>
   <mat-form-field *ngIf="isFileLoaded && isValidFormat">
     <mat-label>Assignment Name</mat-label>
     <input formControlName="assignmentName" type="text" [readonly]="isAssignmentName" matInput required>
   </mat-form-field>
+  <div class="pdf-spacer"></div>
   <mat-form-field>
     <mat-label>Working Folder</mat-label>
     <mat-select formControlName="workspaceFolder" required>
       <mat-option *ngFor="let workspace of workspaces" [value]="workspace">{{workspace}}</mat-option>
     </mat-select>
   </mat-form-field>
-  <mat-label class="pdf-marker-form-labels">Rubric</mat-label>
   <div class="pdf-marker-rubric-container">
-    <mat-checkbox formControlName="noRubric" color="primary" [disabled]>No Rubric</mat-checkbox>
-    <br>
     <mat-form-field [hideRequiredMarker]="importForm.get('noRubric').value === true">
       <mat-label>Select Rubric</mat-label>
-      <mat-select formControlName="rubric" [required]="importForm.get('noRubric').value">
+      <mat-select formControlName="rubric" [required]="importForm.get('noRubric').value" [disabled]="isNoRubric">
         <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{rubric.name}}</mat-option>
       </mat-select>
     </mat-form-field>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <mat-checkbox formControlName="noRubric" color="primary" [disabled]>No Rubric</mat-checkbox>
   </div>
   <div class="pdf-marker-submit mt-3">
     <button type="button" color="primary" mat-raised-button [disabled]="!importForm.valid || !isValidFormat" (click)="onSubmit()">Submit</button>
