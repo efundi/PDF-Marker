@@ -132,6 +132,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     canExportReview: false,
     showSendForModeration: false,
     canSendForModeration: false,
+    canVerifyModeration: false,
+    showModerationVerified: false,
   };
 
 
@@ -695,7 +697,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     config.width = '600px';
     config.maxWidth = '600px';
     let message = 'You are about to export the assignment for review, the assignment will be locked for marking after export. ';
-    if(this.assignmentSettings.state === AssignmentState.SENT_FOR_REVIEW) {
+    if (this.assignmentSettings.state === AssignmentState.SENT_FOR_REVIEW) {
       message = 'This assignment has already been exported for review, do you want to export it again?';
     } else if (allMarked) {
       message += 'Do you want to continue?';
@@ -855,6 +857,47 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         }
       });
 
+    });
+  }
+
+  verifyModeration() {
+    const confirmationModalConfig = new MatDialogConfig<ConfirmationDialogData>();
+    confirmationModalConfig.width = '600px';
+    confirmationModalConfig.maxWidth = '800px';
+    confirmationModalConfig.disableClose = true;
+    confirmationModalConfig.data = {
+      title: 'Verify Moderation',
+      message: 'Are you sure you want to complete moderation for this assignment?',
+    };
+    this.appService.createDialog(ConfirmationDialogComponent, confirmationModalConfig).afterClosed().subscribe({
+      next: (accepted) => {
+        if (!accepted) {
+          this.busyService.stop();
+        }
+
+        const updatedSettings = cloneDeep(this.assignmentSettings);
+        forEach(updatedSettings.submissions, (submission) => {
+          if (submission.state === SubmissionState.SENT_FOR_MODERATION) {
+            submission.state = SubmissionState.MODERATED;
+          }
+        });
+
+        this.assignmentService.updateAssignmentSettings(updatedSettings, this.workspaceName, this.assignmentName).subscribe({
+          next: () => {
+            this.alertService.success(`Assignment marked as moderated`);
+            this.busyService.stop();
+            this.refresh();
+          },
+          error: (error) => {
+            this.busyService.stop();
+            this.alertService.error(error);
+          }
+        });
+
+      },
+      error: () => {
+        this.busyService.stop();
+      }
     });
   }
 }
