@@ -7,18 +7,35 @@ import {
   SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
 import {Marker} from '@shared/info-objects/setting.info';
-import {every, find, isNil, property, some} from 'lodash';
+import {every, find, isEmpty, isNil, property, some} from 'lodash';
 
 export interface Permissions {
+
+  /**
+   * Should the allocate button be displayed
+   */
+  showAllocate: boolean;
+
   /**
    * Can submissions be allocated
    */
   canAllocate: boolean;
 
+
+  /**
+   * Should the reallocate button be displayed
+   */
+  showReAllocate: boolean;
+
   /**
    * Can submission be re-allocated
    */
   canReAllocate: boolean;
+
+  /**
+   * Should the import button be shown
+   */
+  showImport: boolean;
 
   /**
    * Flag if the user can import assignments exported by markers
@@ -46,6 +63,11 @@ export interface Permissions {
   canExportReview: boolean;
 
   /**
+   * Should the send for moderation button be displayed
+   */
+  showSendForModeration: boolean;
+
+  /**
    * Can the assignment export for review
    */
   canSendForModeration: boolean;
@@ -53,7 +75,6 @@ export interface Permissions {
 }
 
 const ASSIGNMENT_OWNER_ID = property('owner.id');
-const USER_ID = property('user.id');
 
 function calculateCanAllocate(assignmentSettings: AssignmentSettingsInfo): boolean {
   if (assignmentSettings.distributionFormat !== DistributionFormat.STANDALONE) {
@@ -66,8 +87,16 @@ function calculateCanAllocate(assignmentSettings: AssignmentSettingsInfo): boole
     return false;
   }
 
+  const pendingSubmission = find(assignmentSettings.submissions, (submission) => {
+    if(assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED) {
+      return submission.state === SubmissionState.ASSIGNED_TO_MARKER || submission.state === SubmissionState.NOT_MARKED;
+    } else {
+      return submission.state === SubmissionState.NEW
+    }
+  });
+
   // Nothing else prevents allocating
-  return true;
+  return !isEmpty(pendingSubmission);
 }
 
 export function calculateCanReAllocateSubmission(submission: Submission): boolean {
@@ -87,7 +116,7 @@ function calculateCanReAllocate(assignmentSettings: AssignmentSettingsInfo, user
   }
 
 
-  if (isNil(user) || assignmentSettings.owner.id !== user.id) {
+  if (isNil(user) || ASSIGNMENT_OWNER_ID(assignmentSettings) !== user.id) {
     // User is not the owner of the assignment
     return false;
   }
@@ -104,7 +133,7 @@ function calculateCanImport(assignmentSettings: AssignmentSettingsInfo, user: Ma
     // Already finalized assignments can't accept imports
     return false;
   }
-  if (isNil(user) || assignmentSettings.owner.id !== user.id) {
+  if (isNil(user) || ASSIGNMENT_OWNER_ID(assignmentSettings) !== user.id) {
     // User must be the owner of the assignment to import
     return false;
   }
@@ -148,7 +177,7 @@ export function calculateCanManageRubric(assignmentSettings: AssignmentSettingsI
 function calculateCanFinalize(assignmentSettings: AssignmentSettingsInfo, user: Marker): boolean {
 
   if (assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED) {
-    if (isNil(user) || assignmentSettings.owner.id !== user.id) {
+    if (isNil(user) || ASSIGNMENT_OWNER_ID(assignmentSettings) !== user.id) {
       // User must be the owner of a DISTRIBUTED assignment to finalize
       return false;
     }
@@ -175,7 +204,7 @@ function calculateCanExportReview(assignmentSettings: AssignmentSettingsInfo, us
     return false;
   }
 
-  return true;
+  return some(assignmentSettings.submissions, {state: SubmissionState.MARKED});
 }
 
 export function calculateOpenInMarking(assignmentSettings: AssignmentSettingsInfo): boolean {
@@ -190,7 +219,7 @@ export function calculateCanEditMarking(assignmentSettings: AssignmentSettingsIn
       return false;
     }
 
-    if (!isNil(user) && assignmentSettings.owner.id === user.id) {
+    if (!isNil(user) && ASSIGNMENT_OWNER_ID(assignmentSettings) === user.id) {
       // User is the owner of the assignment
       if (submission.state === SubmissionState.NOT_MARKED
         || submission.state === SubmissionState.MARKED
@@ -215,10 +244,10 @@ export function calculateCanModerateSubmission(submission: Submission): boolean 
     submission.state === SubmissionState.SENT_FOR_MODERATION;
 }
 
-function calculateCanSendForReview(assignmentSettings: AssignmentSettingsInfo, user: Marker): boolean {
+function calculateCanSendForModeration(assignmentSettings: AssignmentSettingsInfo, user: Marker): boolean {
 
   if (assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED) {
-    if (isNil(user) || user.id !== assignmentSettings.owner.id) {
+    if (isNil(user) || user.id !== ASSIGNMENT_OWNER_ID(assignmentSettings)) {
       return false;
     }
   }
@@ -235,15 +264,41 @@ function calculateCanSendForReview(assignmentSettings: AssignmentSettingsInfo, u
   return allMatch;
 }
 
+
+function calculateShowAllocate(assignmentSettings: AssignmentSettingsInfo): boolean {
+  return assignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED;
+}
+
+
+function isDistributedAndOwner(assignmentSettings: AssignmentSettingsInfo, user: Marker): boolean {
+  if (assignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
+    return false;
+  }
+
+  return !(isNil(user) || user.id !== ASSIGNMENT_OWNER_ID(assignmentSettings));
+}
+
+function calculateShowSendForModeration(assignmentSettings: AssignmentSettingsInfo, user: Marker): boolean {
+  if (assignmentSettings.distributionFormat === DistributionFormat.STANDALONE) {
+    return true;
+  }
+
+  return !(isNil(user) || user.id !== ASSIGNMENT_OWNER_ID(assignmentSettings));
+}
+
 export function checkPermissions(assignmentSettings: AssignmentSettingsInfo, user: Marker): Permissions {
   return {
+    showAllocate: calculateShowAllocate(assignmentSettings),
     canAllocate: calculateCanAllocate(assignmentSettings),
+    showReAllocate: isDistributedAndOwner(assignmentSettings, user),
     canReAllocate: calculateCanReAllocate(assignmentSettings, user),
+    showImport: isDistributedAndOwner(assignmentSettings, user),
     canImport: calculateCanImport(assignmentSettings, user),
     canManageSubmissions: calculateCanManageSubmissions(assignmentSettings),
     canManageRubric: calculateCanManageRubric(assignmentSettings),
     canFinalize: calculateCanFinalize(assignmentSettings, user),
     canExportReview: calculateCanExportReview(assignmentSettings, user),
-    canSendForModeration: calculateCanSendForReview(assignmentSettings, user),
+    showSendForModeration: calculateShowSendForModeration(assignmentSettings, user),
+    canSendForModeration: calculateCanSendForModeration(assignmentSettings, user),
   };
 }

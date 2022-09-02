@@ -120,13 +120,17 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   private workspaceName: string;
   assignmentName: string;
   permissions: Permissions = {
+    showAllocate: false,
     canAllocate: false,
+    showReAllocate: false,
     canReAllocate: false,
+    showImport: false,
     canImport: false,
     canManageSubmissions: false,
     canManageRubric: false,
     canFinalize: false,
     canExportReview: false,
+    showSendForModeration: false,
     canSendForModeration: false,
   };
 
@@ -641,21 +645,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           }
         });
     });
-  }
-
-  private updateAssignmentSettings(assignmentSettings: AssignmentSettingsInfo) {
-    this.busyService.start();
-    this.assignmentService.updateAssignmentSettings(assignmentSettings, this.workspaceName, this.assignmentName)
-      .subscribe({
-        next: () => {
-          this.refresh();
-          this.busyService.stop();
-        },
-        error: (error) => {
-          this.alertService.error(error);
-          this.busyService.stop();
-        }
-      });
   }
 
   private checkAllSubmissionsMarked(): boolean {
