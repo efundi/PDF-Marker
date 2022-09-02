@@ -56,6 +56,8 @@ export class ImportComponent implements OnInit, OnDestroy {
   ZipFileType = ZipFileType;
   assignmentValidateResultInfo: AssignmentValidateResultInfo;
 
+  isNoRubric: boolean;
+
   private static getAssignmentNameFromFilename(filename: string): string {
     return filename.replace(/\.[^/.]+$/, '');
   }
@@ -74,6 +76,7 @@ export class ImportComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.isNoRubric = false;
     this.busyService.start();
     forkJoin([
       this.loadRubrics(),
@@ -142,11 +145,14 @@ export class ImportComponent implements OnInit, OnDestroy {
     this.formSubscriptions.push(this.importForm.controls.noRubric.valueChanges.subscribe((noRubric) => {
         const rubricControl = this.importForm.get('rubric');
         if (noRubric === true) {
+          this.isNoRubric = true;
           rubricControl.validator = null;
           this.importForm.patchValue({
             rubric: null
           }, {emitEvent: false});
         } else {
+          this.isNoRubric = false;
+          this.importForm.controls.rubric.enable();
           rubricControl.validator = Validators.required;
         }
         rubricControl.updateValueAndValidity();
@@ -275,7 +281,7 @@ export class ImportComponent implements OnInit, OnDestroy {
     this.importForm.reset({
       noRubric: false
     });
-
+    this.isNoRubric = true;
     this.assignmentService.refreshWorkspaces().subscribe();
   }
 }

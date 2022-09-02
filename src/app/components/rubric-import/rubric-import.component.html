@@ -5,19 +5,19 @@
     <span id="external-rubric-tool">Create your rubrics to be imported at: <span class="externalLink" (click)="downloadFile()">{{ rubricTemplateFile }}</span></span>
     <mat-divider></mat-divider>
     <div class="pdf-spacer"></div>
+
     <div id="pdf-marker-file-upload-wrapper">
+      <div class="pdf-marker-file-upload" [class.pdf-marker-file-upload-error]="(rubricForm.get('rubricFile')?.errors && rubricForm.get('rubricFile')?.touched && rubricForm.get('rubricFile')?.dirty)">
+        <button type="button" [class.pdf-marker-rubric-import-hide]="rubricForm.invalid" (click)="onResetPreviousUpload();" mat-button mat-icon-button><mat-icon class="pdf-marker-file-upload-remove">close</mat-icon></button>
+        <button type="button" mat-raised-button (click)="selectFile()">Browse<!--<input formControlName="rubricFile" #fileElement type="file" class="pdf-marker-upload" [accept]="MimeTypesEnum.XLSX" required (click)="fileElement.value = null" (change)="onFileChange($event)">--></button>
+      </div>
       <mat-form-field>
         <div class="rubric-setup">
           <input formControlName="rubricName" type="text" placeholder="Rubric Name" matInput required [autocomplete]="false" maxlength="50">
         </div>
       </mat-form-field>
-      <div class="pdf-marker-file-upload" [class.pdf-marker-file-upload-error]="(rubricForm.get('rubricFile')?.errors && rubricForm.get('rubricFile')?.touched && rubricForm.get('rubricFile')?.dirty)">
-        <button type="button" [class.pdf-marker-rubric-import-hide]="rubricForm.invalid" (click)="onResetPreviousUpload();" mat-button mat-icon-button><mat-icon class="pdf-marker-file-upload-remove">close</mat-icon></button>
-        <button type="button" mat-raised-button (click)="selectFile()">Browse<!--<input formControlName="rubricFile" #fileElement type="file" class="pdf-marker-upload" [accept]="MimeTypesEnum.XLSX" required (click)="fileElement.value = null" (change)="onFileChange($event)">--></button>
-        &nbsp;&nbsp;
-        <input type="text" formControlName="rubricFileText" id="pdf-marker-upload-display" readonly placeholder="Choose Excel File">
-      </div>
     </div>
+
     <div [class.pdf-marker-rubric-import-hide]="rubricForm.invalid">
       <div class="pdf-spacer-button"></div>
       <div class="pdf-marker-submit">
