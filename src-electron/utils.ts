@@ -36,10 +36,6 @@ export const isFunction = (functionToCheck) => {
   return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
 };
 
-export const isNullOrUndefined = (object: any): boolean => {
-  return (object === null || object === undefined);
-};
-
 export const isNullOrUndefinedOrEmpty = (object: string): boolean => {
   return (object === null || object === undefined || object === '');
 };

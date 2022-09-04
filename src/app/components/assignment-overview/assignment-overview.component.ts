@@ -433,10 +433,15 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     this.sortSubscription.unsubscribe();
   }
 
+  private canReAllocateOrModerate(row: AssignmentDetails): boolean {
+    return  (this.permissions.canReAllocate && row.canReAllocate) ||
+      (this.permissions.canSendForModeration && row.canModerate);
+  }
+
   /** Whether the number of selected elements matches the total number of rows. */
   isAllSelected() {
     const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.data.filter((r) => r.canReAllocate || r.canModerate).length;
+    const numRows = this.dataSource.data.filter((r) => this.canReAllocateOrModerate(r)).length;
     return numSelected === numRows;
   }
 
@@ -447,7 +452,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       return;
     }
 
-    this.selection.select(...this.dataSource.data.filter((r) => r.canReAllocate || r.canModerate));
+    this.selection.select(...this.dataSource.data.filter((r) => this.canReAllocateOrModerate(r)));
   }
 
   /** The label for the checkbox on the passed row */
