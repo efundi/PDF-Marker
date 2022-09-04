@@ -155,9 +155,4 @@ parentPort.on('message', (exportAssignmentsRequest: any) => {
       .then(() => {
         parentPort.postMessage('Created zip: ' + exportAssignmentsRequest.exportPath + sep + exportAssignmentsRequest.markerEmail + '.zip');
       });
-
-
-
-
-
 });

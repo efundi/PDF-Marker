@@ -54,6 +54,7 @@ import {runSettingsMigration} from './src-electron/migration/settings.migration'
 import {migrateAssignmentSettings} from './src-electron/migration/assignment.migration';
 import {migrateMarks} from './src-electron/migration/marks.migration';
 import { join } from 'path';
+import {generateGenericZip, generateAssignment, markAll, markSome} from './src-electron/ipc/generate.handler';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -226,7 +227,6 @@ try {
     ipcMain.handle('config:getConfig', toIpcResponse(getConfig));
     ipcMain.handle('config:updateConfig', toIpcResponse(updateConfig));
 
-
     // Application API
     ipcMain.handle('app:saveFile', toIpcResponse(saveFile));
     ipcMain.handle('app:version', toIpcResponse(getVersion));
@@ -241,6 +241,12 @@ try {
     ipcMain.on('update:restart', () => {
       autoUpdater.quitAndInstall();
     });
+
+    // Application API
+    ipcMain.handle('generate:generateGenericZip', generateGenericZip);
+    ipcMain.handle('generate:generateAssignment', generateAssignment);
+    ipcMain.handle('generate:markSome', markSome);
+    ipcMain.handle('generate:markAll', markAll);
   });
 
   // Quit when all windows are closed.
