@@ -9,6 +9,9 @@ import {FileFilterInfo} from '@shared/info-objects/file-filter.info';
 
 
 export function saveFile (event: IpcMainInvokeEvent, filter: FileFilterInfo): Promise<AppSelectedPathInfo> {
+  return saveFileImpl(filter);
+}
+export function saveFileImpl (filter: FileFilterInfo): Promise<AppSelectedPathInfo> {
   return dialog.showSaveDialog(BrowserWindow.getFocusedWindow(), {
     defaultPath: filter.filename,
     title: 'Save',

@@ -18,6 +18,8 @@ import {UpdateIpcService} from './src/shared/ipc/update.ipc-service';
 import {LectureImportInfo} from './src/shared/info-objects/lecture-import.info';
 import {validateLectureImport} from './src-electron/ipc/import.handler';
 import {IpcResponse} from './src/shared/ipc/ipc-response';
+import {GenerateIpcService} from './src/shared/ipc/generate.ipc-service';
+import {markSome} from './src-electron/ipc/generate.handler';
 
 contextBridge.exposeInMainWorld('updateApi', {
   checkForUpdate: () => ipcRenderer.invoke('update:check'),
@@ -91,3 +93,16 @@ contextBridge.exposeInMainWorld('applicationApi', {
   saveFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:saveFile', fileFilter),
   openExternalLink: (link: any) => ipcRenderer.invoke('app:openExternalLink', link),
 } as ApplicationIpcService);
+
+contextBridge.exposeInMainWorld('generateApi', {
+  generateGenericZip: (studentCount: number, assignmentName: string, sourceFilePath: string) => ipcRenderer.invoke('generate:generateGenericZip', studentCount, assignmentName, sourceFilePath)
+    .then((result) => console.log(result), (error) => console.error(error)),
+  generateAssignment: (studentCount: number, assignmentName: string, sourceFilePath: string, rubricName?: string) => ipcRenderer.invoke('generate:generateAssignment', studentCount, assignmentName, sourceFilePath, rubricName)
+    .then((result) => console.log(result), (error) => console.error(error)),
+  markSome: (assignmentName: string, workspaceName?: string) => ipcRenderer.invoke('generate:markSome', assignmentName, workspaceName)
+    .then((result) => console.log(result), (error) => console.error(error)),
+  markAll: (assignmentName: string, workspaceName: string) => ipcRenderer.invoke('generate:markAll', assignmentName, workspaceName)
+    .then((result) => console.log(result), (error) => console.error(error)),
+} as GenerateIpcService);
+
+
