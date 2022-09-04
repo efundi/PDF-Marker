@@ -71,6 +71,7 @@ generateApi.generateAssignment(studentCount: number, assignmentName: string, sou
 | **assignmentName** | `string` | Name of the assignment to generate                           |
 | **sourceFilePath** | `string` | Absolute path to the source file to use as a submission file |
 | **rubricName**     | `string` | (Optional) Name of the rubric to use                         |
+
 The function returns a promise which can safely be ignored, or chained to perform more tasks after the assignment has been created.
 The console will print out the location of the created assignment once done.
 
