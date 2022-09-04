@@ -230,7 +230,8 @@ export function calculateCanEditMarking(assignmentSettings: AssignmentSettingsIn
       // User is the owner of the assignment
       if (submission.state === SubmissionState.NOT_MARKED
         || submission.state === SubmissionState.MARKED
-        || submission.state === SubmissionState.SENT_FOR_MODERATION) {
+        || submission.state === SubmissionState.SENT_FOR_MODERATION
+        || submission.state === SubmissionState.MODERATED) {
         // Submission state indicate that it has been returned from the marker
         return true;
       }
