@@ -65,8 +65,9 @@ import {findRubric} from './rubric.handler';
 import {GradesCSV, StudentGrade} from '@shared/info-objects/grades';
 import {annotatePdfFile} from '../pdf/marking-annotations';
 import {WorkerPool} from '../worker-pool';
+import {zipDir} from '../zip';
+const pool = WorkerPool.getInstance();
 
-const zipDir = require('zip-dir');
 const csvtojson = require('csvtojson');
 
 export function getAssignments(): Promise<Workspace[]> {
@@ -713,6 +714,7 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
     getAssignmentSettingsFor(workspaceFolder, assignmentName)
   ]).then(([assignmentFolder, assignmentSettings]) => {
     const files = glob.sync(assignmentFolder + sep + '/*');
+    console.log(new Date().toISOString() + " start pdf annotate");
     const promises: Promise<any>[] = files.map((file) => {
       if (statSync(file).isDirectory()) {
         const regEx = /(.*)\((.+)\)$/;
@@ -722,22 +724,30 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
 
         const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
         const submissionPromisses: Promise<any>[] = submissionFiles.map((submission) => {
-          try {
-            accessSync(submission, constants.F_OK);
-            const studentFolder = dirname(dirname(submission));
-            const ext = extname(submission);
-            let fileName = basename(submission, ext);
-            return annotatePdf(submission, assignmentSettings)
-              .then((data) => {
-                fileName += '_MARK';
-                writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data);
-                unlinkSync(submission);
-              }, (error) => {
-                return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
-              });
-          } catch (e) {
-            return Promise.reject(e.message);
-          }
+
+          return pool.queueTask({
+            type: 'FinalizeSubmission',
+            assignmentName,
+            workspaceFolder,
+            assignmentSettings,
+            pdfPath: submission
+          });
+          // try {
+          //   accessSync(submission, constants.F_OK);
+          //   const studentFolder = dirname(dirname(submission));
+          //   const ext = extname(submission);
+          //   let fileName = basename(submission, ext);
+          //   return annotatePdf(submission, assignmentSettings)
+          //     .then((data) => {
+          //       fileName += '_MARK';
+          //       writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data);
+          //       unlinkSync(submission);
+          //     }, (error) => {
+          //       return Promise.reject('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
+          //     });
+          // } catch (e) {
+          //   return Promise.reject(e.message);
+          // }
         });
 
         return Promise.all(submissionPromisses);
@@ -746,7 +756,10 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
     });
 
     return Promise.all(promises)
-      .then(() => setDateFinalized(assignmentFolder))
+      .then(() => {
+        console.log(new Date().toISOString() + " all pdfs annotated");
+        return setDateFinalized(assignmentFolder)
+      })
       .then((updatedAssignmentSettings) => {
         // Set status of all assignments that has not been marked
         forEach(updatedAssignmentSettings.submissions, (submission) => {
@@ -759,7 +772,7 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
   });
 }
 
-export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: string, assignmentName: string): Promise<any> {
+export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: string, assignmentName: string, zipFilePath: string): Promise<any> {
   try {
     return Promise.all([
       getAssignmentDirectoryAbsolutePath(workspaceFolder, assignmentName),
@@ -794,8 +807,13 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
           );
         })
         .then(() => writeGrades(exportTempDirectory, assignmentSettings.submissions, assignmentName))
-        .then(() => zipDir(tempDirectory))
+        .then(() => {
+          console.log(new Date().toISOString() + " start zipping");
+          return zipDir(tempDirectory, zipFilePath)
+        })
         .then((buffer) => {
+
+          console.log(new Date().toISOString() + " done zipping");
           return rm(tempDirectory, {recursive: true}).then(() => buffer);
         }, (err) => {
           console.error('Could not export assignment');
@@ -856,9 +874,6 @@ export function exportAssignment(exportAssignmentsRequest: ExportAssignmentsRequ
           exportTempDirectory + sep + submission.directoryName,
           {
             recursive: true,
-            //   filter: (src) => {
-            //     return !src.endsWith(MARK_FILE);
-            //   }
           }
         );
       });
@@ -875,7 +890,7 @@ export function exportAssignment(exportAssignmentsRequest: ExportAssignmentsRequ
           return writeAssignmentSettingsAt(exportSettings, exportTempDirectory);
         })
         .then(() => {
-          return zipDir(tempDirectory);
+          return zipDir(tempDirectory, exportAssignmentsRequest.zipFilePath);
         })
         .then((buffer) => {
           cleanupTemp(tempDirectory);
@@ -968,22 +983,20 @@ function exportForModeration(exportReviewRequestInfo: ExportAssignmentsRequest):
             const sourceFilePath = submissionPath + sep + files[0];
             const ext = extname(sourceFilePath);
             const fileName = basename(sourceFilePath, ext);
-            return annotatePdf(sourceFilePath, assignmentSettings).then((data) => {
-              if (isNil(data)) {
-                // nothing to save
-                return Promise.resolve();
-              }
-
-              const destFilePath = zipAssignmentDirectory + sep + submission.studentName + '_' + submission.studentSurname
-                + '_' + submission.studentId + '_' + fileName + '_MARK.pdf';
-              return writeFile(destFilePath, data);
+            const destFilePath = zipAssignmentDirectory + sep + submission.studentName + '_' + submission.studentSurname
+              + '_' + submission.studentId + '_' + fileName + '_MARK.pdf';
+            return pool.queueTask({
+              type: 'AnnotateSubmission',
+              sourcePath: sourceFilePath,
+              outputPath: destFilePath,
+              assignmentSettings: assignmentSettings
             });
           });
         });
 
         return Promise.all(promises);
       })
-        .then(() => zipDir(tempDirectory))
+        .then(() => zipDir(tempDirectory, exportReviewRequestInfo.zipFilePath))
         .then((buffer) => {
           cleanupTemp(tempDirectory);
           return buffer;
@@ -1015,10 +1028,10 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
       }, {});
 
 
-      let pool = new WorkerPool(cpus().length);
+
       const promises: Promise<any>[] = map(Object.keys(allocationSubmissionsMap), (markerEmail) => {
         return pool.queueTask({
-          format: ExportFormat.PDFM,
+          type: 'MarkerExport',
           studentIds: allocationSubmissionsMap[markerEmail],
           workspaceFolder: workspaceName,
           assignmentName: assignmentName,
@@ -1029,8 +1042,8 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
 
       return Promise.all(promises)
         .then(() => {
-          pool.close();
-          pool = null;
+          // pool.close();
+          // pool = null;
         });
     }).then(() => Promise.resolve()); // End with noop to make it return no value
 }

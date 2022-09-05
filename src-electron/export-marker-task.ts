@@ -7,18 +7,27 @@
  * ##################################################
  */
 import {parentPort} from 'node:worker_threads';
-import {existsSync, mkdtempSync, rmSync} from 'fs';
-import {join, sep} from 'path';
+import {accessSync, constants, existsSync, mkdtempSync, rmSync, unlinkSync, writeFileSync} from 'fs';
+import {basename, dirname, extname, join, sep} from 'path';
 import {mkdir, readFile, writeFile} from 'fs/promises';
 import {AssignmentSettingsInfo, AssignmentState, Submission} from '../src/shared/info-objects/assignment-settings.info';
 import {cloneDeep, filter, isNil} from 'lodash';
 import {copy} from 'fs-extra';
 import {tmpdir} from 'os';
-import {DEFAULT_WORKSPACE, SETTING_FILE} from '../src/shared/constants/constants';
+import {DEFAULT_WORKSPACE, FEEDBACK_FOLDER, SETTING_FILE} from '../src/shared/constants/constants';
 import {SettingInfo} from '../src/shared/info-objects/setting.info';
 import {CONFIG_DIR, CONFIG_FILE} from './constants';
 import {isJson, writeToFile} from './utils';
-const zipDir = require('zip-dir');
+import {
+  MarkingSubmissionInfo,
+  RubricSubmissionInfo,
+  SubmissionInfo,
+  SubmissionType
+} from '../src/shared/info-objects/submission.info';
+import {annotatePdfFile} from './pdf/marking-annotations';
+import {annotatePdfRubric} from './pdf/rubric-annotations';
+import {loadMarksAt} from './ipc/assignment.handler';
+import {zipDir} from './zip';
 
 /**
  * ##################################################
@@ -95,12 +104,97 @@ function cleanupTemp(tmpDir: string) {
   }
 }
 
-parentPort.on('message', (exportAssignmentsRequest: any) => {
+interface TaskDetails {
+  type: 'MarkerExport' | 'FinalizeSubmission' | 'AnnotateSubmission';
+}
+
+interface MarkerExportTaskDetails extends TaskDetails {
+  type: 'MarkerExport';
+  studentIds: string[];
+  assignmentName: string;
+  workspaceFolder: string;
+  exportPath: string;
+  markerEmail: string;
+}
+
+interface FinalizeSubmissionTaskDetails {
+  type: 'FinalizeSubmission';
+  assignmentName: string;
+  workspaceFolder: string;
+  assignmentSettings: AssignmentSettingsInfo;
+  pdfPath: string;
+}
+interface AnnotateSubmissionTaskDetails {
+  type: 'AnnotateSubmission';
+  sourcePath: string;
+  outputPath: string;
+  assignmentSettings: AssignmentSettingsInfo;
+}
+
+parentPort.on('message', (taskDetails: TaskDetails) => {
+
+  if (taskDetails.type === 'MarkerExport') {
+    markerExportTask(taskDetails as MarkerExportTaskDetails);
+  } else if (taskDetails.type === 'FinalizeSubmission') {
+    finalizeSubmissionTask(taskDetails as FinalizeSubmissionTaskDetails);
+  } else if (taskDetails.type === 'AnnotateSubmission') {
+    annotationSubmissionTask(taskDetails as AnnotateSubmissionTaskDetails);
+  } else {
+    parentPort.postMessage('Unknown task');
+  }
+});
+
+
+
+function annotatePdf(sourceSubmissionFile: string, assignmentSettings: AssignmentSettingsInfo): Promise<Uint8Array> {
+  const studentFolder = dirname(dirname(sourceSubmissionFile));
+  return loadMarksAt(studentFolder).then((submissionInfo: SubmissionInfo) => {
+    if (submissionInfo.marks.length > 0) {
+      if (submissionInfo.type === SubmissionType.MARK) {
+        return annotatePdfFile(sourceSubmissionFile, submissionInfo as MarkingSubmissionInfo);
+      } else {
+        return annotatePdfRubric(sourceSubmissionFile, submissionInfo as RubricSubmissionInfo, assignmentSettings.rubric);
+      }
+    }
+
+    // Nothing to save
+    return Promise.resolve(null);
+  });
+}
+
+function annotationSubmissionTask(taskDetails: AnnotateSubmissionTaskDetails){
+  annotatePdf(taskDetails.sourcePath, taskDetails.assignmentSettings)
+    .then((buffer) => {
+      return writeFile(taskDetails.outputPath, buffer);
+    })
+    .then(() => {
+      parentPort.postMessage('Done');
+    }, (error) => {
+      throw new Error(error);
+    });
+}
+
+function finalizeSubmissionTask(finalizeSubmissionTaskDetails: FinalizeSubmissionTaskDetails): void {
+    const studentFolder = dirname(dirname(finalizeSubmissionTaskDetails.pdfPath));
+    const ext = extname(finalizeSubmissionTaskDetails.pdfPath);
+    let fileName = basename(finalizeSubmissionTaskDetails.pdfPath, ext);
+    annotatePdf(finalizeSubmissionTaskDetails.pdfPath, finalizeSubmissionTaskDetails.assignmentSettings)
+      .then((data) => {
+        fileName += '_MARK';
+        writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data);
+        unlinkSync(finalizeSubmissionTaskDetails.pdfPath);
+        parentPort.postMessage('Done');
+      }, (error) => {
+        throw new Error('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
+      });
+}
+
+function markerExportTask(exportAssignmentsRequest: MarkerExportTaskDetails): void {
 
     const tempDirectory = mkdtempSync(join(tmpdir(), 'pdfm-'));
     const exportTempDirectory = tempDirectory + sep + exportAssignmentsRequest.assignmentName;
 
-    return Promise.all([
+    Promise.all([
       getAssignmentSettingsFor(exportAssignmentsRequest.workspaceFolder, exportAssignmentsRequest.assignmentName),
       getAssignmentDirectoryAbsolutePath(exportAssignmentsRequest.workspaceFolder, exportAssignmentsRequest.assignmentName),
       mkdir(exportTempDirectory)
@@ -139,20 +233,16 @@ parentPort.on('message', (exportAssignmentsRequest: any) => {
             return writeAssignmentSettingsAt(exportSettings, exportTempDirectory);
           })
           .then(() => {
-            return zipDir(tempDirectory);
+            return zipDir(tempDirectory, exportAssignmentsRequest.exportPath + sep + exportAssignmentsRequest.assignmentName + '-' + exportAssignmentsRequest.markerEmail + '.zip');
           })
-          .then((buffer) => {
+          .then(() => {
             cleanupTemp(tempDirectory);
-            return buffer;
           }, (error) => {
             cleanupTemp(tempDirectory);
             return Promise.reject(error.message);
           });
       })
-      .then((buffer) => {
-        return writeFile(exportAssignmentsRequest.exportPath + sep + exportAssignmentsRequest.assignmentName + '-' + exportAssignmentsRequest.markerEmail + '.zip', buffer);
-      })
       .then(() => {
         parentPort.postMessage('Created zip: ' + exportAssignmentsRequest.exportPath + sep + exportAssignmentsRequest.markerEmail + '.zip');
       });
-});
+}
