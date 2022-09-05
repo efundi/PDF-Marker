@@ -4,9 +4,15 @@ import { Worker } from 'node:worker_threads';
 import {sep} from 'path';
 import {cpus} from 'os';
 import {isNil} from 'lodash';
+import {TaskDetails} from './web-worker/task-detail';
 
 const kTaskInfo = Symbol('kTaskInfo');
 const kWorkerFreedEvent = Symbol('kWorkerFreedEvent');
+type TaskCallback = (data, error) => void;
+interface QueuedTask {
+  task: TaskDetails;
+  callback: TaskCallback;
+}
 
 class WorkerPoolTaskInfo<R> extends AsyncResource {
   private callback: any;
@@ -27,7 +33,7 @@ export class WorkerPool extends EventEmitter {
   private numThreads: number;
   private workers: Worker[];
   private freeWorkers: Worker[];
-  private tasks: any[];
+  private tasks: QueuedTask[];
 
   private constructor() {
     super();
@@ -71,7 +77,7 @@ export class WorkerPool extends EventEmitter {
   private addNewWorker() {
 
     console.log('Adding worker: ' + this.workers.length);
-    const worker = new Worker(__dirname + sep + 'exportMarkerTask.js');
+    const worker = new Worker(__dirname + sep + 'pdfm-web-worker.js');
     worker.on('message', (result) => {
       // In case of success: Call the callback that was passed to `runTask`,
       // remove the `TaskInfo` associated with the Worker, and mark it as free
@@ -99,7 +105,7 @@ export class WorkerPool extends EventEmitter {
     // this.emit(kWorkerFreedEvent);
   }
 
-  private runTask(task, callback) {
+  private runTask(task: TaskDetails, callback) {
 
     if (this.freeWorkers.length === 0 && this.workers.length < this.numThreads) {
       // We have space to add another worker
@@ -117,7 +123,7 @@ export class WorkerPool extends EventEmitter {
     worker.postMessage(task);
   }
 
-  queueTask(task) {
+  queueTask<T extends TaskDetails>(task: T) {
     return new Promise((resolve, reject) => {
       this.runTask(task, (error, result) => {
         if (error) {

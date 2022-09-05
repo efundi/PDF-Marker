@@ -1,25 +1,6 @@
-import {Writable} from 'stream';
 import {createWriteStream} from 'fs';
-import * as zlib from 'zlib';
+import {constants} from 'zlib';
 const archiver = require('archiver');
-
-class BufferStream extends Writable {
-  body = [];
-
-  constructor() {
-    super()
-  }
-
-  _write(chunk, enc, next) {
-    this.body.push(chunk);
-    next();
-  }
-
-
-  getBody() {
-    return Buffer.concat(this.body);
-  }
-}
 
 export function zipDir(directory: string, destination: string): Promise<string> {
 
@@ -27,7 +8,7 @@ export function zipDir(directory: string, destination: string): Promise<string> 
     const output = createWriteStream(destination);
     // const output = new BufferStream();
     const archive = archiver('zip', {
-      zlib: { level: zlib.constants.Z_BEST_SPEED } // Sets the compression level.
+      zlib: { level: constants.Z_BEST_SPEED } // Sets the compression level.
     });
 // listen for all archive data to be written
 // 'close' event is fired only when a file descriptor is involved

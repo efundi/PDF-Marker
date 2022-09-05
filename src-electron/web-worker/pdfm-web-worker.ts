@@ -7,28 +7,32 @@
  * ##################################################
  */
 import {parentPort} from 'node:worker_threads';
-import {accessSync, constants, existsSync, mkdtempSync, rmSync, unlinkSync, writeFileSync} from 'fs';
+import {existsSync, mkdtempSync, rmSync, unlinkSync, writeFileSync} from 'fs';
 import {basename, dirname, extname, join, sep} from 'path';
 import {mkdir, readFile, writeFile} from 'fs/promises';
-import {AssignmentSettingsInfo, AssignmentState, Submission} from '../src/shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo, AssignmentState, Submission} from '../../src/shared/info-objects/assignment-settings.info';
 import {cloneDeep, filter, isNil} from 'lodash';
 import {copy} from 'fs-extra';
 import {tmpdir} from 'os';
-import {DEFAULT_WORKSPACE, FEEDBACK_FOLDER, SETTING_FILE} from '../src/shared/constants/constants';
-import {SettingInfo} from '../src/shared/info-objects/setting.info';
-import {CONFIG_DIR, CONFIG_FILE} from './constants';
-import {isJson, writeToFile} from './utils';
+import {DEFAULT_WORKSPACE, FEEDBACK_FOLDER, MARK_FILE, SETTING_FILE} from '../../src/shared/constants/constants';
+import {SettingInfo} from '../../src/shared/info-objects/setting.info';
+import {CONFIG_DIR, CONFIG_FILE} from '../constants';
+import {isJson, writeToFile} from '../utils';
 import {
   MarkingSubmissionInfo,
   RubricSubmissionInfo,
   SubmissionInfo,
   SubmissionType
-} from '../src/shared/info-objects/submission.info';
-import {annotatePdfFile} from './pdf/marking-annotations';
-import {annotatePdfRubric} from './pdf/rubric-annotations';
-import {loadMarksAt} from './ipc/assignment.handler';
-import {zipDir} from './zip';
-
+} from '../../src/shared/info-objects/submission.info';
+import {annotatePdfFile} from '../pdf/marking-annotations';
+import {annotatePdfRubric} from '../pdf/rubric-annotations';
+import {zipDir} from '../zip';
+import {
+  AnnotateSubmissionTaskDetails,
+  FinalizeSubmissionTaskDetails,
+  MarkerExportTaskDetails,
+  TaskDetails
+} from './task-detail';
 /**
  * ##################################################
  *
@@ -44,6 +48,17 @@ function getConfig(): Promise<SettingInfo> {
     }
 
     return JSON.parse(data.toString());
+  });
+}
+function loadMarksAt(studentFolderFull: string): Promise<SubmissionInfo> {
+  return readFile(studentFolderFull + sep + MARK_FILE).then((data) => {
+    if (!isJson(data)) {
+      return new SubmissionInfo();
+    } else {
+      return JSON.parse(data.toString());
+    }
+  }, () => {
+    return new SubmissionInfo();
   });
 }
 
@@ -104,32 +119,8 @@ function cleanupTemp(tmpDir: string) {
   }
 }
 
-interface TaskDetails {
-  type: 'MarkerExport' | 'FinalizeSubmission' | 'AnnotateSubmission';
-}
 
-interface MarkerExportTaskDetails extends TaskDetails {
-  type: 'MarkerExport';
-  studentIds: string[];
-  assignmentName: string;
-  workspaceFolder: string;
-  exportPath: string;
-  markerEmail: string;
-}
 
-interface FinalizeSubmissionTaskDetails {
-  type: 'FinalizeSubmission';
-  assignmentName: string;
-  workspaceFolder: string;
-  assignmentSettings: AssignmentSettingsInfo;
-  pdfPath: string;
-}
-interface AnnotateSubmissionTaskDetails {
-  type: 'AnnotateSubmission';
-  sourcePath: string;
-  outputPath: string;
-  assignmentSettings: AssignmentSettingsInfo;
-}
 
 parentPort.on('message', (taskDetails: TaskDetails) => {
 

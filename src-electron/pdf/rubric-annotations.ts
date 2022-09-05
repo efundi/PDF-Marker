@@ -1,4 +1,4 @@
-import {PageSizes, PDFDocument, rgb, RotationTypes} from 'pdf-lib';
+import {PDFDocument, rgb, RotationTypes} from 'pdf-lib';
 import {isNullOrUndefinedOrEmpty} from '../utils';
 import {adjustPointsForResults} from './pdf-utils';
 import {IRubric} from '@shared/info-objects/rubric.class';

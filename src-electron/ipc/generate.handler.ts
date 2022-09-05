@@ -16,9 +16,8 @@ import {
 } from '@shared/info-objects/assignment-settings.info';
 import {getAssignmentDirectoryAbsolutePath} from './workspace.handler';
 import {uuidv4} from '@shared/constants/constants';
-import {findRubric, getRubric} from './rubric.handler';
-
-const zipDir = require('zip-dir');
+import {findRubric} from './rubric.handler';
+import {zipDir} from '../zip';
 
 export function generateGenericZip(
   event: IpcMainInvokeEvent,
@@ -37,21 +36,23 @@ export function generateGenericZip(
         });
 
         return Promise.all(promises);
-      })
-      .then(() => {
-        return zipDir(tempDir);
-      })
-      .then((buffer) => {
+      }).then(() => {
         return saveFileImpl({
-          buffer,
           filename: assignmentName + '_' + studentCount + '.zip',
           name: 'Zip File',
           extension: ['zip']
         });
       })
+      .then((selectedPath) => {
+        if (selectedPath.selectedPath) {
+          return zipDir(tempDir, selectedPath.selectedPath);
+        } else {
+          return Promise.reject('No file selected');
+        }
+      })
       .then((result) => {
         rm(tempDir, {recursive: true});
-        return 'Generic zip created at : ' + result.selectedPath
+        return 'Generic zip created at : ' + result;
       }, (error) => {
         rm(tempDir, {recursive: true});
         return Promise.reject(error);

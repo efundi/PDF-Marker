@@ -19,7 +19,7 @@ module.exports = env => {
     entry: {
       preload: "./preload.ts",
       main: "./main.ts",
-      exportMarkerTask: "./src-electron/export-marker-task.ts"
+      'pdfm-web-worker' : "./src-electron/web-worker/pdfm-web-worker.ts"
     },
     output: {
       filename: "[name].js",

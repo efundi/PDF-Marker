@@ -73,7 +73,6 @@
     "luxon": "^3.0.1",
     "ngx-color-picker": "^11.0.0",
     "ngx-filesaver": "^8.1.0",
-    "node-worker-threads-pool": "^1.5.1",
     "pdf-lib": "^1.4.0",
     "pdfjs-dist": "^2.15.349",
     "rxjs": "~7.5.2",
@@ -81,7 +80,6 @@
     "tslib": "^2.3.1",
     "webpack-node-externals": "^3.0.0",
     "word-wrap": "^1.2.3",
-    "zip-dir": "^2.0.0",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {
