@@ -2,9 +2,17 @@ import { AsyncResource } from 'node:async_hooks';
 import { EventEmitter } from 'node:events';
 import { Worker } from 'node:worker_threads';
 import {sep} from 'path';
+import {cpus} from 'os';
+import {isNil} from 'lodash';
+import {TaskDetails} from './web-worker/task-detail';
 
 const kTaskInfo = Symbol('kTaskInfo');
 const kWorkerFreedEvent = Symbol('kWorkerFreedEvent');
+type TaskCallback = (data, error) => void;
+interface QueuedTask {
+  task: TaskDetails;
+  callback: TaskCallback;
+}
 
 class WorkerPoolTaskInfo<R> extends AsyncResource {
   private callback: any;
@@ -21,21 +29,22 @@ class WorkerPoolTaskInfo<R> extends AsyncResource {
 }
 
 export class WorkerPool extends EventEmitter {
-  private numThreads: any;
-  private workers: any[];
-  private freeWorkers: any[];
-  private tasks: any[];
+  private static instance: WorkerPool;
+  private numThreads: number;
+  private workers: Worker[];
+  private freeWorkers: Worker[];
+  private tasks: QueuedTask[];
 
-  constructor(numThreads) {
+  private constructor() {
     super();
-    this.numThreads = numThreads;
+    this.numThreads = cpus().length;
     this.workers = [];
     this.freeWorkers = [];
     this.tasks = [];
 
-    for (let i = 0; i < numThreads; i++) {
-      this.addNewWorker();
-    }
+    // for (let i = 0; i < this.numThreads; i++) {
+    //   this.addNewWorker();
+    // }
 
     // Any time the kWorkerFreedEvent is emitted, dispatch
     // the next task pending in the queue, if any.
@@ -43,12 +52,32 @@ export class WorkerPool extends EventEmitter {
       if (this.tasks.length > 0) {
         const { task, callback } = this.tasks.shift();
         this.runTask(task, callback);
+      } else {
+        // We can remove an idle worker
+        this.removeIdleWorkers();
       }
     });
   }
 
-  addNewWorker() {
-    const worker = new Worker(__dirname + sep + 'exportMarkerTask.js');
+  public static getInstance(): WorkerPool {
+    if (isNil(WorkerPool.instance)) {
+      WorkerPool.instance = new WorkerPool();
+    }
+    return WorkerPool.instance;
+  }
+
+  private removeIdleWorkers() {
+    while (this.freeWorkers.length > 0) {
+      const worker = this.freeWorkers.pop();
+      this.workers.splice(this.workers.indexOf(worker), 1);
+      worker.terminate().then(() => console.log("Worker removed"));
+    }
+  }
+
+  private addNewWorker() {
+
+    console.log('Adding worker: ' + this.workers.length);
+    const worker = new Worker(__dirname + sep + 'pdfm-web-worker.js');
     worker.on('message', (result) => {
       // In case of success: Call the callback that was passed to `runTask`,
       // remove the `TaskInfo` associated with the Worker, and mark it as free
@@ -73,10 +102,16 @@ export class WorkerPool extends EventEmitter {
     });
     this.workers.push(worker);
     this.freeWorkers.push(worker);
-    this.emit(kWorkerFreedEvent);
+    // this.emit(kWorkerFreedEvent);
   }
 
-  private runTask(task, callback) {
+  private runTask(task: TaskDetails, callback) {
+
+    if (this.freeWorkers.length === 0 && this.workers.length < this.numThreads) {
+      // We have space to add another worker
+      this.addNewWorker();
+    }
+
     if (this.freeWorkers.length === 0) {
       // No free threads, wait until a worker thread becomes free.
       this.tasks.push({ task, callback });
@@ -88,7 +123,7 @@ export class WorkerPool extends EventEmitter {
     worker.postMessage(task);
   }
 
-  queueTask(task) {
+  queueTask<T extends TaskDetails>(task: T) {
     return new Promise((resolve, reject) => {
       this.runTask(task, (error, result) => {
         if (error) {
@@ -101,6 +136,8 @@ export class WorkerPool extends EventEmitter {
   }
 
   close() {
-    for (const worker of this.workers) { worker.terminate(); }
+    for (const worker of this.workers) {
+      worker.terminate();
+    }
   }
 }

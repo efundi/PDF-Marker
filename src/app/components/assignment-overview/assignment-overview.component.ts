@@ -346,7 +346,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   private openYesNoConfirmationDialog(title: string = 'Confirm', message: string) {
-    const config = new MatDialogConfig();
+    const config = new MatDialogConfig<ConfirmationDialogData>();
     config.width = '400px';
     config.maxWidth = '400px';
     config.data = {
@@ -354,40 +354,38 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       message: message,
     };
 
-    const shouldFinalizeAndExportFn = (shouldFinalizeAndExport: boolean) => {
-      if (shouldFinalizeAndExport) {
-        this.busyService.start();
-        this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName).subscribe({
-          next: (blob: Uint8Array) => {
-            this.onSuccessfulExport(blob);
-          },
-          error: (responseError) => {
-            this.alertService.error(responseError);
-            this.busyService.stop();
+    this.dialog.open(ConfirmationDialogComponent, config).afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.appService.saveFile({
+          filename: this.assignmentName + '.zip',
+          name: 'Zip File',
+          extension: ['zip']
+        }).subscribe((selectedPath) => {
+
+          if (selectedPath){
+            this.busyService.start();
+            console.log(new Date().toISOString());
+            this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName, selectedPath.selectedPath).subscribe({
+              next: (outputPath: string) => {
+                console.log(new Date().toISOString());
+                this.alertService.success(`Successfully exported to ${outputPath}. You can now upload it to ${this.settings.lmsSelection}.`);
+                this.assignmentService.refreshWorkspaces().subscribe(() => {
+                  this.busyService.stop();
+                  this.refresh();
+                });
+              },
+              error: (responseError) => {
+                this.alertService.error(responseError);
+                this.busyService.stop();
+              }
+            });
           }
+
         });
+
+
       }
-    };
-    this.appService.createDialog(ConfirmationDialogComponent, config, shouldFinalizeAndExportFn);
-  }
-
-  private onSuccessfulExport(blob: Uint8Array) {
-    this.alertService.clear();
-    const fileName: string = this.assignmentName;
-    this.appService.saveFile({ filename: fileName, buffer: blob, name: 'Zip File', extension: ['zip']})
-      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        if (appSelectedPathInfo.selectedPath) {
-          this.alertService.success(`Successfully exported ${fileName}. You can now upload it to ${this.settings.lmsSelection}.`);
-        } else if (appSelectedPathInfo.error) {
-          this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
-        }
-
-        this.assignmentService.refreshWorkspaces().subscribe(() => {
-          this.busyService.stop();
-          this.refresh();
-        });
-      });
-
+    });
   }
 
   manageStudents() {
@@ -499,56 +497,70 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           return;
         }
         this.busyService.start();
-        const studentIds = map(this.selection.selected, 'studentNumber');
-        const shareRequest: ExportAssignmentsRequest = {
-          format: ExportFormat.MODERATION,
-          assignmentName: this.assignmentName,
-          workspaceFolder: this.workspaceName,
-          studentIds
-        };
+        this.appService.saveFile({
+          filename: this.assignmentName + '_moderation.zip',
+          name: 'Zip File',
+          extension: ['zip']
+        })
+          .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+            if (isNil(appSelectedPathInfo.selectedPath)) {
+              this.busyService.stop();
+              return;
+            }
+            const studentIds = map(this.selection.selected, 'studentNumber');
+            const shareRequest: ExportAssignmentsRequest = {
+              format: ExportFormat.MODERATION,
+              assignmentName: this.assignmentName,
+              workspaceFolder: this.workspaceName,
+              studentIds,
+              zipFilePath: appSelectedPathInfo.selectedPath
+            };
 
-        const updateSettings = cloneDeep(this.assignmentSettings);
-        forEach(studentIds, (studentId) => {
-          const submission = find(updateSettings.submissions, {studentId});
-          submission.state = SubmissionState.SENT_FOR_MODERATION;
-        });
-        this.assignmentService.updateAssignmentSettings(updateSettings, this.workspaceName, this.assignmentName)
-          .subscribe({
-            next: () => {
-              this.assignmentService.exportAssignment(shareRequest).subscribe({
-                next: (data) => {
-                  this.saveData(data, this.assignmentName + '_moderation.zip');
-                  this.refresh();
-                  this.busyService.stop();
+            const updateSettings = cloneDeep(this.assignmentSettings);
+            forEach(studentIds, (studentId) => {
+              const submission = find(updateSettings.submissions, {studentId});
+              submission.state = SubmissionState.SENT_FOR_MODERATION;
+            });
+            this.assignmentService.updateAssignmentSettings(updateSettings, this.workspaceName, this.assignmentName)
+              .subscribe({
+                next: () => {
+                  console.log(new Date().toISOString() + " start")
+                  this.assignmentService.exportAssignment(shareRequest).subscribe({
+                    next: (filePath) => {
+                      console.log(new Date().toISOString() + " done")
+                      this.alertService.success(`Successfully exported ${filePath}.`);
+                      this.refresh();
+                      this.busyService.stop();
+                    },
+                    error: (error) => {
+                      this.alertService.error(error);
+                      this.busyService.stop();
+                    }
+                  });
                 },
                 error: (error) => {
-                  this.alertService.error(error);
                   this.busyService.stop();
+                  this.alertService.error(error);
                 }
               });
-            },
-            error: (error) => {
-              this.busyService.stop();
-              this.alertService.error(error);
-            }
           });
       }
     });
   }
-
-  private saveData(data: Uint8Array, filename: string) {
-    this.alertService.clear();
-    this.busyService.start();
-    this.appService.saveFile({ filename, buffer: data, name: 'Zip File', extension: ['zip']})
-      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        this.busyService.stop();
-        if (appSelectedPathInfo.selectedPath) {
-          this.alertService.success(`Successfully exported ${filename}.`);
-        } else if (appSelectedPathInfo.error) {
-          this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
-        }
-      });
-  }
+  //
+  // private saveData(data: Uint8Array, filename: string) {
+  //   this.alertService.clear();
+  //   this.busyService.start();
+  //   this.appService.saveFile({ filename, buffer: data, name: 'Zip File', extension: ['zip']})
+  //     .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+  //       this.busyService.stop();
+  //       if (appSelectedPathInfo.selectedPath) {
+  //         this.alertService.success(`Successfully exported ${filename}.`);
+  //       } else if (appSelectedPathInfo.error) {
+  //         this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
+  //       }
+  //     });
+  // }
 
   ngAfterViewInit() {
     this.sortSubscription = this.sort.sortChange.subscribe((change) => {
@@ -677,15 +689,28 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       }
     });
 
-    this.assignmentService.updateAssignmentSettings(assignmentSettings, this.workspaceName, this.assignmentName).subscribe(() => {
+    this.assignmentService.updateAssignmentSettings(assignmentSettings, this.workspaceName, this.assignmentName)
+      .pipe(
+        mergeMap(() => this.appService.saveFile({
+            filename: this.assignmentName + '_marked.zip',
+            name: 'Zip File',
+            extension: ['zip']
+          })
+        )
+      ).subscribe((selectedPathInfo) => {
+      if (isNil(selectedPathInfo.selectedPath)) {
+        this.busyService.stop();
+        return;
+      }
       this.assignmentService.exportAssignment({
         assignmentName: this.assignmentName,
         workspaceFolder: this.workspaceName,
         format: ExportFormat.PDFM,
-        studentIds: null // Export all
+        studentIds: null, // Export all
+        zipFilePath: selectedPathInfo.selectedPath
       }).subscribe({
-        next: (buffer) => {
-          this.saveData(buffer, this.assignmentName + '_marked.zip');
+        next: (filepath) => {
+          this.alertService.success(`Successfully exported ${filepath}.`);
           this.refresh();
           this.busyService.stop();
         },
@@ -828,11 +853,22 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         };
         submission.state = SubmissionState.ASSIGNED_TO_MARKER;
       });
-
-
-      this.assignmentService.updateAssignmentSettings(updateAssignmentSettings, this.workspaceName, this.assignmentName).subscribe({
-        next: () => {
+      this.assignmentService.updateAssignmentSettings(updateAssignmentSettings, this.workspaceName, this.assignmentName)
+        .pipe(
+          mergeMap(() => this.appService.saveFile({
+              filename: this.assignmentName + '_' + marker.email + '_reallocation.zip',
+              name: 'Zip File',
+              extension: ['zip']
+            })
+          )
+        ).subscribe( {
+        next: (selectedPathInfo) => {
           this.refresh();
+          if (isNil(selectedPathInfo.selectedPath)) {
+            this.busyService.stop();
+            return;
+          }
+
           if (marker.id === this.settings.user.id) {
             // If re-allocated to user there is no zips to create
             this.busyService.stop();
@@ -843,12 +879,14 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
             format: ExportFormat.PDFM,
             assignmentName: this.assignmentName,
             workspaceFolder: this.workspaceName,
-            studentIds : map(selectedSubmissions, 'studentId')
+            studentIds : map(selectedSubmissions, 'studentId'),
+            zipFilePath: selectedPathInfo.selectedPath
           };
 
           this.assignmentService.exportAssignment(shareRequest).subscribe({
-            next: (data) => {
-              this.saveData(data, this.assignmentName + '_' + marker.email + '_reallocation.zip');
+            next: (outputPath) => {
+
+              this.alertService.success(`Successfully exported ${outputPath}.`);
               this.busyService.stop();
             },
             error: (error) => {

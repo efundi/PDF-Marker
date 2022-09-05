@@ -20,13 +20,18 @@ export function saveFileImpl (filter: FileFilterInfo): Promise<AppSelectedPathIn
     ]
   }).then(({filePath}) => {
     if (filePath) {
-      try {
-        return writeFile(filePath, Buffer.from(filter.buffer as ArrayBuffer))
-          .then(() => {
-            return { selectedPath: filePath };
-          });
-      } catch (e) {
-        return Promise.reject(e.message);
+
+      if(filter.buffer) {
+        try {
+          return writeFile(filePath, Buffer.from(filter.buffer as ArrayBuffer))
+            .then(() => {
+              return {selectedPath: filePath};
+            });
+        } catch (e) {
+          return Promise.reject(e.message);
+        }
+      } else {
+        return {selectedPath: filePath};
       }
     } else {
       return { selectedPath: null };

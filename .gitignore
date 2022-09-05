@@ -58,5 +58,5 @@ preload.js
 preload.js.map
 main.js
 main.js.map
-exportMarkerTask.js
-exportMarkerTask.js.map
+pdfm-web-worker.js
+pdfm-web-worker.js.map

@@ -151,12 +151,12 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.getMarks(location));
   }
 
-  exportAssignment(exportAssignmentsRequest: ExportAssignmentsRequest): Observable<Uint8Array> {
+  exportAssignment(exportAssignmentsRequest: ExportAssignmentsRequest): Observable<string> {
     return fromIpcResponse(this.assignmentApi.exportAssignment(exportAssignmentsRequest));
   }
 
-  finalizeAndExport(workspaceName: string, assignmentName: string): Observable<Uint8Array> {
-    return fromIpcResponse(this.assignmentApi.finalizeAssignment(workspaceName, assignmentName));
+  finalizeAndExport(workspaceName: string, assignmentName: string, zipFilePath: string): Observable<string> {
+    return fromIpcResponse(this.assignmentApi.finalizeAssignment(workspaceName, assignmentName, zipFilePath));
   }
 
   createAssignment(createAssignmentInfo: CreateAssignmentInfo): Observable<any> {
