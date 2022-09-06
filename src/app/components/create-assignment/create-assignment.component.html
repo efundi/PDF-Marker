@@ -1,41 +1,35 @@
 <pdf-marker-alert></pdf-marker-alert>
 <form [formGroup]="createAssignmentForm">
   <h1 class="mt-3">
-    <mat-icon color="primary">picture_as_pdf</mat-icon>&nbsp;{{ title }}
+    <mat-icon color="primary" class="mat-icon-36">picture_as_pdf</mat-icon>&nbsp;{{ title }}
   </h1>
   <mat-divider></mat-divider>
   <div class="pdf-spacer"></div>
   <mat-form-field class="settings-halfWidth">
-    <mat-label>Assignment:</mat-label>
-    <input #assignmentName formControlName="assignmentName" type="text" placeholder="My Assignment" matInput required
+    <input #assignmentName formControlName="assignmentName" type="text" placeholder="Assignment Name" matInput required
            [autocomplete]="false" maxlength="50">
   </mat-form-field>
   <div class="pdf-spacer"></div>
 
-  <mat-label class="pdf-marker-form-labels">Working Folder:&nbsp;</mat-label>
   <mat-form-field>
-    <mat-label>Select folder</mat-label>
+    <mat-label>Working Folder</mat-label>
     <mat-select formControlName="workspaceFolder" required>
       <mat-option *ngFor="let workspace of workspaces" [value]="workspace">{{workspace}}</mat-option>
     </mat-select>
   </mat-form-field>
-  <div class="pdf-spacer"></div>
 
-
-  <mat-label class="pdf-marker-form-labels">Rubric</mat-label>
   <div class="pdf-marker-rubric-container">
-    <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange()">No Rubric</mat-checkbox>
     <ng-container>
-      <br>
       <mat-form-field [hideRequiredMarker]="createAssignmentForm.get('noRubric').value">
         <mat-label>Select Rubric</mat-label>
-        <mat-select formControlName="rubric" required="createAssignmentForm.get('noRubric').value">
+        <mat-select formControlName="rubric">
           <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{rubric.name}}</mat-option>
         </mat-select>
       </mat-form-field>
     </ng-container>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <mat-checkbox formControlName="noRubric" color="primary" (change)="onRubricChange()">No Rubric</mat-checkbox>
     <div class="pdf-spacer"></div>
-
   </div>
   <div class="pdf-spacer"></div>
   <div>

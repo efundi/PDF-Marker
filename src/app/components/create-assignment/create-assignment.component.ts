@@ -40,8 +40,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   private studentFiles: any[] = [];
 
-  isRubric = true;
-
   rubrics: IRubricName[];
 
   selectedRubric: IRubric;
@@ -80,7 +78,6 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.initForm();
-
     this.busyService.start();
     this.activatedRoute.params.subscribe(params => {
       this.assignmentId = params['id'];
@@ -270,11 +267,12 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       this.fc.rubric.setValidators(null);
       this.fc.rubric.updateValueAndValidity();
       this.fc.rubric.disable();
-      this.isRubric = false;
+      this.createAssignmentForm.controls.rubric.disable();
     } else {
       this.fc.rubric.setValidators(Validators.required);
       this.fc.rubric.updateValueAndValidity();
       this.fc.rubric.enable();
+      this.createAssignmentForm.controls.rubric.enable();
     }
 
     this.createAssignmentForm.updateValueAndValidity();

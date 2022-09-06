@@ -18,6 +18,7 @@ h1 {
 
 .rubric-setup {
   display: flex;
+  width: 75%;
 }
 
 .pdf-marker-rubric-import-hide {
@@ -54,7 +55,6 @@ form {
       display: flex;
       padding: 2px;
       border: 1px solid transparent;
-      width: 75%;
 
       .pdf-marker-file-upload-remove {
         color: #a94442 !important;

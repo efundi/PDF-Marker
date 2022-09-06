@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
 import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {SettingsService} from '../../services/settings.service';
 import {AppService} from '../../services/app.service';
@@ -12,19 +12,28 @@ import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
 import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 import {filter} from 'lodash';
+import {MatPaginator} from '@angular/material/paginator';
+import {MatSort} from '@angular/material/sort';
+import {IComment} from '@shared/info-objects/comment.class';
 
 @Component({
   selector: 'pdf-marker-working-folder',
   templateUrl: './working-folder.component.html',
   styleUrls: ['./working-folder.component.scss']
 })
-export class WorkingFolderComponent implements OnInit {
+export class WorkingFolderComponent implements OnInit, AfterViewInit {
 
   createFolderForm: UntypedFormGroup;
   readonly displayedColumns: string[] = ['folder', 'actions'];
   folders: string[];
   private folderNameList: string[];
-  dataSource: MatTableDataSource<string>;
+  dataSource = new MatTableDataSource<string>([]);
+
+  @ViewChild(MatPaginator, {static: true})
+  paginator: MatPaginator;
+
+  @ViewChild(MatSort, {static: true})
+  sort: MatSort;
 
   constructor(private fb: UntypedFormBuilder,
               private settingsService: SettingsService,
@@ -51,7 +60,10 @@ export class WorkingFolderComponent implements OnInit {
     });
   }
 
-
+  ngAfterViewInit() {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+  }
 
   private populateWorkspaces(folders: string[]) {
     const values: any[] = [];
@@ -66,7 +78,7 @@ export class WorkingFolderComponent implements OnInit {
         });
       });
     }
-    this.dataSource = new MatTableDataSource<string>(values);
+    this.dataSource.data = values;
   }
 
   private initForm() {
@@ -74,7 +86,6 @@ export class WorkingFolderComponent implements OnInit {
       workspaceName: [null, Validators.compose([Validators.required, Validators.pattern('^(\\w+\\.?\\_?\\-?\\s?\\d?)*\\w+$')])]
     });
   }
-
 
 
   onSubmitCreateFolder() {
