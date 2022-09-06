@@ -22,7 +22,7 @@
     <ng-container>
       <mat-form-field [hideRequiredMarker]="createAssignmentForm.get('noRubric').value">
         <mat-label>Select Rubric</mat-label>
-        <mat-select formControlName="rubric" required="createAssignmentForm.get('noRubric').value" [disabled]="isNoRubric">
+        <mat-select formControlName="rubric">
           <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{rubric.name}}</mat-option>
         </mat-select>
       </mat-form-field>
