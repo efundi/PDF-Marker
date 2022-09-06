@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewContainerRef} from '@angular/core';
+import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
 import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
@@ -14,13 +14,15 @@ import {Subscription} from 'rxjs';
 import {IRubric, IRubricName, SelectedRubric} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {BusyService} from '../../services/busy.service';
+import {MatPaginator} from '@angular/material/paginator';
+import {MatSort} from '@angular/material/sort';
 
 @Component({
   selector: 'pdf-marker-rubric-import',
   templateUrl: './rubric-import.component.html',
   styleUrls: ['./rubric-import.component.scss']
 })
-export class RubricImportComponent implements OnInit, OnDestroy {
+export class RubricImportComponent implements OnInit, OnDestroy, AfterViewInit {
 
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
   private selectedRubric: SelectedRubric;
@@ -33,6 +35,12 @@ export class RubricImportComponent implements OnInit, OnDestroy {
   rubrics: IRubricName[];
 
   subscription: Subscription;
+
+  @ViewChild(MatPaginator, {static: true})
+  paginator: MatPaginator;
+
+  @ViewChild(MatSort, {static: true})
+  sort: MatSort;
 
   constructor(private fb: UntypedFormBuilder,
               private alertService: AlertService,
@@ -56,6 +64,11 @@ export class RubricImportComponent implements OnInit, OnDestroy {
         this.busyService.stop();
       }
     });
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
   }
 
   private initForm() {

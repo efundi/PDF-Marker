@@ -21,7 +21,7 @@ export class MenuComponent implements OnInit {
   readonly menuItems = [
     { id: 'settings', title: 'App Settings', icon: 'build', href: RoutesEnum.ASSIGNMENT_SETTINGS },
     { id: 'rubrics',  title: 'Rubrics', icon: 'apps', href: RoutesEnum.ASSIGNMENT_RUBRICS },
-    { id: 'comments',  title: 'Generic Comments', icon: 'comment_bank', href: RoutesEnum.ASSIGNMENT_COMMENTS },
+    { id: 'comments',  title: 'Generic Comments', icon: 'comment', href: RoutesEnum.ASSIGNMENT_COMMENTS },
     { id: 'workingFolder',  title: 'Working Folders', icon: 'folder', href: RoutesEnum.ASSIGNMENT_WORKING_FOLDER },
     { id: 'markers' , title: 'Markers', icon: 'person', href: RoutesEnum.MARKERS_MANAGE },
   ];

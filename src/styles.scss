@@ -164,11 +164,6 @@ pdf-marker-rubric-criteria {
   width: fit-content;
 }
 
-pdf-marker-rubric-criteria-level-block {
-
-}
-
-
 /** Place the progress bar over other elements to avoid the page jumping */
 .mat-progress-bar{
   position: absolute !important;
@@ -329,4 +324,12 @@ pdf-marker-rubric-criteria-level-block {
   border-color: var(--pdf-marker-primary);
 }
 
+.mat-icon.mat-icon-36 {
+  width: 36px;
+  height: 36px;
+  font-size: 36px;
+  line-height: unset;
+}
+
 @import 'scss/compatibility';
+
