@@ -27,7 +27,7 @@
 
     <mat-checkbox formControlName="includeMe" color="primary" class="ms-2">Include Me</mat-checkbox>
 
-    <div *ngIf="allocations.length > 0">
+    <div [class.d-none]="allocations?.length === 0" >
       <div class="d-flex mb-2"><mat-icon color="primary">workspaces</mat-icon>&nbsp;Submissions Allocated</div>
       <table class="table ms-4 mb-0">
         <tbody>
@@ -42,14 +42,15 @@
     <div class="pdf-spacer"></div>
 
     <div id="pdf-marker-file-export-wrapper">
+      <div class="pdf-marker-export-upload">
+        <button type="button" mat-raised-button (click)="setExportDirectory()">Browse</button>
+      </div>
+      &nbsp;&nbsp;
       <mat-form-field class="w-100">
         <div class="export-path-setup">
           <input type="text" matInput formControlName="exportPath" id="pdf-marker-export-display" readonly placeholder="Export Directory">
         </div>
       </mat-form-field>
-      <div class="pdf-marker-export-upload">
-        <button type="button" mat-raised-button (click)="setExportDirectory()">Browse</button>
-      </div>
     </div>
 
     <div class="pdf-spacer"></div>
