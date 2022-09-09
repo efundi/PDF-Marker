@@ -39,8 +39,8 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
   allocations: Allocation[] = [];
   assignmentName: string;
   studentCount: number;
-  private formSubscription: Subscription;
-  private workspaceName: string;
+  private groupIdSubscription: Subscription;
+  private includeMeSubscription: Subscription;
   zipFileCount: number;
 
   constructor(private formBuilder: FormBuilder,
@@ -60,11 +60,17 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
       exportPath: [null as string, Validators.required]
     });
 
-    this.formSubscription = this.formGroup.valueChanges.subscribe((value) => {
-      if (this.formGroup.valid) {
-        this.calculateAllocation(value.groupId, value.includeMe);
+    this.groupIdSubscription = this.formGroup.controls.groupId.valueChanges.subscribe((value) => {
+      if(this.formGroup.controls.groupId.valid) {
+        this.calculateAllocation(value, this.formGroup.value.includeMe);
       } else {
         this.allocations = [];
+      }
+    });
+
+    this.includeMeSubscription = this.formGroup.controls.includeMe.valueChanges.subscribe((value) => {
+      if(this.formGroup.controls.groupId.valid) {
+        this.calculateAllocation(this.formGroup.value.groupId, value);
       }
     });
   }
@@ -92,7 +98,8 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.formSubscription.unsubscribe();
+    this.groupIdSubscription.unsubscribe();
+    this.includeMeSubscription.unsubscribe();
   }
 
   ngOnInit(): void {
@@ -164,7 +171,8 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
   }
 
   private calculateZipFileCount(): void {
-    this.zipFileCount = this.allocations.filter((allocation) => allocation.marker.id !== this.settings.user.id).length;
+    this.zipFileCount = this.allocations.filter((allocation) =>
+      allocation.marker.id !== this.settings.user.id && allocation.submissions.length > 0).length;
   }
 
   private loadSettings(): void {
