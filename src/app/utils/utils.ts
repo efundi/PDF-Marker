@@ -192,8 +192,8 @@ function calculateCanFinalize(assignmentSettings: AssignmentSettingsInfo, user: 
 
   const allMatch = every(assignmentSettings.submissions, (submission) => {
     return submission.state === SubmissionState.MARKED ||
-      submission.state === SubmissionState.MODERATED ||
-      submission.state === SubmissionState.SENT_FOR_MODERATION;
+      submission.state === SubmissionState.NOT_MARKED ||
+      submission.state === SubmissionState.MODERATED;
   });
 
 
