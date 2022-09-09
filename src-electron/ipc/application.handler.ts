@@ -17,6 +17,8 @@ export function saveFile (event: IpcMainInvokeEvent, filter: FileFilterInfo): Pr
     ]
   }).then(({filePath}) => {
     if (filePath) {
+
+      if(filter.buffer) {
       try {
         return writeFile(filePath, new Buffer(filter.buffer as ArrayBuffer))
           .then(() => {
@@ -24,6 +26,9 @@ export function saveFile (event: IpcMainInvokeEvent, filter: FileFilterInfo): Pr
           });
       } catch (e) {
         return Promise.reject(e.message);
+      }
+      } else {
+        return {selectedPath: filePath};
       }
     } else {
       return { selectedPath: null };

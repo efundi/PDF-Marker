@@ -16,6 +16,8 @@ export interface ShareAssignments {
    */
   assignmentName: string;
 
+  zipPath: string;
+
   /**
    * Submissions to share
    */

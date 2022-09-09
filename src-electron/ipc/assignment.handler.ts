@@ -70,8 +70,7 @@ import {
 } from '@shared/info-objects/submission.info';
 import {getComments, updateCommentsFile} from './comment.handler';
 import {findRubric} from './rubric.handler';
-
-const zipDir = require('zip-dir');
+import {zipDir} from '../zip';
 
 const csvtojson = require('csvtojson');
 
@@ -772,7 +771,7 @@ function writeAssignmentSettingsFor(
     .then((assignmentDirectory) => writeAssignmentSettingsAt(assignmentSettings, assignmentDirectory));
 }
 
-export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: string, location: string): Promise<any> {
+export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: string, location: string, zipFilePath: string): Promise<any> {
   try {
     return Promise.all([
       getConfig(),
@@ -843,18 +842,21 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
         });
         return Promise.all(promises).then(() => {
           return zipDir((workspaceFolder === DEFAULT_WORKSPACE) ? config.defaultPath : config.defaultPath + sep + workspaceFolder,
-            {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(assignmentFolder)) ? true : (path.startsWith((assignmentFolder) + sep))))})
-            .then((buffer) => {
-              return buffer;
+            zipFilePath,
+            '**/!(.marks.json|.settings.json|.zip)'
+            // {filter: (path: string, stat) => (!(/\.marks\.json|\.settings\.json|\.zip$/.test(path)) && ((path.endsWith(assignmentFolder)) ? true : (path.startsWith((assignmentFolder) + sep))))}
+            )
+            .then((outputPath) => {
+              return outputPath;
             }, (err) => {
               console.error('Could not export assignment');
               console.error(err);
               return Promise.reject('Could not export assignment');
             });
         });
-      }).then((buffer) => {
+      }).then((outputPath) => {
         return setDateFinalized(assignmentFolder)
-          .then(() => buffer);
+          .then(() => outputPath);
       });
     });
   } catch (e) {
@@ -865,7 +867,7 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
 
 
 
-export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFolder: string, location: string, rubricName: string): Promise<any> {
+export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFolder: string, location: string, rubricName: string, zipPath: string): Promise<any> {
   try {
     return Promise.all([
       getConfig(),
@@ -950,8 +952,10 @@ export function finalizeAssignmentRubric(event: IpcMainInvokeEvent, workspaceFol
         });
         return Promise.all(promises).then(() => {
           return zipDir((workspaceFolder === DEFAULT_WORKSPACE) ? config.defaultPath : config.defaultPath + sep + workspaceFolder,
-            {filter: (filterPath: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(filterPath)) && ((filterPath.endsWith(assignmentFolder)) ? true : (filterPath.startsWith(assignmentFolder + sep))))})
-            .then((buffer) => {
+            zipPath,
+            '**/!(.marks.json|.settings.json|.zip)'
+            // {filter: (filterPath: string, stat) => (!(/\.marks\.json|.settings.json|\.zip$/.test(filterPath)) && ((filterPath.endsWith(assignmentFolder)) ? true : (filterPath.startsWith(assignmentFolder + sep))))})
+          ).then((buffer) => {
               return buffer;
             }, (err) => {
               console.error('Could not export assignment');
@@ -1023,7 +1027,7 @@ export function shareExport(event: IpcMainInvokeEvent, shareRequest: ShareAssign
             return writeFile(tempAssignmentDirectory + sep + GRADES_FILE, csv);
           })
           .then(() => {
-            return zipDir(tmpDir);
+            return zipDir(tmpDir, shareRequest.zipPath);
           })
           .then((buffer) => {
             cleanupTemp(tmpDir);
