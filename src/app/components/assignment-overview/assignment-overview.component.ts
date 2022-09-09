@@ -362,12 +362,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           extension: ['zip']
         }).subscribe((selectedPath) => {
 
-          if (selectedPath){
+          if (selectedPath) {
             this.busyService.start();
-            console.log(new Date().toISOString());
             this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName, selectedPath.selectedPath).subscribe({
               next: (outputPath: string) => {
-                console.log(new Date().toISOString());
                 this.alertService.success(`Successfully exported to ${outputPath}. You can now upload it to ${this.settings.lmsSelection}.`);
                 this.assignmentService.refreshWorkspaces().subscribe(() => {
                   this.busyService.stop();
@@ -524,10 +522,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
             this.assignmentService.updateAssignmentSettings(updateSettings, this.workspaceName, this.assignmentName)
               .subscribe({
                 next: () => {
-                  console.log(new Date().toISOString() + " start")
                   this.assignmentService.exportAssignment(shareRequest).subscribe({
                     next: (filePath) => {
-                      console.log(new Date().toISOString() + " done")
                       this.alertService.success(`Successfully exported ${filePath}.`);
                       this.refresh();
                       this.busyService.stop();
@@ -547,20 +543,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       }
     });
   }
-  //
-  // private saveData(data: Uint8Array, filename: string) {
-  //   this.alertService.clear();
-  //   this.busyService.start();
-  //   this.appService.saveFile({ filename, buffer: data, name: 'Zip File', extension: ['zip']})
-  //     .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-  //       this.busyService.stop();
-  //       if (appSelectedPathInfo.selectedPath) {
-  //         this.alertService.success(`Successfully exported ${filename}.`);
-  //       } else if (appSelectedPathInfo.error) {
-  //         this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
-  //       }
-  //     });
-  // }
+
 
   ngAfterViewInit() {
     this.sortSubscription = this.sort.sortChange.subscribe((change) => {
@@ -645,10 +628,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         .subscribe({
           next: () => {
             this.assignmentService.generateAllocationZipFiles(this.workspaceName, this.assignmentName, exportPath).subscribe({
-              next: (generateResult) => {
+              next: () => {
                 this.refresh();
                 this.alertService.success(`Markers have been allocated.`);
-                console.log(generateResult);
                 this.busyService.stop();
               },
               error: (error) => {

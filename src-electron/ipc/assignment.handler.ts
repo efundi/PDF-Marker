@@ -323,10 +323,13 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
         return savePromise.then(() => {
           const submission = find(assignmentSettings.submissions, {directoryName: submissionDirectoryName});
           submission.mark = totalMark;
-          if (isNil(totalMark)) {
-            submission.state = isNil(submission.allocation) ? SubmissionState.NEW : SubmissionState.ASSIGNED_TO_MARKER;
-          } else {
-            submission.state = SubmissionState.MARKED;
+          if (!(submission.state === SubmissionState.MODERATED || submission.state === SubmissionState.SENT_FOR_MODERATION)) {
+            // Only update the submission state if it s not being moderated
+            if (isNil(totalMark)) {
+              submission.state = isNil(submission.allocation) ? SubmissionState.NEW : SubmissionState.ASSIGNED_TO_MARKER;
+            } else {
+              submission.state = SubmissionState.MARKED;
+            }
           }
           if (assignmentSettings.state !== AssignmentState.IN_PROGRESS) {
             assignmentSettings.state = AssignmentState.IN_PROGRESS;

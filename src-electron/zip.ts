@@ -42,7 +42,7 @@ export function zipDir(directory: string, destination: string): Promise<string> 
     archive.pipe(output);
 
 // append a file from stream
-    archive.glob('**/*', {cwd: directory});
+    archive.glob('**/*', {cwd: directory, dot: true});
 
 // finalize the archive (ie we are done appending files but streams have to finish yet)
 // 'close', 'end' or 'finish' may be fired right after calling this method so register to them beforehand

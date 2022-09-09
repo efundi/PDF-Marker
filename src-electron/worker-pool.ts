@@ -70,13 +70,12 @@ export class WorkerPool extends EventEmitter {
     while (this.freeWorkers.length > 0) {
       const worker = this.freeWorkers.pop();
       this.workers.splice(this.workers.indexOf(worker), 1);
-      worker.terminate().then(() => console.log("Worker removed"));
+      worker.terminate();
     }
   }
 
   private addNewWorker() {
 
-    console.log('Adding worker: ' + this.workers.length);
     const worker = new Worker(__dirname + sep + 'pdfm-web-worker.js');
     worker.on('message', (result) => {
       // In case of success: Call the callback that was passed to `runTask`,
