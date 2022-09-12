@@ -347,51 +347,52 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
     const shouldFinalizeAndExportFn = (shouldFinalizeAndExport: boolean) => {
       if (shouldFinalizeAndExport) {
+        this.alertService.clear();
         this.busyService.start();
-        if (!isNil(this.assignmentSettings.rubric)) {
-          this.assignmentService.finalizeAndExportRubric(this.workspaceName, this.assignmentName, this.assignmentSettings.rubric)
-            .subscribe({
-              next: (data: Uint8Array) => {
-                this.onSuccessfulExport(data);
+        this.appService.saveFile({
+          filename: this.assignmentName + '.zip',
+          name: 'Zip File',
+          extension: ['zip']
+        }).subscribe((appSelectedPathInfo) => {
+          if (isNil(appSelectedPathInfo.selectedPath)) {
+            this.busyService.stop();
+            return;
+          }
+
+          if (!isNil(this.assignmentSettings.rubric)) {
+            this.assignmentService.finalizeAndExportRubric(this.workspaceName, this.assignmentName, this.assignmentSettings.rubric, appSelectedPathInfo.selectedPath)
+              .subscribe({
+                next: (path: string) => {
+                  this.assignmentService.refreshWorkspaces().subscribe(() => {
+                    this.busyService.stop();
+                    this.getAssignmentSettings();
+                  });
+                  this.alertService.success(`Successfully exported ${path}. You can now upload it to ${this.settings.lmsSelection}.`);
+                },
+                error: (responseError) => {
+                  this.alertService.error(responseError);
+                  this.busyService.stop();
+                }
+              });
+          } else {
+            this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName, appSelectedPathInfo.selectedPath).subscribe({
+              next: (path: string) => {
+                this.assignmentService.refreshWorkspaces().subscribe(() => {
+                  this.busyService.stop();
+                  this.getAssignmentSettings();
+                });
+                this.alertService.success(`Successfully exported ${path}. You can now upload it to ${this.settings.lmsSelection}.`);
               },
               error: (responseError) => {
                 this.alertService.error(responseError);
                 this.busyService.stop();
               }
             });
-        } else {
-          this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName).subscribe({
-            next: (blob: Uint8Array) => {
-              this.onSuccessfulExport(blob);
-            },
-            error: (responseError) => {
-              this.alertService.error(responseError);
-              this.busyService.stop();
-            }
-          });
-        }
+          }
+        });
       }
     };
     this.appService.createDialog(YesAndNoConfirmationDialogComponent, config, shouldFinalizeAndExportFn);
-  }
-
-  private onSuccessfulExport(blob: Uint8Array) {
-    this.alertService.clear();
-    const fileName: string = this.assignmentName;
-    this.appService.saveFile({ filename: fileName, buffer: blob, name: 'Zip File', extension: ['zip']})
-      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        if (appSelectedPathInfo.selectedPath) {
-          this.alertService.success(`Successfully exported ${fileName}. You can now upload it to ${this.settings.lmsSelection}.`);
-        } else if (appSelectedPathInfo.error) {
-          this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
-        }
-
-        this.assignmentService.refreshWorkspaces().subscribe(() => {
-          this.busyService.stop();
-          this.getAssignmentSettings();
-        });
-      });
-
   }
 
   manageStudents() {
@@ -464,47 +465,46 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   }
 
   share() {
-    const shareRequest: ShareAssignments = {
-      assignmentName: this.assignmentName,
-      workspaceFolder: this.workspaceName,
-      submissions : this.selection.selected.map((selection) => {
-        return {
-          directoryName: selection.submissionDirectoryName,
-          studentName: selection.studentName,
-          studentNumber: selection.studentNumber
-        };
-      })
-    };
-
-    this.busyService.start();
-    this.assignmentService.shareExport(shareRequest).subscribe({
-      next: (data) => {
-        this.onSuccessfulShareExport(data);
-        this.busyService.stop();
-      },
-      error: (error) => {
-        this.alertService.error(error);
-        this.busyService.stop();
-      }
-    });
-  }
-
-  private onSuccessfulShareExport(data: Uint8Array) {
     this.alertService.clear();
-    this.busyService.start();
     const fileName: string = this.assignmentName + '_share.zip';
-    this.appService.saveFile({ filename: fileName, buffer: data, name: 'Zip File', extension: ['zip']})
+    this.busyService.start();
+    this.appService.saveFile({ filename: fileName,  name: 'Zip File', extension: ['zip']})
       .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        this.busyService.stop();
-        if (appSelectedPathInfo.selectedPath) {
-          this.alertService.success(`Successfully exported ${fileName}.`);
-        } else if (appSelectedPathInfo.error) {
+        if (appSelectedPathInfo.error) {
           this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
+          return;
+        } else if (isNil(appSelectedPathInfo.selectedPath)) {
+          this.busyService.stop();
+          return;
         }
+
+        const shareRequest: ShareAssignments = {
+          assignmentName: this.assignmentName,
+          workspaceFolder: this.workspaceName,
+          zipPath: appSelectedPathInfo.selectedPath,
+          submissions: this.selection.selected.map((selection) => {
+            return {
+              directoryName: selection.submissionDirectoryName,
+              studentName: selection.studentName,
+              studentNumber: selection.studentNumber
+            };
+          })
+        };
+
+        this.assignmentService.shareExport(shareRequest).subscribe({
+          next: (data) => {
+            this.alertService.success(`Successfully exported ${data}.`);
+            this.busyService.stop();
+          },
+          error: (error) => {
+            this.alertService.error(error);
+            this.busyService.stop();
+          }
+        });
       });
   }
 
-  ngAfterViewInit() {
+   ngAfterViewInit() {
     this.sortSubscription = this.sort.sortChange.subscribe((change) => {
       localStorage.setItem('assignment-overview-sort', JSON.stringify({
         id: change.active,

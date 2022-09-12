@@ -12,14 +12,14 @@ export interface AssignmentIpcService {
   createAssignment(createAssignmentInfo: CreateAssignmentInfo): Promise<IpcResponse<any>>;
   updateAssignment(updateRequest: UpdateAssignment): Promise<IpcResponse<any>>;
   saveMarks(location: string, marks: SubmissionInfo): Promise<IpcResponse<any>>;
-  finalizeAssignment(workspaceFolder: string, assignmentName: string): Promise<IpcResponse<Uint8Array>>;
-  finalizeAssignmentRubric(workspaceFolder: string, assignmentName: string, rubricName: string): Promise<IpcResponse<Uint8Array>>;
+  finalizeAssignment(workspaceFolder: string, assignmentName: string, zipFilePath: string): Promise<IpcResponse<string>>;
+  finalizeAssignmentRubric(workspaceFolder: string, assignmentName: string, rubricName: string, zipFilePath: string): Promise<IpcResponse<string>>;
   getAssignmentSettings(workspaceName: string, location: string): Promise<IpcResponse<any>>;
   getAssignmentGlobalSettings(location: string): Promise<IpcResponse<any>>;
   getMarks(location: string): Promise<IpcResponse<SubmissionInfo>>;
   getGrades(workspaceName: string, assignmentName: string): Promise<IpcResponse<any>>;
   updateAssignmentSettings(updatedSettings: any, workspaceName: string, assignmentName: string): Promise<IpcResponse<any>>;
-  shareExport(shareRequest: ShareAssignments): Promise<IpcResponse<any>>;
+  shareExport(shareRequest: ShareAssignments): Promise<IpcResponse<string>>;
   updateAssignmentRubric(workspaceName: string, assignmentName: string, rubricName: string): Promise<IpcResponse<IRubric>>;
   getPdfFile(location: string): Promise<IpcResponse<Uint8Array>>;
 }

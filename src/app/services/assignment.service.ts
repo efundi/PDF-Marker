@@ -155,16 +155,16 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.getMarks(location));
   }
 
-  shareExport(shareRequest: ShareAssignments): Observable<Uint8Array> {
+  shareExport(shareRequest: ShareAssignments): Observable<string> {
     return fromIpcResponse(this.assignmentApi.shareExport(shareRequest));
   }
 
-  finalizeAndExport(workspaceName: string = null, assignmentName: string): Observable<Uint8Array> {
-    return fromIpcResponse(this.assignmentApi.finalizeAssignment(workspaceName, assignmentName));
+  finalizeAndExport(workspaceName: string, assignmentName: string, zipFilePath: string): Observable<string> {
+    return fromIpcResponse(this.assignmentApi.finalizeAssignment(workspaceName, assignmentName, zipFilePath));
   }
 
-  finalizeAndExportRubric(workspaceName: string, assignmentName: string, assignmentRubric: IRubric): Observable<Uint8Array> {
-    return fromIpcResponse(this.assignmentApi.finalizeAssignmentRubric(workspaceName, assignmentName, assignmentRubric.name));
+  finalizeAndExportRubric(workspaceName: string, assignmentName: string, assignmentRubric: IRubric, zipFilePath: string): Observable<string> {
+    return fromIpcResponse(this.assignmentApi.finalizeAssignmentRubric(workspaceName, assignmentName, assignmentRubric.name, zipFilePath));
   }
 
   createAssignment(createAssignmentInfo: CreateAssignmentInfo): Observable<any> {
