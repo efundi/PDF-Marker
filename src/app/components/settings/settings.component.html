@@ -3,13 +3,16 @@
   <form [formGroup]="settingsForm">
     <h1 class="mt-3"><mat-icon color="primary" class="mat-icon-36">settings</mat-icon>&nbsp;Settings</h1>
     <mat-divider class="mb-3"></mat-divider>
-    <mat-form-field>
-      <div class="pdf-marker-file-upload">
-        <button type="button" mat-raised-button (click)="setWorkingDirectory()">Browse</button>
-        &nbsp;&nbsp;
-        <input type="text" matInput formControlName="defaultPath" id="pdf-marker-upload-display" readonly placeholder="Default workspace">
-      </div>
-    </mat-form-field>
+
+
+    <div id="pdf-marker-file-settings-wrapper">
+      <button type="button" mat-raised-button (click)="setWorkingDirectory()">Browse</button>&nbsp;&nbsp;
+      <mat-form-field class="w-75">
+        <div class="pdf-marker-file-upload">          &nbsp;&nbsp;
+          <input type="text" matInput formControlName="defaultPath" id="pdf-marker-upload-display" readonly placeholder="Default workspace">
+        </div>
+      </mat-form-field>
+    </div>
 
     <div class="pdf-spacer"></div>
 
