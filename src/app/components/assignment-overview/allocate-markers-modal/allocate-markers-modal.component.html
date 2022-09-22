@@ -11,7 +11,6 @@
     <div class="d-flex"><mat-icon color="primary">insert_drive_file</mat-icon>&nbsp;<span class="text-black-50">{{submissions.length}} Submission</span></div>
   </div>
 
-
   <form [formGroup]="formGroup">
     <div>Choose your marker group</div>
     <mat-form-field cdkTrapFocus>
@@ -52,22 +51,22 @@
         </div>
       </mat-form-field>
     </div>
-
-    <div class="pdf-spacer"></div>
-
-    <div *ngIf="zipFileCount">
-      <span id="zip-file-count">{{ zipFileCount }} zip files will be downloaded to your chosen directory.</span>
+    <div class="row">
+      <div class="col-sm-10 d-flex align-self-end" *ngIf="zipFileCount">
+        <span id="zip-file-count">{{ zipFileCount }} zip files will be downloaded to your chosen directory.</span>
+      </div>
+      <div mat-dialog-actions class="col justify-content-end">
+        <button
+          [disabled]="formGroup.invalid"
+          color="primary"
+          type="submit"
+          mat-button
+          mat-raised-button
+          (click)="submit()">Submit</button>&nbsp;&nbsp;&nbsp;
+      </div>
     </div>
 
   </form>
 
 </mat-dialog-content>
-<div mat-dialog-actions class="justify-content-end">
-  <button
-    [disabled]="formGroup.invalid"
-    color="primary"
-    type="submit"
-    mat-button
-    mat-raised-button
-    (click)="submit()">Submit</button>&nbsp;&nbsp;&nbsp;
-</div>
+
