@@ -7,14 +7,21 @@ import {ImportInfo} from '@shared/info-objects/import.info';
 import {isNil} from 'lodash';
 import {readFile} from 'fs/promises';
 import {getRubrics, writeRubricFile} from './rubric.handler';
-import {EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, NOT_PROVIDED_RUBRIC} from '../constants';
+import {
+  EXTRACTED_ZIP,
+  EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
+  NOT_PROVIDED_RUBRIC,
+  STUDENT_DIRECTORY_NO_NAME_REGEX,
+  STUDENT_DIRECTORY_REGEX
+} from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {deleteFolderRecursive, extractAssignmentZipFile, isFolder} from '../utils';
 
-import JSZip from 'jszip';
+import JSZip, {JSZipObject} from 'jszip';
 import {getWorkingDirectory, writeAssignmentSettings} from './workspace.handler';
 import {SakaiConstants} from '@shared/constants/sakai.constants';
 import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
+import {FEEDBACK_FOLDER, GRADES_FILE, MARK_FILE, SUBMISSION_FOLDER} from '@shared/constants/constants';
 
 
 function existingFolders(workspace: string): Promise<string[]> {
@@ -173,18 +180,70 @@ function readZipFile(file: string): Promise<JSZip> {
 }
 
 function validateZipAssignmentFile(file: string): Promise<any> {
-  return readZipFile(file).then((zip) => {
-    const filePaths = Object.keys(zip.files);
+  return readZipFile(file).then((zipObject) => {
+
+    const zipSubmissionDirectoryNames: string[] = [];
+    const filePaths = Object.keys(zipObject.files);
+    const zipAssignmentName = filePaths[0].split('/')[0];
     const fileNames = SakaiConstants.assignmentRootFiles;
-    for (const filePath of filePaths) {
-      const path = filePath.split('/');
-      if (path[1] !== undefined && fileNames.indexOf(path[1]) !== -1) {
-        return true;
+
+    for (const zipFilePath in zipObject.files) {
+
+      if (!zipObject.files[zipFilePath]) {
+        continue;
+      }
+      const zipFile: JSZipObject = zipObject.files[zipFilePath];
+      const zipFilePathParts = zipFilePath.split('/');
+
+      if (zipFilePathParts[0] !== zipAssignmentName) {
+        // Check that the file path starts with the assignment name
+        return Promise.reject(`Zip contains more than one root directory. ${zipFilePath}`);
+      }
+
+      if (zipFile.dir && zipFilePath === zipAssignmentName + '/') {
+        continue; // We found the root directory
+      }
+
+      if (zipFilePathParts[1] === GRADES_FILE) {
+        continue; // We found a grades file, nothing further to validate
+      }
+
+      if (!(zipFilePathParts[1].match(STUDENT_DIRECTORY_REGEX) || zipFilePath[1].match(STUDENT_DIRECTORY_NO_NAME_REGEX))) {
+        // Check that the second path is a student submission path
+        return Promise.reject(`Zip contains directories that are not submissions. ${zipFilePath}`);
+      }
+
+      if (zipFilePathParts[2] === SakaiConstants.commentsFileName || zipFilePathParts[2] === SakaiConstants.timestampFileName) {
+        continue; // We found a commentsFileName or timestampFileName file, nothing further to validate
+      }
+
+      if (zipFile.dir && zipFilePathParts.length === 3) {
+        continue; // We found the submission root directory
+      }
+
+      if (zipFilePathParts[2] !== FEEDBACK_FOLDER && zipFilePathParts[2] !== SUBMISSION_FOLDER) {
+        // Check that the second path is a student submission path
+        return Promise.reject(`Zip contains directories that are not feedback or submission folders. ${zipFilePath}`);
+      }
+
+      if (zipFile.dir && zipFilePathParts.length === 4) {
+        continue; // We found the feedback or submission root directory
+      }
+
+      if (zipFile.dir && zipFilePathParts.length > 4) {
+        // The path is too long to be valid
+        return Promise.reject(`Zip contains directories invalid directory path. ${zipFilePath}`);
+      }
+
+      if (!zipFile.dir && zipFilePathParts.length > 5) {
+        // The path is too long to be valid
+        return Promise.reject(`Zip contains directories invalid file path. ${zipFilePath}`);
       }
     }
 
     // Could not find at least on sakai file
-   return Promise.reject(SakaiConstants.formatErrorMessage);
+    // return Promise.reject(SakaiConstants.formatErrorMessage);
+    return Promise.resolve();
   });
 }
 
