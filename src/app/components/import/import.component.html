@@ -8,7 +8,7 @@
     <mat-label>Select Assignment Type</mat-label>
     <div class="pdf-spacer"></div>
     <div class="pdf-marker-assignmentType-container">
-      <mat-select formControlName="assignmentType"  class="form-control select" ngModel placeholder="Choose Assignment Type">
+      <mat-select formControlName="assignmentType" class="form-control select" ngModel placeholder="Choose Assignment Type" required>
         <mat-option *ngFor="let assignmentType of assignmentTypes" [value]="assignmentType.name" >
           {{ assignmentType.name }}
         </mat-option>
