@@ -221,7 +221,7 @@ function validateZipAssignmentFile(file: string): Promise<any> {
         continue; // We found the submission root directory
       }
 
-      if (zipFilePathParts[2] !== FEEDBACK_FOLDER && zipFilePathParts[2] !== SUBMISSION_FOLDER) {
+      if (zipFile.dir && zipFilePathParts[2] !== FEEDBACK_FOLDER && zipFilePathParts[2] !== SUBMISSION_FOLDER) {
         // Check that the second path is a student submission path
         return Promise.reject(`Zip contains directories that are not feedback or submission folders. ${zipFilePath}`);
       }
