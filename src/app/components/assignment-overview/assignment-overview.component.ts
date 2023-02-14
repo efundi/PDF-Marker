@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {forkJoin, mergeMap, Observable, Subscription, tap} from 'rxjs';
+import {forkJoin, mergeMap, Observable, Subscription, tap, of} from 'rxjs';
 import {AppService} from '../../services/app.service';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
@@ -835,14 +835,20 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         };
         submission.state = SubmissionState.ASSIGNED_TO_MARKER;
       });
+
       this.assignmentService.updateAssignmentSettings(updateAssignmentSettings, this.workspaceName, this.assignmentName)
         .pipe(
-          mergeMap(() => this.appService.saveFile({
-              filename: this.assignmentName + '_' + marker.email + '_reallocation.zip',
-              name: 'Zip File',
-              extension: ['zip']
-            })
-          )
+          mergeMap(() => {
+            if(marker.id !== this.settings.user.id) {
+              return this.appService.saveFile({
+                filename: this.assignmentName + '_' + marker.email + '_reallocation.zip',
+                name: 'Zip File',
+                extension: ['zip']
+              });
+            }
+            return of({selectedPath: null});
+            }
+          ),
         ).subscribe( {
         next: (selectedPathInfo) => {
           this.refresh();
