@@ -272,7 +272,9 @@ function calculateCanSendForModeration(assignmentSettings: AssignmentSettingsInf
 
   const allMatch = every(assignmentSettings.submissions, (submission) => {
     // Not marked state checked here separately because the function should be enabled as a whole
-    return calculateCanModerateSubmission(submission) || submission.state === SubmissionState.NOT_MARKED ;
+    return calculateCanModerateSubmission(submission)
+      || submission.state === SubmissionState.NOT_MARKED
+      || submission.state === SubmissionState.NO_SUBMISSION;
   });
 
   return allMatch;
