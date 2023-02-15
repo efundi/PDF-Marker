@@ -78,7 +78,7 @@ function upgradeMarks(assignmentSettings: AssignmentSettingsInfo, studentFolderF
 
     return loadMarksAt(studentFolderFullPath).then((marks) => {
       if (isNil(marks)) {
-        return Promise<SubmissionInfo>.resolve(null);
+        return Promise.resolve(null);
       }
       let submissionInfo: SubmissionInfo;
       if (marks.version !== SubmissionInfoVersion) {

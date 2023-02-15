@@ -453,7 +453,7 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
       return Promise.reject(NOT_PROVIDED_RUBRIC);
     }
   }
-  let rubricPromise: Promise<IRubric> = Promise<IRubric>.resolve(null);
+  let rubricPromise: Promise<IRubric> = Promise.resolve(null);
   if (!createInfo.noRubric) {
     rubricPromise = findRubric(createInfo.rubric.trim());
   }
