@@ -13,7 +13,7 @@ import {
   updateAssignmentSettings,
   generateAllocationZipFiles,
   isMarkerAllocated,
-  handleExportAssignment
+  handleExportAssignment, convertToPdf
 } from './src-electron/ipc/assignment.handler';
 import {
   deleteRubric,
@@ -64,7 +64,6 @@ const logger = require('electron-log');
 
 // Only auto download for full (non pre-releases)
 autoUpdater.autoDownload = !autoUpdater.allowPrerelease;
-
 runSettingsMigration()
   .then(migrateAssignmentSettings)
   .then(migrateMarks)
@@ -193,6 +192,7 @@ try {
     ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
     ipcMain.handle('assignments:isMarkerAllocated', toIpcResponse(isMarkerAllocated));
     ipcMain.handle('assignments:generateAllocationZipFiles', toIpcResponse(generateAllocationZipFiles));
+    ipcMain.handle('assignments:convertToPdf', toIpcResponse(convertToPdf));
 
     // Rubric API
     ipcMain.handle('rubrics:selectRubricFile', toIpcResponse(selectRubricFile));

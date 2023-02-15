@@ -185,4 +185,8 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.isMarkerAllocated(markerId));
   }
 
+  convertToPdf(workspaceName: string, assignmentName: string, filePath: string): Observable<string> {
+    return fromIpcResponse(this.assignmentApi.convertToPdf(workspaceName, assignmentName, filePath));
+  }
+
 }

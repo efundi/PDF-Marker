@@ -1,4 +1,13 @@
-import {existsSync, mkdtempSync, rmSync, statSync, unlinkSync} from 'fs';
+import {
+  accessSync,
+  constants,
+  existsSync,
+  mkdtempSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+  writeFileSync
+} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
 import {checkAccess, isFolder, isJson, isNullOrUndefinedOrEmpty} from '../utils';
@@ -29,7 +38,8 @@ import {
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {ExportAssignmentsRequest, ExportFormat} from '@shared/info-objects/export-assignments-request';
 import * as os from 'os';
-import {copy, readdir} from 'fs-extra';
+import {cpus} from 'os';
+import {copy, move, readdir} from 'fs-extra';
 import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {
   FeedbackAttachments,
@@ -57,15 +67,8 @@ import {getComments, updateCommentsFile} from './comment.handler';
 import {findRubric} from './rubric.handler';
 import {GradesCSV, StudentGrade} from '@shared/info-objects/grades';
 import {WorkerPool} from '../worker-pool';
-import {zipDir} from '../zip';
-import {
-  AnnotateSubmissionTaskDetails,
-  FinalizeSubmissionTaskDetails,
-  MarkerExportTaskDetails
-} from '../web-worker/task-detail';
-
-const pool = WorkerPool.getInstance();
-
+import {libreConvertToPdf} from '../libreoffice-convert';
+const zipDir = require('zip-dir');
 const csvtojson = require('csvtojson');
 
 export function getAssignments(): Promise<Workspace[]> {
@@ -1057,4 +1060,32 @@ export function isMarkerAllocated(event: IpcMainInvokeEvent, markerId: string): 
       });
     });
   });
+}
+
+
+export function convertToPdf(
+  event: IpcMainInvokeEvent,
+  workspaceName: string,
+  assignmentName: string,
+  filePath: string): Promise<string> {
+
+  return workspaceRelativePathToAbsolute(filePath).then((fileFullPath) => {
+    const directory = dirname(fileFullPath);
+    const ext = extname(fileFullPath);
+    const fileName = basename(fileFullPath, ext);
+
+    const outputPath = directory + sep + fileName + '.pdf';
+
+    return libreConvertToPdf(fileFullPath, outputPath)
+      .then(() => {
+        // Workspace relative path
+        const b = dirname(filePath);
+        return b + '/' + fileName + '.pdf';
+      }, (error) => {
+        console.error(error);
+        return Promise.reject('Failed to convert to PDF');
+      });
+  });
+
+
 }

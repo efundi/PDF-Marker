@@ -40,7 +40,8 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   updateAssignmentRubric: (workspaceName: string, assignmentName: string, rubricName: string, ) => ipcRenderer.invoke('assignments:updateAssignmentRubric', workspaceName, assignmentName, rubricName),
   getPdfFile: (location: string) => ipcRenderer.invoke('assignments:getPdfFile', location),
   generateAllocationZipFiles: (workspaceName: string, assignmentName: string, exportPath: string) => ipcRenderer.invoke('assignments:generateAllocationZipFiles', workspaceName, assignmentName, exportPath),
-  isMarkerAllocated: (markerId: string) => ipcRenderer.invoke('assignments:isMarkerAllocated', markerId)
+  isMarkerAllocated: (markerId: string) => ipcRenderer.invoke('assignments:isMarkerAllocated', markerId),
+  convertToPdf: (workspaceName: string, assignmentName: string, filePath: string) => ipcRenderer.invoke('assignments:convertToPdf', workspaceName, assignmentName, filePath)
 } as AssignmentIpcService);
 
 
