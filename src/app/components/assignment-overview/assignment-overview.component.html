@@ -142,7 +142,8 @@
       <th mat-header-cell *matHeaderCellDef mat-sort-header="fullName"> Student Name </th>
       <td mat-cell *matCellDef="let element" >
         <div
-          class="pdf-marker-assignment-overview-student-name cursor-pointer"
+          class="pdf-marker-assignment-overview-student-name"
+          [class.cursor-pointer]="element.state !== SubmissionState.NO_SUBMISSION"
           (click)="onSelectedPdf(element)">{{element.fullName}}
         </div>
         <div class="pdf-marker-assignment-overview-student-number">{{element.studentNumber}}</div>
@@ -196,6 +197,7 @@
         <span *ngIf="element.state === SubmissionState.NOT_MARKED">Not Marked</span>
         <span *ngIf="element.state === SubmissionState.SENT_FOR_MODERATION">Sent for Moderation</span>
         <span *ngIf="element.state === SubmissionState.MODERATED">Moderated</span>
+        <span *ngIf="element.state === SubmissionState.NO_SUBMISSION">No Submission</span>
       </td>
     </ng-container>
 

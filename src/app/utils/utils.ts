@@ -193,7 +193,8 @@ function calculateCanFinalize(assignmentSettings: AssignmentSettingsInfo, user: 
   const allMatch = every(assignmentSettings.submissions, (submission) => {
     return submission.state === SubmissionState.MARKED ||
       submission.state === SubmissionState.NOT_MARKED ||
-      submission.state === SubmissionState.MODERATED;
+      submission.state === SubmissionState.MODERATED ||
+      submission.state === SubmissionState.NO_SUBMISSION;
   });
 
 
@@ -219,6 +220,11 @@ export function calculateOpenInMarking(assignmentSettings: AssignmentSettingsInf
 }
 
 export function calculateCanEditMarking(assignmentSettings: AssignmentSettingsInfo, user: Marker, submission: Submission): boolean {
+
+  if (submission.state === SubmissionState.NO_SUBMISSION) {
+    // Nothing to mark if there is no submission
+    return false;
+  }
 
   if (assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED) {
 

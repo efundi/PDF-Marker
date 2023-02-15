@@ -167,7 +167,7 @@ pdf-marker-rubric-criteria {
 /** Place the progress bar over other elements to avoid the page jumping */
 .mat-progress-bar{
   position: absolute !important;
-  z-index: 99999;
+  z-index: 1000;
 }
 .mat-header-cell{
   font-size: 14px;

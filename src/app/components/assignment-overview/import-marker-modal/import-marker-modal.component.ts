@@ -98,6 +98,10 @@ export class ImportMarkerModalComponent implements OnInit {
 
 
     const markersMap = reduce(this.assignmentSettings.submissions, (total, submission) => {
+      if (isNil(submission.allocation)) {
+        // Submission is not allocated
+        return total;
+      }
       const markerId = submission.allocation.id;
       if (markerId === this.settings.user.id) {
         // Don't add self to the list

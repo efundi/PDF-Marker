@@ -460,7 +460,7 @@ function extractAssignmentZipFile(
             submission.state = SubmissionState.NEW;
           }
 
-          return promise.then(() => {
+          return promise = promise.then(() => {
             return stream2buffer(file.nodeStream())
               .then((content) => PDFDocument.load(content))
               .then((pdfDoc) => pdfDoc.save())
@@ -492,7 +492,7 @@ function extractAssignmentZipFile(
           forEach(grades.studentGrades, (studentGrade) => {
             const submission = find(submissions, {studentId: studentGrade.id});
             if (isNil(submission)) {
-              LOG.warn(`Found student ID in grades.csv which is not in the assignment submissions list "${studentGrade.id}"`)
+              LOG.warn(`Found student ID in grades.csv which is not in the assignment submissions list "${studentGrade.id}"`);
             } else {
               submission.mark = studentGrade.grade;
               submission.lmsStatusText = studentGrade.lateSubmission;
@@ -604,7 +604,7 @@ export function lectureImport(event: IpcMainInvokeEvent, importInfo: LectureImpo
               submission.state = zipSubmission.state;
             });
             return writeAssignmentSettingsAt(assignmentSettings, assignmentDirectory);
-          })
+          });
       });
     });
 }
