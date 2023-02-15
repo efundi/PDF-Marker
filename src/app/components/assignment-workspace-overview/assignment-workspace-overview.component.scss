@@ -14,11 +14,11 @@ form {
 
 table {
   width: 100%;
-  .mat-cell {
+  .mat-mdc-cell {
     color: #888 !important;
   }
 
-  .mat-header-cell {
+  .mat-mdc-header-cell {
     width: calc(100% / 4);
   }
 

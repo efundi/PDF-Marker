@@ -10,18 +10,21 @@
     "module": "esnext",
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "es2020",
+    "target": "ES2022",
     "typeRoots": [
       "node_modules/@types"
     ],
     "paths": {
-      "@shared/*": ["./src/shared/*"],
+      "@shared/*": [
+        "./src/shared/*"
+      ]
     },
     "lib": [
       "es2018",
       "esnext",
       "dom"
-    ]
+    ],
+    "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,

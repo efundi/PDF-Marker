@@ -8,7 +8,7 @@ form {
     display: flex;
     align-items: flex-start;
 
-    .mat-form-field {
+    .mat-mdc-form-field {
       width: 25%;
     }
 
@@ -50,7 +50,7 @@ form {
     flex: 1 1 auto;
     justify-content: space-between;
 
-    .mat-form-field {
+    .mat-mdc-form-field {
       flex: 1;
       flex-grow: unset;
     }

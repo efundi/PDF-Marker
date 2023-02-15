@@ -3,9 +3,9 @@
 /**
  Override material zero padding with bootstrap padding
  */
-th.mat-header-cell,
-td.mat-cell,
-td.mat-footer-cell{
+th.mat-mdc-header-cell,
+td.mat-mdc-cell,
+td.mat-mdc-footer-cell{
   padding: $table-cell-padding-y $table-cell-padding-x !important;
 }
 

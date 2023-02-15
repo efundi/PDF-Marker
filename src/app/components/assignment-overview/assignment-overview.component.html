@@ -19,7 +19,6 @@
         color="primary"
         *ngIf="assignmentSettings?.sourceFormat === SourceFormat.MANUAL"
         [disabled]="!permissions.canManageSubmissions"
-        mat-button
         mat-icon-button
         matTooltip="Manage Submissions"
         (click)="manageStudents()">
@@ -28,7 +27,6 @@
       <button
         color="primary"
         *ngIf="assignmentSettings?.rubric"
-        mat-button
         mat-icon-button
         matTooltip="Manage Rubric"
         (click)="viewRubric()">
@@ -38,7 +36,6 @@
         *ngIf="permissions.showAllocate"
         [disabled]="!permissions.canAllocate"
         color="primary"
-        mat-button
         mat-icon-button
         matTooltip="Allocate Markers"
         (click)="allocateMarkers()">
@@ -48,7 +45,6 @@
         *ngIf="permissions.showReAllocate"
         [disabled]="!permissions.canReAllocate || !selection.hasValue()"
         color="primary"
-        mat-button
         mat-icon-button
         matTooltip="Reallocate Markers"
         (click)="reallocateMarkers()">
@@ -59,7 +55,6 @@
         *ngIf="permissions.showImport"
         [disabled]="!permissions.canImport"
         color="primary"
-        mat-button
         mat-icon-button
         matTooltip="Import from Marker"
         (click)="importMarkerFile()">
@@ -69,7 +64,6 @@
         *ngIf="!permissions.canExportReview"
         color="primary"
         [disabled]="!isSettings || !permissions.canFinalize"
-        mat-button
         mat-icon-button
         matTooltip="Finalise and Export Assignment"
         (click)="onFinalizeAndExport($event)">
@@ -79,7 +73,6 @@
         *ngIf="(permissions.showSendForModeration && !permissions.canVerifyModeration) || (permissions.showSendForModeration && selection.hasValue())"
         [disabled]="!permissions.canSendForModeration || !selection.hasValue()"
         color="primary"
-        mat-button
         mat-icon-button
         matTooltip="Send for moderation"
         (click)="exportForModeration()">
@@ -88,7 +81,6 @@
       <button
         *ngIf="permissions.canVerifyModeration && !selection.hasValue()"
         color="primary"
-        mat-button
         mat-icon-button
         matTooltip="Verify moderation"
         (click)="verifyModeration()">
@@ -104,7 +96,6 @@
         *ngIf="permissions.canExportReview                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "
         color="primary"
         [disabled]="!isSettings"
-        mat-button
         mat-icon-button
         matTooltip="Export for review"
         (click)="onExportForReview($event)">

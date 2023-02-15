@@ -2,6 +2,7 @@
 
 @import '@material-design-icons/font';
 @import 'scss/mixins';
+@include mat.all-component-typographies();
 @include mat.core();
 
 @import "scss/variables";
@@ -54,14 +55,14 @@ html, body {
   --pdf-marker-secondary: #{$pdf-marker-secondary};
 }
 
-.mat-dialog-container {
+.mat-mdc-dialog-container {
   padding-top: 0 !important;
 }
 
 body {
 
   .mat-drawer-content,
-  .mat-dialog-container{
+  .mat-mdc-dialog-container{
     @include scrollbar();
   }
 }
@@ -105,8 +106,8 @@ body {
 }
 
 
-.mat-menu-panel,
-.mat-dialog-content {
+.mat-mdc-menu-panel,
+.mat-mdc-dialog-content {
   @include scrollbar();
 }
 
@@ -143,11 +144,11 @@ pdf-marker-file-explorer-modal {
 }
 
 
-.mat-paginator-container {
+.mat-mdc-paginator-container {
   justify-content: flex-start !important;
 }
 
-.mat-dialog-container {
+.mat-mdc-dialog-container {
   /*background: #F5F5F5 !important;*/
 }
 
@@ -165,11 +166,11 @@ pdf-marker-rubric-criteria {
 }
 
 /** Place the progress bar over other elements to avoid the page jumping */
-.mat-progress-bar{
+.mat-mdc-progress-bar{
   position: absolute !important;
   z-index: 1000;
 }
-.mat-header-cell{
+.mat-mdc-header-cell{
   font-size: 14px;
 }
 
@@ -301,7 +302,7 @@ pdf-marker-rubric-criteria {
 }
 
 /** Loading indicator while pages are rendering */
-.waiting .mat-progress-spinner circle, .mat-spinner circle{
+.waiting .mat-mdc-progress-spinner circle, .mat-mdc-progress-spinner circle{
   stroke: var(--pdf-marker-secondary);
 }
 
@@ -320,7 +321,7 @@ pdf-marker-rubric-criteria {
 .cursor-grab     { cursor: grab; }
 .cursor-grabbing     { cursor: grabbing; }
 
-.mat-stroked-button.mat-primary{
+.mat-mdc-outlined-button.mat-primary{
   border-color: var(--pdf-marker-primary);
 }
 

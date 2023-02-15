@@ -8,7 +8,7 @@ form {
     display: flex;
     align-items: flex-start;
 
-    .mat-form-field {
+    .mat-mdc-form-field {
       width: 25%;
     }
 
@@ -46,7 +46,7 @@ form {
   .pdf-marker-rubric-container {
     padding-top: 20px;
 
-    .mat-form-field {
+    .mat-mdc-form-field {
       flex: 1;
       flex-grow: unset;
     }

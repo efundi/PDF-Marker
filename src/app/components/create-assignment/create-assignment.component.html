@@ -84,7 +84,7 @@
           <button
             [disabled]="studentFormGroupAtIndex(studentIndex).invalid || (studentRow.length) - 1 !== studentIndex"
             [class.pdf-marker-create-assignment-disabled]="studentFormGroupAtIndex(studentIndex).invalid || (studentRow.length) - 1 !== studentIndex"
-            type="button" matTooltip="Add" mat-button mat-icon-button (click)="addNewRow()">
+            type="button" matTooltip="Add" mat-icon-button (click)="addNewRow()">
             <mat-icon
               [class.pdf-marker-create-assignment-add]="(studentRow.length) - 1 === studentIndex && !studentFormGroupAtIndex(studentIndex).invalid"
               [class.pdf-icon-disabled]="(studentRow.length) - 1 !== studentIndex || studentFormGroupAtIndex(studentIndex).invalid">
@@ -93,7 +93,7 @@
           </button>
           <button [disabled]="studentRow.length == 1"
                   [class.pdf-marker-create-assignment-disabled]="studentRow.length == 1" type="button"
-                  matTooltip="Remove" mat-button mat-icon-button (click)="onStudentInfoRemove(studentIndex)">
+                  matTooltip="Remove" mat-icon-button (click)="onStudentInfoRemove(studentIndex)">
             <mat-icon [class.pdf-marker-create-assignment-remove]="!(studentRow.length == 1)"
                       [class.pdf-icon-disabled]="studentRow.length == 1">remove_circle
             </mat-icon>
