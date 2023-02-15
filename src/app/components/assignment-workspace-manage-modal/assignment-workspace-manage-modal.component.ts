@@ -100,7 +100,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
     this.manageForm = this.formBuilder.group({
       workspaceName: [null as string, Validators.required],
       newWorkspaceFolder: [null as string],
-      selectedAssignments: [[]]
+      selectedAssignments: new FormControl([])
     });
   }
 
