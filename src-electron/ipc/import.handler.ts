@@ -38,12 +38,12 @@ import {getConfig} from './config.handler';
 import {
   ASSIGNMENT_BACKUP_DIR,
   ASSIGNMENT_ROOT_FILES,
-  FEEDBACK_FOLDER,
+  FEEDBACK_FOLDER, FEEDBACK_ZIP_DIR_REGEX,
   FEEDBACK_ZIP_ENTRY_REGEX,
   GRADES_FILE,
   MARK_FILE,
   SETTING_FILE,
-  SUBMISSION_FOLDER,
+  SUBMISSION_FOLDER, SUBMISSION_ZIP_DIR_REGEX,
   SUBMISSION_ZIP_ENTRY_REGEX,
   uuidv4
 } from '@shared/constants/constants';
@@ -377,13 +377,15 @@ function extractAssignmentZipFile(
       const fileFullPath = destination + zipFilePath;
       const directory = dirname(fileFullPath);
 
-      if (!file.dir) {
-        // Check if its a submission file
-        const match = zipRelativePath.match(FEEDBACK_ZIP_ENTRY_REGEX) || zipRelativePath.match(SUBMISSION_ZIP_ENTRY_REGEX);
+      if (file.dir) {
+
+        // Check if its a submission directory
+        const match = zipRelativePath.match(FEEDBACK_ZIP_DIR_REGEX) || zipRelativePath.match(SUBMISSION_ZIP_DIR_REGEX);
+
         if (match) {
 
-          if (!existsSync(directory)) {
-            mkdirSync(directory, {recursive: true});
+          if (!existsSync(fileFullPath)) {
+            mkdirSync(fileFullPath, {recursive: true});
           }
 
           const studentDirectory = match[1];
@@ -404,17 +406,61 @@ function extractAssignmentZipFile(
             }
           }
 
-          submissions.push({
-            mark: null,
-            allocation: null,
-            directoryName: studentDirectory,
-            state: SubmissionState.NEW,
-            studentId,
-            studentName,
-            studentSurname
-          });
+          const submission = find(submissions, {studentId: studentId});
+          if (isNil(submission)) {
+            submissions.push({
+              mark: null,
+              allocation: null,
+              directoryName: studentDirectory,
+              state: SubmissionState.NO_SUBMISSION,
+              studentId,
+              studentName,
+              studentSurname
+            });
+          }
+        }
 
-          return promise.then(() => {
+      } else {
+
+        // Check if its a submission file
+        const match = zipRelativePath.match(FEEDBACK_ZIP_ENTRY_REGEX) || zipRelativePath.match(SUBMISSION_ZIP_ENTRY_REGEX);
+
+        if (match) {
+
+          const studentDirectory = match[1];
+          let studentId;
+          let studentName;
+          let studentSurname;
+
+          let matches = STUDENT_DIRECTORY_REGEX.exec(studentDirectory);
+          if (matches !== null) {
+            studentId = matches[3];
+            studentName =  matches[2];
+            studentSurname = matches[1];
+          } else {
+            matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(studentDirectory);
+            if (matches !== null) {
+              studentId = matches[2];
+              studentSurname =  matches[1];
+            }
+          }
+
+          const submission = find(submissions, {studentId: studentId});
+          if (isNil(submission)) {
+            submissions.push({
+              mark: null,
+              allocation: null,
+              directoryName: studentDirectory,
+              state: SubmissionState.NEW,
+              studentId,
+              studentName,
+              studentSurname
+            });
+          } else {
+            submission.state = SubmissionState.NEW;
+          }
+
+          return promise = promise.then(() => {
             return stream2buffer(file.nodeStream())
               .then((content) => PDFDocument.load(content))
               .then((pdfDoc) => pdfDoc.save())
@@ -435,14 +481,6 @@ function extractAssignmentZipFile(
               });
           });
         }
-      } else {
-        promise = promise.then(() => {
-          return stat(fileFullPath).then(() => {
-
-          }, () => {
-            return mkdir(fileFullPath, {recursive: true});
-          });
-        });
       }
     });
     return promise;
@@ -454,7 +492,7 @@ function extractAssignmentZipFile(
           forEach(grades.studentGrades, (studentGrade) => {
             const submission = find(submissions, {studentId: studentGrade.id});
             if (isNil(submission)) {
-              LOG.warn(`Found student ID in grades.csv which is not in the assignment submissions list "${studentGrade.id}"`)
+              LOG.warn(`Found student ID in grades.csv which is not in the assignment submissions list "${studentGrade.id}"`);
             } else {
               submission.mark = studentGrade.grade;
               submission.lmsStatusText = studentGrade.lateSubmission;
@@ -566,7 +604,7 @@ export function lectureImport(event: IpcMainInvokeEvent, importInfo: LectureImpo
               submission.state = zipSubmission.state;
             });
             return writeAssignmentSettingsAt(assignmentSettings, assignmentDirectory);
-          })
+          });
       });
     });
 }

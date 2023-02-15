@@ -11,6 +11,9 @@ export const GRADES_FILE = 'grades.csv';
 export const ASSIGNMENT_ROOT_FILES = [GRADES_FILE, 'grades.xls', 'grades.xlsx'];
 
 export const ASSIGNMENT_BACKUP_DIR = '.backup';
+export const FEEDBACK_ZIP_DIR_REGEX = /\/(.*)\/Feedback Attachment\(s\)\/$/;
+export const SUBMISSION_ZIP_DIR_REGEX = /\/(.*)\/Submission attachment\(s\)\/$/;
+
 export const FEEDBACK_ZIP_ENTRY_REGEX = /\/(.*)\/Feedback Attachment\(s\)\/(.*)\.pdf/;
 export const SUBMISSION_ZIP_ENTRY_REGEX = /\/(.*)\/Submission attachment\(s\)\/(.*)\.pdf/;
 

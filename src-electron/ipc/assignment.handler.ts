@@ -977,8 +977,8 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
 
       // Map of marker email to student Id
       const allocationSubmissionsMap: {[key: string]: string[]} = reduce(assignmentSettings.submissions, (submissionsMap, submission) => {
-        // Dont add owner of assignment
-        if (assignmentSettings.owner.id !== submission.allocation.id) {
+
+        if (!isNil(submission.allocation) && assignmentSettings.owner.id !== submission.allocation.id) {
           if (!submissionsMap.hasOwnProperty(submission.allocation.email) ) {
             submissionsMap [ submission.allocation.email ] = [];
           }

@@ -93,6 +93,12 @@ export enum SubmissionState {
    */
   NOT_MARKED = 'NOT_MARKED',
 
+  /**
+   * An assignment with empty submissions, does not make sense to zip them for marking or allocate them. Also can’t mark them so the states will not update to 'Marked'.
+   * text: 'No submission'
+   */
+  NO_SUBMISSION = 'NO_SUBMISSION',
+
   SENT_FOR_MODERATION = 'SENT_FOR_MODERATION',
 
   MODERATED = 'MODERATED'
