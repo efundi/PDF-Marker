@@ -14,6 +14,7 @@ import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
 import {SubmissionInfo} from '@shared/info-objects/submission.info';
 import {catchError} from 'rxjs/operators';
 import {AppService} from './app.service';
+import {PdfmUtilsService} from './pdfm-utils.service';
 
 @Injectable({
   providedIn: 'root'
@@ -136,6 +137,20 @@ export class AssignmentService {
       );
   }
 
+  private renameConvertedSubmissionFile(workspace: string, oldSubmissionFile: string, newSubmissionFile: string): Observable<any>{
+    return this.workspaceList.pipe(
+      first(),
+      tap((workspaces) => {
+
+        if (!oldSubmissionFile.startsWith(workspace)) {
+          oldSubmissionFile = workspace + '/' + oldSubmissionFile;
+        }
+        const submissionFile: WorkspaceFile = findTreeNode(oldSubmissionFile, workspaces) as WorkspaceFile;
+        submissionFile.name = PdfmUtilsService.basename(newSubmissionFile);
+      })
+    );
+  }
+
   saveMarks(workspace: string, location: string, marks: SubmissionInfo): Observable<any> {
     return fromIpcResponse(this.assignmentApi.saveMarks(location, marks))
       .pipe(
@@ -186,7 +201,17 @@ export class AssignmentService {
   }
 
   convertToPdf(workspaceName: string, assignmentName: string, filePath: string): Observable<string> {
-    return fromIpcResponse(this.assignmentApi.convertToPdf(workspaceName, assignmentName, filePath));
+    return fromIpcResponse(this.assignmentApi.convertToPdf(workspaceName, assignmentName, filePath))
+      .pipe(
+        mergeMap((response) => {
+          // After saving the marks we need to update the workspace list to contain the new modified date
+          return this.renameConvertedSubmissionFile(workspaceName, filePath, response)
+            .pipe(
+              mergeMap(() => this.refreshWorkspaces()),
+              map(() => response)
+            );
+        }),
+      );
   }
 
 }

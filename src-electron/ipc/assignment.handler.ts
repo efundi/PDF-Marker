@@ -1,13 +1,4 @@
-import {
-  accessSync,
-  constants,
-  existsSync,
-  mkdtempSync,
-  rmSync,
-  statSync,
-  unlinkSync,
-  writeFileSync
-} from 'fs';
+import {existsSync, mkdtempSync, rmSync, statSync, unlinkSync} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
 import {checkAccess, isFolder, isJson, isNullOrUndefinedOrEmpty} from '../utils';
@@ -37,9 +28,8 @@ import {
 } from '@shared/info-objects/assignment-settings.info';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {ExportAssignmentsRequest, ExportFormat} from '@shared/info-objects/export-assignments-request';
-import * as os from 'os';
-import {cpus} from 'os';
-import {copy, move, readdir} from 'fs-extra';
+import {tmpdir} from 'os';
+import {copy, readdir} from 'fs-extra';
 import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {
   FeedbackAttachments,
@@ -67,8 +57,16 @@ import {getComments, updateCommentsFile} from './comment.handler';
 import {findRubric} from './rubric.handler';
 import {GradesCSV, StudentGrade} from '@shared/info-objects/grades';
 import {WorkerPool} from '../worker-pool';
+import {zipDir} from '../zip';
+import {
+  AnnotateSubmissionTaskDetails,
+  FinalizeSubmissionTaskDetails,
+  MarkerExportTaskDetails
+} from '../web-worker/task-detail';
 import {libreConvertToPdf} from '../libreoffice-convert';
-const zipDir = require('zip-dir');
+
+const pool = WorkerPool.getInstance();
+
 const csvtojson = require('csvtojson');
 
 export function getAssignments(): Promise<Workspace[]> {
@@ -748,7 +746,7 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
     ]).then(([ assignmentFolder, assignmentSettings]) => {
       // Finalize the pdfs in the workspace
 
-      const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
+      const tempDirectory = mkdtempSync(join(tmpdir(), 'pdfm-'));
       const exportTempDirectory = tempDirectory + sep + assignmentName;
       return finalizeSubmissions(workspaceFolder, assignmentName).then(() => {
         return mkdir(exportTempDirectory);
@@ -812,7 +810,7 @@ export function exportAssignment(exportAssignmentsRequest: ExportAssignmentsRequ
   }
 
 
-  const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
+  const tempDirectory = mkdtempSync(join(tmpdir(), 'pdfm-'));
   const exportTempDirectory = tempDirectory + sep + exportAssignmentsRequest.assignmentName;
 
   return Promise.all([
@@ -933,7 +931,7 @@ function exportForModeration(exportReviewRequestInfo: ExportAssignmentsRequest):
       const exportSubmissions: Submission[] = filter(assignmentSettings.submissions, (submission) => {
         return exportReviewRequestInfo.studentIds.indexOf(submission.studentId) >= 0;
       });
-      const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
+      const tempDirectory = mkdtempSync(join(tmpdir(), 'pdfm-'));
       const zipAssignmentDirectory = tempDirectory + sep + exportReviewRequestInfo.assignmentName;
       return mkdir(zipAssignmentDirectory).then(() => {
         const promises: Promise<any>[] = exportSubmissions.map((submission) => {
@@ -1077,12 +1075,12 @@ export function convertToPdf(
     const outputPath = directory + sep + fileName + '.pdf';
 
     return libreConvertToPdf(fileFullPath, outputPath)
+      .then(() => rm(fileFullPath))
       .then(() => {
         // Workspace relative path
         const b = dirname(filePath);
         return b + '/' + fileName + '.pdf';
       }, (error) => {
-        console.error(error);
         return Promise.reject('Failed to convert to PDF');
       });
   });

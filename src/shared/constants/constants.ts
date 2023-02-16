@@ -15,7 +15,7 @@ export const FEEDBACK_ZIP_DIR_REGEX = /\/(.*)\/Feedback Attachment\(s\)\/$/;
 export const SUBMISSION_ZIP_DIR_REGEX = /\/(.*)\/Submission attachment\(s\)\/$/;
 
 export const FEEDBACK_ZIP_ENTRY_REGEX = /\/(.*)\/Feedback Attachment\(s\)\/(.*)\.pdf/;
-export const SUBMISSION_ZIP_ENTRY_REGEX = /\/(.*)\/Submission attachment\(s\)\/(.*)\.pdf/;
+export const SUBMISSION_ZIP_ENTRY_REGEX = /\/(.*)\/Submission attachment\(s\)\/(.*)\.(pdf|docx|doc|xlsx|xls|ppt|pptx)/;
 
 export const PDFM_FILES = [MARK_FILE, SETTING_FILE];
 
