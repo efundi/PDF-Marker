@@ -316,25 +316,64 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     const workspace = assignment.parent as Workspace;
     const pdfPath = PdfmUtilsService.buildTreePath(pdfFile);
 
-    this.assignmentService.selectSubmission({
-      workspace,
-      assignment,
-      pdfFile
-    });
+    if (!pdfPath.endsWith('.pdf')) {
+      // Need to convert
+      this.appService.openSnackBar(true, 'Converting to PDF...');
+      this.busyService.start();
+      this.assignmentService.convertToPdf(workspace.name, assignment.name, pdfPath).subscribe({
+        next: (result) => {
+          this.appService.openSnackBar(true, 'Successfully converted to PDF');
+          pdfFile.name = PdfmUtilsService.basename(result); // TODO hacking
+          this.assignmentService.selectSubmission({
+            workspace,
+            assignment,
+            pdfFile
+          });
 
-    if (calculateOpenInMarking(this.assignmentSettings)) {
-      this.router.navigate([
-        RoutesEnum.ASSIGNMENT_MARKER,
-        workspace.name,
-        assignment.name,
-        pdfPath]);
+          if (calculateOpenInMarking(this.assignmentSettings)) {
+            this.router.navigate([
+              RoutesEnum.ASSIGNMENT_MARKER,
+              workspace.name,
+              assignment.name,
+              result]);
+          } else {
+            this.router.navigate([
+              RoutesEnum.PDF_VIEWER,
+              workspace.name,
+              assignment.name,
+              result]);
+          }
+          this.busyService.stop();
+        },
+        error: (error) => {
+          console.log(error);
+          this.busyService.stop();
+        }
+      });
     } else {
-      this.router.navigate([
-        RoutesEnum.PDF_VIEWER,
-        workspace.name,
-        assignment.name,
-        pdfPath]);
+      this.assignmentService.selectSubmission({
+        workspace,
+        assignment,
+        pdfFile
+      });
+
+      if (calculateOpenInMarking(this.assignmentSettings)) {
+        this.router.navigate([
+          RoutesEnum.ASSIGNMENT_MARKER,
+          workspace.name,
+          assignment.name,
+          pdfPath]);
+      } else {
+        this.router.navigate([
+          RoutesEnum.PDF_VIEWER,
+          workspace.name,
+          assignment.name,
+          pdfPath]);
+      }
     }
+
+
+
   }
 
   onFinalizeAndExport(event) {

@@ -28,7 +28,7 @@ import {
 } from '@shared/info-objects/assignment-settings.info';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {ExportAssignmentsRequest, ExportFormat} from '@shared/info-objects/export-assignments-request';
-import * as os from 'os';
+import {tmpdir} from 'os';
 import {copy, readdir} from 'fs-extra';
 import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {
@@ -63,6 +63,7 @@ import {
   FinalizeSubmissionTaskDetails,
   MarkerExportTaskDetails
 } from '../web-worker/task-detail';
+import {libreConvertToPdf} from '../libreoffice-convert';
 
 const pool = WorkerPool.getInstance();
 
@@ -745,7 +746,7 @@ export function finalizeAssignment(event: IpcMainInvokeEvent, workspaceFolder: s
     ]).then(([ assignmentFolder, assignmentSettings]) => {
       // Finalize the pdfs in the workspace
 
-      const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
+      const tempDirectory = mkdtempSync(join(tmpdir(), 'pdfm-'));
       const exportTempDirectory = tempDirectory + sep + assignmentName;
       return finalizeSubmissions(workspaceFolder, assignmentName).then(() => {
         return mkdir(exportTempDirectory);
@@ -809,7 +810,7 @@ export function exportAssignment(exportAssignmentsRequest: ExportAssignmentsRequ
   }
 
 
-  const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
+  const tempDirectory = mkdtempSync(join(tmpdir(), 'pdfm-'));
   const exportTempDirectory = tempDirectory + sep + exportAssignmentsRequest.assignmentName;
 
   return Promise.all([
@@ -930,7 +931,7 @@ function exportForModeration(exportReviewRequestInfo: ExportAssignmentsRequest):
       const exportSubmissions: Submission[] = filter(assignmentSettings.submissions, (submission) => {
         return exportReviewRequestInfo.studentIds.indexOf(submission.studentId) >= 0;
       });
-      const tempDirectory = mkdtempSync(join(os.tmpdir(), 'pdfm-'));
+      const tempDirectory = mkdtempSync(join(tmpdir(), 'pdfm-'));
       const zipAssignmentDirectory = tempDirectory + sep + exportReviewRequestInfo.assignmentName;
       return mkdir(zipAssignmentDirectory).then(() => {
         const promises: Promise<any>[] = exportSubmissions.map((submission) => {
@@ -1057,4 +1058,32 @@ export function isMarkerAllocated(event: IpcMainInvokeEvent, markerId: string): 
       });
     });
   });
+}
+
+
+export function convertToPdf(
+  event: IpcMainInvokeEvent,
+  workspaceName: string,
+  assignmentName: string,
+  filePath: string): Promise<string> {
+
+  return workspaceRelativePathToAbsolute(filePath).then((fileFullPath) => {
+    const directory = dirname(fileFullPath);
+    const ext = extname(fileFullPath);
+    const fileName = basename(fileFullPath, ext);
+
+    const outputPath = directory + sep + fileName + '.pdf';
+
+    return libreConvertToPdf(fileFullPath, outputPath)
+      .then(() => rm(fileFullPath))
+      .then(() => {
+        // Workspace relative path
+        const b = dirname(filePath);
+        return b + '/' + fileName + '.pdf';
+      }, (error) => {
+        return Promise.reject('Failed to convert to PDF');
+      });
+  });
+
+
 }

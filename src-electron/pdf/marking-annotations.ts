@@ -1,5 +1,14 @@
 import {AnnotationFactory} from 'annotpdf';
-import {PageSizes, PDFDocument, PDFPageDrawSVGOptions, rgb, PDFPageDrawTextOptions, RotationTypes, StandardFonts} from 'pdf-lib';
+import {
+  PageSizes,
+  PDFDocument,
+  PDFPageDrawSVGOptions,
+  rgb,
+  PDFPageDrawTextOptions,
+  RotationTypes,
+  StandardFonts,
+  PDFPage
+} from 'pdf-lib';
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
 import {HIGHLIGHT_HEIGHT as HIGHTLIGHT_HEIGHT_px} from '../constants';
 import {MarkCoordinate, MarkInfo} from '@shared/info-objects/mark.info';
@@ -355,7 +364,7 @@ function addPdfMarks(session: AnnotationSession, marks: MarkInfo[][]): Promise<A
 
 
 function addResultsPage(session: AnnotationSession, pdfDoc: PDFDocument) {
-  let resultsPage = pdfDoc.addPage(PageSizes.A4);
+  let resultsPage: PDFPage = pdfDoc.addPage(PageSizes.A4);
   let y = 800;
   const xPosition = 25;
   const headerSize = 14;

@@ -375,7 +375,6 @@ function extractAssignmentZipFile(
     zipObject.forEach((zipRelativePath, file) => {
       const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replaceAll('/', sep);
       const fileFullPath = destination + zipFilePath;
-      const directory = dirname(fileFullPath);
 
       if (file.dir) {
 
@@ -462,13 +461,11 @@ function extractAssignmentZipFile(
 
           return promise = promise.then(() => {
             return stream2buffer(file.nodeStream())
-              .then((content) => PDFDocument.load(content))
-              .then((pdfDoc) => pdfDoc.save())
-              .then((pdfBytes) => writeFile(fileFullPath, pdfBytes));
+              .then((fileBytes) => writeFile(fileFullPath, fileBytes));
           });
 
         } else {
-          console.log('Unknown file, saving to backup... ' + zipFilePath);
+          LOG.warn('Unknown file, saving to backup... ' + zipFilePath);
           promise = promise.then(() => {
             return stream2buffer(file.nodeStream())
               .then(content => {
