@@ -7,7 +7,6 @@ Var LibreInstallCheckbox
 Var LibreInstallCheckbox_State
 
 ; Instfiles page
-!insertmacro MUI_PAGE_INSTFILES
 Page custom nsDialogsPage nsDialogsPageLeave
 
 !macro preInit
