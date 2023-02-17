@@ -5,23 +5,21 @@ import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {AppVersionInfo} from '@shared/info-objects/app-version.info';
 import {basename, extname} from 'path';
 import {statSync} from 'fs';
-import {FileFilterInfo} from '@shared/info-objects/file-filter.info';
+import {OpenFileInfo, SaveFileInfo} from '@shared/info-objects/file-filter.info';
 
 
-export function saveFile (event: IpcMainInvokeEvent, filter: FileFilterInfo): Promise<AppSelectedPathInfo> {
+export function saveFile (event: IpcMainInvokeEvent, filter: SaveFileInfo): Promise<AppSelectedPathInfo> {
   return saveFileImpl(filter);
 }
-export function saveFileImpl (filter: FileFilterInfo): Promise<AppSelectedPathInfo> {
+export function saveFileImpl (filter: SaveFileInfo): Promise<AppSelectedPathInfo> {
   return dialog.showSaveDialog(BrowserWindow.getFocusedWindow(), {
     defaultPath: filter.filename,
     title: 'Save',
-    filters: [
-      { name: filter.name, extensions: filter.extension }
-    ]
+    filters: filter.filters
   }).then(({filePath}) => {
     if (filePath) {
 
-      if(filter.buffer) {
+      if (filter.buffer) {
         try {
           return writeFile(filePath, Buffer.from(filter.buffer as ArrayBuffer))
             .then(() => {
@@ -54,12 +52,10 @@ export function getFolder(): Promise<AppSelectedPathInfo> {
   });
 }
 
-export function getFile(event: IpcMainInvokeEvent, filter: FileFilterInfo): Promise<AppSelectedPathInfo> {
+export function getFile(event: IpcMainInvokeEvent, filter: OpenFileInfo): Promise<AppSelectedPathInfo> {
   return dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
     title: 'Select File',
-    filters: [
-      { name: filter.name, extensions: filter.extension }
-    ],
+    filters: filter.filters,
     properties: ['openFile']
   }).then((data) => {
     if (data.canceled) {

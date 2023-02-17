@@ -450,7 +450,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     this.busyService.start();
     this.assignmentService.createAssignment(createAssignmentInfo)
       .pipe(
-        mergeMap(() => this.assignmentService.refreshWorkspaces()),
+        mergeMap(() => this.workspaceService.refreshWorkspaces()),
       ).subscribe({
       next: () => {
         if (PdfmUtilsService.isDefaultWorkspace(createAssignmentInfo.workspace)) {
@@ -470,7 +470,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   private performUpdate(updateAssignment: UpdateAssignment) {
     this.assignmentService.updateAssignment(updateAssignment)
       .pipe(
-        mergeMap(() => this.assignmentService.refreshWorkspaces()),
+        mergeMap(() => this.workspaceService.refreshWorkspaces()),
       ).subscribe({
       next: () => {
         this.isEdit = false;

@@ -84,12 +84,12 @@ export class ImportMarkerModalComponent implements OnInit {
   }
 
   private validateImportFile(filename: string, markerId: string): Observable<ValidationErrors> {
-      return this.importService.validateLectureImport({
-        markerId,
-        filename,
-        assignmentName: this.data.assignmentName,
-        workspaceName: this.data.workspaceName
-      });
+    return this.importService.validateLectureImport({
+      markerId,
+      filename,
+      assignmentName: this.data.assignmentName,
+      workspaceName: this.data.workspaceName
+    });
   }
 
   ngOnInit(): void {
@@ -135,17 +135,21 @@ export class ImportMarkerModalComponent implements OnInit {
 
   selectFile() {
     this.busyService.start();
-    this.appService.getFile({ name: 'Zip Files', extension: ['zip'] })
-      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        this.busyService.stop();
-        if (appSelectedPathInfo.selectedPath) {
-          this.formGroup.patchValue({
-            zipFile: appSelectedPathInfo.selectedPath
-          });
-        }
-        if (appSelectedPathInfo.error) {
-          this.alertService.error(appSelectedPathInfo.error.message);
-        }
-      });
+    this.appService.getFile({
+      filters: [{
+        name: 'Zip Files',
+        extensions: ['zip']
+      }]
+    }).subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+      this.busyService.stop();
+      if (appSelectedPathInfo.selectedPath) {
+        this.formGroup.patchValue({
+          zipFile: appSelectedPathInfo.selectedPath
+        });
+      }
+      if (appSelectedPathInfo.error) {
+        this.alertService.error(appSelectedPathInfo.error.message);
+      }
+    });
   }
 }

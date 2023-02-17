@@ -1,9 +1,9 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {AssignmentService} from '../../services/assignment.service';
 import {AppService} from '../../services/app.service';
 import {BusyService} from '../../services/busy.service';
 import {Subscription} from 'rxjs';
 import {AssignmentListComponent} from '../assignment-list/assignment-list.component';
+import {WorkspaceService} from '../../services/workspace.service';
 
 @Component({
   selector: 'pdf-marker-side-navigation',
@@ -18,12 +18,12 @@ export class SideNavigationComponent implements OnInit, OnDestroy {
   @ViewChild(AssignmentListComponent)
   private assignmentListComponent: AssignmentListComponent;
 
-  constructor(private assignmentService: AssignmentService,
+  constructor(private workspaceService: WorkspaceService,
               private appService: AppService,
               private busyService: BusyService) { }
 
   ngOnInit() {
-    this.loadingWorkspacesSubscription = this.assignmentService.workspaceListLoading.subscribe((loading) => {
+    this.loadingWorkspacesSubscription = this.workspaceService.workspaceListLoading.subscribe((loading) => {
       this.loadingWorkspaces = loading;
     });
   }
@@ -34,7 +34,7 @@ export class SideNavigationComponent implements OnInit, OnDestroy {
 
   onRefresh(event) {
     this.busyService.start();
-    this.assignmentService.refreshWorkspaces().subscribe((assignments) => {
+    this.workspaceService.refreshWorkspaces().subscribe((assignments) => {
       this.busyService.stop();
       this.appService.openSnackBar(true, 'Refreshed list');
     }, () => {

@@ -31,7 +31,7 @@ export class RubricImportComponent implements OnInit, OnDestroy, AfterViewInit {
   config: MatDialogConfig;
 
   rubricForm: UntypedFormGroup;
-  dataSource: MatTableDataSource<IRubricName>;
+  readonly dataSource: MatTableDataSource<IRubricName> = new MatTableDataSource<IRubricName>([]);
   rubrics: IRubricName[];
 
   subscription: Subscription;
@@ -123,16 +123,18 @@ export class RubricImportComponent implements OnInit, OnDestroy, AfterViewInit {
             this.appService.saveFile({
               filename: this.rubricTemplateFile,
               buffer: reader.result,
-              name: 'Excel File',
-              extension: ['xlsx']})
-              .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-                this.busyService.stop();
-                if (appSelectedPathInfo.selectedPath) {
-                  this.alertService.success(`Rubric template file downloaded`);
-                } else if (appSelectedPathInfo.error) {
-                  this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
-                }
-              });
+              filters: [{
+                name: 'Excel File',
+                extensions: ['xlsx']
+              }]
+            }).subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+              this.busyService.stop();
+              if (appSelectedPathInfo.selectedPath) {
+                this.alertService.success(`Rubric template file downloaded`);
+              } else if (appSelectedPathInfo.error) {
+                this.appService.openSnackBar(false, appSelectedPathInfo.error.message);
+              }
+            });
           });
 
           reader.readAsArrayBuffer(blob);
@@ -230,7 +232,7 @@ export class RubricImportComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private populateRubrics(rubrics: IRubricName[]) {
     this.rubrics = rubrics;
-    this.dataSource = new MatTableDataSource<IRubricName>(this.rubrics);
+    this.dataSource.data = this.rubrics;
   }
 
   private openRubricModal(rubricName: string) {

@@ -7,7 +7,7 @@ import {ApplicationIpcService} from '@shared/ipc/application.ipc-service';
 import {fromIpcResponse} from './ipc.utils';
 import {AppVersionInfo} from '@shared/info-objects/app-version.info';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
-import {FileFilterInfo} from '@shared/info-objects/file-filter.info';
+import {OpenFileInfo, SaveFileInfo} from '@shared/info-objects/file-filter.info';
 
 export type ComponentType<T> = new (...args: any[]) => T;
 
@@ -52,11 +52,11 @@ export class AppService {
   }
 
 
-  getFile(fileFilter: FileFilterInfo): Observable<AppSelectedPathInfo> {
+  getFile(fileFilter: OpenFileInfo): Observable<AppSelectedPathInfo> {
     return fromIpcResponse(this.applicationApi.getFile(fileFilter));
   }
 
-  saveFile(fileFilter: FileFilterInfo): Observable<AppSelectedPathInfo> {
+  saveFile(fileFilter: SaveFileInfo): Observable<AppSelectedPathInfo> {
     if (!fileFilter.filename) {
       fileFilter.filename = 'download';
     }

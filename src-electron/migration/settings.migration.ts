@@ -5,6 +5,8 @@ import {CONFIG_DIR, CONFIG_FILE} from '../constants';
 import {existsSync} from 'fs';
 import {uuidv4} from '@shared/constants/constants';
 import {basename} from 'path';
+import {findLibreOfficePath} from '../ipc/convert.handler';
+import { noop } from 'lodash';
 
 const logger = require('electron-log');
 const LOG = logger.scope('SettingsMigration');
@@ -63,13 +65,24 @@ function upgradeSettings(settings: SettingInfo): Promise<SettingInfo> {
       promise = updateConfigFile(settings);
     }
 
-    /*
+
        if (settings.version === 1) {
          // Convert to from v 1 to version 2
-         settings = settingsV2;
-         promise = promise.then(() => updateConfigFile(settings));
+         settings = {
+           ...settings,
+           version: 2,
+           libreOfficePath: null
+         };
+         promise = promise.then(() => {
+           return findLibreOfficePath()
+             .then((path) => {
+               settings.libreOfficePath = path;
+             }, noop)
+             .then(() => updateConfigFile(settings));
+         });
        }
 
+/*
        if (settings.version === 2) {
          // Convert to from v 2 to version 3
          settings = sSettingsV3;

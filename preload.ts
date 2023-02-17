@@ -1,5 +1,4 @@
 import {contextBridge, ipcRenderer} from 'electron';
-import {FileFilterInfo} from '@shared/info-objects/file-filter.info';
 import {AssignmentIpcService} from './src/shared/ipc/assignment.ipc-service';
 import {UpdateAssignment} from '@shared/info-objects/update-assignment';
 import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info';
@@ -16,10 +15,9 @@ import {ApplicationIpcService} from './src/shared/ipc/application.ipc-service';
 import {SubmissionInfo} from './src/shared/info-objects/submission.info';
 import {UpdateIpcService} from './src/shared/ipc/update.ipc-service';
 import {LectureImportInfo} from './src/shared/info-objects/lecture-import.info';
-import {validateLectureImport} from './src-electron/ipc/import.handler';
-import {IpcResponse} from './src/shared/ipc/ipc-response';
 import {GenerateIpcService} from './src/shared/ipc/generate.ipc-service';
-import {markSome} from './src-electron/ipc/generate.handler';
+import {ConvertIpcService} from './src/shared/ipc/convert.ipc-service';
+import {OpenFileInfo, SaveFileInfo} from './src/shared/info-objects/file-filter.info';
 
 contextBridge.exposeInMainWorld('updateApi', {
   checkForUpdate: () => ipcRenderer.invoke('update:check'),
@@ -28,7 +26,6 @@ contextBridge.exposeInMainWorld('updateApi', {
 } as UpdateIpcService);
 
 contextBridge.exposeInMainWorld('assignmentApi', {
-  getAssignments: () => ipcRenderer.invoke('assignments:get'),
   createAssignment: (createAssignmentInfo: CreateAssignmentInfo) => ipcRenderer.invoke('assignments:create', createAssignmentInfo),
   updateAssignment: (updateRequest: UpdateAssignment) => ipcRenderer.invoke('assignments:update', updateRequest),
   saveMarks: (location: string, submissionInfo: SubmissionInfo) => ipcRenderer.invoke('assignments:saveMarks', location, submissionInfo),
@@ -41,7 +38,7 @@ contextBridge.exposeInMainWorld('assignmentApi', {
   getPdfFile: (location: string) => ipcRenderer.invoke('assignments:getPdfFile', location),
   generateAllocationZipFiles: (workspaceName: string, assignmentName: string, exportPath: string) => ipcRenderer.invoke('assignments:generateAllocationZipFiles', workspaceName, assignmentName, exportPath),
   isMarkerAllocated: (markerId: string) => ipcRenderer.invoke('assignments:isMarkerAllocated', markerId),
-  convertToPdf: (workspaceName: string, assignmentName: string, filePath: string) => ipcRenderer.invoke('assignments:convertToPdf', workspaceName, assignmentName, filePath)
+
 } as AssignmentIpcService);
 
 
@@ -66,6 +63,7 @@ contextBridge.exposeInMainWorld('importApi', {
 
 
 contextBridge.exposeInMainWorld('workspaceApi', {
+  getAssignments: () => ipcRenderer.invoke('workspace:get'),
   createWorkingFolder: (name: string) => ipcRenderer.invoke('workspace:createWorkingFolder', name),
   updateWorkspaceName: (workspaceName: string, newWorkspaceName: string) => ipcRenderer.invoke('workspace:updateWorkspaceName', workspaceName, newWorkspaceName),
   moveWorkspaceAssignments: (currentWorkspaceName: string, workspaceName: string, assignments: any[]) => ipcRenderer.invoke('workspace:moveWorkspaceAssignments', currentWorkspaceName, workspaceName, assignments),
@@ -90,8 +88,8 @@ contextBridge.exposeInMainWorld('configApi', {
 contextBridge.exposeInMainWorld('applicationApi', {
   getAppVersion: () => ipcRenderer.invoke('app:version'),
   getFolder: () => ipcRenderer.invoke('app:getFolder'),
-  getFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:getFile', fileFilter),
-  saveFile: (fileFilter: FileFilterInfo) => ipcRenderer.invoke('app:saveFile', fileFilter),
+  getFile: (fileFilter: OpenFileInfo) => ipcRenderer.invoke('app:getFile', fileFilter),
+  saveFile: (fileFilter: SaveFileInfo) => ipcRenderer.invoke('app:saveFile', fileFilter),
   openExternalLink: (link: any) => ipcRenderer.invoke('app:openExternalLink', link),
 } as ApplicationIpcService);
 
@@ -105,5 +103,13 @@ contextBridge.exposeInMainWorld('generateApi', {
   markAll: (assignmentName: string, workspaceName: string) => ipcRenderer.invoke('generate:markAll', assignmentName, workspaceName)
     .then((result) => console.log(result), (error) => console.error(error)),
 } as GenerateIpcService);
+
+
+
+contextBridge.exposeInMainWorld('convertApi', {
+  convertToPdf: (workspaceName: string, assignmentName: string, filePath: string) => ipcRenderer.invoke('convert:convertToPdf', workspaceName, assignmentName, filePath),
+  libreOfficeFind: () => ipcRenderer.invoke('convert:libreOfficeFind'),
+  libreOfficeVersion: (path: string) => ipcRenderer.invoke('convert:libreOfficeVersion', path),
+} as ConvertIpcService);
 
 

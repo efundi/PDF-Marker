@@ -39,8 +39,9 @@ export function generateGenericZip(
       }).then(() => {
         return saveFileImpl({
           filename: assignmentName + '_' + studentCount + '.zip',
-          name: 'Zip File',
-          extension: ['zip']
+          filters: [{name: 'Zip File',
+            extensions: ['zip']
+          }]
         });
       })
       .then((selectedPath) => {

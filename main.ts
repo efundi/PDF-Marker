@@ -3,7 +3,6 @@ import {autoUpdater} from 'electron-updater';
 import {
   createAssignment,
   finalizeAssignment,
-  getAssignments,
   getAssignmentSettings,
   getMarks,
   getPdfFile,
@@ -13,7 +12,7 @@ import {
   updateAssignmentSettings,
   generateAllocationZipFiles,
   isMarkerAllocated,
-  handleExportAssignment, convertToPdf
+  handleExportAssignment
 } from './src-electron/ipc/assignment.handler';
 import {
   deleteRubric,
@@ -35,7 +34,7 @@ import {
 import {
   createWorkingFolder,
   deleteWorkspace,
-  deleteWorkspaceCheck,
+  deleteWorkspaceCheck, getAssignments,
   getWorkspaces,
   moveWorkspaceAssignments,
   updateWorkspaceName
@@ -55,6 +54,7 @@ import {migrateAssignmentSettings} from './src-electron/migration/assignment.mig
 import {migrateMarks} from './src-electron/migration/marks.migration';
 import { join } from 'path';
 import {generateGenericZip, generateAssignment, markAll, markSome} from './src-electron/ipc/generate.handler';
+import {convertToPdf, libreOfficeFind, libreOfficeVersion} from './src-electron/ipc/convert.handler';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
 const args = process.argv.slice(1);
@@ -179,7 +179,6 @@ try {
 
 
     // Assignment API
-    ipcMain.handle('assignments:get', toIpcResponse(getAssignments));
     ipcMain.handle('assignments:update', toIpcResponse(updateAssignment));
     ipcMain.handle('assignments:create', toIpcResponse(createAssignment));
     ipcMain.handle('assignments:saveMarks', toIpcResponse(saveMarks));
@@ -192,7 +191,7 @@ try {
     ipcMain.handle('assignments:getPdfFile', toIpcResponse(getPdfFile));
     ipcMain.handle('assignments:isMarkerAllocated', toIpcResponse(isMarkerAllocated));
     ipcMain.handle('assignments:generateAllocationZipFiles', toIpcResponse(generateAllocationZipFiles));
-    ipcMain.handle('assignments:convertToPdf', toIpcResponse(convertToPdf));
+
 
     // Rubric API
     ipcMain.handle('rubrics:selectRubricFile', toIpcResponse(selectRubricFile));
@@ -211,6 +210,8 @@ try {
     ipcMain.handle('import:validateLectureImport', toIpcResponse(validateLectureImport));
 
     // Workspace API
+
+    ipcMain.handle('workspace:get', toIpcResponse(getAssignments));
     ipcMain.handle('workspace:moveWorkspaceAssignments', toIpcResponse(moveWorkspaceAssignments));
     ipcMain.handle('workspace:updateWorkspaceName', toIpcResponse(updateWorkspaceName));
     ipcMain.handle('workspace:createWorkingFolder', toIpcResponse(createWorkingFolder));
@@ -247,6 +248,12 @@ try {
     ipcMain.handle('generate:generateAssignment', generateAssignment);
     ipcMain.handle('generate:markSome', markSome);
     ipcMain.handle('generate:markAll', markAll);
+
+
+    // Convert API
+    ipcMain.handle('convert:convertToPdf', toIpcResponse(convertToPdf));
+    ipcMain.handle('convert:libreOfficeFind', toIpcResponse(libreOfficeFind));
+    ipcMain.handle('convert:libreOfficeVersion', toIpcResponse(libreOfficeVersion));
   });
 
   // Quit when all windows are closed.

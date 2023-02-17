@@ -1,13 +1,20 @@
 /**
  * A tool greatly inspire by https://github.com/elwerene/libreoffice-convert/blob/master/index.js
  */
-import {basename, extname, join, sep} from 'path';
+import {basename, dirname, extname, join, sep} from 'path';
 import {platform, tmpdir} from 'os';
 import {mkdtemp, rm, stat} from 'fs/promises';
 import {ChildProcess, execFile} from 'node:child_process';
 import {pathToFileURL} from 'url';
 import {move} from 'fs-extra';
+import {getConfig} from './config.handler';
+import { isNil } from 'lodash';
+import {IpcMainInvokeEvent} from 'electron';
+import {workspaceRelativePathToAbsolute} from './assignment.handler';
 
+/**
+ * Look return a list of paths where libre office is normally located on the current operating system
+ */
 function findPaths(): Promise<string[]> {
   let paths = [];
   const platformName: string = platform();
@@ -30,11 +37,20 @@ function findPaths(): Promise<string[]> {
   return Promise.resolve(paths);
 }
 
+/**
+ * Checks if the specified path exists, if not rejects
+ * @param path
+ */
+function checkPathExist(path: string): Promise<string> {
+  return stat(path).then(() => {
+    return path;
+  });
+}
+
+
 function findActualPath(paths: string[]): Promise<string> {
   const promises: Promise<string>[] = paths.map((potentialPath) => {
-    return stat(potentialPath).then(() => {
-      return potentialPath;
-    });
+    return checkPathExist(potentialPath);
   });
 
   return Promise.any(promises)
@@ -92,8 +108,74 @@ function convert(sofficePath: string, sourcePath: string, destPath: string): Pro
     });
 }
 
-export function libreConvertToPdf(sourceFilePath: string, destinationPath: string): Promise<void> {
+export function findLibreOfficePath(): Promise<string> {
   return findPaths()
-    .then((paths) => findActualPath(paths))
+    .then((paths) => findActualPath(paths));
+}
+
+
+export function libreConvertToPdf(sourceFilePath: string, destinationPath: string): Promise<void> {
+  return getConfig()
+    .then((config) => {
+      if ( isNil(config.libreOfficePath)) {
+        return Promise.reject('Libre office path not configured.');
+      } else {
+        return checkPathExist(config.libreOfficePath)
+          .then(p => p, (error) => {
+            return Promise.reject('Libre office path is not valid, please check settings.');
+          });
+      }
+    })
     .then((sofficePath) => convert(sofficePath, sourceFilePath, destinationPath));
+}
+
+export function convertToPdf(
+  event: IpcMainInvokeEvent,
+  workspaceName: string,
+  assignmentName: string,
+  filePath: string): Promise<string> {
+
+  return workspaceRelativePathToAbsolute(filePath).then((fileFullPath) => {
+    const directory = dirname(fileFullPath);
+    const ext = extname(fileFullPath);
+    const fileName = basename(fileFullPath, ext);
+
+    const outputPath = directory + sep + fileName + '.pdf';
+
+    return libreConvertToPdf(fileFullPath, outputPath)
+      .then(() => rm(fileFullPath))
+      .then(() => {
+        // Workspace relative path
+        const b = dirname(filePath);
+        return b + '/' + fileName + '.pdf';
+      }, (error) => {
+        return Promise.reject(error);
+      });
+  });
+}
+
+/**
+ *
+ * @param event
+ */
+export function libreOfficeFind(event: IpcMainInvokeEvent): Promise<string> {
+  return findLibreOfficePath();
+}
+
+
+export function libreOfficeVersion(event: IpcMainInvokeEvent, librePath: string): Promise<string> {
+  let versionString = '';
+  return new Promise<void>((resolve, reject) => {
+    const childProcess: ChildProcess = execFile(librePath, ['--version']);
+    childProcess.addListener('error', reject);
+    childProcess.addListener('exit', resolve);
+    childProcess.stdout.on('data', (data) => {
+      versionString += data;
+    });
+  }).then(() => {
+    return versionString.trim();
+  }, (error) => {
+    console.log(error);
+    return Promise.reject('Failed to retrieve version');
+  });
 }

@@ -1,6 +1,6 @@
 import {uuidv4} from '@shared/constants/constants';
 
-export const SettingInfoVersion = 1;
+export const SettingInfoVersion = 2;
 
 export const DefaultSettings: SettingInfo = {
   version: SettingInfoVersion,
@@ -10,7 +10,8 @@ export const DefaultSettings: SettingInfo = {
   groupMembers: [],
   user: {
     id: uuidv4()
-  }
+  },
+  libreOfficePath: null
 };
 
 export interface SettingInfo {
@@ -38,6 +39,10 @@ export interface SettingInfo {
    */
   groups: Group[];
   groupMembers: GroupMember[];
+  /**
+   * Path to libre office convert
+   */
+  libreOfficePath: string;
 }
 
 

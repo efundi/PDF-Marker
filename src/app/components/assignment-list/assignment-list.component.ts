@@ -20,6 +20,7 @@ import {GRADES_FILE, PDFM_FILES_FILTER} from '@shared/constants/constants';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {calculateOpenInMarking} from '../../utils/utils';
+import {WorkspaceService} from '../../services/workspace.service';
 
 let treeId = 0;
 
@@ -103,6 +104,7 @@ function setParent(treeNode: TreeNode, parentNode: DisplayTreeNode = null): Disp
 export class AssignmentListComponent implements OnInit, OnDestroy {
   constructor(private settingsService: SettingsService,
               private assignmentService: AssignmentService,
+              private workspaceService: WorkspaceService,
               private router: Router) { }
 
 
@@ -137,7 +139,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
       this.settings = settings;
     });
 
-    this.workspacesSubscription = this.assignmentService.workspaceList.subscribe(workspaces => {
+    this.workspacesSubscription = this.workspaceService.workspaceList.subscribe(workspaces => {
 
       this.workspaces = workspaces;
       this.dataSource.data = [];
