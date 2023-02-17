@@ -8,7 +8,7 @@ import {SubmissionInfo} from '@shared/info-objects/submission.info';
 
 export interface AssignmentIpcService {
 
-  getAssignments(): Promise<IpcResponse<Workspace[]>>;
+
   createAssignment(createAssignmentInfo: CreateAssignmentInfo): Promise<IpcResponse<any>>;
   updateAssignment(updateRequest: UpdateAssignment): Promise<IpcResponse<any>>;
   saveMarks(location: string, marks: SubmissionInfo): Promise<IpcResponse<any>>;
@@ -21,6 +21,5 @@ export interface AssignmentIpcService {
   getPdfFile(location: string): Promise<IpcResponse<Uint8Array>>;
   generateAllocationZipFiles(workspaceName: string, assignmentName: string, exportPath: string): Promise<IpcResponse<string>>;
   isMarkerAllocated(markerId: string): Promise<IpcResponse<boolean>>;
-  convertToPdf(workspaceName: string, assignmentName: string, filePath: string): Promise<IpcResponse<string>>;
 
 }

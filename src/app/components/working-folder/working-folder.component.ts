@@ -3,7 +3,6 @@ import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {SettingsService} from '../../services/settings.service';
 import {AppService} from '../../services/app.service';
 import {AlertService} from '../../services/alert.service';
-import {AssignmentService} from '../../services/assignment.service';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {ConfirmationDialogComponent} from '../confirmation-dialog/confirmation-dialog.component';
@@ -14,7 +13,6 @@ import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 import {filter} from 'lodash';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatSort} from '@angular/material/sort';
-import {IComment} from '@shared/info-objects/comment.class';
 
 @Component({
   selector: 'pdf-marker-working-folder',
@@ -39,9 +37,8 @@ export class WorkingFolderComponent implements OnInit, AfterViewInit {
               private settingsService: SettingsService,
               private appService: AppService,
               private alertService: AlertService,
-              private assignmentService: AssignmentService,
               private busyService: BusyService,
-              private workspaceService: WorkspaceService,) {
+              private workspaceService: WorkspaceService) {
 
     this.initForm();
   }
@@ -146,7 +143,7 @@ export class WorkingFolderComponent implements OnInit, AfterViewInit {
 
   refreshSideBar() {
     this.busyService.start();
-    this.assignmentService.refreshWorkspaces().subscribe({
+    this.workspaceService.refreshWorkspaces().subscribe({
       next: () => {
         this.busyService.stop();
         this.appService.openSnackBar(true, 'Refreshed list');

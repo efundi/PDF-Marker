@@ -1,10 +1,14 @@
-export interface FileFilterInfo {
-
-  filename?: string;
-
-  buffer?: string | ArrayBuffer;
-
+export interface FileFilter {
   name: string;
+  extensions: string[];
+}
 
-  extension: string[];
+export interface SaveFileInfo {
+  filename: string;
+  filters: FileFilter[];
+  buffer?: string | ArrayBuffer;
+}
+
+export interface OpenFileInfo {
+  filters: FileFilter[];
 }

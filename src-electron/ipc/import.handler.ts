@@ -48,7 +48,6 @@ import {
   uuidv4
 } from '@shared/constants/constants';
 import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
-import {PDFDocument} from 'pdf-lib';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 const logger = require('electron-log');
 const LOG = logger.scope('ImportHandler');

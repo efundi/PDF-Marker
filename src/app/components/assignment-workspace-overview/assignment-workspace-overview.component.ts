@@ -18,6 +18,7 @@ import {RoutesEnum} from '../../utils/routes.enum';
 import {isNil, reduce} from 'lodash';
 import {MARK_FILE} from '@shared/constants/constants';
 import {MatSort, MatSortable} from '@angular/material/sort';
+import {WorkspaceService} from '../../services/workspace.service';
 
 export interface WorkspaceDetails {
   assignmentTitle: string;
@@ -57,6 +58,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy, 
   isCreated: boolean;
 
   constructor(private assignmentService: AssignmentService,
+              private workspaceService: WorkspaceService,
               private router: Router,
               private appService: AppService,
               private busyService: BusyService,
@@ -68,7 +70,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy, 
       next: (params) => {
         this.busyService.start();
         const workspaceName = params['workspaceName'];
-        this.assignmentService.getWorkspaceHierarchy(workspaceName).subscribe((workspace) => {
+        this.workspaceService.getWorkspaceHierarchy(workspaceName).subscribe((workspace) => {
           this.workspace = workspace;
           this.generateDataFromModel();
           this.busyService.stop();
@@ -107,7 +109,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy, 
       }
       if (edited) {
         this.busyService.start();
-        this.assignmentService.refreshWorkspaces().subscribe({
+        this.workspaceService.refreshWorkspaces().subscribe({
           next: () => {
             this.busyService.stop();
             this.appService.openSnackBar(true, 'Refreshed list');

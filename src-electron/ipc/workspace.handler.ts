@@ -1,10 +1,208 @@
-import {indexOf, isEmpty, isNil, noop} from 'lodash';
+import {indexOf, isEmpty, isNil, map, noop, sortBy} from 'lodash';
 import {getConfig, updateConfigFile} from './config.handler';
 import {basename, sep} from 'path';
 import {IpcMainInvokeEvent, shell} from 'electron';
 import {move} from 'fs-extra';
-import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
+import {
+  ASSIGNMENT_BACKUP_DIR,
+  DEFAULT_WORKSPACE,
+  FEEDBACK_FOLDER, PDFM_FILE_SORT,
+  SUBMISSION_FOLDER
+} from '@shared/constants/constants';
 import {mkdir, readdir, rename, stat} from 'fs/promises';
+import {
+  FeedbackAttachments,
+  StudentSubmission, SubmissionAttachments, TreeNode,
+  TreeNodeType,
+  Workspace,
+  WorkspaceAssignment, WorkspaceFile
+} from '@shared/info-objects/workspace';
+import {isNullOrUndefinedOrEmpty} from '../utils';
+import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX} from '../constants';
+
+export function getAssignments(): Promise<Workspace[]> {
+  return loadWorkspaces();
+}
+
+function loadWorkspaces(): Promise<Workspace[]> {
+  return getConfig().then((config) => {
+    const defaultWorkspace: Workspace = {
+      type: TreeNodeType.WORKSPACE,
+      name: DEFAULT_WORKSPACE,
+      dateModified: null,
+      children: [],
+      parent: null
+    };
+    const workspaceFolders = config.folders || [];
+    const workspaces: Workspace[] = [defaultWorkspace];
+
+    if (isNullOrUndefinedOrEmpty(config.defaultPath)) {
+      return workspaces;
+    }
+
+    return readdir(config.defaultPath).then((foundDirectories) => {
+      const promises: Promise<any>[] = map(foundDirectories, (directory) => {
+        const fullPath = config.defaultPath + sep + directory;
+        // Check if the directory is a working directory
+        if (workspaceFolders.includes(directory)) {
+          return loadWorkspaceContents(fullPath)
+            .then(workspace => workspaces.push(workspace));
+        } else {
+          return loadAssignmentContents(fullPath, defaultWorkspace)
+            .then(a => defaultWorkspace.children.push(a));
+        }
+      });
+      return Promise.all(promises).then(() => {
+        return sortBy(workspaces, 'name');
+      }, (error) => {
+        console.error(error);
+        return Promise.reject(error);
+      });
+    });
+  });
+}
+
+
+
+function loadAssignmentContents(directoryFullPath: string, parent: Workspace): Promise<WorkspaceAssignment> {
+  const assignment: WorkspaceAssignment = {
+    type: TreeNodeType.ASSIGNMENT,
+    dateModified: null,
+    name: basename(directoryFullPath),
+    children: [],
+    parent
+  };
+  return readdir(directoryFullPath).then((files) => {
+    const promises: Promise<any>[] = map(files, (file) => {
+      const fullPath = directoryFullPath + sep + file;
+      return stat(fullPath).then((fileStats) => {
+        if (fileStats.isFile()) {
+          assignment.children.push({
+            type: TreeNodeType.FILE,
+            name: file,
+            dateModified: fileStats.mtime,
+            children: [],
+            parent: assignment
+          });
+        } else {
+          // It must be a submission
+          let studentId: string;
+          let studentName: string;
+          let studentSurname: string;
+
+          if (file === ASSIGNMENT_BACKUP_DIR) {
+            // Skip the backup dir
+            return Promise.resolve(null);
+          }
+
+          let matches = STUDENT_DIRECTORY_REGEX.exec(file);
+          if (matches !== null) {
+            studentId = matches[3];
+            studentName =  matches[2];
+            studentSurname = matches[1];
+          } else {
+            matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(file);
+            if (matches !== null) {
+              studentId = matches[2];
+              studentSurname =  matches[1];
+            }
+          }
+
+          if (matches === null) {
+            return Promise.reject(`Student directory not in expected format '${file}'`);
+          }
+
+          const submission: StudentSubmission = {
+            dateModified: null,
+            type: TreeNodeType.SUBMISSION,
+            name: file,
+            studentId,
+            studentName,
+            studentSurname,
+            children: [],
+            parent: assignment
+          };
+          assignment.children.push(submission);
+          const feedbackNode: FeedbackAttachments = {
+            name: FEEDBACK_FOLDER,
+            type: TreeNodeType.FEEDBACK_DIRECTORY,
+            children: [],
+            dateModified: null,
+            parent: submission
+          };
+          submission.children.push(feedbackNode);
+
+          const submissionAttachments: SubmissionAttachments = {
+            name: SUBMISSION_FOLDER,
+            type: TreeNodeType.SUBMISSIONS_DIRECTORY,
+            children: [],
+            dateModified: null,
+            parent: submission
+          };
+          submission.children.push(submissionAttachments);
+
+
+          return Promise.all([
+            loadFiles(fullPath, submission).then(nodes => submission.children.push(...nodes)),
+            loadFiles(fullPath + sep + FEEDBACK_FOLDER, feedbackNode).then(nodes => feedbackNode.children = nodes),
+            loadFiles(fullPath + sep + SUBMISSION_FOLDER, submissionAttachments).then(nodes => submissionAttachments.children = nodes),
+          ]).then(() => {
+            submission.children.sort(PDFM_FILE_SORT);
+            return submission;
+          });
+        }
+      });
+    });
+    return Promise.all(promises);
+  }).then(() => {
+    assignment.children.sort(PDFM_FILE_SORT);
+    return assignment;
+  });
+}
+
+function  loadFiles(directory: string, parent: TreeNode): Promise<WorkspaceFile[]> {
+  return readdir(directory).then(files => {
+    const workspaceFiles: WorkspaceFile[] = [];
+    const promises: Promise<any>[] = map(files, (file) => {
+      return stat(directory + sep + file).then(fileStat => {
+        if (fileStat.isFile()) {
+          workspaceFiles.push({
+            type: TreeNodeType.FILE,
+            dateModified: fileStat.mtime,
+            name: file,
+            children: [],
+            parent
+          });
+        }
+      });
+    });
+    return Promise.all(promises).then(() => workspaceFiles);
+  });
+}
+
+function loadWorkspaceContents(directoryFullPath: string): Promise<Workspace> {
+  // This directory is a workspace
+  const workspace: Workspace = {
+    type: TreeNodeType.WORKSPACE,
+    dateModified: null,
+    name: basename(directoryFullPath),
+    children: [],
+    parent: null
+  };
+
+  return readdir(directoryFullPath).then((assignments) => {
+    const promises = map(assignments, assignment => {
+      return loadAssignmentContents(directoryFullPath + sep + assignment, workspace)
+        .then(a => workspace.children.push(a));
+    });
+
+    return Promise.all(promises)
+      .then(() => {
+        workspace.children.sort(PDFM_FILE_SORT);
+        return workspace;
+      });
+  });
+}
 
 /**
  * Get the absolute path of the workspace

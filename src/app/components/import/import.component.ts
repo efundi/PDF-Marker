@@ -5,10 +5,8 @@ import {FileExplorerModalComponent} from '../file-explorer-modal/file-explorer-m
 import {AlertService} from '../../services/alert.service';
 import {AppService} from '../../services/app.service';
 import {ImportService} from '../../services/import.service';
-import {AssignmentService} from '../../services/assignment.service';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 import {WorkspaceService} from '../../services/workspace.service';
-import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {ImportInfo} from '@shared/info-objects/import.info';
@@ -69,7 +67,6 @@ export class ImportComponent implements OnInit, OnDestroy {
               private importService: ImportService,
               private rubricService: RubricService,
               private busyService: BusyService,
-              private assignmentService: AssignmentService,
               private workspaceService: WorkspaceService) {
 
     this.initForm();
@@ -162,18 +159,22 @@ export class ImportComponent implements OnInit, OnDestroy {
 
   selectFile() {
     this.busyService.start();
-    this.appService.getFile({ name: 'Zip Files', extension: ['zip'] })
-      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        this.busyService.stop();
-        if (appSelectedPathInfo.selectedPath) {
-          this.actualFilePath = appSelectedPathInfo.selectedPath;
-        }
+    this.appService.getFile({
+      filters: [{
+        name: 'Zip Files',
+        extensions: ['zip']
+      }]
+    }).subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+      this.busyService.stop();
+      if (appSelectedPathInfo.selectedPath) {
+        this.actualFilePath = appSelectedPathInfo.selectedPath;
+      }
 
-        this.onFileChange(appSelectedPathInfo);
-        if (appSelectedPathInfo.error) {
-          this.alertService.error(appSelectedPathInfo.error.message);
-        }
-      });
+      this.onFileChange(appSelectedPathInfo);
+      if (appSelectedPathInfo.error) {
+        this.alertService.error(appSelectedPathInfo.error.message);
+      }
+    });
   }
 
   onFileChange(appSelectedPathInfo: AppSelectedPathInfo) {
@@ -202,13 +203,13 @@ export class ImportComponent implements OnInit, OnDestroy {
       next: (assignmentValidateResultInfo) => {
         this.assignmentValidateResultInfo = assignmentValidateResultInfo;
         if (assignmentValidateResultInfo.zipFileType === ZipFileType.MARKER_IMPORT) {
-            this.importForm.patchValue({
-              noRubric: !assignmentValidateResultInfo.hasRubric
-            }, {emitEvent: false});
-            this.importForm.controls.noRubric.disable();
-            this.importForm.controls.rubric.disable();
-            this.importForm.controls.rubric.validator = null;
-            this.importForm.updateValueAndValidity();
+          this.importForm.patchValue({
+            noRubric: !assignmentValidateResultInfo.hasRubric
+          }, {emitEvent: false});
+          this.importForm.controls.noRubric.disable();
+          this.importForm.controls.rubric.disable();
+          this.importForm.controls.rubric.validator = null;
+          this.importForm.updateValueAndValidity();
         } else {
           this.importForm.controls.noRubric.enable();
           this.importForm.controls.rubric.enable();
@@ -282,6 +283,6 @@ export class ImportComponent implements OnInit, OnDestroy {
       noRubric: false
     });
     this.isNoRubric = true;
-    this.assignmentService.refreshWorkspaces().subscribe();
+    this.workspaceService.refreshWorkspaces().subscribe();
   }
 }

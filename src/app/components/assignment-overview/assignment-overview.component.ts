@@ -57,6 +57,8 @@ import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 import {
   ReallocateSubmissionsModalComponent
 } from './reallocate-submissions-modal/reallocate-submissions-modal.component';
+import {WorkspaceService} from '../../services/workspace.service';
+import {ConvertService} from '../../services/convert.service';
 
 export interface AssignmentDetails {
   index?: number;
@@ -139,6 +141,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
 
   constructor(private assignmentService: AssignmentService,
+              private workspaceService: WorkspaceService,
+              private convertService: ConvertService,
               private router: Router,
               private activatedRoute: ActivatedRoute,
               private appService: AppService,
@@ -320,7 +324,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       // Need to convert
       this.appService.openSnackBar(true, 'Converting to PDF...');
       this.busyService.start();
-      this.assignmentService.convertToPdf(workspace.name, assignment.name, pdfPath).subscribe({
+      this.convertService.convertToPdf(workspace.name, assignment.name, pdfPath).subscribe({
         next: (result) => {
           this.appService.openSnackBar(true, 'Successfully converted to PDF');
           pdfFile.name = PdfmUtilsService.basename(result); // TODO hacking
@@ -347,6 +351,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         },
         error: (error) => {
           console.log(error);
+          this.appService.openSnackBar(false, error);
           this.busyService.stop();
         }
       });
@@ -397,8 +402,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       if (confirmed) {
         this.appService.saveFile({
           filename: this.assignmentName + '.zip',
-          name: 'Zip File',
-          extension: ['zip']
+          filters: [{
+            name: 'Zip File',
+            extensions: ['zip']
+          }]
         }).subscribe((selectedPath) => {
 
           if (selectedPath) {
@@ -406,7 +413,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
             this.assignmentService.finalizeAndExport(this.workspaceName, this.assignmentName, selectedPath.selectedPath).subscribe({
               next: (outputPath: string) => {
                 this.alertService.success(`Successfully exported to ${outputPath}. You can now upload it to ${this.settings.lmsSelection}.`);
-                this.assignmentService.refreshWorkspaces().subscribe(() => {
+                this.workspaceService.refreshWorkspaces().subscribe(() => {
                   this.busyService.stop();
                   this.refresh();
                 });
@@ -536,49 +543,50 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         this.busyService.start();
         this.appService.saveFile({
           filename: this.assignmentName + '_moderation.zip',
-          name: 'Zip File',
-          extension: ['zip']
-        })
-          .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-            if (isNil(appSelectedPathInfo.selectedPath)) {
-              this.busyService.stop();
-              return;
-            }
-            const studentIds = map(this.selection.selected, 'studentNumber');
-            const shareRequest: ExportAssignmentsRequest = {
-              format: ExportFormat.MODERATION,
-              assignmentName: this.assignmentName,
-              workspaceFolder: this.workspaceName,
-              studentIds,
-              zipFilePath: appSelectedPathInfo.selectedPath
-            };
+          filters: [{
+            name: 'Zip File',
+            extensions: ['zip']
+          }]
+        }).subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
+          if (isNil(appSelectedPathInfo.selectedPath)) {
+            this.busyService.stop();
+            return;
+          }
+          const studentIds = map(this.selection.selected, 'studentNumber');
+          const shareRequest: ExportAssignmentsRequest = {
+            format: ExportFormat.MODERATION,
+            assignmentName: this.assignmentName,
+            workspaceFolder: this.workspaceName,
+            studentIds,
+            zipFilePath: appSelectedPathInfo.selectedPath
+          };
 
-            const updateSettings = cloneDeep(this.assignmentSettings);
-            forEach(studentIds, (studentId) => {
-              const submission = find(updateSettings.submissions, {studentId});
-              submission.state = SubmissionState.SENT_FOR_MODERATION;
-            });
-            this.assignmentService.updateAssignmentSettings(updateSettings, this.workspaceName, this.assignmentName)
-              .subscribe({
-                next: () => {
-                  this.assignmentService.exportAssignment(shareRequest).subscribe({
-                    next: (filePath) => {
-                      this.alertService.success(`Successfully exported ${filePath}.`);
-                      this.refresh();
-                      this.busyService.stop();
-                    },
-                    error: (error) => {
-                      this.alertService.error(error);
-                      this.busyService.stop();
-                    }
-                  });
-                },
-                error: (error) => {
-                  this.busyService.stop();
-                  this.alertService.error(error);
-                }
-              });
+          const updateSettings = cloneDeep(this.assignmentSettings);
+          forEach(studentIds, (studentId) => {
+            const submission = find(updateSettings.submissions, {studentId});
+            submission.state = SubmissionState.SENT_FOR_MODERATION;
           });
+          this.assignmentService.updateAssignmentSettings(updateSettings, this.workspaceName, this.assignmentName)
+            .subscribe({
+              next: () => {
+                this.assignmentService.exportAssignment(shareRequest).subscribe({
+                  next: (filePath) => {
+                    this.alertService.success(`Successfully exported ${filePath}.`);
+                    this.refresh();
+                    this.busyService.stop();
+                  },
+                  error: (error) => {
+                    this.alertService.error(error);
+                    this.busyService.stop();
+                  }
+                });
+              },
+              error: (error) => {
+                this.busyService.stop();
+                this.alertService.error(error);
+              }
+            });
+        });
       }
     });
   }
@@ -714,8 +722,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       .pipe(
         mergeMap(() => this.appService.saveFile({
             filename: this.assignmentName + '_marked.zip',
-            name: 'Zip File',
-            extension: ['zip']
+            filters: [{
+              name: 'Zip File',
+              extensions: ['zip']
+            }]
           })
         )
       ).subscribe((selectedPathInfo) => {
@@ -782,7 +792,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       if (result) {
         this.importService.lectureImport(result).subscribe({
           next: () => {
-            this.assignmentService.refreshWorkspaces().subscribe(() => {
+            this.workspaceService.refreshWorkspaces().subscribe(() => {
 
               this.alertService.success(`Marker file imported.`);
               this.busyService.stop();
@@ -878,14 +888,16 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       this.assignmentService.updateAssignmentSettings(updateAssignmentSettings, this.workspaceName, this.assignmentName)
         .pipe(
           mergeMap(() => {
-            if(marker.id !== this.settings.user.id) {
-              return this.appService.saveFile({
-                filename: this.assignmentName + '_' + marker.email + '_reallocation.zip',
-                name: 'Zip File',
-                extension: ['zip']
-              });
-            }
-            return of({selectedPath: null});
+              if (marker.id !== this.settings.user.id) {
+                return this.appService.saveFile({
+                  filename: this.assignmentName + '_' + marker.email + '_reallocation.zip',
+                  filters: [{
+                    name: 'Zip File',
+                    extensions: ['zip']
+                  }]
+                });
+              }
+              return of({selectedPath: null});
             }
           ),
         ).subscribe( {
