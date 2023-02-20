@@ -187,6 +187,14 @@ export function libreOfficeVersion(event: IpcMainInvokeEvent, librePath: string)
   );
 }
 
+function extractVersion(vString: string): string{
+  if (isNil(vString)) {
+    return null;
+  } else {
+    return vString.trim().match(/(\d\.\d(\.\d)*)/)[0];
+  }
+}
+
 function libreOfficeVersionUnix(librePath: string): Promise<string> {
   let versionString = '';
   return new Promise<void>((resolve, reject) => {
@@ -197,7 +205,7 @@ function libreOfficeVersionUnix(librePath: string): Promise<string> {
       versionString += data;
     });
   }).then(() => {
-    return versionString.trim().match(/(\d\.\d(\.\d)*)/)[0];
+    return extractVersion(versionString);
   });
 }
 
@@ -213,7 +221,7 @@ function libreOfficeVersionWindowsPowershell(librePath: string): Promise<string>
       versionString += data;
     });
   }).then(() => {
-    return versionString.trim();
+    return extractVersion(versionString);
   });
 }
 
@@ -230,9 +238,6 @@ function libreOfficeVersionWindowsWmic(librePath: string): Promise<string> {
     });
     childProcess.stdin.end();
   }).then(() => {
-    return versionString.split('\n')[1].trim(); // "7.5.0.3"
-  }, (error) => {
-    console.log(error);
-    return Promise.reject('Failed to retrieve version');
+    return extractVersion(versionString.split('\n')[1]); // "7.5.0.3"
   });
 }
