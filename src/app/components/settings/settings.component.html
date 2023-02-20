@@ -43,10 +43,10 @@
       <button type="button" mat-raised-button (click)="setLibreOfficePath()">Browse</button>&nbsp;&nbsp;
       <mat-form-field class="w-75">
         <div class="pdf-marker-file-upload"> &nbsp;&nbsp;
-          <input type="text" matInput formControlName="libreOfficePath" id="pdf-marker-upload-display" readonly placeholder="Libre Office">
+          <input type="text" matInput formControlName="libreOfficePath" id="pdf-marker-upload-display" readonly placeholder="Libre Office" [errorStateMatcher]="libreOfficeErrorMatcher">
         </div>
         <mat-hint *ngIf="!libreOfficeError" class="text-muted"><b>Version:</b> {{libreOfficeVersion}}</mat-hint>
-        <mat-hint *ngIf="libreOfficeError" class="small">
+        <mat-hint *ngIf="libreOfficeError">
           <span class="text-danger ">{{libreOfficeError}}</span>
           <span
             *ngIf="libreOfficeAutoscan"
