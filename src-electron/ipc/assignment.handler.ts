@@ -462,7 +462,7 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
     getConfig(),
     rubricPromise
   ]).then(([workspaceAbsolutePath , config, rubric]) => {
-    const folders = glob.sync(config.defaultPath + '/*');
+    const folders = glob.sync(config.defaultPath.replace(/\\/g, '/') + '/*');
 
     let foundCount = 0;
     for (let i = 0; i < folders.length; i++) {
@@ -699,7 +699,7 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
     getAssignmentDirectoryAbsolutePath(workspaceFolder, assignmentName),
     getAssignmentSettingsFor(workspaceFolder, assignmentName)
   ]).then(([assignmentFolder, assignmentSettings]) => {
-    const files = glob.sync(assignmentFolder + sep + '/*');
+    const files = glob.sync(assignmentFolder.replace(/\\/g, '/') + '/*');
     const promises: Promise<any>[] = files.map((file) => {
       if (statSync(file).isDirectory()) {
         const regEx = /(.*)\((.+)\)$/;
@@ -707,7 +707,7 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
           return Promise.reject(INVALID_STUDENT_FOLDER + ' ' + basename(file));
         }
 
-        const submissionFiles = glob.sync(file + sep + SUBMISSION_FOLDER + '/*');
+        const submissionFiles = glob.sync(file.replace(/\\/g, '/') + '/' + SUBMISSION_FOLDER + '/*');
         const submissionPromisses: Promise<any>[] = submissionFiles.map((submission) => {
           return pool.queueTask({
             type: 'FinalizeSubmission',
@@ -881,7 +881,7 @@ export function updateAssignmentRubric(
     const assignmentDirectory: string = results[1];
 
     // Remove all marks files
-    const markFiles = glob.sync(assignmentDirectory + sep + '/**/' + MARK_FILE);
+    const markFiles = glob.sync(assignmentDirectory.replace(/\\/g, '/') + '/**/' + MARK_FILE);
     markFiles.forEach(markFile => {
       unlinkSync(markFile);
     });
