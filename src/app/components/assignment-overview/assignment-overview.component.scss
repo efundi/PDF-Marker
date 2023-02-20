@@ -47,6 +47,9 @@ table {
   .pdf-marker-assignment-overview-student-name {
     font-weight: 500;
     color: #2B72A1 !important;
+    &.no-submission {
+      color: inherit !important;
+    }
   }
 
   .pdf-marker-assignment-overview-student-number {

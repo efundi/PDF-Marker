@@ -144,6 +144,7 @@
         <div
           class="pdf-marker-assignment-overview-student-name"
           [class.cursor-pointer]="element.state !== SubmissionState.NO_SUBMISSION"
+          [class.no-submission]="element.state === SubmissionState.NO_SUBMISSION"
           (click)="onSelectedPdf(element)">{{element.fullName}}
         </div>
         <div class="pdf-marker-assignment-overview-student-number">{{element.studentNumber}}</div>

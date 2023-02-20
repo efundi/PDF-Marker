@@ -707,6 +707,7 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
           return Promise.reject(INVALID_STUDENT_FOLDER + ' ' + basename(file));
         }
 
+        // For a NO_SUBMISSION there won't be any files anyway
         const submissionFiles = glob.sync(file.replace(/\\/g, '/') + '/' + SUBMISSION_FOLDER + '/*');
         const submissionPromisses: Promise<any>[] = submissionFiles.map((submission) => {
           return pool.queueTask({
@@ -728,7 +729,7 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
       .then((updatedAssignmentSettings) => {
         // Set status of all assignments that has not been marked
         forEach(updatedAssignmentSettings.submissions, (submission) => {
-          if (isNil(submission.mark)) {
+          if (isNil(submission.mark) && submission.state !== SubmissionState.NO_SUBMISSION) {
             submission.state = SubmissionState.NOT_MARKED;
           }
         });
