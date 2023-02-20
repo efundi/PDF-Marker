@@ -1,5 +1,13 @@
 import {Component, OnInit} from '@angular/core';
-import {FormBuilder, FormControl, FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormGroupDirective, NgForm,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import {SettingsService} from '../../services/settings.service';
 import {AppService} from '../../services/app.service';
 import {AlertService} from '../../services/alert.service';
@@ -10,6 +18,15 @@ import {SettingInfo} from '@shared/info-objects/setting.info';
 import {cloneDeep, isEqual, isNil} from 'lodash';
 import {WorkspaceService} from '../../services/workspace.service';
 import {ConvertService} from '../../services/convert.service';
+import {ErrorStateMatcher} from '@angular/material/core';
+
+
+/** Error when invalid control is dirty, touched, or submitted. */
+export class MyErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    return !!(control && control.invalid);
+  }
+}
 
 @Component({
   selector: 'pdf-marker-settings',
@@ -17,6 +34,8 @@ import {ConvertService} from '../../services/convert.service';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit {
+
+
 
   settingsForm: FormGroup<{
     name: FormControl<string>,
@@ -37,6 +56,7 @@ export class SettingsComponent implements OnInit {
   libreOfficeAutoscan = true;
 
   private libreOfficeSubscription: Subscription;
+  libreOfficeErrorMatcher = new MyErrorStateMatcher();
 
   private static removeTrailingSlashes(path: string): string {
     return path.replace(/\\+$/, ''); // Removes one or more trailing slashes
@@ -105,12 +125,15 @@ export class SettingsComponent implements OnInit {
       email: [null as string, Validators.compose([Validators.required, Validators.email])],
       lmsSelection: ['Sakai', Validators.required],
       defaultPath: [null as string, Validators.required],
-      libreOfficePath: [null as string, Validators.required],
+      libreOfficePath: [null as string, Validators.pattern(/(libreoffice|soffice)(\.exe)?/)],
     });
 
     this.libreOfficeSubscription = this.settingsForm.get('libreOfficePath').valueChanges.subscribe({
       next: (path) => {
-        if (isNil(path)) {
+        if (this.settingsForm.get('libreOfficePath').errors?.pattern) {
+          this.libreOfficeAutoscan = true;
+          this.libreOfficeError = 'Select Libre Office executable (soffice or libreoffice).';
+        } else if (isNil(path)) {
           this.libreOfficeAutoscan = true;
           this.libreOfficeError = 'Libre Office path is not configured. You will not be able to convert documents to PDF.';
         } else {
@@ -144,7 +167,7 @@ export class SettingsComponent implements OnInit {
         this.settingsForm.patchValue({
           libreOfficePath: appSelectedPathInfo.selectedPath
         });
-        this.loadLibreOfficeVersion(appSelectedPathInfo.selectedPath);
+        this.settingsForm.updateValueAndValidity();
       } else if (appSelectedPathInfo.error) {
         this.alertService.error(appSelectedPathInfo.error.message);
       }
