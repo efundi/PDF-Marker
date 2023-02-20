@@ -25,11 +25,11 @@ function findPaths(): Promise<string[]> {
       break;
     case 'win32':
       paths = [
-      ...paths,
-      join(process.env['PROGRAMFILES(X86)'], 'LIBREO~1/program/soffice.exe'),
-      join(process.env['PROGRAMFILES(X86)'], 'LibreOffice/program/soffice.exe'),
-      join(process.env.PROGRAMFILES, 'LibreOffice/program/soffice.exe'),
-    ];
+        ...paths,
+        join(process.env['PROGRAMFILES(X86)'], 'LIBREO~1/program/soffice.exe'),
+        join(process.env['PROGRAMFILES(X86)'], 'LibreOffice/program/soffice.exe'),
+        join(process.env.PROGRAMFILES, 'LibreOffice/program/soffice.exe'),
+      ];
       break;
     default:
       return Promise.reject(`Operating system not yet supported: ${platform}`);
@@ -75,7 +75,7 @@ function convert(sofficePath: string, sourcePath: string, destPath: string): Pro
   return Promise.all([
     mkdtemp(join(tmpdir(), 'soffice')),
     mkdtemp(join(tmpdir(), 'libreofficeConvert_'))
-    ])
+  ])
     .then(([sofficeTemp, outputTemp]) => {
       const args: string[] = [
         `-env:UserInstallation=${pathToFileURL(sofficeTemp)}`,
@@ -164,16 +164,73 @@ export function libreOfficeFind(event: IpcMainInvokeEvent): Promise<string> {
 
 
 export function libreOfficeVersion(event: IpcMainInvokeEvent, librePath: string): Promise<string> {
+
+  let promise: Promise<string>;
+  if (process.platform === 'win32') {
+    promise = libreOfficeVersionWindowsPowershell(librePath)
+      .then(v => v, () => {
+        // If using powershell did not work, try wmic
+        return libreOfficeVersionWindowsWmic(librePath);
+      });
+  } else if (process.platform === 'linux' || process.platform === 'darwin') {
+    promise = libreOfficeVersionUnix(librePath);
+  } else {
+    return Promise.reject('Unsupported platform');
+  }
+
+  return promise.then(
+    v => v,
+    (error) => {
+      console.error(error);
+      return Promise.reject('Could not load version');
+    }
+  );
+}
+
+function libreOfficeVersionUnix(librePath: string): Promise<string> {
   let versionString = '';
   return new Promise<void>((resolve, reject) => {
     const childProcess: ChildProcess = execFile(librePath, ['--version']);
-    childProcess.addListener('error', reject);
-    childProcess.addListener('exit', resolve);
+    childProcess.on('error', reject);
+    childProcess.on('exit', resolve);
+    childProcess.stdout.on('data', (data) => {
+      versionString += data;
+    });
+  }).then(() => {
+    return versionString.trim().match(/(\d\.\d(\.\d)*)/)[0];
+  });
+}
+
+function libreOfficeVersionWindowsPowershell(librePath: string): Promise<string> {
+  let versionString = '';
+
+  const args = ['-NoLogo', '-NoProfile', '-Command', '(Get-Item -Path \'' + librePath + '\').VersionInfo.ProductVersion'];
+  return new Promise<void>((resolve, reject) => {
+    const childProcess: ChildProcess = execFile('powershell', args);
+    childProcess.on('error', reject);
+    childProcess.on('exit', resolve);
     childProcess.stdout.on('data', (data) => {
       versionString += data;
     });
   }).then(() => {
     return versionString.trim();
+  });
+}
+
+function libreOfficeVersionWindowsWmic(librePath: string): Promise<string> {
+  let versionString = '';
+  librePath = librePath.replaceAll('\\', '\\\\');
+  const args = ['datafile', 'where', 'name=\"' + librePath + '\"', 'get', 'version'];
+  return new Promise<void>((resolve, reject) => {
+    const childProcess: ChildProcess = execFile('wmic', args);
+    childProcess.on('error', reject);
+    childProcess.on('exit', resolve);
+    childProcess.stdout.on('data', (data) => {
+      versionString += data;
+    });
+    childProcess.stdin.end();
+  }).then(() => {
+    return versionString.split('\n')[1].trim(); // "7.5.0.3"
   }, (error) => {
     console.log(error);
     return Promise.reject('Failed to retrieve version');
