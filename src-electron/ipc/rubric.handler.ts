@@ -241,7 +241,7 @@ export function deleteRubricCheck(event: IpcMainInvokeEvent, rubricName: string)
 
   return getConfig().then((config) => {
     try {
-      const folders: string[] = glob.sync(config.defaultPath.replace(/\\/g, '/') + sep + '*');
+      const folders: string[] = glob.sync(config.defaultPath.replace(/\\/g, '/') + '/*');
       let found = false;
       folders.forEach(folder => {
         const settingFileContents = existsSync(folder + sep + SETTING_FILE) ? readFileSync(folder + sep + SETTING_FILE) : null;
