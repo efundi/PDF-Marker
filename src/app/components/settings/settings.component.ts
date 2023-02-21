@@ -50,10 +50,6 @@ export class SettingsComponent implements OnInit {
 
   libreOfficeVersion = '';
   libreOfficeError: string = null;
-  /**
-   * Flag if autoscanning for libre office path is allowed
-   */
-  libreOfficeAutoscan = true;
 
   private libreOfficeSubscription: Subscription;
   libreOfficeErrorMatcher = new MyErrorStateMatcher();
@@ -97,12 +93,11 @@ export class SettingsComponent implements OnInit {
   autoscanLibreOffice(): void {
     this.convertService.libreOfficeFind().subscribe({
       next: (path) => {
-        this.libreOfficeAutoscan = true;
         this.settingsForm.patchValue({
           libreOfficePath: path
         });
       }, error: () => {
-        this.libreOfficeAutoscan = false;
+        this.libreOfficeError = 'Could not find the Libre Office installation.'
       }
     });
   }
@@ -131,10 +126,8 @@ export class SettingsComponent implements OnInit {
     this.libreOfficeSubscription = this.settingsForm.get('libreOfficePath').valueChanges.subscribe({
       next: (path) => {
         if (this.settingsForm.get('libreOfficePath').errors?.pattern) {
-          this.libreOfficeAutoscan = true;
           this.libreOfficeError = 'Select Libre Office executable (soffice or libreoffice).';
         } else if (isNil(path)) {
-          this.libreOfficeAutoscan = true;
           this.libreOfficeError = 'Libre Office path is not configured. You will not be able to convert documents to PDF.';
         } else {
           this.loadLibreOfficeVersion(path);

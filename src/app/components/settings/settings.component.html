@@ -49,7 +49,6 @@
         <mat-hint *ngIf="libreOfficeError">
           <span class="text-danger ">{{libreOfficeError}}</span>
           <span
-            *ngIf="libreOfficeAutoscan"
             matTooltip="Automatically find Libre Office on your system"
             class="text-success fw-bold ms-2"
             (click)="autoscanLibreOffice()"
@@ -57,7 +56,6 @@
             Find
           </span>
           <a
-            *ngIf="libreOfficeAutoscan"
             matTooltip="Download Libre Office"
             class="text-primary fw-bold ms-2"
             href="https://www.libreoffice.org/download/download-libreoffice/"
