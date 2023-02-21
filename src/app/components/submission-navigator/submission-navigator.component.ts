@@ -1,16 +1,13 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {filter, findIndex, isNil} from 'lodash';
 import {StudentSubmission, TreeNodeType, WorkspaceFile} from '@shared/info-objects/workspace';
-import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {AssignmentService} from '../../services/assignment.service';
 import {Router} from '@angular/router';
-import {Subscription} from 'rxjs';
+import {Subscription, tap} from 'rxjs';
 import {SelectedSubmission} from '../../info-objects/selected-submission';
-import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {SettingsService} from '../../services/settings.service';
-import {SettingInfo} from '@shared/info-objects/setting.info';
-import {calculateOpenInMarking} from '../../utils/utils';
+import {SubmissionNavigationService} from '../../services/submission-navigation.service';
 
 export interface SubmissionItem {
   studentFullName: string;
@@ -24,6 +21,12 @@ export interface SubmissionItem {
   styleUrls: ['./submission-navigator.component.scss']
 })
 export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
+
+  /**
+   * Indicator if we are busy waiting for a page to load.
+   * This is used to prevent the user from quickly jumping pages while waiting for files to convert
+   */
+  busy = false;
 
   /**
    * Indicator if we can navigate any further
@@ -56,42 +59,22 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
    */
   private assignmentSubscription: Subscription;
 
-  private assignmentSettings: AssignmentSettingsInfo;
-  private settings: SettingInfo;
 
   constructor(private assignmentService: AssignmentService,
               private settingsService: SettingsService,
-              private router: Router) { }
+              private router: Router,
+              private submissionNavigationService: SubmissionNavigationService) { }
 
   ngOnInit(): void {
-    this.loadSettings();
 
-    this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.subscribe((assignment) => {
-      this.activeSubmission = assignment;
-      this.loadAssignmentSettings();
-      this.generateDataFromModel(assignment);
+    this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.subscribe((submission) => {
+      this.activeSubmission = submission;
+      this.generateDataFromModel(submission);
     });
   }
 
   ngOnDestroy() {
     this.assignmentSubscription.unsubscribe();
-  }
-
-  private loadSettings(){
-    this.settingsService.getConfigurations()
-      .subscribe({
-        next: (settings) => {
-          this.settings = settings;
-        }
-      });
-  }
-
-  private loadAssignmentSettings() {
-    if (!isNil(this.activeSubmission)) {
-       this.assignmentService.getAssignmentSettings(this.activeSubmission.workspace.name, this.activeSubmission.assignment.name).subscribe((settings) => {
-        this.assignmentSettings = settings;
-      });
-    }
   }
 
   private generateDataFromModel(activeSubmission: SelectedSubmission) {
@@ -102,19 +85,20 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
         .map((studentSubmission: StudentSubmission) => {
 
           // Find submission or feedback pdf
-          let pdfNode: WorkspaceFile = studentSubmission.children.find((tn) => tn.type === TreeNodeType.SUBMISSIONS_DIRECTORY).children[0]  as WorkspaceFile;
-          if (isNil(pdfNode)) {
-            pdfNode = studentSubmission.children.find((tn) => tn.type === TreeNodeType.FEEDBACK_DIRECTORY).children[0] as WorkspaceFile;
+          let submissionFile: WorkspaceFile = studentSubmission.children
+            .find((tn) => tn.type === TreeNodeType.SUBMISSIONS_DIRECTORY).children[0] as WorkspaceFile;
+          if (isNil(submissionFile)) {
+            submissionFile = studentSubmission.children.find((tn) => tn.type === TreeNodeType.FEEDBACK_DIRECTORY).children[0] as WorkspaceFile;
           }
 
-          if (isNil(pdfNode)) {
+          if (isNil(submissionFile)) {
             return null; // This student does not have submissions or feedback...
           }
 
           return {
             studentFullName: studentSubmission.studentSurname + (isNil(studentSubmission.studentName) ? '' : ', ' + studentSubmission.studentName),
             studentId: studentSubmission.studentId,
-            pdfFile: pdfNode
+            pdfFile: submissionFile
           };
         })
         .filter((mi) => !isNil(mi))
@@ -135,27 +119,17 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
   }
 
   selectSubmission(index: number) {
-    this.activeIndex = index;
-    this.updateStates();
-    const workspace = this.activeSubmission.workspace;
-    const assignment = this.activeSubmission.assignment;
-    const activeMenuItem = this.menuItems[this.activeIndex];
-
-    const workspaceName = workspace.name;
-    const assignmentName =  assignment.name;
-    const pdfPath = PdfmUtilsService.buildTreePath(activeMenuItem.pdfFile);
-
-    this.assignmentService.selectSubmission({
-      workspace,
-      assignment,
-      pdfFile: activeMenuItem.pdfFile
+    const nextItem = this.menuItems[index];
+    this.busy = true;
+    this.submissionNavigationService.openSubmission(nextItem.pdfFile).subscribe({
+      next: () => {
+        this.busy = false;
+      },
+      error: () => {
+        this.busy = false;
+      }
     });
 
-    if (calculateOpenInMarking(this.assignmentSettings)) {
-      this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
-    } else {
-      this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);
-    }
   }
 
   openAssignment() {

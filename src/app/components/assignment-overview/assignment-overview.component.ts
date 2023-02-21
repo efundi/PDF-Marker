@@ -31,14 +31,12 @@ import {SelectionModel} from '@angular/cdk/collections';
 import {ExportAssignmentsRequest, ExportFormat} from '@shared/info-objects/export-assignments-request';
 import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
-import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
 import {MatSort, MatSortable} from '@angular/material/sort';
 import {cloneDeep, every, filter, find, forEach, isEmpty, isNil, map, sortBy, uniq} from 'lodash';
 import {
   StudentSubmission,
   TreeNodeType,
-  Workspace,
   WorkspaceAssignment,
   WorkspaceFile
 } from '@shared/info-objects/workspace';
@@ -48,8 +46,7 @@ import {DateTime} from 'luxon';
 import {
   calculateCanModerateSubmission,
   calculateCanReAllocateSubmission,
-  calculateOpenInMarking,
-  checkPermissions,
+  checkPermissions, DEFAULT_PERMISSIONS,
   Permissions
 } from '../../utils/utils';
 import {ImportMarkerModalComponent} from './import-marker-modal/import-marker-modal.component';
@@ -58,7 +55,7 @@ import {
   ReallocateSubmissionsModalComponent
 } from './reallocate-submissions-modal/reallocate-submissions-modal.component';
 import {WorkspaceService} from '../../services/workspace.service';
-import {ConvertService} from '../../services/convert.service';
+import {SubmissionNavigationService} from '../../services/submission-navigation.service';
 
 export interface AssignmentDetails {
   index?: number;
@@ -121,28 +118,10 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
 
   private workspaceName: string;
   assignmentName: string;
-  permissions: Permissions = {
-    showAllocate: false,
-    canAllocate: false,
-    showReAllocate: false,
-    canReAllocate: false,
-    showImport: false,
-    canImport: false,
-    canManageSubmissions: false,
-    canManageRubric: false,
-    canFinalize: false,
-    canExportReview: false,
-    showSendForModeration: false,
-    canSendForModeration: false,
-    canVerifyModeration: false,
-    showModerationVerified: false,
-  };
-
-
+  permissions: Permissions = DEFAULT_PERMISSIONS();
 
   constructor(private assignmentService: AssignmentService,
               private workspaceService: WorkspaceService,
-              private convertService: ConvertService,
               private router: Router,
               private activatedRoute: ActivatedRoute,
               private appService: AppService,
@@ -153,7 +132,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
               private rubricService: RubricService,
               private fb: UntypedFormBuilder,
               private viewContainerRef: ViewContainerRef,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private submissionNavigationService: SubmissionNavigationService) {
   }
 
 
@@ -315,70 +295,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     if (isNil(element.pdfFile)) {
       return;
     }
-    const pdfFile = element.pdfFile;
-    const assignment = pdfFile.parent.parent.parent as WorkspaceAssignment;
-    const workspace = assignment.parent as Workspace;
-    const pdfPath = PdfmUtilsService.buildTreePath(pdfFile);
-
-    if (!pdfPath.endsWith('.pdf')) {
-      // Need to convert
-      this.appService.openSnackBar(true, 'Converting to PDF...');
-      this.busyService.start();
-      this.convertService.convertToPdf(workspace.name, assignment.name, pdfPath).subscribe({
-        next: (result) => {
-          this.appService.openSnackBar(true, 'Successfully converted to PDF');
-          pdfFile.name = PdfmUtilsService.basename(result); // TODO hacking
-          this.assignmentService.selectSubmission({
-            workspace,
-            assignment,
-            pdfFile
-          });
-
-          if (calculateOpenInMarking(this.assignmentSettings)) {
-            this.router.navigate([
-              RoutesEnum.ASSIGNMENT_MARKER,
-              workspace.name,
-              assignment.name,
-              result]);
-          } else {
-            this.router.navigate([
-              RoutesEnum.PDF_VIEWER,
-              workspace.name,
-              assignment.name,
-              result]);
-          }
-          this.busyService.stop();
-        },
-        error: (error) => {
-          console.log(error);
-          this.appService.openSnackBar(false, error);
-          this.busyService.stop();
-        }
-      });
-    } else {
-      this.assignmentService.selectSubmission({
-        workspace,
-        assignment,
-        pdfFile
-      });
-
-      if (calculateOpenInMarking(this.assignmentSettings)) {
-        this.router.navigate([
-          RoutesEnum.ASSIGNMENT_MARKER,
-          workspace.name,
-          assignment.name,
-          pdfPath]);
-      } else {
-        this.router.navigate([
-          RoutesEnum.PDF_VIEWER,
-          workspace.name,
-          assignment.name,
-          pdfPath]);
-      }
-    }
-
-
-
+    this.submissionNavigationService.openSubmission(element.pdfFile).subscribe();;
   }
 
   onFinalizeAndExport(event) {

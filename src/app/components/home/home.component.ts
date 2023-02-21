@@ -11,8 +11,7 @@ import {BusyService} from '../../services/busy.service';
 @Component({
   selector: 'pdf-marker-home',
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss'],
-  providers: [AssignmentService]
+  styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly title = 'PDF Marker';

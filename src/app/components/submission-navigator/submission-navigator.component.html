@@ -8,11 +8,12 @@
   </div>
 
   <div class="submission-navigator-submission-wrapper">
-    <button mat-icon-button matTooltip="Next" [disabled]="!canPrevious" (click)="previous()">
+    <button mat-icon-button matTooltip="Previous" [disabled]="busy || !canPrevious" (click)="previous()">
       <mat-icon>arrow_back</mat-icon>
     </button>
     <button
       mat-button
+      [disabled]="busy"
       [matMenuTriggerFor]="menu">
       <div style="display: flex">
         <div style="flex-grow: 1;line-height: 2rem;height: 2.5rem; width: 185px; text-align: left">
@@ -36,7 +37,7 @@
       </ng-template>
     </mat-menu>
 
-    <button mat-icon-button matTooltip="Next" [disabled]="!canNext" (click)="next()">
+    <button mat-icon-button matTooltip="Next" [disabled]="busy || !canNext" (click)="next()">
       <mat-icon>arrow_forward</mat-icon>
     </button>
   </div>
