@@ -324,23 +324,24 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
         return savePromise.then(() => {
           const submission = find(assignmentSettings.submissions, {directoryName: submissionDirectoryName});
           submission.mark = totalMark;
-          const userId = config.user ? config.user.id : null;
-          const markerId = submission.allocation ? submission.allocation.id : null;
           let allocatedToLecture = false;
 
-          // Flag if the allocation may be moved to the owner of the assignment
-          const allowReAllocateToOwner = !(submission.state === SubmissionState.MODERATED ||
-            submission.state === SubmissionState.SENT_FOR_MODERATION ||
-            submission.state === SubmissionState.MARKED
-          );
+          if (assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED ) {
+            const userId = config.user ? config.user.id : null;
+            const markerId = submission.allocation ? submission.allocation.id : null;
+            const assignmentOwnerId = assignmentSettings.owner ? assignmentSettings.owner.id : null;
 
-          if (allowReAllocateToOwner && !isNil(userId) && userId !== markerId) {
-            // We are allowed to change the owner, and the allocation was not the owner
-            submission.allocation = {
-              id: userId,
-              email: config.user.email
-            };
-            allocatedToLecture = true;
+            // Flag if the allocation may be moved to the owner of the assignment
+            const allowReAllocateToOwner = submission.state === SubmissionState.NOT_MARKED && assignmentOwnerId === userId;
+
+            if (allowReAllocateToOwner && !isNil(userId) && userId !== markerId) {
+              // We are allowed to change the owner, and the allocation was not the owner
+              submission.allocation = {
+                id: userId,
+                email: config.user.email
+              };
+              allocatedToLecture = true;
+            }
           }
 
           if (!(submission.state === SubmissionState.MODERATED || submission.state === SubmissionState.SENT_FOR_MODERATION)) {
