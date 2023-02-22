@@ -324,7 +324,6 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
         return savePromise.then(() => {
           const submission = find(assignmentSettings.submissions, {directoryName: submissionDirectoryName});
           submission.mark = totalMark;
-          let allocatedToOwner = false;
 
           if (assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED ) {
             const userId = config.user ? config.user.id : null;
@@ -340,14 +339,13 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
                 id: userId,
                 email: config.user.email
               };
-              allocatedToOwner = true;
             }
           }
 
           if (!(submission.state === SubmissionState.MODERATED || submission.state === SubmissionState.SENT_FOR_MODERATION)) {
             // Only update the submission state if it is not being moderated
             if (isNil(totalMark)) {
-              submission.state = isNil(submission.allocation) || allocatedToOwner ? SubmissionState.NEW : SubmissionState.ASSIGNED_TO_MARKER;
+              submission.state = isNil(submission.allocation) ? SubmissionState.NEW : SubmissionState.ASSIGNED_TO_MARKER;
             } else {
               submission.state = SubmissionState.MARKED;
             }
