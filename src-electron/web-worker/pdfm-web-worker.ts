@@ -171,9 +171,11 @@ function finalizeSubmissionTask(finalizeSubmissionTaskDetails: FinalizeSubmissio
     let fileName = basename(finalizeSubmissionTaskDetails.pdfPath, ext);
     annotatePdf(finalizeSubmissionTaskDetails.pdfPath, finalizeSubmissionTaskDetails.assignmentSettings)
       .then((data) => {
-        fileName += '_MARK';
-        writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data);
-        unlinkSync(finalizeSubmissionTaskDetails.pdfPath);
+        if (!isNil(data)) {
+          fileName += '_MARK';
+          writeFileSync(studentFolder + sep + FEEDBACK_FOLDER + sep + fileName + '.pdf', data);
+          unlinkSync(finalizeSubmissionTaskDetails.pdfPath);
+        }
         parentPort.postMessage('Done');
       }, (error) => {
         throw new Error('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
