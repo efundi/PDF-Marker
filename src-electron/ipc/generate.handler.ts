@@ -133,7 +133,9 @@ export function marksSubmissions(assignmentName: string, workspaceName: string, 
   ]).then(([assignmentPath, assignmentSettings]) => {
 
     const submissions: Submission[] = filter(assignmentSettings.submissions, (submission) => {
-      if (!(submission.state === SubmissionState.NEW || submission.state === SubmissionState.NOT_MARKED)) {
+      if (!(submission.state === SubmissionState.NEW ||
+        submission.state === SubmissionState.NOT_MARKED ||
+        submission.state === SubmissionState.NO_SUBMISSION)) {
         return false;
       }
       if (all) {

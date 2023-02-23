@@ -35,8 +35,6 @@ export class PreviewMarksComponent implements OnInit {
         }
       }
 
-      console.log(config);
-
       const pagesArray = Object.keys(config.submissionInfo.marks);
       pagesArray.forEach(page => {
         if (Array.isArray(config.submissionInfo.marks[page])) {

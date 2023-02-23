@@ -34,7 +34,7 @@ import {RubricService} from '../../services/rubric.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {BusyService} from '../../services/busy.service';
 import {MatSort, MatSortable} from '@angular/material/sort';
-import {cloneDeep, every, filter, find, forEach, isEmpty, isNil, map, sortBy, uniq} from 'lodash';
+import {cloneDeep, every, filter, find, forEach, isEmpty, isNil, map, some, sortBy, uniq} from 'lodash';
 import {
   StudentSubmission,
   TreeNodeType,
@@ -386,7 +386,14 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       event.target.disabled = true;
       return;
     }
-    this.openYesNoConfirmationDialog(null, 'Are you sure you want to finalise and zip this assignment?');
+
+    let message = 'Are you sure you want to finalise and zip this assignment?';
+    const anyNotMarked = some(this.assignmentSettings.submissions, (s) => s.state === SubmissionState.NOT_MARKED);
+    if (anyNotMarked) {
+      message = 'There are submissions that are not marked. ' + message;
+    }
+
+    this.openYesNoConfirmationDialog(null, message);
   }
 
   private openYesNoConfirmationDialog(title: string = 'Confirm', message: string) {
