@@ -261,8 +261,9 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
       const submissionDirectoryName = basename(submissionPath);
       return Promise.all([
         getAssignmentSettingsAt(assignmentPath),
+        getConfig(),
         saveSubmissionInfo(submissionPath, submissionInfo)
-      ]).then(([assignmentSettings]) => {
+      ]).then(([assignmentSettings, config]) => {
         let savePromise: Promise<any> = Promise.resolve();
 
         if (submissionInfo.type === SubmissionType.MARK) {
@@ -323,8 +324,26 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
         return savePromise.then(() => {
           const submission = find(assignmentSettings.submissions, {directoryName: submissionDirectoryName});
           submission.mark = totalMark;
+
+          if (assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED ) {
+            const userId = config.user ? config.user.id : null;
+            const markerId = submission.allocation ? submission.allocation.id : null;
+            const assignmentOwnerId = assignmentSettings.owner ? assignmentSettings.owner.id : null;
+
+            // Flag if the allocation may be moved to the owner of the assignment
+            const allowReAllocateToOwner = submission.state === SubmissionState.NOT_MARKED && assignmentOwnerId === userId;
+
+            if (allowReAllocateToOwner && !isNil(userId) && userId !== markerId) {
+              // We are allowed to change the owner, and the allocation was not the owner
+              submission.allocation = {
+                id: userId,
+                email: config.user.email
+              };
+            }
+          }
+
           if (!(submission.state === SubmissionState.MODERATED || submission.state === SubmissionState.SENT_FOR_MODERATION)) {
-            // Only update the submission state if it s not being moderated
+            // Only update the submission state if it is not being moderated
             if (isNil(totalMark)) {
               submission.state = isNil(submission.allocation) ? SubmissionState.NEW : SubmissionState.ASSIGNED_TO_MARKER;
             } else {
