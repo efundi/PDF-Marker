@@ -182,7 +182,7 @@ export function libreOfficeVersion(event: IpcMainInvokeEvent, librePath: string)
     v => v,
     (error) => {
       console.error(error);
-      return Promise.reject('Could not load version');
+      return Promise.reject('Could not determine Libre Office version. Please check configuration');
     }
   );
 }

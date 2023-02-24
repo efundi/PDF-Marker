@@ -9,6 +9,25 @@ import {
 import {Marker} from '@shared/info-objects/setting.info';
 import {every, find, isEmpty, isNil, property, some} from 'lodash';
 
+export function DEFAULT_PERMISSIONS(): Permissions {
+  return {
+    showAllocate: false,
+    canAllocate: false,
+    showReAllocate: false,
+    canReAllocate: false,
+    showImport: false,
+    canImport: false,
+    canManageSubmissions: false,
+    canManageRubric: false,
+    canFinalize: false,
+    canExportReview: false,
+    showSendForModeration: false,
+    canSendForModeration: false,
+    canVerifyModeration: false,
+    showModerationVerified: false
+  };
+}
+
 export interface Permissions {
 
   /**

@@ -21,6 +21,7 @@ import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {calculateOpenInMarking} from '../../utils/utils';
 import {WorkspaceService} from '../../services/workspace.service';
+import {SubmissionNavigationService} from '../../services/submission-navigation.service';
 
 let treeId = 0;
 
@@ -105,7 +106,8 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
   constructor(private settingsService: SettingsService,
               private assignmentService: AssignmentService,
               private workspaceService: WorkspaceService,
-              private router: Router) { }
+              private router: Router,
+              private submissionNavigationService: SubmissionNavigationService) { }
 
 
   workspaces: Workspace[] = [];
@@ -188,27 +190,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
   }
 
   private openDocument(node: WorkspaceFile): void {
-
-    const studentSubmission = node.parent.parent as StudentSubmission;
-    const assignment = studentSubmission.parent as WorkspaceAssignment;
-    const workspace = assignment.parent as Workspace;
-
-    const assignmentName = assignment.name;
-    const workspaceName = workspace.name;
-    this.assignmentService.selectSubmission({
-      workspace,
-      assignment,
-      pdfFile: node
-    });
-    this.assignmentService.getAssignmentSettings(workspaceName, assignmentName).subscribe((assignmentSettingsInfo) => {
-      if (calculateOpenInMarking(assignmentSettingsInfo)) {
-        const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, studentSubmission.name, node.parent.name, node.name);
-        this.router.navigate([RoutesEnum.ASSIGNMENT_MARKER, workspaceName, assignmentName, pdfPath]);
-      } else {
-        const pdfPath = PdfmUtilsService.buildFilePath(workspaceName, assignmentName, studentSubmission.name, node.parent.name, node.name);
-        this.router.navigate([RoutesEnum.PDF_VIEWER, workspaceName, assignmentName, pdfPath]);
-      }
-    });
+    this.submissionNavigationService.openSubmission(node).subscribe();
   }
 
 
