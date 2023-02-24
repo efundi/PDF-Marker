@@ -76,7 +76,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
     return Promise.reject('No file selected!');
   }
   let rubricName;
-  if (!req.noRubric && req.zipFileType !== ZipFileType.MARKER_IMPORT) {
+  if (!isNil(req.rubricName) && req.zipFileType !== ZipFileType.MARKER_IMPORT) {
     // If it is not a marker import, and a rubric is required, the rubric name must be provide
     if (isNil(req.rubricName)) {
       return Promise.reject(NOT_PROVIDED_RUBRIC);

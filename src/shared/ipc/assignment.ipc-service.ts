@@ -1,16 +1,14 @@
-import {UpdateAssignment} from '../info-objects/update-assignment';
-import {CreateAssignmentInfo} from '../info-objects/create-assignment.info';
+import {AssignmentInfo} from '../info-objects/assignment.info';
 import {ExportAssignmentsRequest} from '../info-objects/export-assignments-request';
 import {IRubric} from '../info-objects/rubric.class';
 import {IpcResponse} from './ipc-response';
-import {Workspace} from '@shared/info-objects/workspace';
 import {SubmissionInfo} from '@shared/info-objects/submission.info';
 
 export interface AssignmentIpcService {
 
 
-  createAssignment(createAssignmentInfo: CreateAssignmentInfo): Promise<IpcResponse<any>>;
-  updateAssignment(updateRequest: UpdateAssignment): Promise<IpcResponse<any>>;
+  createAssignment(createAssignmentInfo: AssignmentInfo): Promise<IpcResponse<any>>;
+  updateAssignment(updateRequest: AssignmentInfo): Promise<IpcResponse<any>>;
   saveMarks(location: string, marks: SubmissionInfo): Promise<IpcResponse<any>>;
   finalizeAssignment(workspaceFolder: string, assignmentName: string, zipFilePath: string): Promise<IpcResponse<string>>;
   getAssignmentSettings(workspaceName: string, location: string): Promise<IpcResponse<any>>;

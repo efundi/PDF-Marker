@@ -2,16 +2,14 @@ import {existsSync, mkdtempSync, rmSync, statSync, unlinkSync} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
 import {checkAccess, isFolder, isJson} from '../utils';
-import {INVALID_STUDENT_FOLDER, NOT_PROVIDED_RUBRIC,} from '../constants';
+import {INVALID_STUDENT_FOLDER} from '../constants';
 import {basename, dirname, extname, join, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
 import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
-import {cloneDeep, filter, find, forEach, isNil, map, reduce, remove} from 'lodash';
+import {cloneDeep, filter, find, forEach, isNil, map, reduce, remove, findIndex} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
-import {UpdateAssignment} from '@shared/info-objects/update-assignment';
-import {PDFDocument} from 'pdf-lib';
 import {IRubric} from '@shared/info-objects/rubric.class';
-import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-assignment.info';
+import {AssignmentInfo, AssignmentSubmissionInfo} from '@shared/info-objects/assignment.info';
 import {
   AssignmentSettingsInfo,
   AssignmentState,
@@ -24,7 +22,7 @@ import {
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {ExportAssignmentsRequest, ExportFormat} from '@shared/info-objects/export-assignments-request';
 import {tmpdir} from 'os';
-import {copy, readdir} from 'fs-extra';
+import {copy, copyFile, readdir} from 'fs-extra';
 import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {
   ASSIGNMENT_BACKUP_DIR,
@@ -203,7 +201,7 @@ export function updateAssignmentSettings(
 
 
 
-export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: UpdateAssignment): Promise<any> {
+export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: AssignmentInfo): Promise<any> {
   return Promise.all([
     getAssignmentSettingsFor(updateRequest.workspace, updateRequest.assignmentName),
     getAssignmentDirectoryAbsolutePath(updateRequest.workspace, updateRequest.assignmentName)
@@ -212,12 +210,18 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
       return Promise.reject('Operation not permitted on this type of assignment!');
     }
 
-    if (updateRequest.studentDetails.length !== updateRequest.files.length) {
-      return Promise.reject( `Student details is not equal to number of files sent!`);
-    }
+    const promises: Promise<any>[] = [];
+    // Not find all the submissions we had, and not in the request, remove them
+    assignmentSettings.submissions.forEach(submission => {
+      const foundIndex = findIndex(updateRequest.submissions, s => s.studentId === submission.studentId);
+      if (foundIndex < 0) {
+        remove(assignmentSettings.submissions, {studentId: submission.studentId.toUpperCase()});
+        const promise = rm(assignmentAbsolutePath + sep + submission.directoryName, {recursive: true});
+        promises.push(promise);
+      }
+    });
 
-    const promises: Promise<any>[] = updateRequest.studentDetails.map((studentInfo, index) => {
-      const file: any = updateRequest.files[index];
+    updateRequest.submissions.forEach((studentInfo) => {
       const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() +
         '(' + studentInfo.studentId.toUpperCase() + ')';
       const feedbackFolder = studentFolder + sep + FEEDBACK_FOLDER;
@@ -226,7 +230,7 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
       const existingSubmission = find(assignmentSettings.submissions, {studentId: studentInfo.studentId.toUpperCase()});
 
       if (isNil(existingSubmission)) {
-        const filename = basename(file);
+        const filename = basename(studentInfo.submissionFilePath);
         assignmentSettings.submissions.push({
           studentId: studentInfo.studentId.toUpperCase(),
           studentName: studentInfo.studentName.toUpperCase(),
@@ -237,21 +241,12 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
           directoryName: studentFolder,
           mark: null
         });
-        return mkdir(assignmentAbsolutePath + sep + feedbackFolder, {recursive: true})
+        const promise =  mkdir(assignmentAbsolutePath + sep + feedbackFolder, {recursive: true})
           .then(() =>  mkdir(assignmentAbsolutePath + sep + submissionFolder, {recursive: true}))
-          .then(() => readFile(file))
-          .then((content) => PDFDocument.load(content))
-          .then((pdfDocument) => pdfDocument.save())
-          .then((pdfBytes) => writeFile(assignmentAbsolutePath + sep + submissionFolder + sep + filename, pdfBytes));
-      } else {
-        if (studentInfo.remove) {
-          remove(assignmentSettings.submissions, {studentId: studentInfo.studentId.toUpperCase()});
-          return rm(assignmentAbsolutePath + sep + studentFolder, {recursive: true});
-        } else {
-          return Promise.resolve();
-        }
-
+          .then(() => copyFile(studentInfo.submissionFilePath, assignmentAbsolutePath + sep + submissionFolder + sep + filename));
+        promises.push(promise);
       }
+      // else, we don't update other details of the submission
     });
 
     return Promise.all(promises)
@@ -262,21 +257,12 @@ export function updateAssignment(event: IpcMainInvokeEvent, updateRequest: Updat
 
 
 
-export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAssignmentInfo): Promise<any> {
+export function createAssignment(event: IpcMainInvokeEvent, createInfo: AssignmentInfo): Promise<any> {
 
   let assignmentName: string = createInfo.assignmentName.trim();
 
-  if (createInfo.studentRow.length !== createInfo.files.length) {
-    return Promise.reject(`Student details is not equal to number of files sent!`);
-  }
-
-  if (!createInfo.noRubric) {
-    if (isNil(createInfo.rubric)) {
-      return Promise.reject(NOT_PROVIDED_RUBRIC);
-    }
-  }
   let rubricPromise: Promise<IRubric> = Promise.resolve(null);
-  if (!createInfo.noRubric) {
+  if (!isNil(createInfo.rubric)) {
     rubricPromise = findRubric(createInfo.rubric.trim());
   }
   return Promise.all([
@@ -305,15 +291,15 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
       assignmentName = assignmentName + ' (' + (foundCount + 1) + ')';
     }
 
-    const studentDetails: StudentInfo[] = createInfo.studentRow;
+    const studentDetails: AssignmentSubmissionInfo[] = createInfo.submissions;
     const settings: AssignmentSettingsInfo = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
     settings.sourceId = uuidv4();
     settings.assignmentName = assignmentName;
     settings.rubric = rubric;
     settings.sourceFormat = SourceFormat.MANUAL;
 
-    const submissionPromises: Promise<any>[] = studentDetails.map((studentInfo, index) => {
-      const file: any = createInfo.files[index];
+    const submissionPromises: Promise<any>[] = studentDetails.map((studentInfo) => {
+      const file = studentInfo.submissionFilePath;
       const filename = basename(file);
       const studentFolder = studentInfo.studentSurname.toUpperCase() + ', ' + studentInfo.studentName.toUpperCase() +
         '(' + studentInfo.studentId.toUpperCase() + ')';
@@ -333,10 +319,7 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: CreateAs
 
       return mkdir(workspaceAbsolutePath + sep + assignmentName + sep + feedbackFolder, {recursive: true})
         .then(() =>  mkdir(workspaceAbsolutePath + sep + assignmentName + sep + submissionFolder, {recursive: true}))
-        .then(() => readFile(file))
-        .then((content) => PDFDocument.load(content))
-        .then((pdfDocument) => pdfDocument.save())
-        .then((pdfBytes) => writeFile(workspaceAbsolutePath + sep + assignmentName + sep + submissionFolder + sep + filename, pdfBytes));
+        .then(() => copyFile(file, workspaceAbsolutePath + sep + assignmentName + sep + submissionFolder + sep + filename));
     });
 
     return Promise.all(submissionPromises)

@@ -1,31 +1,50 @@
 import {Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
+import {FormArray, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {RxwebValidators} from '@rxweb/reactive-form-validators';
 import {AlertService} from '../../services/alert.service';
 import {AssignmentService} from '../../services/assignment.service';
 import {AppService} from '../../services/app.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ImportService} from '../../services/import.service';
-import {MimeTypesEnum} from '../../utils/mime.types.enum';
 import {RoutesEnum} from '../../utils/routes.enum';
-import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
-import {AssignmentDetails} from '../assignment-overview/assignment-overview.component';
 import {MatDialogConfig} from '@angular/material/dialog';
-import {
-  ConfirmationDialogComponent
-} from '../confirmation-dialog/confirmation-dialog.component';
+import {ConfirmationDialogComponent} from '../confirmation-dialog/confirmation-dialog.component';
 import {WorkspaceService} from '../../services/workspace.service';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
-import {UpdateAssignment, UpdateAssignmentStudentDetails} from '@shared/info-objects/update-assignment';
-import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
-import {CreateAssignmentInfo, StudentInfo} from '@shared/info-objects/create-assignment.info';
+import {IRubricName} from '@shared/info-objects/rubric.class';
+import {AssignmentInfo, AssignmentSubmissionInfo} from '@shared/info-objects/assignment.info';
 import {RubricService} from '../../services/rubric.service';
-import {find, isNil} from 'lodash';
-import {forkJoin, mergeMap, Observable, tap, throwError} from 'rxjs';
+import {find, findIndex, isEmpty, isEqual, isNil, times} from 'lodash';
+import {forkJoin, mergeMap, Observable, of, tap, throwError} from 'rxjs';
 import {BusyService} from '../../services/busy.service';
-import {catchError} from 'rxjs/operators';
+import {catchError, map} from 'rxjs/operators';
 import {StudentSubmission, TreeNodeType} from '@shared/info-objects/workspace';
-import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
+import {DEFAULT_WORKSPACE, SUPPORTED_SUBMISSION_TYPES} from '@shared/constants/constants';
+import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
+
+type StudentFormGroup = FormGroup<{
+  studentId: FormControl<string>,
+  studentName: FormControl<string>,
+  studentSurname: FormControl<string>,
+  submissionFilePath: FormControl<string>,
+  submissionFileName: FormControl<string>,
+}>;
+
+interface StudentSubmissionModel {
+  studentId: string;
+  studentName: string;
+  studentSurname: string;
+  submissionFileName: string;
+  submissionFilePath: string;
+}
+
+interface AssignmentModel {
+  assignmentName: string;
+  workspaceFolder: string;
+  rubric: string;
+  submissions: StudentSubmissionModel[];
+
+}
 
 @Component({
   selector: 'pdf-marker-create-assignment',
@@ -34,38 +53,23 @@ import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 })
 export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
-  createAssignmentForm: UntypedFormGroup;
+  createAssignmentForm: FormGroup<{
+    assignmentName: FormControl<string>,
+    workspaceFolder: FormControl<string>,
+    rubric: FormControl<string>,
+    submissions: FormArray<StudentFormGroup>
+  }>;
 
-  private readonly noRubricDefaultValue: boolean = false;
-
-  private studentFiles: any[] = [];
+  originalAssignmentModel: AssignmentModel = null;
 
   rubrics: IRubricName[];
-
-  selectedRubric: IRubric;
-
-  isEdit = false;
-
-  title = 'Upload PDF Files';
-
-  readonly MimeTypesEnum = MimeTypesEnum;
-
-  readonly regEx = /(.*)\((.+)\)/;
-
-  private assignmentId: string;
-
-  private workspaceName: string;
 
   workspaces: string[] = [];
 
   @ViewChild('assignmentName', {static: true})
   assignmentName: ElementRef;
 
-  private assignmentSettings: AssignmentSettingsInfo;
-
-  private studentDetails: any[] = [];
-
-  constructor(private fb: UntypedFormBuilder,
+  constructor(private formBuilder: FormBuilder,
               private alertService: AlertService,
               private busyService: BusyService,
               private assignmentService: AssignmentService,
@@ -74,50 +78,14 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
               private router: Router,
               private activatedRoute: ActivatedRoute,
               private importService: ImportService,
-              private rubricService: RubricService) {}
+              private rubricService: RubricService) {
+
+    this.initForm();
+  }
 
   ngOnInit() {
-    this.initForm();
     this.busyService.start();
-    this.activatedRoute.params.subscribe(params => {
-      this.assignmentId = params['id'];
-      this.workspaceName = params['workspaceName'];
-      if (!isNil(this.assignmentId)) {
-        this.title = 'Manage Submissions';
-        const fields = ['assignmentName', 'noRubric', 'rubric'];
-        this.isEdit = true;
-        this.fc.assignmentName.setValue(this.assignmentId);
-        if (isNil(this.workspaceName)) {
-          this.workspaceName = DEFAULT_WORKSPACE;
-        }
-        this.fc.workspaceFolder.setValue(this.workspaceName);
-        fields.push('workspaceFolder');
-        this.busyService.start();
-        this.assignmentService.getAssignmentSettings(this.workspaceName, this.assignmentId).subscribe({
-          next: (assignmentSettings: AssignmentSettingsInfo) => {
-            this.assignmentSettings = assignmentSettings;
-            if (this.assignmentSettings.rubric) {
-              this.selectedRubric = this.assignmentSettings.rubric;
-              this.fc.noRubric.setValue(this.noRubricDefaultValue);
-              this.fc.rubric.setValue(this.assignmentSettings.rubric.name);
-            } else {
-              this.fc.noRubric.setValue(!this.noRubricDefaultValue);
-            }
-            this.disableFields(this.createAssignmentForm, fields);
-            this.generateStudentDetailsFromModel();
-            this.busyService.stop();
-          },
-          error: () => this.busyService.stop()
-        });
-      } else {
-        this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD]);
-      }
-    });
 
-
-    if (!this.isEdit) {
-      this.addNewRow();
-    }
     forkJoin([
       this.loadRubrics(),
       this.loadWorkspaces()
@@ -131,6 +99,75 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
       }
     });
 
+
+
+    this.activatedRoute.params
+      .pipe(
+        mergeMap((params) => {
+          this.busyService.start();
+          const model: AssignmentModel = {
+            assignmentName: params['id'],
+            workspaceFolder: params['workspaceName'],
+            rubric: '',
+            submissions: []
+          };
+          if (isNil(params['id'])) {
+            this.originalAssignmentModel = null;
+            return of(model);
+          } else {
+            this.disableFields(); // Disable fields that may not be changed when editing an existing assignment
+            return this.assignmentService.getAssignmentSettings(model.workspaceFolder, model.assignmentName)
+              .pipe(
+                tap((assignmentSettings) => {
+                  if (assignmentSettings.rubric) {
+                    model.rubric = assignmentSettings.rubric.name;
+                  }
+                }),
+                mergeMap(() => this.assignmentService.getAssignmentHierarchy(model.workspaceFolder, model.assignmentName)),
+                tap((workspaceAssignment) => {
+                  if (!isNil(workspaceAssignment)) {
+                    workspaceAssignment.children.filter((c => c.type === TreeNodeType.SUBMISSION))
+                      .forEach((studentSubmission: StudentSubmission) => {
+                        const studentSubmissionModel: StudentSubmissionModel = {
+                          studentName: studentSubmission.studentName,
+                          studentSurname: studentSubmission.studentSurname,
+                          studentId: studentSubmission.studentId,
+                          submissionFileName: '',
+                          submissionFilePath: null
+                        };
+                        const submissionDirectory = find(studentSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
+                        // Here we are taking the first submission file we find
+                        if (submissionDirectory && submissionDirectory.children.length > 0) {
+                          studentSubmissionModel.submissionFileName = submissionDirectory.children[0].name;
+                        }
+                        model.submissions.push(studentSubmissionModel);
+                      });
+                  }
+                }),
+                map(() => model),
+                tap((m) => this.originalAssignmentModel = m)
+              );
+          }
+        })
+      ).subscribe({
+      next: (model) => {
+        this.createAssignmentForm.controls.submissions.clear({emitEvent: false});
+        // Create student rows
+        if (isEmpty(model.submissions)) {
+          this.addNewRow();
+        } else {
+          times(model.submissions.length, () => {
+            this.submissions.push(this.newFormGroupRow(true));
+          });
+        }
+        this.createAssignmentForm.reset(model);
+        this.busyService.stop();
+      },
+      error: () => {
+        this.busyService.stop();
+        this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD]);
+      }
+    });
 
   }
 
@@ -153,171 +190,121 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   private loadRubrics(): Observable<IRubricName[]> {
     return this.rubricService.getRubricNames().pipe(
       catchError(() => throwError(() => 'Unable to retrieve rubrics')),
-      tap((rubrics) => this.rubrics = rubrics)
+      tap((rubrics) => {
+        this.rubrics = rubrics;
+      })
     );
   }
 
 
-  private generateStudentDetailsFromModel() {
-    this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentId).subscribe((workspaceAssignment) => {
-      const values: AssignmentDetails[] = [];
-      if (!isNil(workspaceAssignment)) {
-        workspaceAssignment.children.filter((c => c.type === TreeNodeType.SUBMISSION)).forEach((studentSubmission: StudentSubmission) => {
-          const value: AssignmentDetails = {
-            studentName: studentSubmission.studentName,
-            studentSurname: studentSubmission.studentSurname,
-            studentNumber: studentSubmission.studentId,
-            assignment: null,
-            pdfFile: null
-          };
-          const submissionDirectory = find(studentSubmission.children, {type: TreeNodeType.SUBMISSIONS_DIRECTORY});
-          value.assignment = (submissionDirectory && submissionDirectory.children.length > 0) ? submissionDirectory.children[0].name : '';
-          values.push(value);
-        });
-        this.populateStudentDetails(values);
-      } else {
-        this.router.navigate([RoutesEnum.ASSIGNMENT_UPLOAD]);
-      }
-    });
-  }
-
-  private populateStudentDetails(studentDetails: AssignmentDetails[]) {
-    for (let i = 0; i < studentDetails.length; i++) {
-      const studentFormGroup: UntypedFormGroup = this.newFormGroupRowFromData(studentDetails[i]);
-      (this.fc.studentRow as UntypedFormArray).push(studentFormGroup);
-      this.studentFiles.push(new File([''], studentDetails[i].assignment));
-    }
-  }
-
-  private disableFields(formGroup: UntypedFormGroup, fields: string[]) {
-    fields.forEach(fieldName => {
-      formGroup.get(fieldName).disable();
-    });
+  private disableFields() {
+    this.createAssignmentForm.controls.assignmentName.disable({emitEvent: false});
+    this.createAssignmentForm.controls.workspaceFolder.disable({emitEvent: false});
+    this.createAssignmentForm.controls.rubric.disable({emitEvent: false});
   }
 
   private initForm() {
-    this.createAssignmentForm = this.fb.group({
-      assignmentName: [null, Validators.compose([Validators.required, Validators.maxLength(50), Validators.minLength(1)])],
-      noRubric: [this.noRubricDefaultValue],
-      rubric: [null, Validators.required],
-      workspaceFolder: [null, Validators.required],
-      studentRow: this.fb.array([])
-    });
-
-    this.assignmentName.nativeElement.focus();
-  }
-
-  private newFormGroupRow(): UntypedFormGroup {
-    return this.fb.group({
-      studentId: [null, [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
-      studentName: [null, Validators.required],
-      studentSurname: [null, Validators.required],
-      studentSubmission: [null, Validators.required],
-      studentSubmissionText: [null],
-      readonly: [false],
-      shouldDelete: [false]
+    this.createAssignmentForm = this.formBuilder.group({
+      assignmentName: [null as string, Validators.compose([Validators.required, Validators.maxLength(50), Validators.minLength(1)])],
+      rubric: new FormControl(''),
+      workspaceFolder: [null as string, Validators.required],
+      submissions: this.formBuilder.array([] as StudentFormGroup[])
     });
   }
 
-  private newFormGroupRowFromData(data: AssignmentDetails): UntypedFormGroup {
-    this.populateSavedState(data);
-    return this.fb.group({
-      studentId: [data.studentNumber, [Validators.required, Validators.minLength(5), Validators.maxLength(50), RxwebValidators.unique()]],
-      studentName: [data.studentName, Validators.required],
-      studentSurname: [data.studentSurname, Validators.required],
-      studentSubmission: [data.assignment],
-      studentSubmissionText: [data.assignment],
-      readonly: [true],
-      shouldDelete: [false]
+  private newFormGroupRow(disabled = false): StudentFormGroup {
+    return this.formBuilder.group({
+      studentId: new FormControl({
+        value: null,
+        disabled
+      }, {
+        validators : [
+          Validators.required,
+          Validators.minLength(5),
+          Validators.maxLength(50),
+          RxwebValidators.unique()
+        ]
+      }),
+      studentName: new FormControl({
+        value: null,
+        disabled
+      }, {
+        validators: [
+          Validators.required
+        ]
+      }),
+      studentSurname: new FormControl({
+        value: null,
+        disabled
+      }, {
+        validators: [
+          Validators.required
+        ]
+      }),
+      submissionFileName: new FormControl({
+        value: null,
+        disabled
+      }, {
+        validators: [
+          Validators.required
+        ]
+      }),
+      submissionFilePath: new FormControl({value: null, disabled})
     });
-  }
-
-  private populateSavedState(data: AssignmentDetails) {
-    const studentDetails = {
-      studentId: data.studentNumber,
-      studentName: data.studentName,
-      studentSurname: data.studentSurname,
-      studentSubmission: data.assignment,
-      shouldDelete: false
-    };
-
-    this.studentDetails.push(studentDetails);
   }
 
   addNewRow() {
-    if (this.studentRow.valid) {
-      (this.fc.studentRow as UntypedFormArray).push(this.newFormGroupRow());
-    }
+    this.submissions.push(this.newFormGroupRow());
   }
 
-  get fc() {
-    return this.createAssignmentForm.controls;
+
+  get submissions(): FormArray<StudentFormGroup> {
+    return this.createAssignmentForm.controls.submissions;
   }
 
-  get studentRow() {
-    return this.fc.studentRow as UntypedFormArray;
+  studentFormGroupAtIndex(index: number): StudentFormGroup {
+    return this.submissions.controls[index];
   }
 
-  studentFormGroupAtIndex(index: number): UntypedFormGroup {
-    return (this.studentRow.controls[index] as UntypedFormGroup);
-  }
 
-  onRubricChange() {
-    if (this.fc.noRubric.value) {
-      this.fc.rubric.setValidators(null);
-      this.fc.rubric.updateValueAndValidity();
-      this.fc.rubric.disable();
-      this.createAssignmentForm.controls.rubric.disable();
-    } else {
-      this.fc.rubric.setValidators(Validators.required);
-      this.fc.rubric.updateValueAndValidity();
-      this.fc.rubric.enable();
-      this.createAssignmentForm.controls.rubric.enable();
-    }
 
-    this.createAssignmentForm.updateValueAndValidity();
-  }
-
-  async onFileChange(studentIndex: number, event) {
-    if (event.target.files[0] === undefined || event.target.files[0] === null) {
-      this.studentFormGroupAtIndex(studentIndex).controls.studentSubmission.setValue(null);
-      this.studentFormGroupAtIndex(studentIndex).controls.studentSubmissionText.setValue(null);
-    } else {
-      const file: File = await event.target.files[0];
-      if (file && file.type === MimeTypesEnum.PDF) {
-        this.studentFormGroupAtIndex(studentIndex).controls.studentSubmission.setErrors(null);
-        this.studentFormGroupAtIndex(studentIndex).controls.studentSubmissionText.setValue(file.name);
-        if (!this.studentFiles[studentIndex]) {
-          this.studentFiles.push(file);
-        } else {
-          this.studentFiles[studentIndex] = file;
+  selectFile(studentIndex: number) {
+    this.busyService.start();
+    this.appService.getFile({
+      filters: SUPPORTED_SUBMISSION_TYPES
+    }).subscribe({
+      next: (appSelectedPathInfo: AppSelectedPathInfo) => {
+        this.busyService.stop();
+        if (appSelectedPathInfo.selectedPath) {
+          this.onFileChange(studentIndex, appSelectedPathInfo.selectedPath);
         }
-      } else {
-        this.studentFormGroupAtIndex(studentIndex).controls.studentSubmission.setErrors({file: true});
-        this.studentFormGroupAtIndex(studentIndex).controls.studentSubmissionText.setValue(file.name);
+        if (appSelectedPathInfo.error) {
+          this.alertService.error(appSelectedPathInfo.error.message);
+        }
+      }, error: () => {
+        this.busyService.stop();
       }
-    }
-    this.studentRow.updateValueAndValidity();
+    });
+  }
+
+  private onFileChange(studentIndex: number, filePath: string) {
+    this.studentFormGroupAtIndex(studentIndex).patchValue({
+      submissionFilePath: filePath,
+      submissionFileName: PdfmUtilsService.basename(filePath)
+    });
   }
 
   onStudentInfoRemove(studentIndex: number) {
-    if (this.studentRow.length === 1) {
+    if (this.submissions.length === 1) {
       this.alertService.error('Your assignment should have at least one entry');
       this.appService.openSnackBar(false, 'Your assignment should have at least one entry');
-      this.studentFormGroupAtIndex(0).controls.shouldDelete.setValue(false);
       return;
     }
 
     const selectedStudentId: string = this.studentFormGroupAtIndex(studentIndex).controls.studentId.value;
     let found = false;
-    let foundIndex: number;
-    for (let i = 0; i < this.studentDetails.length; i++) {
-      if (selectedStudentId === this.studentDetails[i].studentId) {
-        foundIndex = i;
-        // this.studentDetails[i].shouldDelete = true;
-        found = true;
-        break;
-      }
+    if (this.originalAssignmentModel) {
+      found = findIndex(this.originalAssignmentModel.submissions, s => s.studentId === selectedStudentId) >= 0;
     }
 
     if (found) {
@@ -329,130 +316,70 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         message: 'This record was previously saved, are you sure you want to continue?'
       };
 
-      const shouldContinueFn = (shouldContinue: boolean) => {
+      this.appService.createDialog(ConfirmationDialogComponent, config, (shouldContinue: boolean) => {
         if (shouldContinue) {
-          this.studentDetails[foundIndex].shouldDelete = true;
-          this.studentRow.controls.splice(studentIndex, 1);
-          // this.studentFiles.splice(studentIndex, 1);
-          this.studentRow.updateValueAndValidity();
-        } else {
-          return;
+          this.submissions.removeAt(studentIndex);
         }
-      };
-
-      this.appService.createDialog(ConfirmationDialogComponent, config, shouldContinueFn);
+      });
     } else {
-      this.studentRow.controls.splice(studentIndex, 1);
-      this.studentFiles.splice(studentIndex, 1);
-      this.studentRow.updateValueAndValidity();
+      this.submissions.removeAt(studentIndex);
     }
   }
 
   onSubmit() {
     this.alertService.clear();
-    if (this.createAssignmentForm.invalid || this.studentRow.invalid) {
+    if (this.createAssignmentForm.invalid || this.submissions.invalid) {
       this.alertService.error('Please fill in the correct details!');
       this.appService.openSnackBar(false, 'Please fill in the correct details!');
       return;
     }
 
-    if (this.isEdit) {
+    if (this.originalAssignmentModel) {
       this.onEdit();
     } else {
       this.onCreate();
     }
   }
 
-  private onEdit() {
-    const formValue: any = this.createAssignmentForm.value;
-    const savedState: any[] = this.studentDetails;
+  private populateAssignmentModel() {
+    const formValue: AssignmentModel = this.createAssignmentForm.getRawValue();
 
-    const updateRequest: UpdateAssignment = {
-      assignmentName: this.assignmentId,
-      workspace: this.workspaceName,
-      studentDetails: [],
-      files: []
+    const assignmentInfo: AssignmentInfo = {
+      assignmentName: formValue.assignmentName,
+      workspace: formValue.workspaceFolder,
+      rubric: formValue.rubric === '' ? null : formValue.rubric,
+      submissions: formValue.submissions.map((submission) => {
+        return {
+          studentId: submission.studentId,
+          studentName: submission.studentName,
+          studentSurname: submission.studentSurname,
+          submissionFilePath: submission.submissionFilePath
+        } as AssignmentSubmissionInfo;
+      })
     };
-    let savedCount = 0;
-    let foundItemsToDelete = false;
-    let foundItemsCount = 0;
+    return assignmentInfo;
+  }
 
-    savedState.forEach((studentDetail: any) => {
-      const student: UpdateAssignmentStudentDetails = {};
-      student.studentId = studentDetail.studentId.trim();
-      student.studentName = studentDetail.studentName.trim();
-      student.studentSurname = studentDetail.studentSurname.trim();
-      if (studentDetail.shouldDelete) {
-        student.remove = true;
-        foundItemsToDelete = true;
-        foundItemsCount++;
-        updateRequest.files.push(studentDetail.studentSubmission.path);
-      } else {
-        updateRequest.files.push(this.studentFiles[savedCount].path);
-      }
-      updateRequest.studentDetails.push(student);
-      savedCount++;
-    });
-
-    let count = 0;
-    formValue.studentRow.map((studentRow: any) => {
-      const foundStudent = updateRequest.studentDetails.find(stud => (stud.studentId  === studentRow.studentId.trim()));
-      if (foundStudent && foundStudent.remove) {
-        const student: any = {};
-        student.studentId = studentRow.studentId.trim();
-        student.studentName = studentRow.studentName.trim();
-        student.studentSurname = studentRow.studentSurname.trim();
-
-        updateRequest.files.push(this.studentFiles[count].path);
-        updateRequest.studentDetails.push(student);
-      } else if (!foundStudent) {
-        const student: any = {};
-        student.studentId = studentRow.studentId.trim();
-        student.studentName = studentRow.studentName.trim();
-        student.studentSurname = studentRow.studentSurname.trim();
-        updateRequest.files.push(this.studentFiles[count].path);
-        updateRequest.studentDetails.push(student);
-      }
-      count++;
-    });
-
-    if (foundItemsCount === updateRequest.studentDetails.length) {
-      this.deletionErrorMessage(foundItemsCount);
+  private onEdit() {
+    const assignmentInfo = this.populateAssignmentModel();
+    if (assignmentInfo.submissions.length === 0) {
+      this.deletionErrorMessage();
       return;
     }
-    this.performUpdate(updateRequest);
+    this.performUpdate(assignmentInfo);
   }
 
   private onCreate() {
-    const formValue: any = this.createAssignmentForm.value;
-    const createRequest: CreateAssignmentInfo = {
-      assignmentName: formValue.assignmentName.trim(),
-      workspace: formValue.workspaceFolder,
-      noRubric: formValue.noRubric,
-      rubric: formValue.rubric,
-      studentRow: [],
-      files: []
-    };
-
-    createRequest.studentRow = formValue.studentRow.map((studentRow: any, index: number) => {
-      createRequest.files.push(this.studentFiles[index].path);
-      return {
-        studentId: studentRow.studentId.trim(),
-        studentName: studentRow.studentName.trim(),
-        studentSurname: studentRow.studentSurname.trim(),
-      } as StudentInfo;
-    });
-
-    this.performCreate(createRequest);
+    const assignmentInfo = this.populateAssignmentModel();
+    this.performCreate(assignmentInfo);
   }
 
-  private performCreate(createAssignmentInfo: CreateAssignmentInfo) {
+  private performCreate(createAssignmentInfo: AssignmentInfo) {
     this.busyService.start();
-    this.assignmentService.createAssignment(createAssignmentInfo)
-      .pipe(
-        mergeMap(() => this.workspaceService.refreshWorkspaces()),
-      ).subscribe({
+    this.assignmentService.createAssignment(createAssignmentInfo).subscribe({
       next: () => {
+        this.originalAssignmentModel = null;
+        this.createAssignmentForm.reset();
         if (PdfmUtilsService.isDefaultWorkspace(createAssignmentInfo.workspace)) {
           this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, createAssignmentInfo.assignmentName]);
         } else {
@@ -467,17 +394,15 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     });
   }
 
-  private performUpdate(updateAssignment: UpdateAssignment) {
-    this.assignmentService.updateAssignment(updateAssignment)
-      .pipe(
-        mergeMap(() => this.workspaceService.refreshWorkspaces()),
-      ).subscribe({
+  private performUpdate(updateAssignment: AssignmentInfo) {
+    this.assignmentService.updateAssignment(updateAssignment).subscribe({
       next: () => {
-        this.isEdit = false;
-        if (PdfmUtilsService.isDefaultWorkspace(this.workspaceName)) {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId]);
+        this.originalAssignmentModel = null;
+        this.createAssignmentForm.reset();
+        if (PdfmUtilsService.isDefaultWorkspace(updateAssignment.workspace)) {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, updateAssignment.assignmentName]);
         } else {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, this.assignmentId, this.workspaceName]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, updateAssignment.workspace, updateAssignment.assignmentName]);
         }
       },
       error: (error) => {
@@ -487,27 +412,22 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     });
   }
 
-  private deletionErrorMessage(count: number = 1) {
+  private deletionErrorMessage() {
     this.alertService.error('Your assignment should have at least one entry');
     this.appService.openSnackBar(false, 'Your assignment should have at least one entry');
-    for (let i = 0; i < count; i++) {
-      this.studentFormGroupAtIndex(i).controls.shouldDelete.setValue(false);
-    }
-    return;
   }
 
-  hasUnsavedChanges() {
-    if (this.isEdit) {
-      let found = false;
-      for (let i = 0; i < this.studentDetails.length; i++) {
-        if (this.studentDetails[i].shouldDelete) {
-          found = true;
-          break;
-        }
-      }
-
-      return found || this.studentRow.length > this.studentDetails.length;
+  hasUnsavedChanges(): boolean {
+    if (this.createAssignmentForm.dirty && this.createAssignmentForm.invalid) {
+      return true; // You must still be busy for the form to be invalid and dirty
     }
+
+    if (!isNil(this.originalAssignmentModel)) {
+      // If we are editing an existing assignment, and the values don't match
+      const value = this.populateAssignmentModel();
+      return !isEqual(value, this.originalAssignmentModel);
+    }
+
     return false;
   }
 

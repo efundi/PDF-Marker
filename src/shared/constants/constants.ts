@@ -10,12 +10,31 @@ export const GRADES_FILE = 'grades.csv';
 
 export const ASSIGNMENT_ROOT_FILES = [GRADES_FILE, 'grades.xls', 'grades.xlsx'];
 
+export const SUPPORTED_SUBMISSION_TYPES = [{
+  name: 'Portable Document (pdf)',
+  extensions: ['pdf']
+}, {
+  name: 'Powerpoint (ppt, pptx)',
+  extensions: ['ppt', 'pptx']
+}, {
+  name: 'Word Document (doc, docx)',
+  extensions: ['doc', 'docx']
+}, {
+  name: 'Spreadsheet (xls, xlsx)',
+  extensions: ['xls', 'xlsx']
+}, {
+  name: 'Image (png, jpg, jpeg, tiff)',
+  extensions: ['png', 'jpeg', 'tiff', 'jpg']
+}];
+
 export const ASSIGNMENT_BACKUP_DIR = '.backup';
 export const FEEDBACK_ZIP_DIR_REGEX = /\/(.*)\/Feedback Attachment\(s\)\/$/;
 export const SUBMISSION_ZIP_DIR_REGEX = /\/(.*)\/Submission attachment\(s\)\/$/;
 
 export const FEEDBACK_ZIP_ENTRY_REGEX = /\/(.*)\/Feedback Attachment\(s\)\/(.*)\.pdf/;
-export const SUBMISSION_ZIP_ENTRY_REGEX = /\/(.*)\/Submission attachment\(s\)\/(.*)\.(pdf|docx|doc|xlsx|xls|ppt|pptx)/;
+
+const extensions = SUPPORTED_SUBMISSION_TYPES.flatMap(t => t.extensions).join('|');
+export const SUBMISSION_ZIP_ENTRY_REGEX = new RegExp('(.*)\\/Submission attachment\\(s\\)\\/(.*)\\.(' + extensions + ')');
 
 export const PDFM_FILES = [MARK_FILE, SETTING_FILE];
 
