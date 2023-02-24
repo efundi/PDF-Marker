@@ -1,7 +1,5 @@
 import {contextBridge, ipcRenderer} from 'electron';
 import {AssignmentIpcService} from './src/shared/ipc/assignment.ipc-service';
-import {UpdateAssignment} from '@shared/info-objects/update-assignment';
-import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info';
 import {ExportAssignmentsRequest} from './src/shared/info-objects/export-assignments-request';
 import {RubricIpcService} from './src/shared/ipc/rubric.ipc-service';
 import {IRubric} from '@shared/info-objects/rubric.class';
@@ -18,6 +16,7 @@ import {LectureImportInfo} from './src/shared/info-objects/lecture-import.info';
 import {GenerateIpcService} from './src/shared/ipc/generate.ipc-service';
 import {ConvertIpcService} from './src/shared/ipc/convert.ipc-service';
 import {OpenFileInfo, SaveFileInfo} from './src/shared/info-objects/file-filter.info';
+import {AssignmentInfo} from './src/shared/info-objects/assignment.info';
 
 contextBridge.exposeInMainWorld('updateApi', {
   checkForUpdate: () => ipcRenderer.invoke('update:check'),
@@ -26,8 +25,8 @@ contextBridge.exposeInMainWorld('updateApi', {
 } as UpdateIpcService);
 
 contextBridge.exposeInMainWorld('assignmentApi', {
-  createAssignment: (createAssignmentInfo: CreateAssignmentInfo) => ipcRenderer.invoke('assignments:create', createAssignmentInfo),
-  updateAssignment: (updateRequest: UpdateAssignment) => ipcRenderer.invoke('assignments:update', updateRequest),
+  createAssignment: (createAssignmentInfo: AssignmentInfo) => ipcRenderer.invoke('assignments:create', createAssignmentInfo),
+  updateAssignment: (updateRequest: AssignmentInfo) => ipcRenderer.invoke('assignments:update', updateRequest),
   saveMarks: (location: string, submissionInfo: SubmissionInfo) => ipcRenderer.invoke('assignments:saveMarks', location, submissionInfo),
   getAssignmentSettings: (workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:getAssignmentSettings', workspaceName, assignmentName),
   updateAssignmentSettings: (updatedSettings: any, workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:updateAssignmentSettings', updatedSettings, workspaceName, assignmentName),

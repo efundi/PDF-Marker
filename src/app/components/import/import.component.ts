@@ -16,6 +16,9 @@ import {catchError} from 'rxjs/operators';
 import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 import {isNil} from 'lodash';
 import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
+import {RoutesEnum} from '../../utils/routes.enum';
+import {Router} from '@angular/router';
+import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 
 @Component({
   selector: 'pdf-marker-import',
@@ -33,7 +36,6 @@ export class ImportComponent implements OnInit, OnDestroy {
     assignmentZipFileText: FormControl<string>,
     assignmentName: FormControl<string>,
     workspaceFolder: FormControl<string>,
-    noRubric: FormControl<boolean>,
     rubric: FormControl<string>
   }>;
 
@@ -54,14 +56,14 @@ export class ImportComponent implements OnInit, OnDestroy {
   ZipFileType = ZipFileType;
   assignmentValidateResultInfo: AssignmentValidateResultInfo;
 
-  isNoRubric: boolean;
-
   private static getAssignmentNameFromFilename(filename: string): string {
     return filename.replace(/\.[^/.]+$/, '');
   }
 
   constructor(private fb: FormBuilder,
               private dialog: MatDialog,
+              private router: Router,
+
               private alertService: AlertService,
               private appService: AppService,
               private importService: ImportService,
@@ -73,7 +75,6 @@ export class ImportComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.isNoRubric = false;
     this.busyService.start();
     forkJoin([
       this.loadRubrics(),
@@ -117,12 +118,11 @@ export class ImportComponent implements OnInit, OnDestroy {
 
   private initForm() {
     this.importForm = this.fb.group({
-      assignmentType: [null as string],
+      assignmentType: [this.assignmentTypes[0].name],
       assignmentZipFileText: [null as string],
       assignmentName: [null as string],
       workspaceFolder: [null as string, Validators.required],
-      noRubric: [false],
-      rubric: [null as string, Validators.required]
+      rubric: ['']
     });
 
     this.formSubscriptions.push(this.importForm.controls.assignmentType.valueChanges.subscribe((type) => {
@@ -130,31 +130,6 @@ export class ImportComponent implements OnInit, OnDestroy {
       })
     );
 
-    this.formSubscriptions.push(this.importForm.controls.rubric.valueChanges.subscribe((value) => {
-        if (!isNil(value)) {
-          this.importForm.patchValue({
-            noRubric: false
-          }, {emitEvent: false});
-        }
-      })
-    );
-
-    this.formSubscriptions.push(this.importForm.controls.noRubric.valueChanges.subscribe((noRubric) => {
-        const rubricControl = this.importForm.get('rubric');
-        if (noRubric === true) {
-          this.isNoRubric = true;
-          rubricControl.validator = null;
-          this.importForm.patchValue({
-            rubric: null
-          }, {emitEvent: false});
-        } else {
-          this.isNoRubric = false;
-          this.importForm.controls.rubric.enable();
-          rubricControl.validator = Validators.required;
-        }
-        rubricControl.updateValueAndValidity();
-      })
-    );
   }
 
   selectFile() {
@@ -186,14 +161,9 @@ export class ImportComponent implements OnInit, OnDestroy {
   }
 
   private validateZipFile(file: string, type: string): void {
-    const currentZipType = this.assignmentValidateResultInfo ? this.assignmentValidateResultInfo.zipFileType : null;
     if (isNil(file) || isNil(type)) {
       // Can't validate without these
       this.assignmentValidateResultInfo = null;
-      if (!isNil(currentZipType) && !this.importForm.value.noRubric) {
-        this.importForm.controls.rubric.validator = Validators.required;
-        this.importForm.updateValueAndValidity();
-      }
       return;
     }
 
@@ -203,15 +173,8 @@ export class ImportComponent implements OnInit, OnDestroy {
       next: (assignmentValidateResultInfo) => {
         this.assignmentValidateResultInfo = assignmentValidateResultInfo;
         if (assignmentValidateResultInfo.zipFileType === ZipFileType.MARKER_IMPORT) {
-          this.importForm.patchValue({
-            noRubric: !assignmentValidateResultInfo.hasRubric
-          }, {emitEvent: false});
-          this.importForm.controls.noRubric.disable();
           this.importForm.controls.rubric.disable();
-          this.importForm.controls.rubric.validator = null;
-          this.importForm.updateValueAndValidity();
         } else {
-          this.importForm.controls.noRubric.enable();
           this.importForm.controls.rubric.enable();
         }
         this.alertService.clear();
@@ -251,12 +214,10 @@ export class ImportComponent implements OnInit, OnDestroy {
     }
 
     const formValue = this.importForm.getRawValue();
-
     const importData: ImportInfo = {
       file: this.actualFilePath,
       workspace: formValue.workspaceFolder,
-      noRubric: formValue.noRubric,
-      rubricName: formValue.rubric,
+      rubricName: formValue.rubric === '' ? null : formValue.rubric,
       assignmentName: formValue.assignmentName,
       zipFileType: this.assignmentValidateResultInfo.zipFileType
     };
@@ -265,7 +226,12 @@ export class ImportComponent implements OnInit, OnDestroy {
       next: (msg) => {
         this.busyService.stop();
         this.alertService.success(msg);
-        this.resetForm();
+        if (PdfmUtilsService.isDefaultWorkspace(importData.workspace)) {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, importData.assignmentName]);
+        } else {
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, importData.workspace, importData.assignmentName]);
+        }
+
       },
       error: (error) => {
         this.alertService.error(error);
@@ -275,14 +241,12 @@ export class ImportComponent implements OnInit, OnDestroy {
   }
 
   private resetForm() {
-    this.importForm.reset();
+    this.importForm.reset({
+      assignmentType: this.assignmentTypes[0].name
+    });
     this.actualFilePath = null;
     this.isFileLoaded = false;
     this.isValidFormat = false;
-    this.importForm.reset({
-      noRubric: false
-    });
-    this.isNoRubric = true;
     this.workspaceService.refreshWorkspaces().subscribe();
   }
 }

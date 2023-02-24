@@ -8,7 +8,7 @@
     <mat-label>Select Assignment Type</mat-label>
     <div class="pdf-spacer"></div>
     <div class="pdf-marker-assignmentType-container">
-      <mat-select formControlName="assignmentType"  class="form-control select" ngModel placeholder="Choose Assignment Type" required>
+      <mat-select formControlName="assignmentType"  class="form-control select" placeholder="Choose Assignment Type" required>
         <mat-option *ngFor="let assignmentType of assignmentTypes" [value]="assignmentType.name" >
           {{ assignmentType.name }}
         </mat-option>
@@ -19,9 +19,14 @@
 
   <div id="pdf-marker-file-upload-wrapper">
     <button type="button" mat-raised-button (click)="selectFile()">Browse</button>
-    &nbsp;&nbsp;
-    <mat-form-field class="w-75">
-      <input type="text" matInput formControlName="assignmentZipFileText" id="pdf-marker-upload-display" readonly placeholder="Choose Zip File" required>
+    <mat-form-field class="ms-3 w-75">
+      <input type="text"
+             matInput
+             formControlName="assignmentZipFileText"
+             id="pdf-marker-upload-display"
+             readonly
+             placeholder="Choose Zip File"
+             required>
     </mat-form-field>
     <button type="button" mat-button color="primary" *ngIf="isFileLoaded && isValidFormat" (click)="onPreview()">Preview&nbsp;<mat-icon>visibility</mat-icon>&nbsp;&nbsp;</button>
   </div>
@@ -39,14 +44,13 @@
     </mat-select>
   </mat-form-field>
   <div class="pdf-marker-rubric-container">
-    <mat-form-field [hideRequiredMarker]="importForm.get('noRubric').value === true">
+    <mat-form-field >
       <mat-label>Select Rubric</mat-label>
-      <mat-select formControlName="rubric" [required]="importForm.get('noRubric').value" [disabled]="isNoRubric">
+      <mat-select formControlName="rubric">
+        <mat-option [value]="''">No Rubric</mat-option>
         <mat-option *ngFor="let rubric of rubrics" [value]="rubric.name">{{rubric.name}}</mat-option>
       </mat-select>
     </mat-form-field>
-    &nbsp;&nbsp;&nbsp;&nbsp;
-    <mat-checkbox formControlName="noRubric" color="primary" [disabled]>No Rubric</mat-checkbox>
   </div>
   <div class="pdf-marker-submit mt-3">
     <button type="button" color="primary" mat-raised-button [disabled]="!importForm.valid || !isValidFormat" (click)="onSubmit()">Submit</button>

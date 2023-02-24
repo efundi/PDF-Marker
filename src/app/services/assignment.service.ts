@@ -3,8 +3,7 @@ import {first, map, mergeMap, Observable, ReplaySubject, tap} from 'rxjs';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {ExportAssignmentsRequest} from '@shared/info-objects/export-assignments-request';
 import {AssignmentIpcService} from '@shared/ipc/assignment.ipc-service';
-import {UpdateAssignment} from '@shared/info-objects/update-assignment';
-import {CreateAssignmentInfo} from '@shared/info-objects/create-assignment.info';
+import {AssignmentInfo} from '@shared/info-objects/assignment.info';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {fromIpcResponse} from './ipc.utils';
 import {find, isNil} from 'lodash';
@@ -133,12 +132,28 @@ export class AssignmentService {
     return fromIpcResponse(this.assignmentApi.finalizeAssignment(workspaceName, assignmentName, zipFilePath));
   }
 
-  createAssignment(createAssignmentInfo: CreateAssignmentInfo): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.createAssignment(createAssignmentInfo));
+  createAssignment(createAssignmentInfo: AssignmentInfo): Observable<any> {
+    return fromIpcResponse(this.assignmentApi.createAssignment(createAssignmentInfo))
+      .pipe(
+        mergeMap((response) => {
+          return this.workspaceService.refreshWorkspaces()
+            .pipe(
+              map(() => response)
+            );
+        })
+      );
   }
 
-  updateAssignment(updateAssignmentInfo: UpdateAssignment): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.updateAssignment(updateAssignmentInfo));
+  updateAssignment(updateAssignmentInfo: AssignmentInfo): Observable<any> {
+    return fromIpcResponse(this.assignmentApi.updateAssignment(updateAssignmentInfo))
+      .pipe(
+        mergeMap((response) => {
+          return this.workspaceService.refreshWorkspaces()
+            .pipe(
+              map(() => response)
+            );
+        })
+      );
   }
 
   updateAssignmentRubric(workspaceName: string, assignmentName: string, rubricName: string): Observable<IRubric> {
