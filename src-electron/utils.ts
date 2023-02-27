@@ -19,7 +19,16 @@ declare type IpcHandler<T> = (event: IpcMainInvokeEvent, ...args: any[]) => Prom
 export function toIpcResponse<T>(listener: IpcHandler<T>): IpcHandler<IpcResponse<T>> {
   // Return a function that can be used as an IPC handler
   return (event, ...args) => {
-    return listener(event, ...args).then(
+    return listener(event, ...args)
+      .then(result => {
+        // Electron returns a function that returns a promise when there were errors
+        if (typeof result === 'function') {
+          return (result as any)();
+        } else {
+          return result;
+        }
+      })
+      .then(
       (data) => {
         return {
           data
@@ -32,9 +41,6 @@ export function toIpcResponse<T>(listener: IpcHandler<T>): IpcHandler<IpcRespons
   };
 }
 
-export const isFunction = (functionToCheck) => {
-  return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
-};
 
 export const isNullOrUndefinedOrEmpty = (object: string): boolean => {
   return (object === null || object === undefined || object === '');

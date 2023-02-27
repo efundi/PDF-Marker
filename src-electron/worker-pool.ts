@@ -15,7 +15,7 @@ interface QueuedTask {
 }
 
 class WorkerPoolTaskInfo<R> extends AsyncResource {
-  private callback: any;
+  private callback: TaskCallback;
 
   constructor(callback) {
     super('WorkerPoolTaskInfo');
@@ -41,10 +41,6 @@ export class WorkerPool extends EventEmitter {
     this.workers = [];
     this.freeWorkers = [];
     this.tasks = [];
-
-    // for (let i = 0; i < this.numThreads; i++) {
-    //   this.addNewWorker();
-    // }
 
     // Any time the kWorkerFreedEvent is emitted, dispatch
     // the next task pending in the queue, if any.
@@ -101,10 +97,9 @@ export class WorkerPool extends EventEmitter {
     });
     this.workers.push(worker);
     this.freeWorkers.push(worker);
-    // this.emit(kWorkerFreedEvent);
   }
 
-  private runTask(task: TaskDetails, callback) {
+  private runTask(task: TaskDetails, callback: TaskCallback) {
 
     if (this.freeWorkers.length === 0 && this.workers.length < this.numThreads) {
       // We have space to add another worker
@@ -122,11 +117,15 @@ export class WorkerPool extends EventEmitter {
     worker.postMessage(task);
   }
 
-  queueTask<T extends TaskDetails>(task: T) {
-    return new Promise((resolve, reject) => {
+  queueTask<T extends TaskDetails>(task: T): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
       this.runTask(task, (error, result) => {
         if (error) {
-          reject(error);
+          if (error.message){
+            reject(error.message);
+          } else {
+            reject(error);
+          }
         } else {
           resolve(result);
         }

@@ -8,8 +8,9 @@ form {
   /*width: 50%;
   margin: 0 auto;*/
 
-  .pdf-marker-file-upload {
+  .pdf-marker-file-upload-wrapper {
     display: flex;
+    align-items: flex-start;
     padding: 2px;
     border: 1px solid transparent;
 

@@ -62,7 +62,7 @@
           </mat-form-field>
         </td>
         <td class="pdf-marker-create-assignment-cell-position">
-          <div id="pdf-marker-file-upload-wrapper">
+          <div class="pdf-marker-file-upload-wrapper">
             <button
               type="button"
               mat-raised-button
@@ -82,12 +82,15 @@
           </div>
         </td>
         <td>
+          <div class="d-flex">
           <!--<mat-checkbox [class.button-visibility]="!isEdit" [disabled]="!studentFormGroupAtIndex(studentIndex)?.controls?.readonly.value || (studentRow.length) === 1" formControlName="shouldDelete" color="primary">Delete</mat-checkbox>-->
           <button
             type="button"
             matTooltip="Add"
             mat-button mat-icon-button
             class="pdf-marker-create-assignment-add"
+            [disabled]="studentIndex <  submissions.controls.length - 1"
+            [class.text-muted]="studentIndex <  submissions.controls.length - 1"
             (click)="addNewRow()">
             <mat-icon>
               add_circle
@@ -101,6 +104,7 @@
                   (click)="onStudentInfoRemove(studentIndex)">
             <mat-icon>remove_circle</mat-icon>
           </button>
+          </div>
         </td>
       </tr>
       </tbody>

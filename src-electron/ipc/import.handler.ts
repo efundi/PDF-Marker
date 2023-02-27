@@ -16,7 +16,6 @@ import {cloneDeep, every, find, forEach, indexOf, isEmpty, isNil, map} from 'lod
 import {mkdir, readFile, stat, writeFile} from 'fs/promises';
 import {getRubrics, markRubricInUse} from './rubric.handler';
 import {
-  EXTRACTED_ZIP,
   EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
   NOT_PROVIDED_RUBRIC,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
@@ -131,6 +130,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
         }
 
 
+        const assignmentDirectory = basename(newFolder);
         let rubricIndex;
         let settings: AssignmentSettingsInfo;
         // Default settings for the new assignment
@@ -166,12 +166,12 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
           return promise.then(() => {
             if (!isNil(rubricIndex) && rubricIndex >= 0) {
               return markRubricInUse(rubricName).then(() => {
-                return EXTRACTED_ZIP;
+                return assignmentDirectory;
               }, () => {
                 return Promise.reject(EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC);
               });
             }
-            return EXTRACTED_ZIP;
+            return assignmentDirectory;
           }).catch((error) => {
             if (existsSync(workingDirectory + sep + newFolder)) {
               deleteFolderRecursive(workingDirectory + sep + newFolder);
