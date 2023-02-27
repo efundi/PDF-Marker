@@ -6,6 +6,7 @@ import {noop} from 'rxjs';
 import {IpcResponse} from '@shared/ipc/ipc-response';
 import {IpcMainInvokeEvent} from 'electron';
 import {Stream} from 'stream';
+import { isPromise } from 'node:util/types';
 
 declare type IpcHandler<T> = (event: IpcMainInvokeEvent, ...args: any[]) => Promise<T>;
 
@@ -19,7 +20,16 @@ declare type IpcHandler<T> = (event: IpcMainInvokeEvent, ...args: any[]) => Prom
 export function toIpcResponse<T>(listener: IpcHandler<T>): IpcHandler<IpcResponse<T>> {
   // Return a function that can be used as an IPC handler
   return (event, ...args) => {
-    return listener(event, ...args).then(
+    return listener(event, ...args)
+      .then(result => {
+        // Electron returns an function that returns a promise when there was errors
+        if (isFunction(result)) {
+          return (result as any)();
+        } else {
+          return result;
+        }
+      })
+      .then(
       (data) => {
         return {
           data

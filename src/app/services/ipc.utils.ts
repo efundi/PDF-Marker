@@ -20,8 +20,8 @@ export function fromIpcResponse<T>(ipcResponse: Promise<IpcResponse<T>>): Observ
         subscriber.next(response.data);
         subscriber.complete();
       }
-    }, () => {
-      subscriber.error();
+    }, (reason) => {
+      subscriber.error(reason);
       subscriber.complete();
     });
   });

@@ -499,7 +499,7 @@ function writeGrades(outputDirectory: string, submissions: Submission[], assignm
 }
 
 
-function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
+function finalizeSubmissions(workspaceFolder, assignmentName): Promise<string> {
   return Promise.all([
     getAssignmentDirectoryAbsolutePath(workspaceFolder, assignmentName),
     getAssignmentSettingsFor(workspaceFolder, assignmentName)
@@ -539,7 +539,8 @@ function finalizeSubmissions(workspaceFolder, assignmentName): Promise<any> {
           }
         });
         return writeAssignmentSettingsFor(updatedAssignmentSettings, workspaceFolder, assignmentName);
-      });
+      })
+      .then(() => 'Assignment exported');
   });
 }
 
