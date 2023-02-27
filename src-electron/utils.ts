@@ -6,7 +6,6 @@ import {noop} from 'rxjs';
 import {IpcResponse} from '@shared/ipc/ipc-response';
 import {IpcMainInvokeEvent} from 'electron';
 import {Stream} from 'stream';
-import { isPromise } from 'node:util/types';
 
 declare type IpcHandler<T> = (event: IpcMainInvokeEvent, ...args: any[]) => Promise<T>;
 
@@ -22,8 +21,8 @@ export function toIpcResponse<T>(listener: IpcHandler<T>): IpcHandler<IpcRespons
   return (event, ...args) => {
     return listener(event, ...args)
       .then(result => {
-        // Electron returns an function that returns a promise when there was errors
-        if (isFunction(result)) {
+        // Electron returns a function that returns a promise when there were errors
+        if (typeof result === 'function') {
           return (result as any)();
         } else {
           return result;
@@ -42,9 +41,6 @@ export function toIpcResponse<T>(listener: IpcHandler<T>): IpcHandler<IpcRespons
   };
 }
 
-export const isFunction = (functionToCheck) => {
-  return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
-};
 
 export const isNullOrUndefinedOrEmpty = (object: string): boolean => {
   return (object === null || object === undefined || object === '');

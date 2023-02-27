@@ -89,6 +89,8 @@
             matTooltip="Add"
             mat-button mat-icon-button
             class="pdf-marker-create-assignment-add"
+            [disabled]="studentIndex <  submissions.controls.length - 1"
+            [class.text-muted]="studentIndex <  submissions.controls.length - 1"
             (click)="addNewRow()">
             <mat-icon>
               add_circle

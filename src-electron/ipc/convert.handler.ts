@@ -88,8 +88,21 @@ function convert(sofficePath: string, sourcePath: string, destPath: string): Pro
       ];
       return new Promise<void>((resolve, reject) => {
         const childProcess: ChildProcess = execFile(sofficePath, args);
-        childProcess.addListener('error', reject);
-        childProcess.addListener('exit', resolve);
+        let errorOut = '';
+        childProcess.addListener('error', (err) => {
+          reject(err);
+        });
+        childProcess.addListener('exit', () => {
+          errorOut = errorOut.trim();
+          if (errorOut.length === 0) {
+            return resolve();
+          } else {
+            return reject(errorOut);
+          }
+        });
+        childProcess.stderr.on('data', (data) => {
+          errorOut += data;
+        });
       })
         .then(() => {
           return move(outputTemp + sep + filename + '.pdf', destPath);
