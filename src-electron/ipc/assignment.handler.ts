@@ -860,7 +860,12 @@ export function exportAssignment(exportAssignmentsRequest: ExportAssignmentsRequ
       return Promise.all(promises)
         .then(() => {
           // We need to create a settings file
-          const exportSettings = cloneDeep(assignmentSettings);
+          const exportSettings: AssignmentSettingsInfo = cloneDeep(assignmentSettings);
+
+          if (exportAssignmentsRequest.format === ExportFormat.REALLOCATION) {
+            exportSettings.state = AssignmentState.NOT_STARTED;
+          }
+
           if (!isNil(exportAssignmentsRequest.studentIds)) {
             // Filter out submissions if required
             exportSettings.submissions = exportSettings.submissions.filter((submission) => {
@@ -1021,10 +1026,6 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
       });
 
       return Promise.all(promises)
-        .then(() => {
-          // pool.close();
-          // pool = null;
-        });
     }).then(() => Promise.resolve()); // End with noop to make it return no value
 }
 

@@ -871,7 +871,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           }
 
           const shareRequest: ExportAssignmentsRequest = {
-            format: ExportFormat.PDFM,
+            format: ExportFormat.REALLOCATION,
             assignmentName: this.assignmentName,
             workspaceFolder: this.workspaceName,
             studentIds : map(selectedSubmissions, 'studentId'),
