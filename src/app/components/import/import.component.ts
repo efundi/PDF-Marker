@@ -223,13 +223,13 @@ export class ImportComponent implements OnInit, OnDestroy {
     };
     this.busyService.start();
     this.importService.importAssignmentFile(importData).subscribe({
-      next: (msg) => {
+      next: (assignmentDirectory) => {
         this.busyService.stop();
-        this.alertService.success(msg);
+        this.alertService.success('Successfully extracted assignment to selected workspace!');
         if (PdfmUtilsService.isDefaultWorkspace(importData.workspace)) {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, importData.assignmentName]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, assignmentDirectory]);
         } else {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, importData.workspace, importData.assignmentName]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, importData.workspace, assignmentDirectory]);
         }
 
       },
@@ -238,15 +238,5 @@ export class ImportComponent implements OnInit, OnDestroy {
         this.busyService.stop();
       }
     });
-  }
-
-  private resetForm() {
-    this.importForm.reset({
-      assignmentType: this.assignmentTypes[0].name
-    });
-    this.actualFilePath = null;
-    this.isFileLoaded = false;
-    this.isValidFormat = false;
-    this.workspaceService.refreshWorkspaces().subscribe();
   }
 }

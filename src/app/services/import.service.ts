@@ -20,7 +20,7 @@ export class ImportService {
     this.importService = (window as any).importApi;
   }
 
-  importAssignmentFile(data: ImportInfo) {
+  importAssignmentFile(data: ImportInfo): Observable<string> {
     return fromIpcResponse(this.importService.importZip(data))
       .pipe(
         mergeMap((response) => {
@@ -29,7 +29,7 @@ export class ImportService {
               map(() => response)
             );
         })
-      );;
+      );
   }
 
   validateZipFile(filePath: string, format: string): Observable<AssignmentValidateResultInfo> {

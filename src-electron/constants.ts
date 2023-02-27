@@ -21,7 +21,6 @@ export const EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC = 'Successfully extract
 export const INVALID_STUDENT_FOLDER = 'Invalid student folder';
 
 export const COULD_NOT_READ_COMMENT_LIST = 'Could not read list of comments!';
-export const NOT_PROVIDED_COMMENT = 'Comment must be provided!';
 
 export const HIGHLIGHT_HEIGHT = 20;
 export const STUDENT_DIRECTORY_ID_REGEX = /.*\((.+)\)/;
