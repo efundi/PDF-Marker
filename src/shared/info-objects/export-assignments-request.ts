@@ -1,7 +1,8 @@
 
 export enum ExportFormat {
   PDFM,
-  MODERATION
+  MODERATION,
+  REALLOCATION,
 }
 
 export interface ExportAssignmentsRequest {
