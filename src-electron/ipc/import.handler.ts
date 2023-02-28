@@ -26,7 +26,7 @@ import {deleteFolderRecursive, isFolder, isNullOrUndefinedOrEmpty, stream2buffer
 
 import JSZip, {JSZipObject} from 'jszip';
 import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
-import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
+import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspaceTreeNode';
 import {
   getAssignmentSettingsFor,
   readGradesCsv,

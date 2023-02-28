@@ -11,22 +11,22 @@ import {
 } from '@shared/constants/constants';
 import {mkdir, readdir, rename, stat} from 'fs/promises';
 import {
-  FeedbackAttachments,
-  StudentSubmission, SubmissionAttachments, TreeNode,
+  FeedbackAttachmentsTreeNode,
+  StudentSubmissionTreeNode, SubmissionAttachmentsTreeNode, TreeNode,
   TreeNodeType,
-  Workspace,
-  WorkspaceAssignment, WorkspaceFile
-} from '@shared/info-objects/workspace';
+  WorkspaceTreeNode,
+  AssignmentTreeNode, WorkspaceFileTreeNode
+} from '@shared/info-objects/workspaceTreeNode';
 import {isNullOrUndefinedOrEmpty} from '../utils';
 import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX} from '../constants';
 
-export function getAssignments(): Promise<Workspace[]> {
+export function getAssignments(): Promise<WorkspaceTreeNode[]> {
   return loadWorkspaces();
 }
 
-function loadWorkspaces(): Promise<Workspace[]> {
+function loadWorkspaces(): Promise<WorkspaceTreeNode[]> {
   return getConfig().then((config) => {
-    const defaultWorkspace: Workspace = {
+    const defaultWorkspace: WorkspaceTreeNode = {
       type: TreeNodeType.WORKSPACE,
       name: DEFAULT_WORKSPACE,
       dateModified: null,
@@ -34,7 +34,7 @@ function loadWorkspaces(): Promise<Workspace[]> {
       parent: null
     };
     const workspaceFolders = config.folders || [];
-    const workspaces: Workspace[] = [defaultWorkspace];
+    const workspaces: WorkspaceTreeNode[] = [defaultWorkspace];
 
     if (isNullOrUndefinedOrEmpty(config.defaultPath)) {
       return workspaces;
@@ -64,8 +64,8 @@ function loadWorkspaces(): Promise<Workspace[]> {
 
 
 
-function loadAssignmentContents(directoryFullPath: string, parent: Workspace): Promise<WorkspaceAssignment> {
-  const assignment: WorkspaceAssignment = {
+function loadAssignmentContents(directoryFullPath: string, parent: WorkspaceTreeNode): Promise<AssignmentTreeNode> {
+  const assignment: AssignmentTreeNode = {
     type: TreeNodeType.ASSIGNMENT,
     dateModified: null,
     name: basename(directoryFullPath),
@@ -112,7 +112,7 @@ function loadAssignmentContents(directoryFullPath: string, parent: Workspace): P
             return Promise.reject(`Student directory not in expected format '${file}'`);
           }
 
-          const submission: StudentSubmission = {
+          const submission: StudentSubmissionTreeNode = {
             dateModified: null,
             type: TreeNodeType.SUBMISSION,
             name: file,
@@ -123,7 +123,7 @@ function loadAssignmentContents(directoryFullPath: string, parent: Workspace): P
             parent: assignment
           };
           assignment.children.push(submission);
-          const feedbackNode: FeedbackAttachments = {
+          const feedbackNode: FeedbackAttachmentsTreeNode = {
             name: FEEDBACK_FOLDER,
             type: TreeNodeType.FEEDBACK_DIRECTORY,
             children: [],
@@ -132,7 +132,7 @@ function loadAssignmentContents(directoryFullPath: string, parent: Workspace): P
           };
           submission.children.push(feedbackNode);
 
-          const submissionAttachments: SubmissionAttachments = {
+          const submissionAttachments: SubmissionAttachmentsTreeNode = {
             name: SUBMISSION_FOLDER,
             type: TreeNodeType.SUBMISSIONS_DIRECTORY,
             children: [],
@@ -160,9 +160,9 @@ function loadAssignmentContents(directoryFullPath: string, parent: Workspace): P
   });
 }
 
-function  loadFiles(directory: string, parent: TreeNode): Promise<WorkspaceFile[]> {
+function  loadFiles(directory: string, parent: TreeNode): Promise<WorkspaceFileTreeNode[]> {
   return readdir(directory).then(files => {
-    const workspaceFiles: WorkspaceFile[] = [];
+    const workspaceFiles: WorkspaceFileTreeNode[] = [];
     const promises: Promise<any>[] = map(files, (file) => {
       return stat(directory + sep + file).then(fileStat => {
         if (fileStat.isFile()) {
@@ -180,9 +180,9 @@ function  loadFiles(directory: string, parent: TreeNode): Promise<WorkspaceFile[
   });
 }
 
-function loadWorkspaceContents(directoryFullPath: string): Promise<Workspace> {
+function loadWorkspaceContents(directoryFullPath: string): Promise<WorkspaceTreeNode> {
   // This directory is a workspace
-  const workspace: Workspace = {
+  const workspace: WorkspaceTreeNode = {
     type: TreeNodeType.WORKSPACE,
     dateModified: null,
     name: basename(directoryFullPath),

@@ -27,11 +27,11 @@ contextBridge.exposeInMainWorld('updateApi', {
 contextBridge.exposeInMainWorld('assignmentApi', {
   createAssignment: (createAssignmentInfo: AssignmentInfo) => ipcRenderer.invoke('assignments:create', createAssignmentInfo),
   updateAssignment: (updateRequest: AssignmentInfo) => ipcRenderer.invoke('assignments:update', updateRequest),
-  saveMarks: (location: string, submissionInfo: SubmissionInfo) => ipcRenderer.invoke('assignments:saveMarks', location, submissionInfo),
+  saveMarks: (workspaceName: string, assignmentName: string, studentId: string, submissionInfo: SubmissionInfo) => ipcRenderer.invoke('assignments:saveMarks', workspaceName, assignmentName, studentId, submissionInfo),
   getAssignmentSettings: (workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:getAssignmentSettings', workspaceName, assignmentName),
   updateAssignmentSettings: (updatedSettings: any, workspaceName: string, assignmentName: string) => ipcRenderer.invoke('assignments:updateAssignmentSettings', updatedSettings, workspaceName, assignmentName),
   finalizeAssignment: (workspaceFolder: any, assignmentName: string, zipFilePath: string) => ipcRenderer.invoke('assignments:finalizeAssignment', workspaceFolder, assignmentName, zipFilePath),
-  getMarks: (location: string) => ipcRenderer.invoke('assignments:getMarks', location),
+  getMarks: (workspaceName: string, assignmentName: string, studentId: string) => ipcRenderer.invoke('assignments:getMarks', workspaceName, assignmentName, studentId),
   exportAssignment: (shareRequest: ExportAssignmentsRequest) => ipcRenderer.invoke('assignments:exportAssignment', shareRequest),
   updateAssignmentRubric: (workspaceName: string, assignmentName: string, rubricName: string, ) => ipcRenderer.invoke('assignments:updateAssignmentRubric', workspaceName, assignmentName, rubricName),
   getPdfFile: (location: string) => ipcRenderer.invoke('assignments:getPdfFile', location),

@@ -253,7 +253,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   private loadMarks(): Observable<SubmissionInfo> {
-    return this.assignmentService.getSavedMarks(PdfmUtilsService.dirname(this.pdf, 2))
+    // TODO ideally SubmissionInfo should contain the studentId...
+    const studentDirectoryName = PdfmUtilsService.basename(PdfmUtilsService.dirname(this.pdf, 2));
+    const submission = find(this.assignmentSettings.submissions, s => s.directoryName === studentDirectoryName);
+    return this.assignmentService.getSavedMarks(this.workspaceName, this.assignmentName, submission.studentId)
       .pipe(
         tap((marks) => {
           this.submissionInfo = this.setupMark(marks);
@@ -336,7 +339,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     } as SubmissionInfo;
     markDetails.pageSettings[pageIndex] = pageSettings;
     this.busyService.start();
-    return this.assignmentService.saveMarks(this.workspaceName, PdfmUtilsService.dirname(this.pdf, 2), markDetails)
+
+    // TODO ideally SubmissionInfo should contain the studentId...
+    const studentDirectoryName = PdfmUtilsService.basename(PdfmUtilsService.dirname(this.pdf, 2));
+    const submission = find(this.assignmentSettings.submissions, s => s.directoryName === studentDirectoryName);
+    return this.assignmentService.saveMarks(this.workspaceName, this.assignmentName, submission.studentId, markDetails)
       .pipe(
         map(() => {
           this.busyService.stop();
@@ -376,7 +383,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       marks: marks || this.submissionInfo.marks
     } as MarkingSubmissionInfo;
     this.busyService.start();
-    return this.assignmentService.saveMarks(this.workspaceName, PdfmUtilsService.dirname(this.pdf, 2), markDetails)
+    // TODO ideally SubmissionInfo should contain the studentId...
+    const studentDirectoryName = PdfmUtilsService.basename(PdfmUtilsService.dirname(this.pdf, 2));
+    const submission = find(this.assignmentSettings.submissions, s => s.directoryName === studentDirectoryName);
+    return this.assignmentService.saveMarks(this.workspaceName, this.assignmentName, submission.studentId, markDetails)
       .pipe(
         map(() => {
           this.busyService.stop();

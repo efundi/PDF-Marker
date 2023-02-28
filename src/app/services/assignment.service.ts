@@ -1,6 +1,6 @@
-import {Injectable} from '@angular/core';
-import {first, map, mergeMap, Observable, ReplaySubject, tap} from 'rxjs';
-import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
+import {EventEmitter, Injectable} from '@angular/core';
+import {first, forkJoin, map, mergeMap, Observable, ReplaySubject, tap} from 'rxjs';
+import {AssignmentSettingsInfo, Submission} from '@shared/info-objects/assignment-settings.info';
 import {ExportAssignmentsRequest} from '@shared/info-objects/export-assignments-request';
 import {AssignmentIpcService} from '@shared/ipc/assignment.ipc-service';
 import {AssignmentInfo} from '@shared/info-objects/assignment.info';
@@ -10,15 +10,23 @@ import {find, isNil} from 'lodash';
 import {SelectedSubmission} from '../info-objects/selected-submission';
 import {
   findTreeNode,
-  StudentSubmission,
-  TreeNodeType,
-  WorkspaceAssignment,
-  WorkspaceFile
-} from '@shared/info-objects/workspace';
+  StudentSubmissionTreeNode,
+  TreeNodeType, WorkspaceTreeNode,
+  AssignmentTreeNode,
+  WorkspaceFileTreeNode
+} from '@shared/info-objects/workspaceTreeNode';
 import {MARK_FILE} from '@shared/constants/constants';
 import {SubmissionInfo} from '@shared/info-objects/submission.info';
 import {AppService} from './app.service';
 import {WorkspaceService} from './workspace.service';
+
+export interface SubmissionUpdatedEvent {
+  workspaceName: string;
+  assignmentName: string;
+  studentId: string;
+
+  submission: SubmissionInfo;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +35,8 @@ export class AssignmentService {
 
   private selectedSubmission = new ReplaySubject<SelectedSubmission>(1);
   selectedSubmissionChanged: Observable<SelectedSubmission>;
+
+  submissionUpdated = new EventEmitter<SubmissionUpdatedEvent>();
 
   private assignmentApi: AssignmentIpcService;
 
@@ -41,7 +51,7 @@ export class AssignmentService {
     this.selectedSubmission.next(selectedSubmission);
   }
 
-  getAssignmentHierarchy(workspaceName: string, assignmentName: string): Observable<WorkspaceAssignment> {
+  getAssignmentHierarchy(workspaceName: string, assignmentName: string): Observable<AssignmentTreeNode> {
     return this.workspaceService.getWorkspaceHierarchy(workspaceName)
       .pipe(
         map((workspace) => {
@@ -81,16 +91,24 @@ export class AssignmentService {
     );
   }
 
-  private updateMarksFileTimestamp(workspace: string, location: string): Observable<any> {
-      return this.workspaceService.workspaceList.pipe(
-        first(),
-        tap((workspaces) => {
+  private updateMarksFileTimestamp(workspaceName: string, assignmentName: string, studentId: string): Observable<any> {
+    const workspacesObservable = this.workspaceService.workspaceList.pipe(first());
 
-          if (!location.startsWith(workspace)) {
-            location = workspace + '/' + location;
-          }
-          const studentSubmission: StudentSubmission = findTreeNode(location, workspaces) as StudentSubmission;
-          let marksFile: WorkspaceFile = studentSubmission.children.find(c => c.name === MARK_FILE) as WorkspaceFile;
+
+      return forkJoin([
+        workspacesObservable,
+        this.getAssignmentSettings(workspaceName, assignmentName)
+      ]).pipe(
+        tap(([workspaces, assignmentSettings]) => {
+
+          const location = `${workspaceName}/${assignmentName}`;
+          const assignmentNode = findTreeNode(location, workspaces) as AssignmentTreeNode;
+          const assignmentSubmission: Submission = find(assignmentSettings.submissions, (s) => s.studentId === studentId);
+
+          const studentSubmission: StudentSubmissionTreeNode = find(assignmentNode.children, (n) => {
+            return n.name === assignmentSubmission.directoryName;
+          }) as StudentSubmissionTreeNode;
+          let marksFile: WorkspaceFileTreeNode = studentSubmission.children.find(c => c.name === MARK_FILE) as WorkspaceFileTreeNode;
           if (isNil(marksFile)) {
             marksFile = {
               type: TreeNodeType.FILE,
@@ -109,19 +127,27 @@ export class AssignmentService {
 
 
 
-  saveMarks(workspace: string, location: string, marks: SubmissionInfo): Observable<any> {
-    return fromIpcResponse(this.assignmentApi.saveMarks(location, marks))
+  saveMarks(workspaceName: string, assignmentName: string, studentId: string, marks: SubmissionInfo): Observable<any> {
+    return fromIpcResponse(this.assignmentApi.saveMarks(workspaceName, assignmentName, studentId, marks))
       .pipe(
         mergeMap((response) => {
           // After saving the marks we need to update the workspace list to contain the new modified date
-          return this.updateMarksFileTimestamp(workspace, location)
+          return this.updateMarksFileTimestamp(workspaceName, assignmentName, studentId)
             .pipe(map(() => response));
         }),
+        tap(() => {
+          this.submissionUpdated.emit({
+            workspaceName,
+            assignmentName,
+            studentId,
+            submission: marks
+          });
+        })
       );
   }
 
-  getSavedMarks(location: string): Observable<SubmissionInfo> {
-    return fromIpcResponse(this.assignmentApi.getMarks(location));
+  getSavedMarks(workspaceName: string, assignmentName: string, studentId: string): Observable<SubmissionInfo> {
+    return fromIpcResponse(this.assignmentApi.getMarks(workspaceName, assignmentName, studentId));
   }
 
   exportAssignment(exportAssignmentsRequest: ExportAssignmentsRequest): Observable<string> {

@@ -3,6 +3,32 @@
   padding-left: 8px;
 }
 
+.marking-detail-wrapper{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 14px;
+
+  .marker-name, .marker-label{
+    line-height: inherit;
+    height: 1rem;
+    font-weight: 500;
+  }
+}
+
+.mark-wrapper{
+  border-radius: 1.6rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid var(--pdf-marker-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  background: #ffffff;
+  color: var(--pdf-marker-primary);
+}
+
 .submission-navigator-assignment-name-wrapper{
   display: flex;
   flex-grow: 1;
@@ -32,3 +58,4 @@ button.mat-menu-item{
     color: #555555;
   }
 }
+

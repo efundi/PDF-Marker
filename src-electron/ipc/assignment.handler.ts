@@ -52,19 +52,26 @@ const csvtojson = require('csvtojson');
 
 
 
-export function saveMarks(event: IpcMainInvokeEvent, location: string, submissionInfo: SubmissionInfo): Promise<any> {
+export function saveMarks(
+  event: IpcMainInvokeEvent,
+  workspaceName: string,
+  assignmentName: string,
+  studentId: string,
+  submissionInfo: SubmissionInfo): Promise<any> {
 
 
   let totalMark = 0;
-  return workspaceRelativePathToAbsolute(location)
-    .then((submissionPath) => {
-      const assignmentPath = dirname(submissionPath);
-      const submissionDirectoryName = basename(submissionPath);
+  return Promise.all([
+    getAssignmentDirectoryAbsolutePath(workspaceName, assignmentName),
+    getAssignmentSettingsFor(workspaceName, assignmentName)
+  ])
+    .then(([assignmentPath, assignmentSettings]) => {
+      const submission = find(assignmentSettings.submissions, {studentId});
+      const submissionPath = assignmentPath + sep + submission.directoryName;
       return Promise.all([
-        getAssignmentSettingsAt(assignmentPath),
         getConfig(),
         saveSubmissionInfo(submissionPath, submissionInfo)
-      ]).then(([assignmentSettings, config]) => {
+      ]).then(([config]) => {
         let savePromise: Promise<any> = Promise.resolve();
 
         if (submissionInfo.type === SubmissionType.MARK) {
@@ -123,7 +130,6 @@ export function saveMarks(event: IpcMainInvokeEvent, location: string, submissio
         }
 
         return savePromise.then(() => {
-          const submission = find(assignmentSettings.submissions, {directoryName: submissionDirectoryName});
           submission.mark = totalMark;
 
           if (assignmentSettings.distributionFormat === DistributionFormat.DISTRIBUTED ) {
@@ -167,8 +173,14 @@ export function saveSubmissionInfo(studentLocation: string, submissionInfo: Subm
 }
 
 
-export function loadMarks(studentFolder: string): Promise<SubmissionInfo> {
-  return workspaceRelativePathToAbsolute(studentFolder).then((absolutePath) => {
+export function loadMarks(workspaceName: string, assignmentName: string, studentId: string): Promise<SubmissionInfo> {
+  return Promise.all([
+    getAssignmentDirectoryAbsolutePath(workspaceName, assignmentName),
+    getAssignmentSettingsFor(workspaceName, assignmentName)
+  ]).then(([assignmentAbsolutePath, assignmentSettings]) => {
+    const submission = find(assignmentSettings.submissions, {studentId});
+    return assignmentAbsolutePath + sep + submission.directoryName;
+  }).then((absolutePath) => {
     return loadMarksAt(absolutePath);
   });
 }
@@ -184,8 +196,8 @@ export function loadMarksAt(studentFolderFull: string): Promise<SubmissionInfo> 
   });
 }
 
-export function getMarks(event: IpcMainInvokeEvent, studentFolder: string): Promise<SubmissionInfo> {
-  return loadMarks(studentFolder);
+export function getMarks(event: IpcMainInvokeEvent, workspaceName: string, assignmentName: string, studentId: string): Promise<SubmissionInfo> {
+  return loadMarks(workspaceName, assignmentName, studentId);
 }
 
 
@@ -816,7 +828,7 @@ export function generateAllocationZipFiles(event: IpcMainInvokeEvent,
         } as MarkerExportTaskDetails);
       });
 
-      return Promise.all(promises)
+      return Promise.all(promises);
     }).then(() => Promise.resolve()); // End with noop to make it return no value
 }
 

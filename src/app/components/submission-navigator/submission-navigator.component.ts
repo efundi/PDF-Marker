@@ -1,18 +1,22 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {filter, findIndex, isNil} from 'lodash';
-import {StudentSubmission, TreeNodeType, WorkspaceFile} from '@shared/info-objects/workspace';
+import {filter, find, findIndex, forEach, isNil} from 'lodash';
+import {StudentSubmissionTreeNode, TreeNodeType, WorkspaceFileTreeNode} from '@shared/info-objects/workspaceTreeNode';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {AssignmentService} from '../../services/assignment.service';
 import {Router} from '@angular/router';
-import {Subscription, tap} from 'rxjs';
+import {mergeMap, Observable, Subscription, tap} from 'rxjs';
 import {SelectedSubmission} from '../../info-objects/selected-submission';
 import {SettingsService} from '../../services/settings.service';
 import {SubmissionNavigationService} from '../../services/submission-navigation.service';
+import {AssignmentSettingsInfo, DistributionFormat, Submission} from '@shared/info-objects/assignment-settings.info';
+import {SettingInfo} from '@shared/info-objects/setting.info';
+import {SubmissionInfo, SubmissionType} from '@shared/info-objects/submission.info';
+import {MarkInfo} from '@shared/info-objects/mark.info';
 
 export interface SubmissionItem {
   studentFullName: string;
   studentId: string;
-  pdfFile: WorkspaceFile;
+  pdfFile: WorkspaceFileTreeNode;
 }
 
 @Component({
@@ -53,11 +57,20 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
    */
   menuItems: SubmissionItem[] = [];
 
+  private assignmentSettings: AssignmentSettingsInfo;
+
   /**
    * Subscription listening for the active submission
    * @private
    */
   private assignmentSubscription: Subscription;
+  private submissionChangeSubscription: Subscription;
+
+  marker = '';
+  marks = 0;
+
+  private settings: SettingInfo;
+
 
 
   constructor(private assignmentService: AssignmentService,
@@ -66,15 +79,104 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
               private submissionNavigationService: SubmissionNavigationService) { }
 
   ngOnInit(): void {
-
-    this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.subscribe((submission) => {
-      this.activeSubmission = submission;
-      this.generateDataFromModel(submission);
+    this.submissionChangeSubscription = this.assignmentService.submissionUpdated.subscribe((submissionUpdateEvent) => {
+      if (submissionUpdateEvent.workspaceName === this.activeSubmission.workspace.name &&
+        submissionUpdateEvent.assignmentName === this.activeSubmission.assignment.name &&
+        submissionUpdateEvent.studentId === this.menuItems[this.activeIndex].studentId) {
+         this.recalculateMark(submissionUpdateEvent.submission);
+      }
+      console.log(submissionUpdateEvent);
     });
+
+    this.settingsService.getConfigurations().subscribe((settings) => {
+      this.settings = settings;
+
+      this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.subscribe((submission) => {
+        this.activeSubmission = submission;
+        this.generateDataFromModel(submission);
+        this.loadMarkingDetails();
+      });
+    });
+
+
+  }
+
+  private recalculateMark(submissionInfo: SubmissionInfo) {
+    if (isNil(this.assignmentSettings.rubric)) {
+      let sum = 0;
+      forEach(submissionInfo.marks as MarkInfo[][], (pageMarks) => {
+        forEach(pageMarks, (mark) => {
+          sum += mark.totalMark;
+        });
+      });
+      this.marks = sum;
+    } else {
+      let sum = 0;
+      forEach(submissionInfo.marks as number[], (rubricIndex, index) => {
+        if (!isNil(rubricIndex)) {
+         sum +=  this.assignmentSettings.rubric.criterias[index].levels[rubricIndex].score;
+        }
+      });
+      this.marks = sum;
+    }
+  }
+
+  private getMarks(): Observable<SubmissionInfo> {
+    return this.assignmentService.getSavedMarks(
+      this.activeSubmission.workspace.name,
+      this.activeSubmission.assignment.name,
+      this.menuItems[this.activeIndex].studentId)
+      .pipe(
+        tap((submissionInfo) => this.recalculateMark(submissionInfo))
+      );
+  }
+
+  private loadMarkingDetails() {
+    if (isNil(this.activeSubmission)) {
+      this.marker = null;
+    } else {
+      this.loadAssignmentSettings(this.activeSubmission)
+        .pipe(
+          mergeMap(() => this.getMarks())
+        )
+        .subscribe(() => {
+          this.loadMarker();
+        });
+    }
+  }
+
+  private loadMarker() {
+
+    if (this.assignmentSettings.distributionFormat === DistributionFormat.STANDALONE) {
+      this.marker = 'Me';
+    } else {
+      const myEmail = this.settings.user.email;
+      const assignmentSubmission: Submission = find(this.assignmentSettings.submissions, {studentId: this.menuItems[this.activeIndex].studentId});
+      if (isNil(assignmentSubmission.allocation) || assignmentSubmission.allocation.email === myEmail) {
+        this.marker = 'Me';
+      } else {
+        const marker = find(this.settings.markers, {email: assignmentSubmission.allocation.email});
+        this.marker = marker.name;
+      }
+    }
+  }
+
+  private loadAssignmentSettings(selectedSubmission: SelectedSubmission): Observable <AssignmentSettingsInfo> {
+    return this.assignmentService.getAssignmentSettings(selectedSubmission.workspace.name, selectedSubmission.assignment.name)
+      .pipe(
+        tap((assignmentSettingsInfo) => this.assignmentSettings = assignmentSettingsInfo)
+      );
   }
 
   ngOnDestroy() {
-    this.assignmentSubscription.unsubscribe();
+    if (this.assignmentSubscription) {
+      this.assignmentSubscription.unsubscribe();
+    }
+
+    if (this.submissionChangeSubscription) {
+      this.submissionChangeSubscription.unsubscribe();
+    }
+
   }
 
   private generateDataFromModel(activeSubmission: SelectedSubmission) {
@@ -82,13 +184,13 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
       this.menuItems = [];
     } else {
       this.menuItems = filter(activeSubmission.assignment.children, {type: TreeNodeType.SUBMISSION})
-        .map((studentSubmission: StudentSubmission) => {
+        .map((studentSubmission: StudentSubmissionTreeNode) => {
 
           // Find submission or feedback pdf
-          let submissionFile: WorkspaceFile = studentSubmission.children
-            .find((tn) => tn.type === TreeNodeType.SUBMISSIONS_DIRECTORY).children[0] as WorkspaceFile;
+          let submissionFile: WorkspaceFileTreeNode = studentSubmission.children
+            .find((tn) => tn.type === TreeNodeType.SUBMISSIONS_DIRECTORY).children[0] as WorkspaceFileTreeNode;
           if (isNil(submissionFile)) {
-            submissionFile = studentSubmission.children.find((tn) => tn.type === TreeNodeType.FEEDBACK_DIRECTORY).children[0] as WorkspaceFile;
+            submissionFile = studentSubmission.children.find((tn) => tn.type === TreeNodeType.FEEDBACK_DIRECTORY).children[0] as WorkspaceFileTreeNode;
           }
 
           if (isNil(submissionFile)) {

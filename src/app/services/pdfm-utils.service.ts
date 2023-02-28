@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {isNil} from 'lodash';
 import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
-import {TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
+import {TreeNode, TreeNodeType} from '@shared/info-objects/workspaceTreeNode';
 
 @Injectable({
   providedIn: 'root'

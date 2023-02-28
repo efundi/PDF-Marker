@@ -1,4 +1,4 @@
-import {TreeNode, TreeNodeType} from '@shared/info-objects/workspace';
+import {TreeNode, TreeNodeType} from '@shared/info-objects/workspaceTreeNode';
 
 export const DEFAULT_COLOR = '#6f327a';
 export const DEFAULT_WORKSPACE = 'Default Workspace';

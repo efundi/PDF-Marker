@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {ConvertIpcService} from '@shared/ipc/convert.ipc-service';
 import {first, map, mergeMap, Observable, tap} from 'rxjs';
 import {fromIpcResponse} from './ipc.utils';
-import {findTreeNode, WorkspaceFile} from '@shared/info-objects/workspace';
+import {findTreeNode, WorkspaceFileTreeNode} from '@shared/info-objects/workspaceTreeNode';
 import {PdfmUtilsService} from './pdfm-utils.service';
 import {WorkspaceService} from './workspace.service';
 
@@ -27,7 +27,7 @@ export class ConvertService {
         if (!oldSubmissionFile.startsWith(workspace)) {
           oldSubmissionFile = workspace + '/' + oldSubmissionFile;
         }
-        const submissionFile: WorkspaceFile = findTreeNode(oldSubmissionFile, workspaces) as WorkspaceFile;
+        const submissionFile: WorkspaceFileTreeNode = findTreeNode(oldSubmissionFile, workspaces) as WorkspaceFileTreeNode;
         submissionFile.name = PdfmUtilsService.basename(newSubmissionFile);
       })
     );
