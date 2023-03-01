@@ -48,6 +48,7 @@ import {
 } from '@shared/constants/constants';
 import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
+import {emptyDir} from 'fs-extra';
 const logger = require('electron-log');
 const LOG = logger.scope('ImportHandler');
 /**
@@ -589,7 +590,12 @@ export function lectureImport(event: IpcMainInvokeEvent, importInfo: LectureImpo
             .replace(zipAssignmentName + '/', importInfo.assignmentName + '/')
             .replaceAll('/', sep);
 
-          return extractFile(zipFile, fullPath);
+          let promise = Promise.resolve();
+          if (basename(dirname(fullPath)) === SUBMISSION_FOLDER) {
+            // The marker could have converted files. Delete the current files, and replace with contents from marker
+            promise = promise.then(() => emptyDir(dirname(fullPath)));
+          }
+          return promise.then(() => extractFile(zipFile, fullPath));
         });
         return Promise.all(promises)
           .then(() => {
