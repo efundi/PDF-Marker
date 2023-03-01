@@ -5,7 +5,7 @@ import {SettingsService} from '../../../services/settings.service';
 import {GroupMember, Marker, SettingInfo} from '@shared/info-objects/setting.info';
 import {Subscription} from 'rxjs';
 import {cloneDeep, filter, find, isNil, shuffle, sortBy, without} from 'lodash';
-import {StudentSubmission, TreeNodeType, WorkspaceAssignment} from '@shared/info-objects/workspace';
+import {StudentSubmissionTreeNode, TreeNodeType, AssignmentTreeNode} from '@shared/info-objects/workspaceTreeNode';
 import {
   AssignmentSettingsInfo,
   Submission,
@@ -105,8 +105,8 @@ export class AllocateMarkersModalComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.assignmentName = this.data.assignmentName;
     const assignmentSettings: AssignmentSettingsInfo = this.data.assignmentSettings;
-    const workspaceAssignment: WorkspaceAssignment = this.data.workspaceAssignment;
-    const studentDirectories: StudentSubmission[] = workspaceAssignment.children.filter(i => i.type === TreeNodeType.SUBMISSION) as StudentSubmission[];
+    const workspaceAssignment: AssignmentTreeNode = this.data.workspaceAssignment;
+    const studentDirectories: StudentSubmissionTreeNode[] = workspaceAssignment.children.filter(i => i.type === TreeNodeType.SUBMISSION) as StudentSubmissionTreeNode[];
     this.studentCount = studentDirectories.length;
     this.submissions = studentDirectories.filter(submissionDirectory => {
       return !isNil(submissionDirectory.children.find(f => f.type === TreeNodeType.SUBMISSIONS_DIRECTORY).children[0]);

@@ -3,7 +3,7 @@ import {ImportInfo} from '@shared/info-objects/import.info';
 import {fromIpcResponse} from './ipc.utils';
 import {ImportIpcService} from '@shared/ipc/import.ipc-service';
 import {map, mergeMap, Observable} from 'rxjs';
-import {TreeNode} from '@shared/info-objects/workspace';
+import {TreeNode} from '@shared/info-objects/workspaceTreeNode';
 import {AssignmentValidateResultInfo} from '@shared/info-objects/assignment-validate-result.info';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';

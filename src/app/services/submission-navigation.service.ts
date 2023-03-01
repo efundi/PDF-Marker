@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {Workspace, WorkspaceAssignment, WorkspaceFile} from '@shared/info-objects/workspace';
+import {WorkspaceTreeNode, AssignmentTreeNode, WorkspaceFileTreeNode} from '@shared/info-objects/workspaceTreeNode';
 import {map, mergeMap, Observable, of, tap, throwError} from 'rxjs';
 import {PdfmUtilsService} from './pdfm-utils.service';
 import {AssignmentService} from './assignment.service';
@@ -27,9 +27,9 @@ export class SubmissionNavigationService {
               private router: Router) { }
 
 
-  private convertFile(submissionFile: WorkspaceFile): Observable<WorkspaceFile> {
-    const assignment = submissionFile.parent.parent.parent as WorkspaceAssignment;
-    const workspace = assignment.parent as Workspace;
+  private convertFile(submissionFile: WorkspaceFileTreeNode): Observable<WorkspaceFileTreeNode> {
+    const assignment = submissionFile.parent.parent.parent as AssignmentTreeNode;
+    const workspace = assignment.parent as WorkspaceTreeNode;
     const submissionFilePath = PdfmUtilsService.buildTreePath(submissionFile);
     this.busyService.start();
 
@@ -62,9 +62,9 @@ export class SubmissionNavigationService {
       );
   }
 
-  openSubmission(submissionFile: WorkspaceFile): Observable<any> {
-    const assignment = submissionFile.parent.parent.parent as WorkspaceAssignment;
-    const workspace = assignment.parent as Workspace;
+  openSubmission(submissionFile: WorkspaceFileTreeNode): Observable<any> {
+    const assignment = submissionFile.parent.parent.parent as AssignmentTreeNode;
+    const workspace = assignment.parent as WorkspaceTreeNode;
 
     let assignmentSettings: AssignmentSettingsInfo;
    return this.assignmentService.getAssignmentSettings(workspace.name, assignment.name)
@@ -77,7 +77,7 @@ export class SubmissionNavigationService {
             return this.convertFile(submissionFile);
           }
         }),
-        tap((submissionWorkspaceFile: WorkspaceFile) => {
+        tap((submissionWorkspaceFile: WorkspaceFileTreeNode) => {
           const pdfPath = PdfmUtilsService.buildTreePath(submissionWorkspaceFile);
           this.assignmentService.selectSubmission({
             workspace,

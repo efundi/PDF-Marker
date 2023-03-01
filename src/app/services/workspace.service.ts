@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {first, map, Observable, ReplaySubject, tap, throwError} from 'rxjs';
 import {WorkspaceIpcService} from '@shared/ipc/workspace.ipc-service';
 import {fromIpcResponse} from './ipc.utils';
-import {Workspace} from '@shared/info-objects/workspace';
+import {WorkspaceTreeNode} from '@shared/info-objects/workspaceTreeNode';
 import {SelectedSubmission} from '../info-objects/selected-submission';
 import {catchError} from 'rxjs/operators';
 import {find, isNil} from 'lodash';
@@ -17,7 +17,7 @@ export class WorkspaceService {
   private workspaceApi: WorkspaceIpcService;
 
 
-  public readonly workspaceList = new ReplaySubject<Workspace[]>(1);
+  public readonly workspaceList = new ReplaySubject<WorkspaceTreeNode[]>(1);
   workspaceListLoading = new ReplaySubject<boolean>(1);
 
   constructor(private appService: AppService) {
@@ -30,7 +30,7 @@ export class WorkspaceService {
   /**
    * Refresh workspaces from cache
    */
-  refreshWorkspaces(): Observable<Workspace[]> {
+  refreshWorkspaces(): Observable<WorkspaceTreeNode[]> {
     this.workspaceListLoading.next(true);
     return fromIpcResponse(this.workspaceApi.getAssignments())
       .pipe(
@@ -50,7 +50,7 @@ export class WorkspaceService {
 
 
 
-  getWorkspaceHierarchy(workspaceName: string): Observable<Workspace> {
+  getWorkspaceHierarchy(workspaceName: string): Observable<WorkspaceTreeNode> {
     if (isNil(workspaceName)) {
       workspaceName = DEFAULT_WORKSPACE;
     }

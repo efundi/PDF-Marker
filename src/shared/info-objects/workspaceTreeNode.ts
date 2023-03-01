@@ -17,40 +17,40 @@ export interface TreeNode {
   children?: TreeNode[];
 }
 
-export interface Workspace extends TreeNode {
+export interface WorkspaceTreeNode extends TreeNode {
   type: TreeNodeType.WORKSPACE;
-  children: WorkspaceAssignment[];
+  children: AssignmentTreeNode[];
   parent: null;
 }
 
-export interface WorkspaceAssignment extends TreeNode {
+export interface AssignmentTreeNode extends TreeNode {
   type: TreeNodeType.ASSIGNMENT;
-  children: (WorkspaceFile| StudentSubmission)[];
-  parent: Workspace;
+  children: (WorkspaceFileTreeNode| StudentSubmissionTreeNode)[];
+  parent: WorkspaceTreeNode;
 }
 
-export interface WorkspaceFile extends TreeNode {
+export interface WorkspaceFileTreeNode extends TreeNode {
   type: TreeNodeType.FILE;
 }
 
-export interface SubmissionAttachments extends TreeNode {
+export interface SubmissionAttachmentsTreeNode extends TreeNode {
   type: TreeNodeType.SUBMISSIONS_DIRECTORY;
-  children: WorkspaceFile[];
-  parent: StudentSubmission;
+  children: WorkspaceFileTreeNode[];
+  parent: StudentSubmissionTreeNode;
 }
 
-export interface FeedbackAttachments extends TreeNode {
+export interface FeedbackAttachmentsTreeNode extends TreeNode {
   type: TreeNodeType.FEEDBACK_DIRECTORY;
-  children: WorkspaceFile[];
-  parent: StudentSubmission;
+  children: WorkspaceFileTreeNode[];
+  parent: StudentSubmissionTreeNode;
 }
 
-export interface StudentSubmission extends TreeNode {
+export interface StudentSubmissionTreeNode extends TreeNode {
   studentName: string;
   studentSurname: string;
   studentId: string;
-  children: (WorkspaceFile|SubmissionAttachments|FeedbackAttachments)[];
-  parent: WorkspaceAssignment;
+  children: (WorkspaceFileTreeNode|SubmissionAttachmentsTreeNode|FeedbackAttachmentsTreeNode)[];
+  parent: AssignmentTreeNode;
 }
 
 export function findTreeNode(path: string, roots: TreeNode[]): TreeNode {

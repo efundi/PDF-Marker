@@ -18,7 +18,7 @@ import {find, findIndex, isEmpty, isEqual, isNil, times} from 'lodash';
 import {forkJoin, mergeMap, Observable, of, tap, throwError} from 'rxjs';
 import {BusyService} from '../../services/busy.service';
 import {catchError, map} from 'rxjs/operators';
-import {StudentSubmission, TreeNodeType} from '@shared/info-objects/workspace';
+import {StudentSubmissionTreeNode, TreeNodeType} from '@shared/info-objects/workspaceTreeNode';
 import {DEFAULT_WORKSPACE, SUPPORTED_SUBMISSION_TYPES} from '@shared/constants/constants';
 import {AppSelectedPathInfo} from '@shared/info-objects/app-selected-path.info';
 
@@ -127,7 +127,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
                 tap((workspaceAssignment) => {
                   if (!isNil(workspaceAssignment)) {
                     workspaceAssignment.children.filter((c => c.type === TreeNodeType.SUBMISSION))
-                      .forEach((studentSubmission: StudentSubmission) => {
+                      .forEach((studentSubmission: StudentSubmissionTreeNode) => {
                         const studentSubmissionModel: StudentSubmissionModel = {
                           studentName: studentSubmission.studentName,
                           studentSurname: studentSubmission.studentSurname,

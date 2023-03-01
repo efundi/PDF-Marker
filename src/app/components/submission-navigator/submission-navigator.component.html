@@ -1,13 +1,24 @@
-<div class="submission-navigator-wrapper" [style.display]="activeSubmission == null ? 'none' : 'flex'">
+<div class="submission-navigator-wrapper" [style.display]="selectedSubmission == null ? 'none' : 'flex'">
+
 
   <div class="submission-navigator-assignment-name-wrapper">
     <button mat-button (click)="openAssignment()">
       <mat-icon style="font-size: 36px; width: 36px; height: 36px">description</mat-icon>
-      <span style="font-size: 1.3rem;font-weight: normal;margin-left: 5px;">{{activeSubmission?.assignment.name}}</span>
+      <span style="font-size: 1.3rem;font-weight: normal;margin-left: 5px;">{{selectedSubmission?.assignment.name}}</span>
     </button>
   </div>
 
+  <div class="marking-detail-wrapper me-3">
+    <div class="marker-name">{{marker}}</div>
+    <small class="marker-label">Marker</small>
+  </div>
+
+
   <div class="submission-navigator-submission-wrapper">
+    <div class="mark-wrapper" (click)="previewMarks()" role="button" matTooltip="Preview Marks">
+      <span>{{marks}}</span>
+    </div>
+
     <button mat-icon-button matTooltip="Previous" [disabled]="busy || !canPrevious" (click)="previous()">
       <mat-icon>arrow_back</mat-icon>
     </button>

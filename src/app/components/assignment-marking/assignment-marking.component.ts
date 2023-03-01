@@ -14,7 +14,7 @@ import {filter, from, mergeMap, Observable, Subscription, tap, throwError} from 
 import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
-import {AssignmentSettingsInfo, AssignmentState, SubmissionState} from '@shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {getDocument, GlobalWorkerOptions, PDFDocumentProxy} from 'pdfjs-dist';
 import {cloneDeep, find, isNil, times} from 'lodash';
 import {MarkInfo} from '@shared/info-objects/mark.info';
@@ -36,7 +36,6 @@ import {
 import {RoutesEnum} from '../../utils/routes.enum';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {PreviewMarksComponent} from './preview-marks/preview-marks.component';
 import {calculateCanEditMarking} from '../../utils/utils';
 
 
@@ -80,8 +79,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private zoomChangeSubscription: Subscription;
   private routeSubscription: Subscription;
   submissionInfo: SubmissionInfo;
-  readonly defaultFullMark = 1;
-  readonly defaultIncorrectMark = 0;
+
   rubric: IRubric;
   showRubric = false;
   showPdf = true;
@@ -253,7 +251,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   private loadMarks(): Observable<SubmissionInfo> {
-    return this.assignmentService.getSavedMarks(PdfmUtilsService.dirname(this.pdf, 2))
+    // TODO ideally SubmissionInfo should contain the studentId...
+    const studentDirectoryName = PdfmUtilsService.basename(PdfmUtilsService.dirname(this.pdf, 2));
+    const submission = find(this.assignmentSettings.submissions, s => s.directoryName === studentDirectoryName);
+    return this.assignmentService.getSavedMarks(this.workspaceName, this.assignmentName, submission.studentId)
       .pipe(
         tap((marks) => {
           this.submissionInfo = this.setupMark(marks);
@@ -285,8 +286,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       case 'save'     :   this.saveMarks().subscribe();
         break;
       case 'clearAll' :   this.clearMarks();
-        break;
-      case 'previewMarks' :   this.previewMarks();
         break;
       case 'prevPage' :   this.onPagedChanged(this.currentPage - 1);
         break;
@@ -336,7 +335,11 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     } as SubmissionInfo;
     markDetails.pageSettings[pageIndex] = pageSettings;
     this.busyService.start();
-    return this.assignmentService.saveMarks(this.workspaceName, PdfmUtilsService.dirname(this.pdf, 2), markDetails)
+
+    // TODO ideally SubmissionInfo should contain the studentId...
+    const studentDirectoryName = PdfmUtilsService.basename(PdfmUtilsService.dirname(this.pdf, 2));
+    const submission = find(this.assignmentSettings.submissions, s => s.directoryName === studentDirectoryName);
+    return this.assignmentService.saveMarks(this.workspaceName, this.assignmentName, submission.studentId, markDetails)
       .pipe(
         map(() => {
           this.busyService.stop();
@@ -376,7 +379,10 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
       marks: marks || this.submissionInfo.marks
     } as MarkingSubmissionInfo;
     this.busyService.start();
-    return this.assignmentService.saveMarks(this.workspaceName, PdfmUtilsService.dirname(this.pdf, 2), markDetails)
+    // TODO ideally SubmissionInfo should contain the studentId...
+    const studentDirectoryName = PdfmUtilsService.basename(PdfmUtilsService.dirname(this.pdf, 2));
+    const submission = find(this.assignmentSettings.submissions, s => s.directoryName === studentDirectoryName);
+    return this.assignmentService.saveMarks(this.workspaceName, this.assignmentName, submission.studentId, markDetails)
       .pipe(
         map(() => {
           this.busyService.stop();
@@ -430,21 +436,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.appService.createDialog(ConfirmationDialogComponent, config, shouldDeleteFn);
   }
 
-
-  private previewMarks() {
-    const config: MatDialogConfig = new MatDialogConfig();
-    config.width = '400px';
-    config.height = '500px';
-    config.disableClose = true;
-
-    config.data = {
-      assignmentPath: this.pdf,
-      submissionInfo: this.submissionInfo,
-      defaultTick: this.defaultFullMark,
-      incorrectTick: this.defaultIncorrectMark
-    };
-    this.appService.createDialog(PreviewMarksComponent, config);
-  }
 
   openNewMarkingCommentModal(): MatDialogConfig {
     const config = new MatDialogConfig();

@@ -32,6 +32,7 @@ import {
 } from '../../confirmation-dialog/confirmation-dialog.component';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {RenderTask} from 'pdfjs-dist/types/src/display/api';
+import {DEFAULT_MARKS} from '@shared/constants/constants';
 
 const eventBus = new EventBus();
 
@@ -208,11 +209,11 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
     };
 
     if (mark.iconType === IconTypeEnum.FULL_MARK) {
-      mark.totalMark = this.assignmentMarkingComponent.defaultFullMark;
+      mark.totalMark = DEFAULT_MARKS.FULL;
     } else if (mark.iconType === IconTypeEnum.HALF_MARK) {
-      mark.totalMark = (this.assignmentMarkingComponent.defaultFullMark / 2);
+      mark.totalMark = (DEFAULT_MARKS.FULL / 2);
     } else if (mark.iconType === IconTypeEnum.CROSS) {
-      mark.totalMark = this.assignmentMarkingComponent.defaultIncorrectMark;
+      mark.totalMark = DEFAULT_MARKS.INCORRECT;
     } else if (mark.iconType === IconTypeEnum.NUMBER) {
       const config = this.assignmentMarkingComponent.openNewMarkingCommentModal();
       const handelCommentFN = (formData: any) => {

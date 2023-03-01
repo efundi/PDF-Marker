@@ -1,7 +1,7 @@
-import {Workspace, WorkspaceAssignment, WorkspaceFile} from '@shared/info-objects/workspace';
+import {WorkspaceTreeNode, AssignmentTreeNode, WorkspaceFileTreeNode} from '@shared/info-objects/workspaceTreeNode';
 
 export interface SelectedSubmission {
-  workspace: Workspace;
-  assignment: WorkspaceAssignment;
-  pdfFile: WorkspaceFile;
+  workspace: WorkspaceTreeNode;
+  assignment: AssignmentTreeNode;
+  pdfFile: WorkspaceFileTreeNode;
 }

@@ -35,11 +35,11 @@ import {BusyService} from '../../services/busy.service';
 import {MatSort, MatSortable} from '@angular/material/sort';
 import {cloneDeep, every, filter, find, forEach, isEmpty, isNil, map, some, sortBy, uniq} from 'lodash';
 import {
-  StudentSubmission,
+  StudentSubmissionTreeNode,
   TreeNodeType,
-  WorkspaceAssignment,
-  WorkspaceFile
-} from '@shared/info-objects/workspace';
+  AssignmentTreeNode,
+  WorkspaceFileTreeNode
+} from '@shared/info-objects/workspaceTreeNode';
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
 import {AllocateMarkersModalComponent} from './allocate-markers-modal/allocate-markers-modal.component';
 import {DateTime} from 'luxon';
@@ -79,7 +79,7 @@ export interface AssignmentDetails {
 
   submissionDirectoryName?: string;
 
-  pdfFile: WorkspaceFile;
+  pdfFile: WorkspaceFileTreeNode;
 
   marker?: string;
   canReAllocate?: boolean;
@@ -112,7 +112,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   private sortSubscription: Subscription;
   private settings: SettingInfo;
   assignmentSettings: AssignmentSettingsInfo;
-  private workspaceAssignment: WorkspaceAssignment;
+  private workspaceAssignment: AssignmentTreeNode;
   isSettings: boolean;
   rubrics: IRubricName[] = [];
 
@@ -212,7 +212,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       );
   }
 
-  private getAssignmentHierarchy(): Observable<WorkspaceAssignment> {
+  private getAssignmentHierarchy(): Observable<AssignmentTreeNode> {
     return this.assignmentService.getAssignmentHierarchy(this.workspaceName, this.assignmentName)
       .pipe(
         tap((workspaceAssignment) => {
@@ -234,7 +234,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       let index = 0;
       const selfEmail = this.settings.user ? this.settings.user.email : null;
       const selfId = this.settings.user ? this.settings.user.id : null;
-      filter(this.workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmission) => {
+      filter(this.workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmissionTreeNode) => {
 
         const submission: Submission = find(this.assignmentSettings.submissions, {directoryName: workspaceSubmission.name});
         const fullName = workspaceSubmission.studentSurname + (isNil(workspaceSubmission.studentName) ? '' : ', ' + workspaceSubmission.studentName);
@@ -274,9 +274,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
           value.time = DateTime.fromJSDate(marksFile.dateModified).toFormat('HH:mm:ss');
         }
         if (submissionDirectory && submissionDirectory.children.length > 0) {
-          value.pdfFile = submissionDirectory.children[0] as WorkspaceFile;
+          value.pdfFile = submissionDirectory.children[0] as WorkspaceFileTreeNode;
         } else if (feedbackDirectory && feedbackDirectory.children.length > 0) {
-          value.pdfFile = feedbackDirectory.children[0] as WorkspaceFile;
+          value.pdfFile = feedbackDirectory.children[0] as WorkspaceFileTreeNode;
         }
         if (!isNil(value.pdfFile)) {
           value.assignment = value.pdfFile.name;

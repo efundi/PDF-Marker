@@ -12,7 +12,7 @@ import {
 import {Observable, Subscription, tap, throwError} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 import {BusyService} from '../../services/busy.service';
-import {TreeNodeType, Workspace} from '@shared/info-objects/workspace';
+import {TreeNodeType, WorkspaceTreeNode} from '@shared/info-objects/workspaceTreeNode';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {isNil, reduce} from 'lodash';
@@ -44,7 +44,7 @@ export class AssignmentWorkspaceOverviewComponent implements OnInit, OnDestroy, 
   workspaceRows: WorkspaceDetails[] = [];
   workspaceName = 'Workspace Name';
   assignmentsLength;
-  private workspace: Workspace;
+  private workspace: WorkspaceTreeNode;
   private sortSubscription: Subscription;
   subscription: Subscription;
 

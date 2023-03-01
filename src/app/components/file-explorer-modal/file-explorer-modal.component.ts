@@ -2,7 +2,7 @@ import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {FlatTreeControl} from '@angular/cdk/tree';
 import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
-import {TreeNode} from '@shared/info-objects/workspace';
+import {TreeNode} from '@shared/info-objects/workspaceTreeNode';
 import {DisplayTreeNode} from '../assignment-list/assignment-list.component';
 import {PDFM_FILE_SORT} from '@shared/constants/constants';
 

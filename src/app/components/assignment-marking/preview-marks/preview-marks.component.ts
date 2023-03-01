@@ -1,7 +1,10 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
-import {isNil} from 'lodash';
+import {forEach, isNil} from 'lodash';
+import {DEFAULT_MARKS} from '@shared/constants/constants';
+import {AssignmentSettingsInfo, Submission} from '@shared/info-objects/assignment-settings.info';
+import {MarkInfo} from '@shared/info-objects/mark.info';
 
 @Component({
   selector: 'pdf-marker-preview-marks',
@@ -9,8 +12,6 @@ import {isNil} from 'lodash';
   styleUrls: ['./preview-marks.component.scss']
 })
 export class PreviewMarksComponent implements OnInit {
-
-  private readonly regEx = /(.*)\((.+)\)/;
 
   studentDetails: string;
 
@@ -26,28 +27,23 @@ export class PreviewMarksComponent implements OnInit {
 
   constructor(private dialogRef: MatDialogRef<PreviewMarksComponent>,
               @Inject(MAT_DIALOG_DATA) config) {
-    if (config.assignmentPath) {
-      const assignmentPathSplit = config.assignmentPath.split('/');
-      if (assignmentPathSplit.length === 4) {
-        const studentDetails = assignmentPathSplit[1];
-        if (this.regEx.test(studentDetails)) {
-          this.studentDetails = studentDetails;
-        }
-      }
+    if (config.studentSubmission) {
+      const submission = config.studentSubmission as Submission;
+      this.studentDetails = submission.studentSurname + ', ' + submission.studentName + ' (' + submission.studentId + ')';
+      const assignmentSettings = config.assignmentSettings as AssignmentSettingsInfo;
 
-      const pagesArray = Object.keys(config.submissionInfo.marks);
-      pagesArray.forEach(page => {
-        if (Array.isArray(config.submissionInfo.marks[page])) {
-          config.submissionInfo.marks[page].forEach(mark => {
+      if (isNil(assignmentSettings.rubric)) {
+        forEach(config.submissionInfo.marks as MarkInfo[][], (pageMarks) => {
+          forEach(pageMarks, (mark) => {
             switch (mark.iconType) {
               case IconTypeEnum.FULL_MARK:
-                this.generalMarks += config.defaultTick;
+                this.generalMarks += DEFAULT_MARKS.FULL;
                 break;
               case IconTypeEnum.HALF_MARK:
-                this.generalMarks += (config.defaultTick / 2);
+                this.generalMarks += (DEFAULT_MARKS.FULL / 2);
                 break;
               case IconTypeEnum.CROSS:
-                this.generalMarks += config.incorrectTick;
+                this.generalMarks += DEFAULT_MARKS.INCORRECT;
                 break;
               case IconTypeEnum.NUMBER:
                 if (!isNil(mark.totalMark)) {
@@ -60,11 +56,14 @@ export class PreviewMarksComponent implements OnInit {
                 break;
             }
           });
-        }
-      });
-
-
-
+        });
+      } else {
+        forEach(config.submissionInfo.marks as number[], (rubricIndex, index) => {
+          if (!isNil(rubricIndex)) {
+            this.generalMarks +=  assignmentSettings.rubric.criterias[index].levels[rubricIndex].score;
+          }
+        });
+      }
       this.totalMark = this.generalMarks + this.numberCommentMarks;
     }
   }

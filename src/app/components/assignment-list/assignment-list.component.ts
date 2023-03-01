@@ -3,13 +3,13 @@ import {AssignmentService} from '../../services/assignment.service';
 import {Subscription} from 'rxjs';
 import {
   findTreeNodes,
-  StudentSubmission,
+  StudentSubmissionTreeNode,
   TreeNode,
   TreeNodeType,
-  Workspace,
-  WorkspaceAssignment,
-  WorkspaceFile
-} from '@shared/info-objects/workspace';
+  WorkspaceTreeNode,
+  AssignmentTreeNode,
+  WorkspaceFileTreeNode
+} from '@shared/info-objects/workspaceTreeNode';
 import {FlatTreeControl} from '@angular/cdk/tree';
 import {isNil, map} from 'lodash';
 import {RoutesEnum} from '../../utils/routes.enum';
@@ -67,7 +67,7 @@ function getIconOpen(treeNode: TreeNode): string {
   }
 }
 
-function buildTreeNodes(workspaces: Workspace[]): DisplayTreeNode[] {
+function buildTreeNodes(workspaces: WorkspaceTreeNode[]): DisplayTreeNode[] {
   const treeNodes: DisplayTreeNode[] = [];
   treeId = 0;
   workspaces.forEach(workspace => {
@@ -110,7 +110,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
               private submissionNavigationService: SubmissionNavigationService) { }
 
 
-  workspaces: Workspace[] = [];
+  workspaces: WorkspaceTreeNode[] = [];
   treeControl = new FlatTreeControl<DisplayTreeNode>(node => node.level, node => node.children.length > 0);
 
   treeFlattener = new MatTreeFlattener(
@@ -173,7 +173,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     } else if (node.type === TreeNodeType.WORKSPACE) {
       this.openWorkspaceOverview(node);
     } else if (node.type === TreeNodeType.FILE && (node.parent.type === TreeNodeType.SUBMISSIONS_DIRECTORY || node.parent.type === TreeNodeType.FEEDBACK_DIRECTORY)) {
-      this.openDocument(node as WorkspaceFile);
+      this.openDocument(node as WorkspaceFileTreeNode);
     }
   }
 
@@ -189,7 +189,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW, node.name]);
   }
 
-  private openDocument(node: WorkspaceFile): void {
+  private openDocument(node: WorkspaceFileTreeNode): void {
     this.submissionNavigationService.openSubmission(node).subscribe();
   }
 
