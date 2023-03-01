@@ -18,7 +18,7 @@
 
 .mark-wrapper{
   border-radius: 1.6rem;
-  width: 2.5rem;
+  min-width: 2.5rem;
   height: 2.5rem;
   border: 2px solid var(--pdf-marker-primary);
   display: flex;
@@ -27,6 +27,7 @@
   flex-wrap: nowrap;
   background: #ffffff;
   color: var(--pdf-marker-primary);
+  font-size: 1rem;
 }
 
 .submission-navigator-assignment-name-wrapper{

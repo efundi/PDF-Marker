@@ -172,7 +172,7 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
   }
 
   onTotalMarkChange() {
-    const number = parseInt(this.iconForm.controls.totalMark.value, 10);
+    const number = parseFloat(this.iconForm.controls.totalMark.value);
     if (!isNaN(number)) {
       const updatedMark: MarkInfo = cloneDeep(this.mark);
       updatedMark.totalMark = number;

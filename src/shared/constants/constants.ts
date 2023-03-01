@@ -38,6 +38,10 @@ export const SUBMISSION_ZIP_ENTRY_REGEX = new RegExp('(.*)\\/Submission attachme
 
 export const PDFM_FILES = [MARK_FILE, SETTING_FILE];
 
+export const DEFAULT_MARKS = {
+  FULL: 1,
+  INCORRECT: 0
+};
 
 export function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {

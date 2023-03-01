@@ -14,7 +14,7 @@ import {filter, from, mergeMap, Observable, Subscription, tap, throwError} from 
 import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
-import {AssignmentSettingsInfo, AssignmentState, SubmissionState} from '@shared/info-objects/assignment-settings.info';
+import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {getDocument, GlobalWorkerOptions, PDFDocumentProxy} from 'pdfjs-dist';
 import {cloneDeep, find, isNil, times} from 'lodash';
 import {MarkInfo} from '@shared/info-objects/mark.info';
@@ -36,7 +36,6 @@ import {
 import {RoutesEnum} from '../../utils/routes.enum';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {PreviewMarksComponent} from './preview-marks/preview-marks.component';
 import {calculateCanEditMarking} from '../../utils/utils';
 
 
@@ -80,8 +79,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private zoomChangeSubscription: Subscription;
   private routeSubscription: Subscription;
   submissionInfo: SubmissionInfo;
-  readonly defaultFullMark = 1;
-  readonly defaultIncorrectMark = 0;
+
   rubric: IRubric;
   showRubric = false;
   showPdf = true;
@@ -289,8 +287,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
         break;
       case 'clearAll' :   this.clearMarks();
         break;
-      case 'previewMarks' :   this.previewMarks();
-        break;
       case 'prevPage' :   this.onPagedChanged(this.currentPage - 1);
         break;
       case 'nextPage' :   this.onPagedChanged(this.currentPage + 1);
@@ -440,21 +436,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.appService.createDialog(ConfirmationDialogComponent, config, shouldDeleteFn);
   }
 
-
-  private previewMarks() {
-    const config: MatDialogConfig = new MatDialogConfig();
-    config.width = '400px';
-    config.height = '500px';
-    config.disableClose = true;
-
-    config.data = {
-      assignmentPath: this.pdf,
-      submissionInfo: this.submissionInfo,
-      defaultTick: this.defaultFullMark,
-      incorrectTick: this.defaultIncorrectMark
-    };
-    this.appService.createDialog(PreviewMarksComponent, config);
-  }
 
   openNewMarkingCommentModal(): MatDialogConfig {
     const config = new MatDialogConfig();
