@@ -341,7 +341,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     }
   }
 
-  private populateAssignmentModel() {
+  private populateAssignmentInfo(): AssignmentInfo {
     const formValue: AssignmentModel = this.createAssignmentForm.getRawValue();
 
     const assignmentInfo: AssignmentInfo = {
@@ -361,7 +361,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private onEdit() {
-    const assignmentInfo = this.populateAssignmentModel();
+    const assignmentInfo = this.populateAssignmentInfo();
     if (assignmentInfo.submissions.length === 0) {
       this.deletionErrorMessage();
       return;
@@ -370,7 +370,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
   }
 
   private onCreate() {
-    const assignmentInfo = this.populateAssignmentModel();
+    const assignmentInfo = this.populateAssignmentInfo();
     this.performCreate(assignmentInfo);
   }
 
@@ -402,7 +402,7 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
         if (PdfmUtilsService.isDefaultWorkspace(updateAssignment.workspace)) {
           this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, updateAssignment.assignmentName]);
         } else {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, updateAssignment.workspace, updateAssignment.assignmentName]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, updateAssignment.assignmentName, updateAssignment.workspace]);
         }
       },
       error: (error) => {
@@ -424,8 +424,8 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
 
     if (!isNil(this.originalAssignmentModel)) {
       // If we are editing an existing assignment, and the values don't match
-      const value = this.populateAssignmentModel();
-      return !isEqual(value, this.originalAssignmentModel);
+      const formValue: AssignmentModel = this.createAssignmentForm.getRawValue();
+      return !isEqual(formValue, this.originalAssignmentModel);
     }
 
     return false;
