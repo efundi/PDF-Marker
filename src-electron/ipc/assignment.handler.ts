@@ -3,10 +3,10 @@ import * as glob from 'glob';
 import {getConfig} from './config.handler';
 import {checkAccess, isFolder, isJson} from '../utils';
 import {INVALID_STUDENT_FOLDER} from '../constants';
-import {basename, dirname, extname, join, sep} from 'path';
+import {basename, extname, join, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
 import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
-import {cloneDeep, filter, find, forEach, isNil, map, reduce, remove, findIndex} from 'lodash';
+import {cloneDeep, filter, find, findIndex, forEach, isNil, map, reduce, remove} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {AssignmentInfo, AssignmentSubmissionInfo} from '@shared/info-objects/assignment.info';
@@ -719,6 +719,9 @@ export function updateAssignmentRubric(
         originalSettings.rubric = rubric;
         originalSettings.submissions.forEach((submission) => {
           submission.mark = null;
+          if (submission.state !== SubmissionState.NO_SUBMISSION) {
+            submission.state = SubmissionState.NEW;
+          }
         });
         return writeAssignmentSettingsFor(originalSettings, workspaceName, assignmentName);
       });

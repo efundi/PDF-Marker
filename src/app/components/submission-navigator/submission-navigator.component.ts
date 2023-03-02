@@ -275,7 +275,7 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
     this.canPrevious = this.activeIndex > 0;
   }
 
-  private previewMarks() {
+  previewMarks() {
     const config: MatDialogConfig = new MatDialogConfig();
     config.width = '400px';
     config.height = '500px';
