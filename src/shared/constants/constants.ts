@@ -25,6 +25,9 @@ export const SUPPORTED_SUBMISSION_TYPES = [{
 }, {
   name: 'Image (png, jpg, jpeg, tiff)',
   extensions: ['png', 'jpeg', 'tiff', 'jpg']
+}, {
+  name: 'Text (txt)',
+  extensions: ['txt']
 }];
 
 export const ASSIGNMENT_BACKUP_DIR = '.backup';
