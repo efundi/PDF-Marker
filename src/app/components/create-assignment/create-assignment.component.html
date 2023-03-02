@@ -115,7 +115,7 @@
       type="button"
       color="primary"
       mat-raised-button
-      [disabled]="createAssignmentForm.invalid"
+      [disabled]="createAssignmentForm.invalid || createAssignmentForm.pristine"
       (click)="onSubmit()">Submit
     </button>
   </div>
