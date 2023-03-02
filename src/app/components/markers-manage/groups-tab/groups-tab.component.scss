@@ -7,6 +7,9 @@
   flex-grow: 1;
   max-width: 50%;
 
+  .mat-expansion-panel-header-title, .mat-expansion-panel-header-description{
+    flex-basis: initial;
+  }
 }
 
 .pdfm-groups-panel .groups-list-container{
@@ -25,6 +28,8 @@
 
     max-height: calc(100vh - 261px);
     @include scrollbar();
+
+
   }
 }
 
