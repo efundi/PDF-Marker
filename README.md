@@ -6,8 +6,13 @@ or individually imported PDF files.
 ## Development Setup
 
 ### Pre-requisites
-- NodeJS 16
-- Angular CLI 13
+- NodeJS 18
+- Angular CLI 14
+
+<div 
+style="border-radius: 0.2rem; border: 1px solid RGBA(255,193,7); padding: 0.5rem; border-left: 4px solid RGBA(255,193,7); background: RGBA(255,193,7, 0.2)">
+If you are changing branches from a major version of PDFM clear the node_module directory and reinstall dependencies
+</div>
 
 ### Install dependencies
 ```bash
