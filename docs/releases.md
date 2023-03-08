@@ -45,6 +45,8 @@ configuration differences that may be present on a developer's machine.
 that will be placed in the list
 - Once the build is completed move to the next section below **Complete the draft release on GitHub**
 
+![](images/release-1.png)
+
 ## Manual Release
 - Set an environment variable with your github token
   ```bash
@@ -56,6 +58,9 @@ that will be placed in the list
   ```
 - The build will take a couple of minutes to complete
 - Once the build is completed move to the next section below **Complete the draft release on GitHub**
+
+![](images/release-2.png)
+Example configuration for building a release with an IntelliJ build profile
 
 ## Complete the draft release on GitHub
 After a release has been made (manually or via GitHub Actions) it will create a draft release on the 
