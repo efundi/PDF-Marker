@@ -29,9 +29,10 @@ and electron is configured to get the files from there, instead of locally packa
 npm run start
 ```
 
-For more guides see
+# For more guides see
 - [IDE Setup](docs/ide.md)
 - [Debugging](docs/debugging.md)
 - [NVM for NodeJS versions](docs/nvm.md)
 - [Creating Releases](docs/releases.md)
+- [Installer](docs/installer.md)
 - [Generate APIs](docs/generate.md)
