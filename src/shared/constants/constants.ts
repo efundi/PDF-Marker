@@ -30,14 +30,17 @@ export const SUPPORTED_SUBMISSION_TYPES = [{
   extensions: ['txt']
 }];
 
+export const SUPPORTED_SUBMISSION_EXTENSIONS = SUPPORTED_SUBMISSION_TYPES.flatMap(t => t.extensions);
+
 export const ASSIGNMENT_BACKUP_DIR = '.backup';
 export const FEEDBACK_ZIP_DIR_REGEX = /\/(.*)\/Feedback Attachment\(s\)\/$/;
 export const SUBMISSION_ZIP_DIR_REGEX = /\/(.*)\/Submission attachment\(s\)\/$/;
 
 export const FEEDBACK_ZIP_ENTRY_REGEX = /\/(.*)\/Feedback Attachment\(s\)\/(.*)\.pdf/;
 
-const extensions = SUPPORTED_SUBMISSION_TYPES.flatMap(t => t.extensions).join('|');
-export const SUBMISSION_ZIP_ENTRY_REGEX = new RegExp('(.*)\\/Submission attachment\\(s\\)\\/(.*)\\.(' + extensions + ')');
+
+const extensions_or = SUPPORTED_SUBMISSION_EXTENSIONS.join('|');
+export const SUBMISSION_ZIP_ENTRY_REGEX = new RegExp('(.*)\\/Submission attachment\\(s\\)\\/(.*)\\.(' + extensions_or + ')');
 
 export const PDFM_FILES = [MARK_FILE, SETTING_FILE];
 

@@ -1,6 +1,6 @@
 import {createWriteStream, existsSync, mkdirSync} from 'fs';
 import * as glob from 'glob';
-import {basename, dirname, sep} from 'path';
+import {basename, dirname, extname, sep} from 'path';
 import {
   AssignmentSettingsInfo,
   AssignmentState,
@@ -43,7 +43,7 @@ import {
   MARK_FILE,
   SETTING_FILE,
   SUBMISSION_FOLDER, SUBMISSION_ZIP_DIR_REGEX,
-  SUBMISSION_ZIP_ENTRY_REGEX,
+  SUBMISSION_ZIP_ENTRY_REGEX, SUPPORTED_SUBMISSION_EXTENSIONS,
   uuidv4
 } from '@shared/constants/constants';
 import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
@@ -330,6 +330,13 @@ function extractGenericImport(
 
       const tempDetails = zipRelativePath.substring((zipRelativePath.indexOf('/') + 1));
       const splitArray = tempDetails.split('_');
+
+      // If the file is not one of the supported extensions, ignore it
+      const ext = extname(fileFullPath);
+      if (!ext.startsWith('.') || !SUPPORTED_SUBMISSION_EXTENSIONS.includes(ext.substring(1))) {
+        LOG.warn('Unknown file, ignoring... ' + zipFilePath);
+        return;
+      }
 
       const studentName = splitArray[1];
       const studentSurname = splitArray[0];

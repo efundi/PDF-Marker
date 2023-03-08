@@ -229,7 +229,7 @@ export class ImportComponent implements OnInit, OnDestroy {
         if (PdfmUtilsService.isDefaultWorkspace(importData.workspace)) {
           this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, assignmentDirectory]);
         } else {
-          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, importData.workspace, assignmentDirectory]);
+          this.router.navigate([RoutesEnum.ASSIGNMENT_OVERVIEW, assignmentDirectory, importData.workspace]);
         }
 
       },

@@ -263,10 +263,12 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   }
 
   private onColourChanged(colour: string) {
-    this.updateAssignmentSettings({
-      ...this.assignmentSettings,
-      defaultColour: colour
-    });
+    if (this.assignmentSettings.defaultColour !== colour) {
+      this.updateAssignmentSettings({
+        ...this.assignmentSettings,
+        defaultColour: colour
+      });
+    }
   }
 
   onPagedChanged(pageNumber: number) {
