@@ -144,7 +144,9 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
       let sum = 0;
       forEach(this.activeSubmissionInfo.marks as MarkInfo[][], (pageMarks) => {
         forEach(pageMarks, (mark) => {
-          sum += mark.totalMark;
+          if(!isNil(mark.totalMark)) {
+            sum += mark.totalMark;
+          }
         });
       });
       this.marks = sum;
