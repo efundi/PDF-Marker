@@ -381,9 +381,8 @@ export function getAssignmentSettings(
 export function writeAssignmentSettingsAt(
   assignmentSettings: AssignmentSettingsInfo,
   assignmentAbsolutePath: string): Promise<AssignmentSettingsInfo> {
-  const buffer = new Uint8Array(Buffer.from(JSON.stringify(assignmentSettings)));
 
-  return writeFile(assignmentAbsolutePath + sep + SETTING_FILE, buffer).then(() => {
+  return writeFile(assignmentAbsolutePath + sep + SETTING_FILE, JSON.stringify(assignmentSettings)).then(() => {
     return assignmentSettings;
   }, () => {
     return Promise.reject('Failed to save assignment settings!');
