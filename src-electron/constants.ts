@@ -29,5 +29,5 @@ export const STUDENT_DIRECTORY_REGEX = /(.*), (.*)\((.+)\)/;
 export const STUDENT_DIRECTORY_NO_NAME_REGEX = /(.*),\((.+)\)/;
 
 // export const SPECIAL_CHARS = /[`!@#$%^&*+=\[\]{};':"|<>?~]/;
-export const SPECIAL_CHARS = /[`*\[\]':"|<>?]/;
+export const SPECIAL_CHARS = /[`*\[\]':"\\|<>?]/;
 export const WHITESPACE_CHARS = ['\t', '\n'];
