@@ -14,7 +14,7 @@ export class MenuComponent implements OnInit {
     { id: 'Home',  toolTip: 'Home', icon: 'home', href: RoutesEnum.MARKER, exact: true},
     { title: 'Assignments', toolTip: 'Assignments', icon: 'assignment_outlined', href: RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW + '/' + DEFAULT_WORKSPACE },
     { title: 'Import', toolTip: 'Import Zip File', icon: 'unarchive', href: RoutesEnum.ASSIGNMENT_IMPORT },
-    { title: 'Upload', toolTip: 'Upload PDF File(s)', icon: 'picture_as_pdf', href: RoutesEnum.ASSIGNMENT_UPLOAD },
+    { title: 'Upload', toolTip: 'Upload PDF File(s)', icon: 'assignment_add', href: RoutesEnum.ASSIGNMENT_UPLOAD },
     { title: 'Settings', toolTip: 'Settings', icon: 'settings'},
   ];
 
