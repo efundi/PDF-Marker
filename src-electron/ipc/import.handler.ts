@@ -17,9 +17,9 @@ import {mkdir, readFile, stat, writeFile} from 'fs/promises';
 import {getRubrics, markRubricInUse} from './rubric.handler';
 import {
   EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
-  NOT_PROVIDED_RUBRIC,
+  NOT_PROVIDED_RUBRIC, SPECIAL_CHARS,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
-  STUDENT_DIRECTORY_REGEX
+  STUDENT_DIRECTORY_REGEX, WHITESPACE_CHARS
 } from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {deleteFolderRecursive, isFolder, isNullOrUndefinedOrEmpty, stream2buffer} from '../utils';
@@ -237,6 +237,22 @@ function validateZipAssignmentFile(file: string): Promise<AssignmentValidateResu
   return readZipFile(file).then((zip) => {
     const filePaths = Object.keys(zip.files);
     const assignmentName = filePaths[0].split('/')[0];
+
+    if (assignmentName.match(SPECIAL_CHARS) || hasWhiteSpace(assignmentName)) {
+      // Check that the Assignment Name does not have special chars or whitespaces
+      return Promise.reject(`File is corrupt, contains special chars or whitespaces that are not allowed.`);
+    }
+
+    for (const filePath of filePaths) {
+      const path = filePath.split('/');
+
+      // Check if the path has any special chars or whitespaces that are not allowed
+      if (path[0] !== undefined && (path[0].match(SPECIAL_CHARS) || hasWhiteSpace(path[0]))) {
+        // Check that the second path does not have special chars or whitespaces
+        return Promise.reject(`Path contains special chars or whitespaces that are not allowed. ${filePath}`);
+      }
+    }
+
     if (zip.files[assignmentName + '/' + SETTING_FILE]) {
       const settingsFileZip: JSZipObject = zip.files[assignmentName + '/' + SETTING_FILE];
       // If the zip contains a settings file, we must check if it is for this marker
@@ -294,6 +310,12 @@ function validateGenericZip(file: string): Promise<AssignmentValidateResultInfo>
     const filePaths = Object.keys(zip.files).sort();
     for (const filePath of filePaths) {
       const path = filePath.split('/');
+
+      // Check if the path has any special chars or whitespaces that are not allowed
+      if (path[0] !== undefined && (path[0] .match(SPECIAL_CHARS) || hasWhiteSpace(path[0]))) {
+        // Check that the second path does not have special chars or whitespaces
+        return Promise.reject(`Path contains special chars or whitespaces that are not allowed. ${filePath}`);
+      }
 
       // Check if it is a sakai file
       if (path[1] !== undefined && ASSIGNMENT_ROOT_FILES.indexOf(path[1]) !== -1) {
@@ -726,6 +748,12 @@ function validatePdfmWorkspaceZip(
   const settingsFilePath = zipAssignmentName + '/' + SETTING_FILE;
   // Check the files in the zip
   for (const zipFilePath in zipObject.files) {
+
+    if (zipAssignmentName.match(SPECIAL_CHARS) || hasWhiteSpace(zipAssignmentName)) {
+      // Check that the Assignment Name does not have special chars or whitespaces
+      return Promise.reject(`Assignment Name contains special chars or whitespaces that are not allowed. ${zipFilePath}`);
+    }
+
     if (!zipObject.files[zipFilePath]) {
       continue;
     }
@@ -743,6 +771,11 @@ function validatePdfmWorkspaceZip(
 
     if (zipFilePath === settingsFilePath) {
       continue; // We found assignment settings file
+    }
+
+    if (zipFilePathParts[1].match(SPECIAL_CHARS) || hasWhiteSpace(zipFilePathParts[1])) {
+      // Check that the second path does not have special chars or whitespaces
+      return Promise.reject(`Student directory contains special chars or whitespaces that are not allowed. ${zipFilePath}`);
     }
 
     if (!(zipFilePathParts[1].match(STUDENT_DIRECTORY_REGEX) || zipFilePath[1].match(STUDENT_DIRECTORY_NO_NAME_REGEX))) {
@@ -802,4 +835,8 @@ function validatePdfmWorkspaceZip(
   }
 
   return Promise.resolve();
+}
+
+function hasWhiteSpace(s) {
+  return WHITESPACE_CHARS.some(char => s.includes(char));
 }
