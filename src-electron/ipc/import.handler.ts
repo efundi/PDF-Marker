@@ -10,9 +10,9 @@ import {getRubrics, writeRubricFile} from './rubric.handler';
 import {
   EXTRACTED_ZIP,
   EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
-  NOT_PROVIDED_RUBRIC,
+  NOT_PROVIDED_RUBRIC, SPECIAL_CHARS,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
-  STUDENT_DIRECTORY_REGEX
+  STUDENT_DIRECTORY_REGEX, WHITESPACE_CHARS
 } from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {deleteFolderRecursive, extractAssignmentZipFile, isFolder} from '../utils';
@@ -189,6 +189,11 @@ function validateZipAssignmentFile(file: string): Promise<any> {
 
     for (const zipFilePath in zipObject.files) {
 
+      if (zipAssignmentName.match(SPECIAL_CHARS) || hasWhiteSpace(zipAssignmentName)) {
+        // Check that the Assignment Name does not have special chars or whitespaces
+        return Promise.reject(`Assignment Name contains special chars or whitespaces that are not allowed. ${zipFilePath}`);
+      }
+
       if (!zipObject.files[zipFilePath]) {
         continue;
       }
@@ -206,6 +211,11 @@ function validateZipAssignmentFile(file: string): Promise<any> {
 
       if (zipFilePathParts[1] === GRADES_FILE) {
         continue; // We found a grades file, nothing further to validate
+      }
+
+      if (zipFilePathParts[1].match(SPECIAL_CHARS) || hasWhiteSpace(zipFilePathParts[1])) {
+        // Check that the second path does not have special chars or whitespaces
+        return Promise.reject(`Student directory contains special chars or whitespaces that are not allowed. ${zipFilePath}`);
       }
 
       if (!(zipFilePathParts[1].match(STUDENT_DIRECTORY_REGEX) || zipFilePath[1].match(STUDENT_DIRECTORY_NO_NAME_REGEX))) {
@@ -247,12 +257,22 @@ function validateZipAssignmentFile(file: string): Promise<any> {
   });
 }
 
+function hasWhiteSpace(s) {
+  return WHITESPACE_CHARS.some(char => s.includes(char));
+}
+
 function validateGenericZip(file: string): Promise<any> {
   return readZipFile(file).then((zip) => {
     const filePaths = Object.keys(zip.files).sort();
     const sakaiFileNames = SakaiConstants.assignmentRootFiles;
     for (const filePath of filePaths) {
       const path = filePath.split('/');
+
+      // Check if the path has any special chars or whitespaces that are not allowed
+      if (path[0] !== undefined && (path[0] .match(SPECIAL_CHARS) || hasWhiteSpace(path[0]))) {
+        // Check that the second path does not have special chars or whitespaces
+        return Promise.reject(`Path contains special chars or whitespaces that are not allowed. ${filePath}`);
+      }
 
       // Check if it is a sakai file
       if (path[1] !== undefined && sakaiFileNames.indexOf(path[1]) !== -1) {
