@@ -1,21 +1,25 @@
 <ng-container>
   <p class="fs-4 mt-3">Welcome to PDF Marker.</p>
-  <p>The onscreen PDF marking application. If you have just installed the application, please click settings above and configure your application.</p>
+  <p>The onscreen PDF marking application. If you have just installed the application, please navigate to App Settings and configure your application.</p>
   <div>
     <mat-panel-title>Application Icons and Tools</mat-panel-title>
     <div class="pdf-spacer"></div>
     <table>
       <tr>
-        <td><mat-icon color="primary">unarchive</mat-icon></td>
-        <td>Import an assignment from a zip file for marking.</td>
+        <td><mat-icon color="primary">assignment_outlined</mat-icon></td>
+        <td>Working folders and assignments</td>
       </tr>
       <tr>
-        <td><mat-icon color="primary">picture_as_pdf</mat-icon></td>
-        <td>Upload PDFs and create an assignment for marking.</td>
+        <td><mat-icon color="primary">unarchive</mat-icon></td>
+        <td>Import an assignment from a zip file for marking</td>
+      </tr>
+      <tr>
+        <td><mat-icon color="primary">assignment_add</mat-icon></td>
+        <td>Create a manual assignment for marking by capturing student submissions</td>
       </tr>
       <tr>
         <td><mat-icon color="primary">settings</mat-icon></td>
-        <td>Application Settings and Rubric Settings.</td>
+        <td>Application settings, rubrics, generic comments and user management</td>
       </tr>
     </table>
   </div>
@@ -30,15 +34,27 @@
     <table>
       <tr>
         <td><mat-icon color="primary">apps</mat-icon></td>
-        <td>View and change selected rubric.</td>
-      </tr>
-      <tr>
-        <td><mat-icon color="primary">archive</mat-icon></td>
-        <td>Finalize and export assignment to zip.</td>
+        <td>View and change selected rubric</td>
       </tr>
       <tr>
         <td><mat-icon color="primary">person</mat-icon></td>
-        <td>Add or remove students from a PDF Marker created assignment.</td>
+        <td>Add or remove students from a manually created assignment</td>
+      </tr>
+      <tr>
+        <td><mat-icon color="primary">workspaces</mat-icon></td>
+        <td>Allocate or re-allocate for marking (for users managing assessments)</td>
+      </tr>
+      <tr>
+        <td><mat-icon color="primary">unarchive</mat-icon></td>
+        <td>Import marked work back from markers (for users managing assessments)</td>
+      </tr>
+      <tr>
+        <td><mat-icon color="primary">verified</mat-icon></td>
+        <td>Moderation and moderation verification</td>
+      </tr>
+      <tr>
+        <td><mat-icon color="primary">archive</mat-icon></td>
+        <td>Export for Review (for markers) and Finalise and Export (for users managing assessments)</td>
       </tr>
     </table>
   </mat-expansion-panel>
@@ -47,62 +63,50 @@
     <mat-expansion-panel-header>
       <mat-panel-title>Marking Icons and Tools</mat-panel-title>
     </mat-expansion-panel-header>
-    <p>
-      Assessors can either mark with a rubric or with a set of marking tools as listed below.
-      Rubrics are enabled when you import or create an assignment.
-    </p>
     <table>
       <tr>
         <td><mat-icon color="primary">check</mat-icon></td>
-        <td>Single Mark or Tick, has a value of 1.</td>
+        <td>Single Mark or Tick, has a value of 1</td>
       </tr>
       <tr>
         <td><mat-icon color="primary" class="pdf-marker-icons-svg-class"  svgIcon="halfTick">halfTick</mat-icon></td>
-        <td>Half-mark or half-tick, has a value of 0.5.</td>
+        <td>Half-mark or half-tick, has a value of 0.5</td>
       </tr>
       <tr>
         <td><mat-icon color="primary">spellcheck</mat-icon></td>
-        <td>Acknowledge mark. This marking tool has no mark value assigned to it.</td>
+        <td>Acknowledge mark. This marking tool has no mark value assigned to it</td>
       </tr>
       <tr>
         <td><mat-icon color="primary">close</mat-icon></td>
-        <td>Cross mark used for indicating a wrong answer.</td>
+        <td>Cross mark used for indicating a wrong answer</td>
       </tr>
       <tr>
         <td><mat-icon color="primary">comment</mat-icon></td>
-        <td>Comment or number mark. This marking tool allows you to assign a mark of any number to a section. There is space for an optional comment.</td>
+        <td>Comment and/or mark tool</td>
       </tr>
       <tr>
-        <td><mat-icon color="primary">announcement</mat-icon></td>
-        <td>Preview Marks will show you the current breakdown of marks on the visible PDF and a breakdown of what marking tools these come from.</td>
-      </tr>
-      <tr>
-        <td><mat-icon color="primary">arrow_upward</mat-icon></td>
-        <td>Page the pdf upwards.</td>
-      </tr>
-      <tr>
-        <td><mat-icon color="primary">arrow_downward</mat-icon></td>
-        <td>Page the pdf downwards.</td>
+        <td><mat-icon color="primary">brush</mat-icon></td>
+        <td>Highlight tool with optional comment</td>
       </tr>
       <tr>
         <td><mat-icon color="primary" svgIcon="layout-expand-left">layout-expand-left</mat-icon></td>
-        <td>Show left panel (PDF) only when marking with a rubric.</td>
+        <td>Show left panel (PDF) only when marking with a rubric</td>
       </tr>
       <tr>
         <td><mat-icon color="primary" svgIcon="layout-default">layout-default</mat-icon></td>
-        <td>Show both panels (PDF and Rubric) when marking with a rubric.</td>
+        <td>Show both panels (PDF and Rubric) when marking with a rubric</td>
       </tr>
       <tr>
         <td><mat-icon color="primary" svgIcon="layout-expand-right">layout-expand-right</mat-icon></td>
-        <td>Show right panel (Rubric) only when marking with a rubric.</td>
+        <td>Show right panel (Rubric) only when marking with a rubric</td>
       </tr>
       <tr>
         <td><mat-icon color="primary">palette</mat-icon></td>
-        <td>Change marking icon color, all mark icons from now on will use this color.</td>
+        <td>Change marking icon color, all mark icons from now on will use this color</td>
       </tr>
       <tr>
         <td><mat-icon color="primary">delete_sweep</mat-icon></td>
-        <td>Clear all marks, selections, comments and annotations.</td>
+        <td>Clear all marks, selections, comments and annotations</td>
       </tr>
     </table>
   </mat-expansion-panel>
