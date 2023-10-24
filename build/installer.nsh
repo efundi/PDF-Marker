@@ -26,7 +26,7 @@ Function nsDialogsPage
 	Pop $Label
 
   ; Create a checkbox to optionally install libre office
-	${NSD_CreateCheckbox} 0 25u 100% 8u "Download and Install Libre Office 7.5"
+	${NSD_CreateCheckbox} 0 25u 100% 8u "Download and Install Libre Office 7.6"
   Pop $LibreInstallCheckbox
 
   ; Reset the checkbox state incase user went back to this page
