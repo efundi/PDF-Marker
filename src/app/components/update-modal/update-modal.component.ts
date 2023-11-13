@@ -10,7 +10,6 @@ import {UpdateInfo} from '@shared/info-objects/update-info';
 })
 export class UpdateModalComponent implements OnInit {
 
-  state: 'waiting' | 'restart' = 'waiting';
   updateInfo: UpdateInfo;
   canSkip = false;
 
@@ -24,21 +23,15 @@ export class UpdateModalComponent implements OnInit {
   ngOnInit(): void {
     this.updateInfo = this.config.updateInfo;
     this.canSkip = this.config.canSkip;
-    this.state = this.config.state;
   }
-  onClose() {
-    this.dialogRef.close();
-  }
-
-  yes() {
-    if (this.state === 'waiting') {
-      this.dialogRef.close('download');
-    } else {
-      this.dialogRef.close('restartApplication');
+  no(): void {
+    if (!this.canSkip) {
+      this.updateService.scheduleInstall();
     }
+    this.dialogRef.close();
   }
 
-  cancel() {
-    this.dialogRef.close();
+  yes(): void {
+    this.dialogRef.close('restartApplication');
   }
 }

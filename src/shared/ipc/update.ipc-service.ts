@@ -5,4 +5,5 @@ export interface UpdateIpcService {
   checkForUpdate(): Promise<IpcResponse<UpdateCheckResult | null>>;
   downloadUpdate(): Promise<IpcResponse<UpdateInfo>>;
   restartApplication(): void;
+  scheduleInstall(): void;
 }

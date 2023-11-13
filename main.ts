@@ -1,4 +1,13 @@
-import {app, BrowserWindow, HandlerDetails, ipcMain, Menu, MenuItemConstructorOptions, screen, shell} from 'electron';
+import {
+  app,
+  BrowserWindow,
+  HandlerDetails,
+  ipcMain,
+  Menu,
+  MenuItemConstructorOptions,
+  screen,
+  shell
+} from 'electron';
 import {autoUpdater} from 'electron-updater';
 import {
   createAssignment,
@@ -48,7 +57,7 @@ import {
   openExternalLink,
   saveFile
 } from './src-electron/ipc/application.handler';
-import {checkForUpdates, downloadUpdate} from './src-electron/ipc/update.handler';
+import {checkForUpdates, downloadUpdate, isUpdateReady, scheduleInstall} from './src-electron/ipc/update.handler';
 import {runSettingsMigration} from './src-electron/migration/settings.migration';
 import {migrateAssignmentSettings} from './src-electron/migration/assignment.migration';
 import {migrateMarks} from './src-electron/migration/marks.migration';
@@ -62,8 +71,24 @@ serve = args.some(val => val === '--serve');
 
 const logger = require('electron-log');
 
-// Only auto download for full (non pre-releases)
-autoUpdater.autoDownload = !autoUpdater.allowPrerelease;
+// Set the log level for the application
+logger.transports.file.level = 'info';
+logger.transports.console.level = 'info';
+
+// Attach a logger to the autoUpdated
+autoUpdater.logger = logger;
+
+// Don't auto download, we'll always use a prompt
+autoUpdater.autoDownload = false;
+
+// We don't make use of web installer - deprecated too
+autoUpdater.disableWebInstaller = true;
+
+// Do not start the auto install on app quit - it will run a silent install
+// Instead we will force the update on exist with  autoUpdater.quitAndInstall(false, false);
+autoUpdater.autoInstallOnAppQuit = false;
+// autoUpdater.forceDevUpdateConfig = true;
+
 runSettingsMigration()
   .then(migrateAssignmentSettings)
   .then(migrateMarks)
@@ -239,10 +264,10 @@ try {
     // Update API
     ipcMain.handle('update:check', toIpcResponse(checkForUpdates));
     ipcMain.handle('update:download', toIpcResponse(downloadUpdate));
+    ipcMain.on('update:schedule', () => scheduleInstall());
     ipcMain.on('update:restart', () => {
-      autoUpdater.quitAndInstall();
+      autoUpdater.quitAndInstall(false, true);
     });
-
     // Application API
     ipcMain.handle('generate:generateGenericZip', generateGenericZip);
     ipcMain.handle('generate:generateAssignment', generateAssignment);
@@ -261,7 +286,13 @@ try {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
-      app.quit();
+      if (isUpdateReady()) {
+        // If there is an update ready start the installation when application exists
+        autoUpdater.quitAndInstall(false, false);
+      } else {
+        // There is no update available, just quit the app
+        app.quit();
+      }
     }
   });
 
@@ -277,7 +308,6 @@ try {
     logger.error('AutoUpdater error');
     logger.error(err);
   });
-
 
 } catch (e) {
   console.error(e);

@@ -2,8 +2,6 @@ import {Component} from '@angular/core';
 import {MatIconRegistry} from '@angular/material/icon';
 import {DomSanitizer} from '@angular/platform-browser';
 import {UpdateService} from './services/update.service';
-import {NavigationStart, Router} from '@angular/router';
-import {Subscription, filter} from 'rxjs';
 
 @Component({
   selector: 'app-root',
