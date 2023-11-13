@@ -21,7 +21,8 @@ import {AssignmentInfo} from './src/shared/info-objects/assignment.info';
 contextBridge.exposeInMainWorld('updateApi', {
   checkForUpdate: () => ipcRenderer.invoke('update:check'),
   downloadUpdate: () => ipcRenderer.invoke('update:download'),
-  restartApplication: () => ipcRenderer.send('update:restart')
+  restartApplication: () => ipcRenderer.send('update:restart'),
+  scheduleInstall : () => ipcRenderer.send('update:schedule')
 } as UpdateIpcService);
 
 contextBridge.exposeInMainWorld('assignmentApi', {

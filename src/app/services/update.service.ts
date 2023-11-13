@@ -20,13 +20,13 @@ export class UpdateService {
   }
 
 
-  private promptRestartApplication(updateInfo: UpdateInfo){
+  private promptRestartApplication(updateCheckResult: UpdateCheckResult, updateInfo: UpdateInfo): void {
     const dialogConfig: MatDialogConfig = {
       autoFocus: true,
       disableClose: true,
       data: {
         updateInfo,
-        state : 'restart',
+        canSkip: updateCheckResult.canSkip,
       }
     };
 
@@ -38,29 +38,11 @@ export class UpdateService {
     });
   }
 
-  private promptDownloadUpdate(updateCheckResult: UpdateCheckResult) {
-    const dialogConfig: MatDialogConfig = {
-      autoFocus: true,
-      disableClose: true,
-      data: {
-        updateInfo: updateCheckResult.updateInfo,
-        canSkip: updateCheckResult.canSkip,
-        state : 'waiting'
-      }
-    };
 
-    const dialog = this.dialog.open(UpdateModalComponent, dialogConfig);
-    dialog.beforeClosed().subscribe((result) => {
-      if ('download' === result) {
-        this.executeDownload();
-      }
-    });
-  }
-
-  private executeDownload() {
+  private executeDownload(updateCheckResult: UpdateCheckResult): void {
     this.downloadUpdate().subscribe({
       next: (updateInfo) => {
-        this.promptRestartApplication(updateInfo);
+        this.promptRestartApplication(updateCheckResult, updateInfo);
       },
       error: (error) => {
         console.error(error);
@@ -78,13 +60,17 @@ export class UpdateService {
 
   initialise(): void {
     this.checkForUpdate().subscribe((data) => {
-      if (!isNil(data) && !isNil(data.cancellationToken)) {
-        this.promptDownloadUpdate(data);
+      if (!isNil(data)) {
+        this.executeDownload(data);
       }
     });
   }
 
   restartApplication() {
     this.updateApi.restartApplication();
+  }
+
+  scheduleInstall() {
+    this.updateApi.scheduleInstall();
   }
 }
