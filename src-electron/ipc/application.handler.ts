@@ -15,7 +15,7 @@ export function saveFileImpl (filter: SaveFileInfo): Promise<AppSelectedPathInfo
   return dialog.showSaveDialog(BrowserWindow.getFocusedWindow(), {
     defaultPath: filter.filename,
     title: 'Save',
-    filters: filter.filters
+    filters: filter.filters,
   }).then(({filePath}) => {
     if (filePath) {
 

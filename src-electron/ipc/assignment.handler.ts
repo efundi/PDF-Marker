@@ -2,7 +2,7 @@ import {existsSync, mkdtempSync, rmSync, statSync, unlinkSync} from 'fs';
 import * as glob from 'glob';
 import {getConfig} from './config.handler';
 import {checkAccess, isFolder, isJson} from '../utils';
-import {INVALID_STUDENT_FOLDER} from '../constants';
+import {INVALID_STUDENT_FOLDER, WORKSPACE_DIR} from '../constants';
 import {basename, extname, join, sep} from 'path';
 import {json2csvAsync} from 'json-2-csv';
 import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
@@ -279,10 +279,9 @@ export function createAssignment(event: IpcMainInvokeEvent, createInfo: Assignme
   }
   return Promise.all([
     getWorkingDirectoryAbsolutePath(createInfo.workspace),
-    getConfig(),
     rubricPromise
-  ]).then(([workspaceAbsolutePath , config, rubric]) => {
-    const folders = glob.sync(config.defaultPath.replace(/\\/g, '/') + '/*');
+  ]).then(([workspaceAbsolutePath ,  rubric]) => {
+    const folders = glob.sync(WORKSPACE_DIR.replace(/\\/g, '/') + '/*');
 
     let foundCount = 0;
     for (let i = 0; i < folders.length; i++) {
@@ -741,13 +740,11 @@ export function getPdfFile(event: IpcMainInvokeEvent, location: string): Promise
  * @param relativePath Workspace relative file path
  */
 export function workspaceRelativePathToAbsolute(relativePath: string): Promise<string> {
-  return getConfig().then((config) => {
-    if (relativePath.startsWith(DEFAULT_WORKSPACE + '/')) {
-      relativePath = relativePath.replace(DEFAULT_WORKSPACE + '/', '');
-    }
-    relativePath = relativePath.replace(/\//g, sep);
-    return config.defaultPath + sep + relativePath;
-  });
+  if (relativePath.startsWith(DEFAULT_WORKSPACE + '/')) {
+    relativePath = relativePath.replace(DEFAULT_WORKSPACE + '/', '');
+  }
+  relativePath = relativePath.replace(/\//g, sep);
+  return Promise.resolve(WORKSPACE_DIR + sep + relativePath);
 }
 
 function exportForModeration(exportReviewRequestInfo: ExportAssignmentsRequest): Promise<any> {
@@ -850,12 +847,12 @@ function markerAllocatedInAssignment(assignmentSettings: AssignmentSettingsInfo,
 export function isMarkerAllocated(event: IpcMainInvokeEvent, markerId: string): Promise<boolean> {
   return getConfig().then((settingsInfo) => {
     const workspaceFolders = settingsInfo.folders || [];
-    return readdir(settingsInfo.defaultPath).then((foundDirectories) => {
+    return readdir(WORKSPACE_DIR).then((foundDirectories) => {
       const allAssignmentDirectories: string[] = [];
 
       // First we calculate all the assignment directories to scan through to find allocations
       const directoryPromises: Promise<any>[] = map(foundDirectories, (directory) => {
-        const fullPath = settingsInfo.defaultPath + sep + directory;
+        const fullPath = WORKSPACE_DIR + sep + directory;
         if (workspaceFolders.includes(directory)) {
           // Check if the directory is a working directory
           return readdir(fullPath).then((assignmentDirectories) => {

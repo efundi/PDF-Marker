@@ -41,16 +41,32 @@
 
       <div class="button-right-margin">
         <button
-          [disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value"
+          [disabled]="selected.selectedOptions.selected.length === 0 || !manageForm.controls.newWorkspaceFolder.value"
           type="button"
           color="primary"
           matSuffix
           mat-icon-button
           matTooltip="Move"
           (click)="onMove()">
-          Move&nbsp;<mat-icon [class.pdf-icon-disabled]="selected.selectedOptions.selected.length == 0 || !manageForm.controls.newWorkspaceFolder.value" >content_copy</mat-icon>
+          Move&nbsp;<mat-icon [class.pdf-icon-disabled]="selected.selectedOptions.selected.length === 0 || !manageForm.controls.newWorkspaceFolder.value" >content_copy</mat-icon>
         </button>
       </div>
+    </div>
+
+    <mat-divider></mat-divider>
+    <div class="customFlexContainer flexGrow3 mt-2">
+      <mat-label class="pdf-marker-form-labels">Delete selected assignments&nbsp;</mat-label>
+      <button
+        type="button"
+        color="primary"
+        matSuffix
+        class="fw-bold"
+        mat-icon-button
+        matTooltip="Delete"
+        [disabled]="selected.selectedOptions.selected.length === 0"
+        (click)="deleteAssignments()">
+        <mat-icon>delete</mat-icon>
+      </button>
     </div>
   </form>
 </mat-dialog-content>

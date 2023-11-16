@@ -63,22 +63,22 @@
     matTooltip="Prev"
     mat-button
     mat-icon-button
-    [disabled]="currentPage == 1"
-    [class.pdf-marker-icons-pdf-nav-buttons-disabled]="currentPage == 1"
+    [disabled]="currentPage === 1"
+    [class.pdf-marker-icons-pdf-nav-buttons-disabled]="currentPage === 1"
     (click)="onControl($event, 'prevPage')"
     class="pdf-marker-icons-pdf-nav-buttons">
-    <mat-icon class="pdf-marker-icons-pdf-nav-icons" [class.pdf-marker-icons-pdf-nav-icons-disabled]="currentPage == 1">arrow_upward</mat-icon>
+    <mat-icon class="pdf-marker-icons-pdf-nav-icons" [class.pdf-marker-icons-pdf-nav-icons-disabled]="currentPage === 1">arrow_upward</mat-icon>
   </button>
   <button
     color="primary"
     matTooltip="Next"
     mat-button
     mat-icon-button
-    [disabled]="currentPage == pages"
-    [class.pdf-marker-icons-pdf-nav-buttons-disabled]="currentPage == pages"
+    [disabled]="currentPage === pages"
+    [class.pdf-marker-icons-pdf-nav-buttons-disabled]="currentPage === pages"
     (click)="onControl($event, 'nextPage')"
     class="pdf-marker-icons-pdf-nav-buttons">
-    <mat-icon class="pdf-marker-icons-pdf-nav-icons" [class.pdf-marker-icons-pdf-nav-icons-disabled]="currentPage == pages">arrow_downward</mat-icon>
+    <mat-icon class="pdf-marker-icons-pdf-nav-icons" [class.pdf-marker-icons-pdf-nav-icons-disabled]="currentPage === pages">arrow_downward</mat-icon>
   </button>
 
   <form [formGroup]="iconForm" style="display: flex; flex-direction: row">

@@ -6,6 +6,7 @@ export const RUBRICS_FILE = 'rubrics.json';
 export const APP_DATA_DIR = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME +
   '/Library/Preferences' : process.env.HOME + '/.local/share');
 export const CONFIG_DIR = APP_DATA_DIR + sep + 'pdf-config' + sep;
+export const WORKSPACE_DIR = APP_DATA_DIR + sep + 'pdf-workspace' + sep;
 export const COMMENTS_FILE = 'comments.json';
 
 /*COMMON MESSAGES*/

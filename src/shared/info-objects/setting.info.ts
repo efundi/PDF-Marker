@@ -1,6 +1,6 @@
 import {uuidv4} from '@shared/constants/constants';
 
-export const SettingInfoVersion = 2;
+export const SettingInfoVersion = 3;
 
 export const DefaultSettings: SettingInfo = {
   version: SettingInfoVersion,
@@ -24,8 +24,6 @@ export interface SettingInfo {
    */
   user?: Marker;
   lmsSelection?: string;
-
-  defaultPath?: string;
 
   folders: string[];
 

@@ -1,4 +1,4 @@
-import {Component, Inject, OnInit} from '@angular/core';
+import {Component, Inject} from '@angular/core';
 import {MAT_SNACK_BAR_DATA} from '@angular/material/snack-bar';
 
 @Component({
@@ -6,7 +6,7 @@ import {MAT_SNACK_BAR_DATA} from '@angular/material/snack-bar';
   templateUrl: './snack-bar.component.html',
   styleUrls: ['./snack-bar.component.scss']
 })
-export class SnackBarComponent implements OnInit {
+export class SnackBarComponent  {
   isShow: boolean;
   isSuccessful: boolean;
   message: string;
@@ -19,9 +19,6 @@ export class SnackBarComponent implements OnInit {
     } else {
       this.isShow = false;
     }
-  }
-
-  ngOnInit() {
   }
 
 }

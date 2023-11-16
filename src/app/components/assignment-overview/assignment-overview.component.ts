@@ -153,7 +153,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       .pipe(
         tap(settings => {
           this.settings = settings;
-          if (settings.defaultPath && settings.lmsSelection) {
+          if (settings.lmsSelection) {
             this.isSettings = true;
           }
         })

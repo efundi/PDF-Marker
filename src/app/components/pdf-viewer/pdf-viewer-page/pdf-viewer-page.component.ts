@@ -1,4 +1,4 @@
-import {Component, ElementRef, Input, OnDestroy, OnInit, Renderer2, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input, OnDestroy, Renderer2, ViewChild} from '@angular/core';
 import {AnnotationLayer, PDFDocumentProxy, PDFPageProxy} from 'pdfjs-dist';
 import {PageSettings} from '@shared/info-objects/submission.info';
 import {ScrollVisibilityDirective} from '../../../directives/scroll-visibility.directive';
@@ -26,7 +26,7 @@ const PDF_SCALE_CONSTANT = (96 / 72);
   templateUrl: './pdf-viewer-page.component.html',
   styleUrls: ['./pdf-viewer-page.component.scss']
 })
-export class PdfViewerPageComponent implements OnInit, OnDestroy {
+export class PdfViewerPageComponent implements OnDestroy, AfterViewInit {
   /**
    * Index of the PDF page that will be rendered here
    */
@@ -98,9 +98,6 @@ export class PdfViewerPageComponent implements OnInit, OnDestroy {
               public elementRef: ElementRef,
               private appService: AppService,
               private busyService: BusyService) { }
-
-  ngOnInit(): void {
-  }
 
   ngOnDestroy() {
     this.page.cleanup();

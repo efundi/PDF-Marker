@@ -1,4 +1,4 @@
-import {Component, Inject, OnInit} from '@angular/core';
+import {Component, Inject} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
 import {forEach, isNil} from 'lodash';
@@ -11,7 +11,7 @@ import {MarkInfo} from '@shared/info-objects/mark.info';
   templateUrl: './preview-marks.component.html',
   styleUrls: ['./preview-marks.component.scss']
 })
-export class PreviewMarksComponent implements OnInit {
+export class PreviewMarksComponent {
 
   studentDetails: string;
 
@@ -66,9 +66,6 @@ export class PreviewMarksComponent implements OnInit {
       }
       this.totalMark = this.generalMarks + this.numberCommentMarks;
     }
-  }
-
-  ngOnInit() {
   }
 
   onClose() {

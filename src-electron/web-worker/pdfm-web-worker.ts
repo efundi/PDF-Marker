@@ -16,7 +16,7 @@ import {copy} from 'fs-extra';
 import {tmpdir} from 'os';
 import {DEFAULT_WORKSPACE, FEEDBACK_FOLDER, MARK_FILE, SETTING_FILE} from '../../src/shared/constants/constants';
 import {SettingInfo} from '../../src/shared/info-objects/setting.info';
-import {CONFIG_DIR, CONFIG_FILE} from '../constants';
+import {CONFIG_DIR, CONFIG_FILE, WORKSPACE_DIR} from '../constants';
 import {isJson, writeToFile} from '../utils';
 import {
   MarkingSubmissionInfo,
@@ -63,13 +63,11 @@ function loadMarksAt(studentFolderFull: string): Promise<SubmissionInfo> {
 }
 
 function getWorkingDirectoryAbsolutePath(workspaceName: string): Promise<string> {
-  return getConfig().then((config) => {
     if (workspaceName === DEFAULT_WORKSPACE || isNil(workspaceName)) {
-      return config.defaultPath;
+      return Promise.resolve(WORKSPACE_DIR);
     } else {
-      return config.defaultPath + sep + workspaceName;
+      return Promise.resolve(WORKSPACE_DIR + sep + workspaceName);
     }
-  });
 }
 function getAssignmentDirectoryAbsolutePath(workspaceName: string, assignmentName: string): Promise<string> {
   return getWorkingDirectoryAbsolutePath(workspaceName).then((workingDirectory) => {

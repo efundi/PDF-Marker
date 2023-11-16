@@ -1,4 +1,4 @@
-import {Component, Inject, OnInit} from '@angular/core';
+import {Component, Inject} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {isNil} from 'lodash';
 
@@ -15,7 +15,7 @@ export interface ConfirmationDialogData {
   templateUrl: './confirmation-dialog.component.html',
   styleUrls: ['./confirmation-dialog.component.scss']
 })
-export class ConfirmationDialogComponent implements OnInit {
+export class ConfirmationDialogComponent {
 
   config: ConfirmationDialogData;
 
@@ -31,9 +31,6 @@ export class ConfirmationDialogComponent implements OnInit {
       noText: inputConfig.yesText || 'No',
       showNo: isNil(inputConfig.showNo) ? true : inputConfig.showNo
     };
-  }
-
-  ngOnInit() {
   }
 
   onButtonClick(isConfirm: boolean) {

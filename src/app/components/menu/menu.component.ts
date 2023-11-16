@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 
@@ -7,7 +7,7 @@ import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
   templateUrl: './menu.component.html',
   styleUrls: ['./menu.component.scss']
 })
-export class MenuComponent implements OnInit {
+export class MenuComponent {
   readonly settings: string = 'Settings';
 
   readonly toolbarMenu = [
@@ -27,6 +27,4 @@ export class MenuComponent implements OnInit {
   ];
   constructor() { }
 
-  ngOnInit() {
-  }
 }

@@ -21,7 +21,7 @@ import {
   uuidv4
 } from '@shared/constants/constants';
 import {getAllFiles, isNullOrUndefinedOrEmpty} from '../utils';
-import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX} from '../constants';
+import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX, WORKSPACE_DIR} from '../constants';
 
 const escapedSep = sep === '\\' ? '\\\\' : '/';
 const FEEDBACK_REL_PATH_REGEX = new RegExp('Feedback Attachment\\(s\\)' + escapedSep  + '(. * )\\.pdf');
@@ -33,14 +33,10 @@ const LOG = logger.scope('AssignmentMigration');
 export function migrateAssignmentSettings(): Promise<any> {
   LOG.info('Running migration');
   return getConfig().then((settingsInfo) => {
-    if (isNil(settingsInfo.defaultPath)) {
-      LOG.info('Default path not set in application settings');
-      return Promise.resolve();
-    } else {
       const workspaceFolders = settingsInfo.folders || [];
-      return readdir(settingsInfo.defaultPath).then((foundDirectories) => {
+      return readdir(WORKSPACE_DIR).then((foundDirectories) => {
         const promises: Promise<any>[] = map(foundDirectories, (directory) => {
-          const fullPath = settingsInfo.defaultPath + sep + directory;
+          const fullPath = WORKSPACE_DIR + sep + directory;
           // Check if the directory is a working directory
           if (workspaceFolders.includes(directory)) {
             return readdir(fullPath).then((assignmentDirectories) => {
@@ -61,7 +57,6 @@ export function migrateAssignmentSettings(): Promise<any> {
           return Promise.reject(error);
         });
       });
-    }
   });
 }
 

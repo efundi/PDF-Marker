@@ -1,4 +1,4 @@
-import {Component, ElementRef, Input, OnDestroy, OnInit, Renderer2} from '@angular/core';
+import {Component, ElementRef, Input, OnInit, Renderer2} from '@angular/core';
 import {IconTypeEnum} from '@shared/info-objects/icon-type.enum';
 import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {MatDialogConfig} from '@angular/material/dialog';
@@ -21,7 +21,7 @@ import {CdkDragEnd} from '@angular/cdk/drag-drop';
   templateUrl: './mark-type-icon.component.html',
   styleUrls: ['./mark-type-icon.component.scss']
 })
-export class MarkTypeIconComponent implements OnInit, OnDestroy {
+export class MarkTypeIconComponent implements OnInit {
 
   static readonly widthAndHeight: number = 36;
 
@@ -54,9 +54,6 @@ export class MarkTypeIconComponent implements OnInit, OnDestroy {
               private renderer: Renderer2,
               private assignmentMarkingPageComponent: AssignmentMarkingPageComponent,
               private assignmentMarkingSessionService: AssignmentMarkingSessionService) {}
-
-  ngOnDestroy() {
-  }
 
   private positionTick() {
     const zoom = this.assignmentMarkingSessionService.zoom;

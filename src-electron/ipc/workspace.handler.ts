@@ -2,14 +2,14 @@ import {indexOf, isEmpty, isNil, map, noop, sortBy} from 'lodash';
 import {getConfig, updateConfigFile} from './config.handler';
 import {basename, sep} from 'path';
 import {IpcMainInvokeEvent, shell} from 'electron';
-import {move} from 'fs-extra';
+import {move, rmdir} from 'fs-extra';
 import {
   ASSIGNMENT_BACKUP_DIR,
   DEFAULT_WORKSPACE,
   FEEDBACK_FOLDER, PDFM_FILE_SORT,
   SUBMISSION_FOLDER
 } from '@shared/constants/constants';
-import {mkdir, readdir, rename, stat} from 'fs/promises';
+import {mkdir, readdir, rename, rm, stat} from 'fs/promises';
 import {
   FeedbackAttachmentsTreeNode,
   StudentSubmissionTreeNode, SubmissionAttachmentsTreeNode, TreeNode,
@@ -17,14 +17,17 @@ import {
   WorkspaceTreeNode,
   AssignmentTreeNode, WorkspaceFileTreeNode
 } from '@shared/info-objects/workspaceTreeNode';
-import {isNullOrUndefinedOrEmpty} from '../utils';
-import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX} from '../constants';
+import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX, WORKSPACE_DIR} from '../constants';
+const logger = require('electron-log');
+
+const LOG = logger.scope('WorkspaceHandler');
 
 export function getAssignments(): Promise<WorkspaceTreeNode[]> {
   return loadWorkspaces();
 }
 
 function loadWorkspaces(): Promise<WorkspaceTreeNode[]> {
+  LOG.debug("Loading workspaces")
   return getConfig().then((config) => {
     const defaultWorkspace: WorkspaceTreeNode = {
       type: TreeNodeType.WORKSPACE,
@@ -36,13 +39,9 @@ function loadWorkspaces(): Promise<WorkspaceTreeNode[]> {
     const workspaceFolders = config.folders || [];
     const workspaces: WorkspaceTreeNode[] = [defaultWorkspace];
 
-    if (isNullOrUndefinedOrEmpty(config.defaultPath)) {
-      return workspaces;
-    }
-
-    return readdir(config.defaultPath).then((foundDirectories) => {
+    return readdir(WORKSPACE_DIR).then((foundDirectories) => {
       const promises: Promise<any>[] = map(foundDirectories, (directory) => {
-        const fullPath = config.defaultPath + sep + directory;
+        const fullPath = WORKSPACE_DIR + sep + directory;
         // Check if the directory is a working directory
         if (workspaceFolders.includes(directory)) {
           return loadWorkspaceContents(fullPath)
@@ -55,7 +54,7 @@ function loadWorkspaces(): Promise<WorkspaceTreeNode[]> {
       return Promise.all(promises).then(() => {
         return sortBy(workspaces, 'name');
       }, (error) => {
-        console.error(error);
+        LOG.error("Error while loading workspaces", error);
         return Promise.reject(error);
       });
     });
@@ -160,7 +159,7 @@ function loadAssignmentContents(directoryFullPath: string, parent: WorkspaceTree
   });
 }
 
-function  loadFiles(directory: string, parent: TreeNode): Promise<WorkspaceFileTreeNode[]> {
+function loadFiles(directory: string, parent: TreeNode): Promise<WorkspaceFileTreeNode[]> {
   return readdir(directory).then(files => {
     const workspaceFiles: WorkspaceFileTreeNode[] = [];
     const promises: Promise<any>[] = map(files, (file) => {
@@ -209,13 +208,11 @@ function loadWorkspaceContents(directoryFullPath: string): Promise<WorkspaceTree
  * @param workspaceName
  */
 export function getWorkingDirectoryAbsolutePath(workspaceName: string): Promise<string> {
-  return getConfig().then((config) => {
     if (workspaceName === DEFAULT_WORKSPACE || isNil(workspaceName)) {
-      return config.defaultPath;
+      return Promise.resolve(WORKSPACE_DIR);
     } else {
-      return config.defaultPath + sep + workspaceName;
+      return Promise.resolve(WORKSPACE_DIR + sep + workspaceName);
     }
-  });
 }
 
 /**
@@ -237,7 +234,7 @@ export function getAssignmentDirectoryAbsolutePath(workspaceName: string, assign
  */
 export function createWorkingFolder(event: IpcMainInvokeEvent, workFolderName: string): Promise<string> {
   return getConfig().then((config) => {
-    const fullPath = config.defaultPath + sep + workFolderName;
+    const fullPath = WORKSPACE_DIR + sep + workFolderName;
 
     return stat(fullPath).then(() => {
       return Promise.reject('Folder with name \'' + workFolderName + '\' already exists.');
@@ -257,8 +254,8 @@ export function createWorkingFolder(event: IpcMainInvokeEvent, workFolderName: s
 
 export function updateWorkspaceName(event: IpcMainInvokeEvent, workspaceName: string, newWorkspaceName: string): Promise<string> {
   return getConfig().then((config) => {
-    const currPath = config.defaultPath + sep + workspaceName;
-    const newPath = config.defaultPath + sep + newWorkspaceName;
+    const currPath = WORKSPACE_DIR + sep + workspaceName;
+    const newPath = WORKSPACE_DIR + sep + newWorkspaceName;
     return stat(newPath).then(() => {
       return Promise.reject('Folder name already exists.');
     }, noop)
@@ -280,34 +277,60 @@ export function updateWorkspaceName(event: IpcMainInvokeEvent, workspaceName: st
  * @param event
  * @param currentWorkspaceName
  * @param workspaceName
- * @param assignments
+ * @param assignmentNames
  */
 export function moveWorkspaceAssignments(
   event: IpcMainInvokeEvent,
   currentWorkspaceName: string,
   workspaceName: string,
-  assignments: any[] = []): Promise<string> {
-  return getConfig().then((config) => {
-    const currentIsDefault = currentWorkspaceName === DEFAULT_WORKSPACE;
-    const newIsDefault = workspaceName === DEFAULT_WORKSPACE;
+  assignmentNames: string[] = []): Promise<string> {
 
-    const workspacePath = currentIsDefault ? config.defaultPath : config.defaultPath + sep + currentWorkspaceName;
-    const newWorkspacePath = newIsDefault ? config.defaultPath : config.defaultPath + sep + workspaceName;
-    const promises: Promise<any>[] = assignments.map((assignment) => {
-      const assignmentPath = workspacePath + sep + assignment.assignmentTitle;
-      const newAssignmentPath = newWorkspacePath + sep + assignment.assignmentTitle;
+  const currentIsDefault = currentWorkspaceName === DEFAULT_WORKSPACE;
+  const newIsDefault = workspaceName === DEFAULT_WORKSPACE;
 
-      return stat(newAssignmentPath)
-        .then(
-          () => Promise.reject('Assignment with the same name already exists.'),
-          () => move(assignmentPath, newAssignmentPath)
-        )
-        .then(noop, (error) => Promise.reject(error.message));
-    });
+  const workspacePath = currentIsDefault ? WORKSPACE_DIR : WORKSPACE_DIR + sep + currentWorkspaceName;
+  const newWorkspacePath = newIsDefault ? WORKSPACE_DIR : WORKSPACE_DIR + sep + workspaceName;
+  const promises: Promise<any>[] = assignmentNames.map((assignmentName) => {
+    const assignmentPath = workspacePath + sep + assignmentName;
+    const newAssignmentPath = newWorkspacePath + sep + assignmentName;
 
-    return Promise.all(promises);
-  })
-    .then(() => 'Successfully renamed the directory.');
+    return stat(newAssignmentPath)
+      .then(
+        () => Promise.reject('Assignment with the same name already exists.'),
+        () => move(assignmentPath, newAssignmentPath)
+      )
+      .then(noop, (error) => Promise.reject(error.message));
+  });
+
+  return Promise.all(promises).then(() => 'Successfully renamed the directory.');
+}
+
+/**
+ * Move an assignment to a new workspace
+ * @param event
+ * @param currentWorkspaceName
+ * @param workspaceName
+ * @param assignmentNames
+ */
+export function deleteWorkspaceAssignments(
+  event: IpcMainInvokeEvent,
+  currentWorkspaceName: string,
+  assignmentNames: string[] = []): Promise<string> {
+
+  const currentIsDefault = currentWorkspaceName === DEFAULT_WORKSPACE;
+  const workspacePath = currentIsDefault ? WORKSPACE_DIR : WORKSPACE_DIR + sep + currentWorkspaceName;
+  const promises: Promise<any>[] = assignmentNames.map((assignmentName) => {
+    const assignmentPath = workspacePath + sep + assignmentName
+    LOG.debug("Deleting assignment at: " + assignmentPath);
+    return rm(assignmentPath, {recursive: true})
+      .then(
+        noop,
+        () => Promise.reject('Failed to remove assignment.'),
+      )
+      .then(noop, (error) => Promise.reject(error.message));
+  });
+
+  return Promise.all(promises).then(() => 'Successfully renamed the directory.');
 }
 
 /**
@@ -333,9 +356,9 @@ export function deleteWorkspace(event: IpcMainInvokeEvent, deleteFolder: string)
       return Promise.reject('Could not find folder ' + deleteFolder);
     }
 
-    return stat(config.defaultPath + sep + deleteFolder)
+    return stat(WORKSPACE_DIR + sep + deleteFolder)
       .then(() => {
-        return shell.trashItem(config.defaultPath + sep + deleteFolder);
+        return shell.trashItem(WORKSPACE_DIR + sep + deleteFolder);
       }, () => {
         // Ignore if the actual directory does not exist
       })
@@ -351,7 +374,7 @@ export function deleteWorkspace(event: IpcMainInvokeEvent, deleteFolder: string)
 
 export function deleteWorkspaceCheck(event: IpcMainInvokeEvent, deleteFolder: string): Promise<boolean> {
   return getConfig().then((config) => {
-    const currPath = config.defaultPath + sep + deleteFolder;
+    const currPath = WORKSPACE_DIR + sep + deleteFolder;
 
     const index = indexOf(config.folders, deleteFolder);
     if (index < 0) {
