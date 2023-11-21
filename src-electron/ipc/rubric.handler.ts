@@ -164,7 +164,7 @@ export function getRubrics(): Promise<IRubric[]> {
 
       const rubrics: IRubric[] = JSON.parse(data.toString());
       if (!Array.isArray(rubrics)) {
-        Promise.reject(COULD_NOT_READ_RUBRIC_LIST);
+        return Promise.reject(COULD_NOT_READ_RUBRIC_LIST);
       }
 
       return rubrics;

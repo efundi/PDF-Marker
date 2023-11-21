@@ -4,7 +4,8 @@ export enum ZipFileType {
    */
   MARKER_IMPORT,
   ASSIGNMENT_IMPORT,
-  GENERIC_IMPORT
+  GENERIC_IMPORT,
+  MOODLE_IMPORT,
 }
 
 export interface AssignmentValidateResultInfo {

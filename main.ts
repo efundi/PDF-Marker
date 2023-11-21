@@ -72,8 +72,8 @@ serve = args.some(val => val === '--serve');
 const logger = require('electron-log');
 
 // Set the log level for the application
-logger.transports.file.level = 'info';
-logger.transports.console.level = 'info';
+logger.transports.file.level = 'debug';
+logger.transports.console.level = 'debug';
 
 // Attach a logger to the autoUpdated
 autoUpdater.logger = logger;

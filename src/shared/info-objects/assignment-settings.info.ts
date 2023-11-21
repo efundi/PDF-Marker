@@ -6,6 +6,7 @@ export const AssignmentSettingsVersion = 1;
 export enum SourceFormat {
   MANUAL = 'MANUAL',
   SAKAI = 'SAKAI',
+  MOODLE = 'MOODLE',
   GENERIC = 'GENERIC',
 }
 

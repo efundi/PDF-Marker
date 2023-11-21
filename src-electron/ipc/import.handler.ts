@@ -17,9 +17,11 @@ import {mkdir, readFile, stat, writeFile} from 'fs/promises';
 import {getRubrics, markRubricInUse} from './rubric.handler';
 import {
   EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
-  NOT_PROVIDED_RUBRIC, SPECIAL_CHARS,
+  NOT_PROVIDED_RUBRIC,
+  SPECIAL_CHARS,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
-  STUDENT_DIRECTORY_REGEX, WHITESPACE_CHARS
+  STUDENT_DIRECTORY_REGEX,
+  WHITESPACE_CHARS
 } from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {deleteFolderRecursive, isFolder, isNullOrUndefinedOrEmpty, stream2buffer} from '../utils';
@@ -37,18 +39,22 @@ import {getConfig} from './config.handler';
 import {
   ASSIGNMENT_BACKUP_DIR,
   ASSIGNMENT_ROOT_FILES,
-  FEEDBACK_FOLDER, FEEDBACK_ZIP_DIR_REGEX,
+  FEEDBACK_FOLDER,
+  FEEDBACK_ZIP_DIR_REGEX,
   FEEDBACK_ZIP_ENTRY_REGEX,
   GRADES_FILE,
   MARK_FILE,
   SETTING_FILE,
-  SUBMISSION_FOLDER, SUBMISSION_ZIP_DIR_REGEX,
-  SUBMISSION_ZIP_ENTRY_REGEX, SUPPORTED_SUBMISSION_EXTENSIONS,
+  SUBMISSION_FOLDER,
+  SUBMISSION_ZIP_DIR_REGEX,
+  SUBMISSION_ZIP_ENTRY_REGEX,
+  SUPPORTED_SUBMISSION_EXTENSIONS,
   uuidv4
 } from '@shared/constants/constants';
 import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 import {emptyDir} from 'fs-extra';
+
 const logger = require('electron-log');
 const LOG = logger.scope('ImportHandler');
 /**
@@ -71,7 +77,7 @@ function existingFolders(workspace: string): Promise<string[]> {
 
 
 export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<any> {
-
+  LOG.debug("Import zip. " + JSON.stringify(req))
   if (isNil(req.file)) {
     return Promise.reject('No file selected!');
   }
@@ -159,6 +165,12 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
               settings.submissions = submissions;
               return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
             });
+          }else if (req.zipFileType === ZipFileType.MOODLE_IMPORT) {
+            settings.sourceFormat = SourceFormat.MOODLE;
+            promise = extractMoodleImport(zipObject, workingDirectory + sep, newFolder, renameOld).then((submissions) => {
+              settings.submissions = submissions;
+              return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
+            });
           } else {
             promise = extractMarkerZip(zipObject, workingDirectory + sep, newFolder, renameOld);
           }
@@ -220,11 +232,21 @@ export function getZipEntries(event: IpcMainInvokeEvent, file: string): Promise<
 
 
 export function validateZipFile(event: IpcMainInvokeEvent, file: string, format: string): Promise<AssignmentValidateResultInfo> {
+  LOG.debug("Validate Zip File, file: " + file + ", format:" + format)
   if (format === 'Assignment') {
     return validateZipAssignmentFile(file);
+  } if (format === 'Moodle' ) {
+    return validateMoodle();
   } else {
     return validateGenericZip(file);
   }
+}
+
+function validateMoodle(): Promise<AssignmentValidateResultInfo>{
+  return Promise.resolve({
+    hasRubric: false ,
+    zipFileType: ZipFileType.MOODLE_IMPORT
+  })
 }
 
 function readZipFile(file: string): Promise<JSZip> {
@@ -345,6 +367,60 @@ function extractGenericImport(
   const submissions: Submission[] = [];
   const promises: Promise<any>[] = [];
   zipObject.forEach((zipRelativePath, file) => {
+    const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replaceAll('/', sep);
+    const fileFullPath = destination + zipFilePath;
+    const directory = dirname(fileFullPath);
+    if (!file.dir) {
+
+      const tempDetails = zipRelativePath.substring((zipRelativePath.indexOf('/') + 1));
+      const splitArray = tempDetails.split('_');
+
+      // If the file is not one of the supported extensions, ignore it
+      const ext = extname(fileFullPath);
+      if (!ext.startsWith('.') || !SUPPORTED_SUBMISSION_EXTENSIONS.includes(ext.substring(1))) {
+        LOG.warn('Unknown file, ignoring... ' + zipFilePath);
+        return;
+      }
+
+      const studentName = splitArray[1];
+      const studentSurname = splitArray[0];
+      const studentId = splitArray[2];
+      const studentDirectory = studentSurname + ', ' + studentName + ' (' + studentId + ')';
+      submissions.push({
+        mark: null,
+        allocation: null,
+        directoryName: studentDirectory,
+        state: SubmissionState.NEW,
+        studentId,
+        studentName,
+        studentSurname
+      });
+
+      const promise = Promise.all([
+        mkdir(directory + sep + studentDirectory, {recursive: true}),
+        mkdir(directory + sep + studentDirectory + sep + FEEDBACK_FOLDER, {recursive: true}),
+        mkdir(directory + sep + studentDirectory + sep + SUBMISSION_FOLDER, {recursive: true})
+      ]).then(() => {
+        return extractFile(file, directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + '/' + tempDetails);
+      });
+
+      promises.push(promise);
+    }
+  });
+  return Promise.all(promises)
+    .then(() => submissions);
+}
+
+function extractMoodleImport(
+  zipObject: JSZip,
+  destination: string,
+  newFolder: string,
+  oldFolder: string): Promise<Submission[]> {
+  const submissions: Submission[] = [];
+  const promises: Promise<any>[] = [];
+  zipObject.forEach((zipRelativePath, file) => {
+    LOG.info(JSON.stringify(file))
+    LOG.info(zipRelativePath)
     const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replaceAll('/', sep);
     const fileFullPath = destination + zipFilePath;
     const directory = dirname(fileFullPath);
