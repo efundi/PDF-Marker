@@ -17,6 +17,7 @@ import {mkdir, readFile, stat, writeFile} from 'fs/promises';
 import {getRubrics, markRubricInUse} from './rubric.handler';
 import {
   EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
+  MOODLE_STUDENT_DIRECTORY_REGEX,
   NOT_PROVIDED_RUBRIC,
   SPECIAL_CHARS,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
@@ -103,18 +104,25 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
 
 
 
-    return new JSZip().loadAsync(zipFile)
+      return new JSZip().loadAsync(zipFile)
       .then((zipObject) => {
 
         if (Object.keys(zipObject.files).length === 0) {
           return Promise.reject('Zip Object contains no files!');
         }
-        const entryPath = Object.keys(zipObject.files)[0].split('/');
-        if (entryPath.length === 0) {
-          return Promise.reject('Invalid zip structure!');
-        }
+        let oldPath;
+        if (req.zipFileType === ZipFileType.MOODLE_IMPORT){
+          const ext = extname(req.file);
+          oldPath = basename(req.file, ext)
+        } else {
+          const rootDirectoryName = Object.keys(zipObject.files)[0].split('/');
+          if (rootDirectoryName.length === 0) {
+            return Promise.reject('Invalid zip structure!');
+          }
 
-        const oldPath = entryPath[0];
+          oldPath = rootDirectoryName[0];
+
+        }
         let foundCount = 0;
         for (let i = 0; i < folders.length; i++) {
           if (oldPath.toLowerCase() === folders[i].toLowerCase()) {
@@ -127,13 +135,17 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
 
         // By default, the zip wil contain the name of the assignment directory
         let assignmentDirectoryName = oldPath;
+        // Name from the zip file
         let renameOld = assignmentDirectoryName + '/';
+        if (req.zipFileType === ZipFileType.MOODLE_IMPORT){
+          renameOld = '/'
+        }
+        // Name as which it will be extracted
         let newFolder = assignmentDirectoryName + '/';
         if (foundCount !== 0) {
           // If existing assignment directory exists, setup renames to extract the file
           assignmentDirectoryName = oldPath + ' (' + (foundCount + 1) + ')';
           newFolder = oldPath + ' (' + (foundCount + 1) + ')' + '/';
-          renameOld = oldPath + '/';
         }
 
 
@@ -419,26 +431,31 @@ function extractMoodleImport(
   const submissions: Submission[] = [];
   const promises: Promise<any>[] = [];
   zipObject.forEach((zipRelativePath, file) => {
-    LOG.info(JSON.stringify(file))
-    LOG.info(zipRelativePath)
-    const zipFilePath = zipRelativePath.replace(oldFolder, newFolder).replaceAll('/', sep);
-    const fileFullPath = destination + zipFilePath;
-    const directory = dirname(fileFullPath);
+    const zipFilePath = zipRelativePath.replaceAll('/', sep);
+    const assignmentFullPath = destination + newFolder;
+
+    const studentDirectoryName = dirname(zipFilePath);
     if (!file.dir) {
 
-      const tempDetails = zipRelativePath.substring((zipRelativePath.indexOf('/') + 1));
-      const splitArray = tempDetails.split('_');
+      const submissionFileName = zipRelativePath.substring((zipRelativePath.indexOf('/') + 1));
+      let matches = MOODLE_STUDENT_DIRECTORY_REGEX.exec(basename(studentDirectoryName));
+      let studentId;
+      let studentName;
+      let studentSurname;
+      if (matches !== null) {
+        studentId = matches[3];
+        studentName =  matches[2];
+        studentSurname = matches[1];
+      }
 
       // If the file is not one of the supported extensions, ignore it
-      const ext = extname(fileFullPath);
+      const ext = extname(submissionFileName);
       if (!ext.startsWith('.') || !SUPPORTED_SUBMISSION_EXTENSIONS.includes(ext.substring(1))) {
         LOG.warn('Unknown file, ignoring... ' + zipFilePath);
         return;
       }
 
-      const studentName = splitArray[1];
-      const studentSurname = splitArray[0];
-      const studentId = splitArray[2];
+
       const studentDirectory = studentSurname + ', ' + studentName + ' (' + studentId + ')';
       submissions.push({
         mark: null,
@@ -451,11 +468,11 @@ function extractMoodleImport(
       });
 
       const promise = Promise.all([
-        mkdir(directory + sep + studentDirectory, {recursive: true}),
-        mkdir(directory + sep + studentDirectory + sep + FEEDBACK_FOLDER, {recursive: true}),
-        mkdir(directory + sep + studentDirectory + sep + SUBMISSION_FOLDER, {recursive: true})
+        mkdir(assignmentFullPath + sep + studentDirectory, {recursive: true}),
+        mkdir(assignmentFullPath + sep + studentDirectory + sep + FEEDBACK_FOLDER, {recursive: true}),
+        mkdir(assignmentFullPath + sep + studentDirectory + sep + SUBMISSION_FOLDER, {recursive: true})
       ]).then(() => {
-        return extractFile(file, directory + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + '/' + tempDetails);
+        return extractFile(file, assignmentFullPath + '/' + studentDirectory + '/' + SUBMISSION_FOLDER + '/' + submissionFileName);
       });
 
       promises.push(promise);

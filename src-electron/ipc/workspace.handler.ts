@@ -20,6 +20,8 @@ import {
 import {isNullOrUndefinedOrEmpty} from '../utils';
 import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX} from '../constants';
 
+const logger = require('electron-log');
+const LOG = logger.scope('WorkspaceHandler');
 export function getAssignments(): Promise<WorkspaceTreeNode[]> {
   return loadWorkspaces();
 }
@@ -55,7 +57,7 @@ function loadWorkspaces(): Promise<WorkspaceTreeNode[]> {
       return Promise.all(promises).then(() => {
         return sortBy(workspaces, 'name');
       }, (error) => {
-        console.error(error);
+        LOG.error(error);
         return Promise.reject(error);
       });
     });

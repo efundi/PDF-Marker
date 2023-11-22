@@ -26,6 +26,7 @@ export const HIGHLIGHT_HEIGHT = 20;
 export const STUDENT_DIRECTORY_ID_REGEX = /.*\((.+)\)/;
 export const STUDENT_DIRECTORY_REGEX = /(.*), (.*)\((.+)\)/;
 export const STUDENT_DIRECTORY_NO_NAME_REGEX = /(.*),\((.+)\)/;
+export const MOODLE_STUDENT_DIRECTORY_REGEX = /(.*) (.*)_(.*)_assignsubmission_file/
 
 // export const SPECIAL_CHARS = /[`!@#$%^&*+=\[\]{};':"|<>?~]/;
 export const SPECIAL_CHARS = /[`*\[\]':"\\|<>?]/;
