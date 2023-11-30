@@ -1,8 +1,8 @@
-import {indexOf, isEmpty, isNil, map, noop, sortBy} from 'lodash';
+import {indexOf, isEmpty, isNil, map, noop, sortBy, find} from 'lodash';
 import {getConfig, updateConfigFile} from './config.handler';
 import {basename, sep} from 'path';
 import {IpcMainInvokeEvent, shell} from 'electron';
-import {move, rmdir} from 'fs-extra';
+import {move} from 'fs-extra';
 import {
   ASSIGNMENT_BACKUP_DIR,
   DEFAULT_WORKSPACE,
@@ -18,6 +18,8 @@ import {
   AssignmentTreeNode, WorkspaceFileTreeNode
 } from '@shared/info-objects/workspaceTreeNode';
 import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX, WORKSPACE_DIR} from '../constants';
+import {getAssignmentSettingsAt} from "./assignment.handler";
+import {Submission} from "@shared/info-objects/assignment-settings.info";
 const logger = require('electron-log');
 
 const LOG = logger.scope('WorkspaceHandler');
@@ -71,7 +73,10 @@ function loadAssignmentContents(directoryFullPath: string, parent: WorkspaceTree
     children: [],
     parent
   };
-  return readdir(directoryFullPath).then((files) => {
+  return Promise.all([
+    readdir(directoryFullPath),
+    getAssignmentSettingsAt(directoryFullPath)
+  ]).then(([files, assignmentSettings]) => {
     const promises: Promise<any>[] = map(files, (file) => {
       const fullPath = directoryFullPath + sep + file;
       return stat(fullPath).then((fileStats) => {
@@ -94,20 +99,8 @@ function loadAssignmentContents(directoryFullPath: string, parent: WorkspaceTree
             return Promise.resolve(null);
           }
 
-          let matches = STUDENT_DIRECTORY_REGEX.exec(file);
-          if (matches !== null) {
-            studentId = matches[3];
-            studentName =  matches[2];
-            studentSurname = matches[1];
-          } else {
-            matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(file);
-            if (matches !== null) {
-              studentId = matches[2];
-              studentSurname =  matches[1];
-            }
-          }
-
-          if (matches === null) {
+          let assignmentSubmission: Submission = find(assignmentSettings.submissions, { directoryName: file});
+          if (assignmentSubmission === null) {
             return Promise.reject(`Student directory not in expected format '${file}'`);
           }
 
@@ -115,9 +108,9 @@ function loadAssignmentContents(directoryFullPath: string, parent: WorkspaceTree
             dateModified: null,
             type: TreeNodeType.SUBMISSION,
             name: file,
-            studentId,
-            studentName,
-            studentSurname,
+            studentId: assignmentSubmission.studentId,
+            studentName: assignmentSubmission.studentName,
+            studentSurname: assignmentSubmission.studentSurname,
             children: [],
             parent: assignment
           };

@@ -52,7 +52,9 @@ export class ImportComponent implements OnInit, OnDestroy {
   private actualFilePath: string;
   assignmentTypes = [
     {'name': 'Assignment'},
-    {'name': 'Generic'}];
+    {'name': 'Group Assignment'},
+    {'name': 'Generic'}
+  ];
   ZipFileType = ZipFileType;
   assignmentValidateResultInfo: AssignmentValidateResultInfo;
 

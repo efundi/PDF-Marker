@@ -232,8 +232,19 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
         return null;
       }
 
+      let fullName = "";
+      if (!isNil(submission.studentSurname)){
+        fullName = submission.studentSurname;
+
+        if(!isNil(submission.studentName)){
+          fullName += ", "
+        }
+      }
+      if (!isNil(submission.studentName)){
+        fullName += submission.studentName;
+      }
       return {
-        studentFullName: submission.studentSurname + (isNil(submission.studentName) ? '' : ', ' + submission.studentName),
+        studentFullName: fullName,
         studentId: submission.studentId,
         pdfFile: submissionFile
       };

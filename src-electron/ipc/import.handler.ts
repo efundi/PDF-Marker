@@ -16,7 +16,7 @@ import {cloneDeep, every, find, forEach, indexOf, isEmpty, isNil, map} from 'lod
 import {mkdir, readFile, stat, writeFile} from 'fs/promises';
 import {getRubrics, markRubricInUse} from './rubric.handler';
 import {
-  EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
+  EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, GROUP_DIRECTORY_REGEX,
   NOT_PROVIDED_RUBRIC, SPECIAL_CHARS,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
   STUDENT_DIRECTORY_REGEX, WHITESPACE_CHARS
@@ -220,7 +220,7 @@ export function getZipEntries(event: IpcMainInvokeEvent, file: string): Promise<
 
 
 export function validateZipFile(event: IpcMainInvokeEvent, file: string, format: string): Promise<AssignmentValidateResultInfo> {
-  if (format === 'Assignment') {
+  if (format === 'Assignment' || format === 'Group Assignment') {
     return validateZipAssignmentFile(file);
   } else {
     return validateGenericZip(file);
@@ -389,6 +389,38 @@ function extractGenericImport(
     .then(() => submissions);
 }
 
+interface StudentDetail{
+  studentId?: string
+  studentName?:  string
+  studentSurname?: string
+}
+function matchStudentDetail(studentDirectory: string): StudentDetail {
+  let matches = STUDENT_DIRECTORY_REGEX.exec(studentDirectory);
+  if (matches !== null) {
+    return {
+      studentId : matches[3],
+      studentName :  matches[2],
+      studentSurname : matches[1]
+    }
+  }
+
+  matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(studentDirectory);
+  if (matches !== null) {
+    return {
+      studentId : matches[2],
+      studentSurname : matches[1]
+    }
+  }
+
+  matches = GROUP_DIRECTORY_REGEX.exec(studentDirectory);
+  if (matches !== null) {
+    return {
+      studentId : matches[2],
+      studentName :  matches[1]
+    }
+  }
+}
+
 function extractAssignmentZipFile(
   zipObject: JSZip,
   destination: string,
@@ -417,33 +449,17 @@ function extractAssignmentZipFile(
           }
 
           const studentDirectory = match[1];
-          let studentId;
-          let studentName;
-          let studentSurname;
-
-          let matches = STUDENT_DIRECTORY_REGEX.exec(studentDirectory);
-          if (matches !== null) {
-            studentId = matches[3];
-            studentName =  matches[2];
-            studentSurname = matches[1];
-          } else {
-            matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(studentDirectory);
-            if (matches !== null) {
-              studentId = matches[2];
-              studentSurname =  matches[1];
-            }
-          }
-
-          const submission = find(submissions, {studentId: studentId});
+          const detail = matchStudentDetail(studentDirectory);
+          const submission = find(submissions, {studentId: detail.studentId});
           if (isNil(submission)) {
             submissions.push({
               mark: null,
               allocation: null,
               directoryName: studentDirectory,
               state: SubmissionState.NO_SUBMISSION,
-              studentId,
-              studentName,
-              studentSurname
+              studentId: detail.studentId,
+              studentName: detail.studentName,
+              studentSurname: detail.studentSurname
             });
           }
         }
@@ -456,33 +472,17 @@ function extractAssignmentZipFile(
         if (match) {
 
           const studentDirectory = match[1];
-          let studentId;
-          let studentName;
-          let studentSurname;
-
-          let matches = STUDENT_DIRECTORY_REGEX.exec(studentDirectory);
-          if (matches !== null) {
-            studentId = matches[3];
-            studentName =  matches[2];
-            studentSurname = matches[1];
-          } else {
-            matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(studentDirectory);
-            if (matches !== null) {
-              studentId = matches[2];
-              studentSurname =  matches[1];
-            }
-          }
-
-          const submission = find(submissions, {studentId: studentId});
+          const detail = matchStudentDetail(studentDirectory);
+          const submission = find(submissions, {studentId: detail.studentId});
           if (isNil(submission)) {
             submissions.push({
               mark: null,
               allocation: null,
               directoryName: studentDirectory,
               state: SubmissionState.NEW,
-              studentId,
-              studentName,
-              studentSurname
+              studentId: detail.studentId,
+              studentName: detail.studentName,
+              studentSurname: detail.studentSurname
             });
           } else {
             submission.state = SubmissionState.NEW;
