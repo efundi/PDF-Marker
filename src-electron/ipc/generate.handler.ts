@@ -18,6 +18,7 @@ import {getAssignmentDirectoryAbsolutePath} from './workspace.handler';
 import {uuidv4} from '@shared/constants/constants';
 import {findRubric} from './rubric.handler';
 import {zipDir} from '../zip';
+import {WORKSPACE_DIR} from "../constants";
 
 export function generateGenericZip(
   event: IpcMainInvokeEvent,
@@ -67,54 +68,51 @@ export function generateAssignment(
   assignmentName: string,
   sourceFilePath: string,
   rubricName?: string): Promise<string> {
-  return getConfig().then((config) => {
-    const assignmentPath = join(config.defaultPath, assignmentName);
-    const assignmentSettings = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
-    assignmentSettings.assignmentName = assignmentName;
-    assignmentSettings.sourceId = uuidv4();
+  const assignmentPath = join(WORKSPACE_DIR, assignmentName);
+  const assignmentSettings = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
+  assignmentSettings.assignmentName = assignmentName;
+  assignmentSettings.sourceId = uuidv4();
 
-    let promise = Promise.resolve();
-    if (rubricName) {
-      promise = findRubric(rubricName)
-        .then((rubric) => {
-          assignmentSettings.rubric = rubric;
-        });
-    }
-    return promise
-      .then(() =>  mkdir(assignmentPath))
-      .then(() => {
-        const promises: Promise<any>[] = times(studentCount, (count: number) => {
-          const studentPath = join(assignmentPath, `Name${count}, Surname${count}(s${count})`);
-          const submissionAttachmentsPath = join(studentPath, `Submission attachment(s)`);
-          const feedbackAttachmentsPath = join(studentPath, `Feedback Attachment(s)`);
-          const submissionPath = join(submissionAttachmentsPath, `Student${count}_Surname${count}_s${count}_submission.pdf`);
-          return mkdir(studentPath)
-            .then(() => mkdir(submissionAttachmentsPath))
-            .then(() => mkdir(feedbackAttachmentsPath))
-            .then(() => copy(sourceFilePath, submissionPath))
-            .then(() => {
-              assignmentSettings.submissions.push({
-                studentId: `s${count}`,
-                studentSurname: `Surname${count}`,
-                state: SubmissionState.NEW,
-                directoryName: basename(studentPath),
-                studentName: `Student${count}`,
-                mark: null,
-                allocation: null,
-                lmsStatusText: null
-              });
-            });
-        });
-
-        return Promise.all(promises);
-      })
-      .then(() => {
-        return writeAssignmentSettingsAt(assignmentSettings, assignmentPath);
-      }).then(() => {
-        return 'Assignment created at: ' + assignmentPath;
+  let promise = Promise.resolve();
+  if (rubricName) {
+    promise = findRubric(rubricName)
+      .then((rubric) => {
+        assignmentSettings.rubric = rubric;
       });
-  });
+  }
+  return promise
+    .then(() =>  mkdir(assignmentPath))
+    .then(() => {
+      const promises: Promise<any>[] = times(studentCount, (count: number) => {
+        const studentPath = join(assignmentPath, `Name${count}, Surname${count}(s${count})`);
+        const submissionAttachmentsPath = join(studentPath, `Submission attachment(s)`);
+        const feedbackAttachmentsPath = join(studentPath, `Feedback Attachment(s)`);
+        const submissionPath = join(submissionAttachmentsPath, `Student${count}_Surname${count}_s${count}_submission.pdf`);
+        return mkdir(studentPath)
+          .then(() => mkdir(submissionAttachmentsPath))
+          .then(() => mkdir(feedbackAttachmentsPath))
+          .then(() => copy(sourceFilePath, submissionPath))
+          .then(() => {
+            assignmentSettings.submissions.push({
+              studentId: `s${count}`,
+              studentSurname: `Surname${count}`,
+              state: SubmissionState.NEW,
+              directoryName: basename(studentPath),
+              studentName: `Student${count}`,
+              mark: null,
+              allocation: null,
+              lmsStatusText: null
+            });
+          });
+      });
 
+      return Promise.all(promises);
+    })
+    .then(() => {
+      return writeAssignmentSettingsAt(assignmentSettings, assignmentPath);
+    }).then(() => {
+      return 'Assignment created at: ' + assignmentPath;
+    });
 }
 
 export function markSome(event: IpcMainInvokeEvent, assignmentName: string, workspaceName?: string): Promise<string> {

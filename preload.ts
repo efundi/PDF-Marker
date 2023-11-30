@@ -66,10 +66,12 @@ contextBridge.exposeInMainWorld('workspaceApi', {
   getAssignments: () => ipcRenderer.invoke('workspace:get'),
   createWorkingFolder: (name: string) => ipcRenderer.invoke('workspace:createWorkingFolder', name),
   updateWorkspaceName: (workspaceName: string, newWorkspaceName: string) => ipcRenderer.invoke('workspace:updateWorkspaceName', workspaceName, newWorkspaceName),
-  moveWorkspaceAssignments: (currentWorkspaceName: string, workspaceName: string, assignments: any[]) => ipcRenderer.invoke('workspace:moveWorkspaceAssignments', currentWorkspaceName, workspaceName, assignments),
+  moveWorkspaceAssignments: (currentWorkspaceName: string, workspaceName: string, assignmentNames: string[]) => ipcRenderer.invoke('workspace:moveWorkspaceAssignments', currentWorkspaceName, workspaceName, assignmentNames),
+  deleteWorkspaceAssignments: (workspaceName: string, assignmentNames: string[]) => ipcRenderer.invoke('workspace:deleteWorkspaceAssignments', workspaceName, assignmentNames),
   getWorkspaces: () => ipcRenderer.invoke('workspace:getWorkspaces'),
   deleteWorkspace: (workspaceFolder: string) => ipcRenderer.invoke('workspace:deleteWorkspace', workspaceFolder),
   deleteWorkspaceCheck: (workspaceFolder: string) => ipcRenderer.invoke('workspace:deleteWorkspaceCheck', workspaceFolder),
+
 } as WorkspaceIpcService);
 
 

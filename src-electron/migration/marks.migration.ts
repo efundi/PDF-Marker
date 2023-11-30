@@ -12,7 +12,7 @@ import {
 } from '@shared/info-objects/submission.info';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {stat} from 'fs/promises';
-import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX} from '../constants';
+import {STUDENT_DIRECTORY_NO_NAME_REGEX, STUDENT_DIRECTORY_REGEX, WORKSPACE_DIR} from '../constants';
 import {MARK_FILE} from '@shared/constants/constants';
 
 const logger = require('electron-log');
@@ -22,14 +22,10 @@ const LOG = logger.scope('MarksMigration');
 export function migrateMarks(): Promise<any> {
   LOG.info('Running migration');
   return getConfig().then((settingsInfo) => {
-    if (isNil(settingsInfo.defaultPath)) {
-      LOG.info('Default path not set in application settings');
-      return Promise.resolve();
-    } else {
       const workspaceFolders = settingsInfo.folders || [];
-      return readdir(settingsInfo.defaultPath).then((foundDirectories) => {
+      return readdir(WORKSPACE_DIR).then((foundDirectories) => {
         const promises: Promise<any>[] = map(foundDirectories, (directory) => {
-          const fullPath = settingsInfo.defaultPath + sep + directory;
+          const fullPath = WORKSPACE_DIR + sep + directory;
           // Check if the directory is a working directory
           if (workspaceFolders.includes(directory)) {
             return readdir(fullPath).then((assignmentDirectories) => {
@@ -50,7 +46,6 @@ export function migrateMarks(): Promise<any> {
           return Promise.reject(error);
         });
       });
-    }
   });
 }
 

@@ -35,13 +35,10 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
 })
 export class SettingsComponent implements OnInit {
 
-
-
   settingsForm: FormGroup<{
     name: FormControl<string>,
     email: FormControl<string>,
     lmsSelection: FormControl<string>,
-    defaultPath: FormControl<string>,
     libreOfficePath: FormControl<string>,
   }>;
   settingsLMSSelected = 'Sakai';
@@ -79,7 +76,6 @@ export class SettingsComponent implements OnInit {
           name: configurations.user ? configurations.user.name : null,
           email: configurations.user ? configurations.user.email : null,
           lmsSelection: configurations.lmsSelection ? configurations.lmsSelection : this.settingsLMSSelected,
-          defaultPath: configurations.defaultPath,
           libreOfficePath: configurations.libreOfficePath
         });
         this.busyService.stop();
@@ -119,7 +115,6 @@ export class SettingsComponent implements OnInit {
       name: [null as string, Validators.required],
       email: [null as string, Validators.compose([Validators.required, Validators.email])],
       lmsSelection: ['Sakai', Validators.required],
-      defaultPath: [null as string, Validators.required],
       libreOfficePath: [null as string, Validators.pattern(/(libreoffice|soffice)(\.exe)?/)],
     });
 
@@ -134,19 +129,6 @@ export class SettingsComponent implements OnInit {
         }
       }
     });
-  }
-
-  setWorkingDirectory() {
-    this.appService.getFolder()
-      .subscribe((appSelectedPathInfo: AppSelectedPathInfo) => {
-        if (appSelectedPathInfo && appSelectedPathInfo.selectedPath) {
-          this.settingsForm.patchValue({
-            defaultPath: appSelectedPathInfo.selectedPath
-          });
-        } else if (appSelectedPathInfo.error) {
-          this.alertService.error(appSelectedPathInfo.error.message);
-        }
-      });
   }
 
   setLibreOfficePath() {
@@ -177,7 +159,6 @@ export class SettingsComponent implements OnInit {
       settings.user.email = SettingsComponent.removeTrailingSlashes(formValue.email);
     }
     settings.lmsSelection = formValue.lmsSelection;
-    settings.defaultPath = SettingsComponent.removeTrailingSlashes(formValue.defaultPath);
     settings.libreOfficePath = formValue.libreOfficePath;
     return settings;
   }

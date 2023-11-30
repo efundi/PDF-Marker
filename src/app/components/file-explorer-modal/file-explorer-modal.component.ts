@@ -1,4 +1,4 @@
-import {Component, Inject, OnInit} from '@angular/core';
+import {Component, Inject} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {FlatTreeControl} from '@angular/cdk/tree';
 import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
@@ -11,7 +11,7 @@ import {PDFM_FILE_SORT} from '@shared/constants/constants';
   templateUrl: './file-explorer-modal.component.html',
   styleUrls: ['./file-explorer-modal.component.scss']
 })
-export class FileExplorerModalComponent implements OnInit {
+export class FileExplorerModalComponent {
 
   filename: string;
   treeControl = new FlatTreeControl<DisplayTreeNode>(node => node.level, node => node.children.length > 0);
@@ -38,10 +38,6 @@ export class FileExplorerModalComponent implements OnInit {
   }
 
   hasChild = (_: number, node: TreeNode) => node.children.length > 0;
-
-  ngOnInit() {
-  }
-
 
   onClose() {
     this.dialogRef.close();

@@ -1,4 +1,4 @@
-import {Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {FormArray, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {RxwebValidators} from '@rxweb/reactive-form-validators';
 import {AlertService} from '../../services/alert.service';
@@ -51,7 +51,7 @@ interface AssignmentModel {
   templateUrl: './create-assignment.component.html',
   styleUrls: ['./create-assignment.component.scss']
 })
-export class CreateAssignmentComponent implements OnInit, OnDestroy {
+export class CreateAssignmentComponent implements OnInit {
 
   createAssignmentForm: FormGroup<{
     assignmentName: FormControl<string>,
@@ -431,6 +431,4 @@ export class CreateAssignmentComponent implements OnInit, OnDestroy {
     return false;
   }
 
-  ngOnDestroy(): void {
-  }
 }

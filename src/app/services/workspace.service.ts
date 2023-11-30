@@ -82,7 +82,11 @@ export class WorkspaceService {
     return fromIpcResponse(this.workspaceApi.updateWorkspaceName(workspaceName, newWorkspaceName));
   }
 
-  moveWorkspaceAssignments(workspaceName: string, newWorkspaceName: string, selectedAssignments: any[]): Observable<any> {
-    return fromIpcResponse(this.workspaceApi.moveWorkspaceAssignments(workspaceName, newWorkspaceName, selectedAssignments));
+  moveWorkspaceAssignments(workspaceName: string, newWorkspaceName: string, assignmentNames: string[]): Observable<any> {
+    return fromIpcResponse(this.workspaceApi.moveWorkspaceAssignments(workspaceName, newWorkspaceName, assignmentNames));
+  }
+
+  deleteWorkspaceAssignments(workspaceName: string, assignmentNames: string[]): Observable<any> {
+    return fromIpcResponse(this.workspaceApi.deleteWorkspaceAssignments(workspaceName, assignmentNames));
   }
 }

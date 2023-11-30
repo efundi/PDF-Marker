@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
+import {AfterViewInit, Component, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
 import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatDialogConfig} from '@angular/material/dialog';
@@ -22,7 +22,7 @@ import {MatSort} from '@angular/material/sort';
   templateUrl: './rubric-import.component.html',
   styleUrls: ['./rubric-import.component.scss']
 })
-export class RubricImportComponent implements OnInit, OnDestroy, AfterViewInit {
+export class RubricImportComponent implements OnInit, AfterViewInit {
 
   readonly displayedColumns: string[] = ['title', 'actions', 'inUse'];
   private selectedRubric: SelectedRubric;
@@ -258,9 +258,5 @@ export class RubricImportComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.appService.createDialog(RubricViewModalComponent, config);
   }
-
-  ngOnDestroy(): void {
-  }
-
 
 }

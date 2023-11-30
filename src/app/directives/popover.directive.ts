@@ -1,20 +1,19 @@
 import {
-  ComponentRef,
   Directive,
   ElementRef,
   EmbeddedViewRef,
   HostListener,
-  Input,
+  Input, OnDestroy, OnInit,
   TemplateRef,
   ViewContainerRef
 } from '@angular/core';
 import {Overlay, OverlayPositionBuilder, OverlayRef} from '@angular/cdk/overlay';
-import {ComponentPortal, TemplatePortal} from '@angular/cdk/portal';
+import {TemplatePortal} from '@angular/cdk/portal';
 
 @Directive({
   selector: '[pdfMarkerPopover]'
 })
-export class PopoverDirective {
+export class PopoverDirective implements OnInit, OnDestroy{
 
 
   /**

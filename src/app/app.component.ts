@@ -4,7 +4,7 @@ import {DomSanitizer} from '@angular/platform-browser';
 import {UpdateService} from './services/update.service';
 
 @Component({
-  selector: 'app-root',
+  selector: 'pdf-marker-app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })

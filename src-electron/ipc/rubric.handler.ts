@@ -12,7 +12,7 @@ import {
   COULD_NOT_READ_RUBRIC_LIST, EXTRACTED_ZIP, EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
   INVALID_RUBRIC_JSON_FILE,
   NOT_CONFIGURED_CONFIG_DIRECTORY,
-  RUBRICS_FILE,
+  RUBRICS_FILE, WORKSPACE_DIR,
 } from '../constants';
 import * as glob from 'glob';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
@@ -239,9 +239,8 @@ export function getRubricNames(): Promise<IRubricName[]> {
 export function deleteRubricCheck(event: IpcMainInvokeEvent, rubricName: string): Promise<boolean> {
   rubricName = rubricName.trim();
 
-  return getConfig().then((config) => {
     try {
-      const folders: string[] = glob.sync(config.defaultPath.replace(/\\/g, '/') + '/*');
+      const folders: string[] = glob.sync(WORKSPACE_DIR.replace(/\\/g, '/') + '/*');
       let found = false;
       folders.forEach(folder => {
         const settingFileContents = existsSync(folder + sep + SETTING_FILE) ? readFileSync(folder + sep + SETTING_FILE) : null;
@@ -257,11 +256,10 @@ export function deleteRubricCheck(event: IpcMainInvokeEvent, rubricName: string)
         }
       });
 
-      return found;
+      return Promise.resolve(found);
     } catch (e) {
       return Promise.reject(e.message);
     }
-  });
 }
 
 

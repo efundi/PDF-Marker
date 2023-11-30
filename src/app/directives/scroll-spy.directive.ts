@@ -6,7 +6,7 @@ import {
   ElementRef,
   Renderer2,
   OnDestroy,
-  OnInit, OnChanges, SimpleChanges
+  OnChanges, SimpleChanges
 } from '@angular/core';
 
 import {isNil} from 'lodash';
@@ -14,7 +14,7 @@ import {isNil} from 'lodash';
 @Directive({
   selector: '[scrollSpy]'
 })
-export class ScrollSpyDirective implements OnInit, OnDestroy, OnChanges {
+export class ScrollSpyDirective implements OnDestroy, OnChanges {
 
   @Input()
   scrollTarget = 'mat-sidenav-content';
@@ -33,8 +33,6 @@ export class ScrollSpyDirective implements OnInit, OnDestroy, OnChanges {
               private renderer: Renderer2) {
   }
 
-  ngOnInit() {
-  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.hasOwnProperty('scrollTarget')) {
