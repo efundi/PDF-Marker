@@ -34,10 +34,10 @@ import {
   SUBMISSION_FOLDER,
   uuidv4
 } from '@shared/constants/constants';
-import {SubmissionInfo, SubmissionType} from '@shared/info-objects/submission.info';
+import {SubmissionInfo} from '@shared/info-objects/submission.info';
 import {getComments, updateCommentsFile} from './comment.handler';
 import {findRubric} from './rubric.handler';
-import {GradesCSV, StudentGrade} from '@shared/info-objects/grades';
+import {GradesCSV, StudentGrade, SubmissionType} from '@shared/info-objects/grades';
 import {WorkerPool} from '../worker-pool';
 import {zipDir} from '../zip';
 import {
@@ -396,37 +396,48 @@ export function writeAssignmentSettingsFor(
     .then((assignmentAbsolutePath) => writeAssignmentSettingsAt(assignmentSettings, assignmentAbsolutePath));
 }
 
-export function readGradesCsv(sourceFile: string): Promise<GradesCSV> {
-  return stat(sourceFile).then(() => {
-    return csvtojson({noheader: true, trim: false}).fromFile(sourceFile).then((data) => {
-      const grades: GradesCSV = {
-        studentGrades: [],
-        header: {
-          gradeType: data[0].field2,
-          assignmentName: data[0].field1
-        }
-      };
+/**
+ * Process raw csv data and build a <code>GradesCSV</code> object
+ * @param data Raw array of table data.
+ */
+function processGradesFile(data: any[]): GradesCSV<StudentGrade>{
+  const grades: GradesCSV<StudentGrade> = {
+    submissionType: SubmissionType.STUDENT,
+    studentGrades: [],
+    header: {
+      gradeType: data[0].field2,
+      assignmentName: data[0].field1
+    }
+  };
 
-      for (let index = 3; index < data.length; index++) {
-        grades.studentGrades.push({
-          displayId: data[index].field1,
-          id: data[index].field2,
-          lastName: data[index].field3,
-          firstName: data[index].field4,
-          grade: data[index].field5 === '' ? null : +data[index].field5,
-          submissionDate: data[index].field6,
-          lateSubmission: data[index].field7,
-        });
-      }
-
-      return grades;
+  // Student data begins on row 4 (index 3)
+  for (let index = 3; index < data.length; index++) {
+    grades.studentGrades.push({
+      submissionType: SubmissionType.STUDENT,
+      displayId: data[index].field1,
+      id: data[index].field2,
+      lastName: data[index].field3,
+      firstName: data[index].field4,
+      grade: data[index].field5 === '' ? null : +data[index].field5,
+      submissionDate: data[index].field6,
+      lateSubmission: data[index].field7
     });
+  }
+
+  return grades;
+}
+
+export function readStudentGradesFromFile(sourceFile: string): Promise<GradesCSV<StudentGrade>> {
+  return stat(sourceFile).then(() => {
+    return csvtojson({noheader: true, trim: false})
+      .fromFile(sourceFile)
+      .then((data) => processGradesFile(data));
   }, () => {
     return null;
   });
 }
 
-function writeGradesCsv(outputFile: string, grades: GradesCSV): Promise<any> {
+function writeGradesCsv(outputFile: string, grades: GradesCSV<StudentGrade>): Promise<any> {
   const gradesJSON = [];
   gradesJSON.push({
     field1: grades.header.assignmentName,
@@ -472,11 +483,12 @@ function writeGrades(outputDirectory: string, submissions: Submission[], assignm
   return stat(outputDirectory + sep + GRADES_FILE)
     .then(_ => true, _ => false)
     .then((exists) => {
-      let promise: Promise<GradesCSV>;
+      let promise: Promise<GradesCSV<StudentGrade>>;
       if (exists) {
-        promise = readGradesCsv(outputDirectory + sep + GRADES_FILE);
+        promise = readStudentGradesFromFile(outputDirectory + sep + GRADES_FILE);
       } else {
         promise = Promise.resolve({
+          submissionType: SubmissionType.STUDENT,
           studentGrades: [],
           header: {
             gradeType: 'SCORE_GRADE_TYPE',
@@ -488,9 +500,10 @@ function writeGrades(outputDirectory: string, submissions: Submission[], assignm
 
         forEach(submissions, (submission) => {
           // Find existing student grade
-          let studentGrade: StudentGrade = find(grades.studentGrades, {id: submission.studentId});
+          let studentGrade: StudentGrade = find(grades.studentGrades, {id: submission.studentId}) as StudentGrade;
           if (isNil(studentGrade)) {
             studentGrade = {
+              submissionType: SubmissionType.STUDENT,
               displayId : submission.studentId,
               id : submission.studentId,
               firstName : submission.studentName,

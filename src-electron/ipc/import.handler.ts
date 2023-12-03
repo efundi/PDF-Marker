@@ -29,7 +29,7 @@ import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} fro
 import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspaceTreeNode';
 import {
   getAssignmentSettingsFor,
-  readGradesCsv,
+  readStudentGradesFromFile,
   writeAssignmentSettingsAt,
   writeAssignmentSettingsFor
 } from './assignment.handler';
@@ -289,14 +289,31 @@ function validateZipAssignmentFile(file: string): Promise<AssignmentValidateResu
       });
     } else {
 
+      var isSakai = false;
       for (const filePath of filePaths) {
         const path = filePath.split('/');
         if (path[1] !== undefined && ASSIGNMENT_ROOT_FILES.indexOf(path[1]) !== -1) {
+          isSakai = true;
+          break;
+        }
+      }
+
+
+      if (isSakai){
+        // Now that we know it is Sakai, check if it is a group or student assignment by reading the grades.csv
+        if (zip.files[assignmentName + '/' + GRADES_FILE) {
+          readStudentGradesFromFile()
+
           return {
             zipFileType: ZipFileType.ASSIGNMENT_IMPORT,
             hasRubric: false
           };
+        } else {
+          return Promise.reject('Invalid zip format, grades.csv file missing. Please select a file exported from Sakai');
         }
+
+
+
       }
 
       // Could not find at least on sakai file
@@ -513,7 +530,7 @@ function extractAssignmentZipFile(
   })
     .then(() => {
       // Now that the workspace is extracted, read the grades file to sync to the submissions
-      return readGradesCsv(backupDirPath + sep + GRADES_FILE)
+      return readStudentGradesFromFile(backupDirPath + sep + GRADES_FILE)
         .then((grades) => {
           forEach(grades.studentGrades, (studentGrade) => {
             const submission = find(submissions, {studentId: studentGrade.id});
@@ -568,9 +585,12 @@ function extractFile(zipFile: JSZipObject, filepath: string): Promise<any> {
   });
 }
 
-function extractAssignmentSettings(zipFile: JSZipObject): Promise<AssignmentSettingsInfo> {
+
+
+function extractAssignmentGrades(zipFile: JSZipObject): Promise<AssignmentSettingsInfo> {
   return zipFile.async('nodebuffer').then((data) => {
-   return JSON.parse(data.toString());
+    readStudentGradesFromFile()
+    return JSON.parse(data.toString());
   });
 }
 

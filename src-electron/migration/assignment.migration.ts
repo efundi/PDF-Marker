@@ -11,7 +11,7 @@ import {
   Submission,
   SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
-import {getAssignmentSettingsAt, readGradesCsv, writeAssignmentSettingsAt} from '../ipc/assignment.handler';
+import {getAssignmentSettingsAt, readStudentGradesFromFile, writeAssignmentSettingsAt} from '../ipc/assignment.handler';
 import {mkdir, stat} from 'fs/promises';
 import {
   ASSIGNMENT_BACKUP_DIR,
@@ -178,7 +178,7 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
         });
         return Promise.all(filePromises);
       }).then(() => {
-        return readGradesCsv(assignmentFolder + sep + GRADES_FILE).then((grades) => {
+        return readStudentGradesFromFile(assignmentFolder + sep + GRADES_FILE).then((grades) => {
           let hasMarks = false;
           let isSakai = false;
           grades.studentGrades.forEach((studentGrade) => {

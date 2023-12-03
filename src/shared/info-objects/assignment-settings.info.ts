@@ -3,9 +3,20 @@ import {DEFAULT_COLOR} from '@shared/constants/constants';
 
 export const AssignmentSettingsVersion = 1;
 
+/**
+ * Format in which the assignment was imported/created
+ */
 export enum SourceFormat {
+  /** Manually created assignment by uploading PDFs */
   MANUAL = 'MANUAL',
+
+  /** Sakai Student submissions assignment */
   SAKAI = 'SAKAI',
+
+  /** Sakai Group submission assignment */
+  SAKAI_GROUP = 'SAKAI_GROUP',
+
+  /** Generic zip file containing student submissions */
   GENERIC = 'GENERIC',
 }
 
@@ -94,7 +105,8 @@ export enum SubmissionState {
   NOT_MARKED = 'NOT_MARKED',
 
   /**
-   * An assignment with empty submissions, does not make sense to zip them for marking or allocate them. Also can’t mark them so the states will not update to 'Marked'.
+   * An assignment with empty submissions, does not make sense to zip them for marking or allocate them.
+   * Also can’t mark them so the states will not update to 'Marked'.
    * text: 'No submission'
    */
   NO_SUBMISSION = 'NO_SUBMISSION',

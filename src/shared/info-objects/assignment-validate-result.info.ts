@@ -4,6 +4,7 @@ export enum ZipFileType {
    */
   MARKER_IMPORT,
   ASSIGNMENT_IMPORT,
+  GROUP_ASSIGNMENT_IMPORT,
   GENERIC_IMPORT
 }
 
