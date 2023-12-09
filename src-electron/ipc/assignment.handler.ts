@@ -34,7 +34,7 @@ import {
   SUBMISSION_FOLDER,
   uuidv4
 } from '@shared/constants/constants';
-import {SubmissionInfo} from '@shared/info-objects/submission.info';
+import {SubmissionInfo, SubmissionMarkType} from '@shared/info-objects/submission.info';
 import {getComments, updateCommentsFile} from './comment.handler';
 import {findRubric} from './rubric.handler';
 import {GradesCSV, StudentGrade, SubmissionType} from '@shared/info-objects/grades';
@@ -45,6 +45,7 @@ import {
   FinalizeSubmissionTaskDetails,
   MarkerExportTaskDetails
 } from '../web-worker/task-detail';
+import {JSZipObject} from "jszip";
 
 const pool = WorkerPool.getInstance();
 
@@ -74,7 +75,7 @@ export function saveMarks(
       ]).then(([config]) => {
         let savePromise: Promise<any> = Promise.resolve();
 
-        if (submissionInfo.type === SubmissionType.MARK) {
+        if (submissionInfo.type === SubmissionMarkType.MARK) {
 
           const marksPerPage = submissionInfo.marks as MarkInfo[][];
           let hadMarks = false;
@@ -107,7 +108,7 @@ export function saveMarks(
               return updateCommentsFile(comments);
             }
           });
-        } else if (submissionInfo.type === SubmissionType.RUBRIC) {
+        } else if (submissionInfo.type === SubmissionMarkType.RUBRIC) {
           if (isNil(assignmentSettings.rubric)) {
             return Promise.reject('Assignment\'s settings does not contain a rubric!');
           }
@@ -428,10 +429,24 @@ function processGradesFile(data: any[]): GradesCSV<StudentGrade>{
 }
 
 export function readStudentGradesFromFile(sourceFile: string): Promise<GradesCSV<StudentGrade>> {
+  return readGradesFromFile(sourceFile)
+      .then((data) => processGradesFile(data), () => {
+    return null;
+  });
+}
+
+
+
+export function readGradesFromZipFile(zipFile: JSZipObject): Promise<any[]> {
+  return zipFile.async('nodebuffer').then((data) => {
+    return csvtojson({noheader: true, trim: false})
+      .fromString(data.toString())
+  });
+}
+export function readGradesFromFile(sourceFile: string): Promise<any[]> {
   return stat(sourceFile).then(() => {
     return csvtojson({noheader: true, trim: false})
       .fromFile(sourceFile)
-      .then((data) => processGradesFile(data));
   }, () => {
     return null;
   });

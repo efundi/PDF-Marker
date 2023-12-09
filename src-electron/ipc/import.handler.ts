@@ -16,10 +16,13 @@ import {cloneDeep, every, find, forEach, indexOf, isEmpty, isNil, map} from 'lod
 import {mkdir, readFile, stat, writeFile} from 'fs/promises';
 import {getRubrics, markRubricInUse} from './rubric.handler';
 import {
-  EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC, GROUP_DIRECTORY_REGEX,
-  NOT_PROVIDED_RUBRIC, SPECIAL_CHARS,
+  EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
+  GROUP_DIRECTORY_REGEX,
+  NOT_PROVIDED_RUBRIC,
+  SPECIAL_CHARS,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
-  STUDENT_DIRECTORY_REGEX, WHITESPACE_CHARS
+  STUDENT_DIRECTORY_REGEX,
+  WHITESPACE_CHARS
 } from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {deleteFolderRecursive, isFolder, isNullOrUndefinedOrEmpty, stream2buffer} from '../utils';
@@ -29,6 +32,7 @@ import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} fro
 import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspaceTreeNode';
 import {
   getAssignmentSettingsFor,
+  readGradesFromZipFile,
   readStudentGradesFromFile,
   writeAssignmentSettingsAt,
   writeAssignmentSettingsFor
@@ -37,18 +41,22 @@ import {getConfig} from './config.handler';
 import {
   ASSIGNMENT_BACKUP_DIR,
   ASSIGNMENT_ROOT_FILES,
-  FEEDBACK_FOLDER, FEEDBACK_ZIP_DIR_REGEX,
+  FEEDBACK_FOLDER,
+  FEEDBACK_ZIP_DIR_REGEX,
   FEEDBACK_ZIP_ENTRY_REGEX,
   GRADES_FILE,
   MARK_FILE,
   SETTING_FILE,
-  SUBMISSION_FOLDER, SUBMISSION_ZIP_DIR_REGEX,
-  SUBMISSION_ZIP_ENTRY_REGEX, SUPPORTED_SUBMISSION_EXTENSIONS,
+  SUBMISSION_FOLDER,
+  SUBMISSION_ZIP_DIR_REGEX,
+  SUBMISSION_ZIP_ENTRY_REGEX,
+  SUPPORTED_SUBMISSION_EXTENSIONS,
   uuidv4
 } from '@shared/constants/constants';
-import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
+import {AssignmentImportValidateResultInfo,} from '@shared/info-objects/assignment-import-validate-result.info';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 import {emptyDir} from 'fs-extra';
+
 const logger = require('electron-log');
 const LOG = logger.scope('ImportHandler');
 /**
@@ -76,7 +84,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
     return Promise.reject('No file selected!');
   }
   let rubricName;
-  if (!isNil(req.rubricName) && req.zipFileType !== ZipFileType.MARKER_IMPORT) {
+  if (!isNil(req.rubricName) && req.distributionFormat !== DistributionFormat.DISTRIBUTED) {
     // If it is not a marker import, and a rubric is required, the rubric name must be provide
     if (isNil(req.rubricName)) {
       return Promise.reject(NOT_PROVIDED_RUBRIC);
@@ -135,26 +143,24 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
         let rubricIndex;
         let settings: AssignmentSettingsInfo;
         // Default settings for the new assignment
-        if (req.zipFileType !== ZipFileType.MARKER_IMPORT) {
+        if (req.distributionFormat !== DistributionFormat.DISTRIBUTED) {
           settings = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
           rubricIndex = rubrics.findIndex(r => r.name === rubricName);
           settings.rubric =  rubrics[rubricIndex] || null;
           settings.assignmentName = req.assignmentName;
           settings.sourceId = uuidv4();
+          settings.sourceFormat = req.sourceFormat;
         }
         return getWorkingDirectoryAbsolutePath(req.workspace).then((workingDirectory) => {
 
           let promise: Promise<any>;
-          if (req.zipFileType === ZipFileType.GENERIC_IMPORT) {
-            settings.sourceFormat = SourceFormat.GENERIC;
+          if (req.sourceFormat === SourceFormat.GENERIC) {
             promise = extractGenericImport(zipObject, workingDirectory + sep, newFolder, renameOld)
               .then((submissions) => {
                 settings.submissions = submissions;
                 return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
               });
-
-          } else if (req.zipFileType === ZipFileType.ASSIGNMENT_IMPORT) {
-            settings.sourceFormat = SourceFormat.SAKAI;
+          } else if (req.sourceFormat === SourceFormat.SAKAI) {
             promise = extractAssignmentZipFile(zipObject, workingDirectory + sep, newFolder, renameOld).then((submissions) => {
               settings.submissions = submissions;
               return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
@@ -219,12 +225,23 @@ export function getZipEntries(event: IpcMainInvokeEvent, file: string): Promise<
 }
 
 
-export function validateZipFile(event: IpcMainInvokeEvent, file: string, format: string): Promise<AssignmentValidateResultInfo> {
-  if (format === 'Assignment' || format === 'Group Assignment') {
-    return validateZipAssignmentFile(file);
-  } else {
-    return validateGenericZip(file);
-  }
+/**
+ * Validate the zip file and detect the format.
+ * @param event
+ * @param file
+ */
+export function validateZipFile(event: IpcMainInvokeEvent, file: string): Promise<AssignmentImportValidateResultInfo> {
+  // Validate in the order of most likelyness
+  // 1) Sakai Student / Group
+  // 2) Lecture Import
+  // 3) Generic import
+  return validateZipAssignmentFile(file)
+    .then(v => {
+      if (v.valid){
+        return v;
+      }
+      return validateGenericZip(file)
+    })
 }
 
 function readZipFile(file: string): Promise<JSZip> {
@@ -233,7 +250,7 @@ function readZipFile(file: string): Promise<JSZip> {
     .catch(() => Promise.reject('Error trying to decipher zip file format validity!'));
 }
 
-function validateZipAssignmentFile(file: string): Promise<AssignmentValidateResultInfo> {
+function validateZipAssignmentFile(file: string): Promise<AssignmentImportValidateResultInfo> {
   return readZipFile(file).then((zip) => {
     const filePaths = Object.keys(zip.files);
     const assignmentName = filePaths[0].split('/')[0];
@@ -281,9 +298,11 @@ function validateZipAssignmentFile(file: string): Promise<AssignmentValidateResu
 
           return validatePdfmWorkspaceZip(zip, zipAssignmentSettings).then(() => {
             return {
-              zipFileType: ZipFileType.MARKER_IMPORT,
-              hasRubric: !isNil(zipAssignmentSettings.rubric)
-            };
+              sourceFormat: zipAssignmentSettings.sourceFormat ,
+              hasRubric: !isNil(zipAssignmentSettings.rubric),
+              valid: true,
+              distributionFormat: DistributionFormat.DISTRIBUTED
+            } as AssignmentImportValidateResultInfo;
           });
         });
       });
@@ -301,19 +320,22 @@ function validateZipAssignmentFile(file: string): Promise<AssignmentValidateResu
 
       if (isSakai){
         // Now that we know it is Sakai, check if it is a group or student assignment by reading the grades.csv
-        if (zip.files[assignmentName + '/' + GRADES_FILE) {
-          readStudentGradesFromFile()
-
-          return {
-            zipFileType: ZipFileType.ASSIGNMENT_IMPORT,
-            hasRubric: false
-          };
+        const gradesZipFile: JSZipObject = zip.files[assignmentName + '/' + GRADES_FILE]
+        if (gradesZipFile) {
+``
+          return readGradesFromZipFile(gradesZipFile).then(data => {
+            // If row 3 field 1 is "Group" it is a group assignment
+            const isGroup = data[2].field1 == "Group";
+            return {
+              sourceFormat: isGroup ? SourceFormat.SAKAI_GROUP : SourceFormat.SAKAI,
+              hasRubric: false,
+              valid: true,
+              distributionFormat: DistributionFormat.STANDALONE
+            } as AssignmentImportValidateResultInfo;
+          })
         } else {
           return Promise.reject('Invalid zip format, grades.csv file missing. Please select a file exported from Sakai');
         }
-
-
-
       }
 
       // Could not find at least on sakai file
@@ -322,7 +344,7 @@ function validateZipAssignmentFile(file: string): Promise<AssignmentValidateResu
   });
 }
 
-function validateGenericZip(file: string): Promise<AssignmentValidateResultInfo> {
+function validateGenericZip(file: string): Promise<AssignmentImportValidateResultInfo> {
   return readZipFile(file).then((zip) => {
     const filePaths = Object.keys(zip.files).sort();
     for (const filePath of filePaths) {
@@ -347,9 +369,11 @@ function validateGenericZip(file: string): Promise<AssignmentValidateResultInfo>
 
     // Check if the file is a directory
     return {
-      zipFileType: ZipFileType.GENERIC_IMPORT,
-      hasRubric: false
-    };
+      sourceFormat: SourceFormat.GENERIC,
+      hasRubric: false,
+      distributionFormat: DistributionFormat.STANDALONE,
+      valid: true
+    } as AssignmentImportValidateResultInfo;
   });
 }
 
@@ -585,14 +609,20 @@ function extractFile(zipFile: JSZipObject, filepath: string): Promise<any> {
   });
 }
 
-
-
-function extractAssignmentGrades(zipFile: JSZipObject): Promise<AssignmentSettingsInfo> {
+function extractAssignmentSettings(zipFile: JSZipObject): Promise<AssignmentSettingsInfo> {
   return zipFile.async('nodebuffer').then((data) => {
-    readStudentGradesFromFile()
     return JSON.parse(data.toString());
   });
 }
+
+
+
+// function extractAssignmentGrades(zipFile: JSZipObject): Promise<AssignmentSettingsInfo> {
+//   return zipFile.async('nodebuffer').then((data) => {
+//     readStudentGradesFromFile()
+//     return JSON.parse(data.toString());
+//   });
+// }
 
 export function lectureImport(event: IpcMainInvokeEvent, importInfo: LectureImportInfo): Promise<AssignmentSettingsInfo> {
   return readFile(importInfo.filename)

@@ -20,6 +20,17 @@ export enum SourceFormat {
   GENERIC = 'GENERIC',
 }
 
+export const SourceFormatDescriptions = {
+  [SourceFormat.MANUAL]: "Manually created assignment",
+  [SourceFormat.SAKAI] : "Sakai student submissions",
+  [SourceFormat.SAKAI_GROUP] : "Sakai group submissions",
+  [SourceFormat.GENERIC] : "Generic submissions",
+}
+
+export function getSourceFormatDescription(sourceFormat: SourceFormat): string {
+  return SourceFormatDescriptions[sourceFormat];
+}
+
 /**
  * An enum defining the format in which an assignment is in.
  * Assignments can be imported, shared, and exported for marking.

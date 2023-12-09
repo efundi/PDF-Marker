@@ -1,9 +1,10 @@
-import {ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
+import {DistributionFormat, SourceFormat} from "@shared/info-objects/assignment-settings.info";
 
 export interface ImportInfo {
   file: string;
   workspace: string;
   assignmentName: string;
   rubricName: string;
-  zipFileType: ZipFileType;
+  sourceFormat: SourceFormat;
+  distributionFormat: DistributionFormat
 }
