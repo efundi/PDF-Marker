@@ -147,7 +147,11 @@
           [class.no-submission]="element.state === SubmissionState.NO_SUBMISSION"
           (click)="onSelectedPdf(element)">{{element.fullName}}
         </div>
-        <div class="pdf-marker-assignment-overview-student-number">{{element.studentNumber}}</div>
+        <div
+          *ngIf="assignmentSettings?.sourceFormat !== SourceFormat.SAKAI_GROUP"
+          class="pdf-marker-assignment-overview-student-number">
+          {{element.studentNumber}}
+        </div>
       </td>
     </ng-container>
 

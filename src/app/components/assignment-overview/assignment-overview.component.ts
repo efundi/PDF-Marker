@@ -97,7 +97,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   assignmentsLength;
   selection = new SelectionModel<AssignmentDetails>(true, []);
 
-
   @ViewChild(MatPaginator, {static: true})
   paginator: MatPaginator;
 
@@ -160,18 +159,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       );
   }
 
-  ngOnInit() {
-    this.busyService.start();
-    forkJoin([
-      this.loadRubrics(),
-      this.loadSettings()
-    ]).subscribe({
-      complete: () => {
-        this.busyService.stop();
-      },
-      error: () => this.busyService.stop()
-    });
-
+  private subscribeToRoute(){
     this.subscription = this.activatedRoute.params.subscribe({
       next: (params) => {
 
@@ -184,6 +172,22 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         this.appService.openSnackBar(false, 'Unable to read selected assignment');
       }
     });
+  }
+
+  ngOnInit() {
+    this.busyService.start();
+    forkJoin([
+      this.loadRubrics(),
+      this.loadSettings()
+    ]).subscribe({
+      complete: () => {
+        this.busyService.stop();
+        this.subscribeToRoute();
+      },
+      error: () => this.busyService.stop()
+    });
+
+
   }
 
   private refresh(): void {

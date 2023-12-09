@@ -160,7 +160,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
                 settings.submissions = submissions;
                 return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
               });
-          } else if (req.sourceFormat === SourceFormat.SAKAI) {
+          } else if (req.sourceFormat === SourceFormat.SAKAI || req.sourceFormat === SourceFormat.SAKAI_GROUP) {
             promise = extractAssignmentZipFile(zipObject, workingDirectory + sep, newFolder, renameOld).then((submissions) => {
               settings.submissions = submissions;
               return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
@@ -235,13 +235,33 @@ export function validateZipFile(event: IpcMainInvokeEvent, file: string): Promis
   // 1) Sakai Student / Group
   // 2) Lecture Import
   // 3) Generic import
-  return validateZipAssignmentFile(file)
-    .then(v => {
-      if (v.valid){
-        return v;
-      }
-      return validateGenericZip(file)
-    })
+  return readZipFile(file).then((zip) => {
+    const format = detectZipFormat(zip);
+    if(format === "assignment"){
+      return validateZipAssignmentFile(zip);
+    } else {
+      return validateGenericZip(zip);
+    }
+  });
+}
+
+function detectZipFormat(zip: JSZip): "assignment" | "generic"{
+    const filePaths = Object.keys(zip.files);
+    const assignmentName = filePaths[0].split('/')[0];
+
+    // If there is a grades.csv file, it is a sakai or sakai group file
+    if (zip.files[assignmentName + '/' + GRADES_FILE]){
+      return "assignment"
+    }
+
+    // If there is a settings.json file, it is a marker import
+    if (zip.files[assignmentName + '/' + SETTING_FILE]){
+      return "assignment"
+    }
+
+    // Else it could be generic
+
+    return "generic";
 }
 
 function readZipFile(file: string): Promise<JSZip> {
@@ -250,8 +270,7 @@ function readZipFile(file: string): Promise<JSZip> {
     .catch(() => Promise.reject('Error trying to decipher zip file format validity!'));
 }
 
-function validateZipAssignmentFile(file: string): Promise<AssignmentImportValidateResultInfo> {
-  return readZipFile(file).then((zip) => {
+function validateZipAssignmentFile(zip: JSZip): Promise<AssignmentImportValidateResultInfo> {
     const filePaths = Object.keys(zip.files);
     const assignmentName = filePaths[0].split('/')[0];
 
@@ -341,11 +360,9 @@ function validateZipAssignmentFile(file: string): Promise<AssignmentImportValida
       // Could not find at least on sakai file
       return Promise.reject('Invalid zip format. Please select a file exported from Sakai');
     }
-  });
 }
 
-function validateGenericZip(file: string): Promise<AssignmentImportValidateResultInfo> {
-  return readZipFile(file).then((zip) => {
+function validateGenericZip(zip: JSZip): Promise<AssignmentImportValidateResultInfo> {
     const filePaths = Object.keys(zip.files).sort();
     for (const filePath of filePaths) {
       const path = filePath.split('/');
@@ -368,13 +385,13 @@ function validateGenericZip(file: string): Promise<AssignmentImportValidateResul
     }
 
     // Check if the file is a directory
-    return {
+    return Promise.resolve({
       sourceFormat: SourceFormat.GENERIC,
       hasRubric: false,
       distributionFormat: DistributionFormat.STANDALONE,
       valid: true
-    } as AssignmentImportValidateResultInfo;
-  });
+    } as AssignmentImportValidateResultInfo
+    );
 }
 
 

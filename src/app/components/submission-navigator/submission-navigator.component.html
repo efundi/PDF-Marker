@@ -26,10 +26,14 @@
       mat-button
       [disabled]="busy"
       [matMenuTriggerFor]="menu">
-      <div style="display: flex">
+      <div class="d-flex">
         <div style="flex-grow: 1;line-height: 2rem;height: 2.5rem; width: 185px; text-align: left">
           <div style="height: 1.5rem;white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{menuItems[activeIndex]?.studentFullName}}</div>
-          <small style="position: relative; top: -0.5rem;">{{menuItems[activeIndex]?.studentId}}</small>
+          <small
+            style="position: relative; top: -0.5rem;"
+            *ngIf="assignmentSettings?.sourceFormat !== SourceFormat.SAKAI_GROUP">
+            {{menuItems[activeIndex]?.studentId}}
+          </small>
         </div>
         <div style="display: flex; align-items: center;">
           <mat-icon>arrow_drop_down</mat-icon>
@@ -40,7 +44,11 @@
     <mat-menu #menu="matMenu">
       <ng-template matMenuContent>
         <ng-container *ngFor="let item of menuItems; let i = index">
-          <button mat-menu-item (click)="selectSubmission(i)" [class.selected]="i === activeIndex">
+          <button
+            mat-menu-item
+            (click)="selectSubmission(i)"
+            [class.selected]="i === activeIndex"
+            [class.no-id]="assignmentSettings?.sourceFormat === SourceFormat.SAKAI_GROUP">
             <div class="student-name">{{item.studentFullName}}</div>
             <small class="student-id">{{item.studentId}}</small>
           </button>
