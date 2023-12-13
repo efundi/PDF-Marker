@@ -181,7 +181,7 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
         return readStudentGradesFromFile(assignmentFolder + sep + GRADES_FILE).then((grades) => {
           let hasMarks = false;
           let isSakai = false;
-          grades.studentGrades.forEach((studentGrade) => {
+          grades.grades.forEach((studentGrade) => {
             const submission: Submission = find(migrationSettings.submissions, (submissionItem) => {
               return submissionItem.studentId.toUpperCase() === studentGrade.id.toUpperCase();
             });

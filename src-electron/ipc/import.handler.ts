@@ -573,7 +573,7 @@ function extractAssignmentZipFile(
       // Now that the workspace is extracted, read the grades file to sync to the submissions
       return readStudentGradesFromFile(backupDirPath + sep + GRADES_FILE)
         .then((grades) => {
-          forEach(grades.studentGrades, (studentGrade) => {
+          forEach(grades.grades, (studentGrade) => {
             const submission = find(submissions, {studentId: studentGrade.id});
             if (isNil(submission)) {
               LOG.warn(`Found student ID in grades.csv which is not in the assignment submissions list "${studentGrade.id}"`);

@@ -37,7 +37,7 @@ import {
 import {SubmissionInfo, SubmissionMarkType} from '@shared/info-objects/submission.info';
 import {getComments, updateCommentsFile} from './comment.handler';
 import {findRubric} from './rubric.handler';
-import {GradesCSV, StudentGrade, SubmissionType} from '@shared/info-objects/grades';
+import {GradesCSV, GradesSubmissionType, GroupGrade, StudentGrade} from '@shared/info-objects/grades';
 import {WorkerPool} from '../worker-pool';
 import {zipDir} from '../zip';
 import {
@@ -401,28 +401,44 @@ export function writeAssignmentSettingsFor(
  * Process raw csv data and build a <code>GradesCSV</code> object
  * @param data Raw array of table data.
  */
-function processGradesFile(data: any[]): GradesCSV<StudentGrade>{
-  const grades: GradesCSV<StudentGrade> = {
-    submissionType: SubmissionType.STUDENT,
-    studentGrades: [],
+function processGradesFile(data: any[]): GradesCSV<StudentGrade|GroupGrade>{
+
+  // If row 3 field 1 is "Group" it is a group assignment
+  const isGroup = data[2].field1 == "Group";
+
+  const grades: GradesCSV<StudentGrade|GroupGrade> = {
+    submissionType: isGroup ? GradesSubmissionType.GROUP : GradesSubmissionType.STUDENT,
+    grades: [],
     header: {
       gradeType: data[0].field2,
       assignmentName: data[0].field1
     }
   };
 
-  // Student data begins on row 4 (index 3)
+  // Grade data begins on row 4 (index 3)
   for (let index = 3; index < data.length; index++) {
-    grades.studentGrades.push({
-      submissionType: SubmissionType.STUDENT,
-      displayId: data[index].field1,
-      id: data[index].field2,
-      lastName: data[index].field3,
-      firstName: data[index].field4,
-      grade: data[index].field5 === '' ? null : +data[index].field5,
-      submissionDate: data[index].field6,
-      lateSubmission: data[index].field7
-    });
+
+    if (isGroup){
+      grades.grades.push({
+        submissionType: GradesSubmissionType.GROUP,
+        id: data[index].field2,
+        name: data[index].field1,
+        grade: data[index].field4 === '' ? null : +data[index].field4,
+        submissionDate: data[index].field5,
+        lateSubmission: data[index].field6,
+      } as GroupGrade);
+    } else {
+      grades.grades.push({
+        submissionType: GradesSubmissionType.STUDENT,
+        displayId: data[index].field1,
+        id: data[index].field2,
+        lastName: data[index].field3,
+        firstName: data[index].field4,
+        grade: data[index].field5 === '' ? null : +data[index].field5,
+        submissionDate: data[index].field6,
+        lateSubmission: data[index].field7
+      } as StudentGrade);
+    }
   }
 
   return grades;
@@ -430,7 +446,8 @@ function processGradesFile(data: any[]): GradesCSV<StudentGrade>{
 
 export function readStudentGradesFromFile(sourceFile: string): Promise<GradesCSV<StudentGrade>> {
   return readGradesFromFile(sourceFile)
-      .then((data) => processGradesFile(data), () => {
+      .then((data) => processGradesFile(data),
+        () => {
     return null;
   });
 }
@@ -470,7 +487,7 @@ function writeGradesCsv(outputFile: string, grades: GradesCSV<StudentGrade>): Pr
     field6: 'Submission date',
     field7: 'Late submission'
   });
-  forEach(grades.studentGrades, (studentGrade) => {
+  forEach(grades.grades, (studentGrade) => {
     gradesJSON.push({
       field1: studentGrade.displayId,
       field2: studentGrade.id,
@@ -503,8 +520,8 @@ function writeGrades(outputDirectory: string, submissions: Submission[], assignm
         promise = readStudentGradesFromFile(outputDirectory + sep + GRADES_FILE);
       } else {
         promise = Promise.resolve({
-          submissionType: SubmissionType.STUDENT,
-          studentGrades: [],
+          submissionType: GradesSubmissionType.STUDENT,
+          grades: [],
           header: {
             gradeType: 'SCORE_GRADE_TYPE',
             assignmentName: assignmentName
@@ -515,10 +532,10 @@ function writeGrades(outputDirectory: string, submissions: Submission[], assignm
 
         forEach(submissions, (submission) => {
           // Find existing student grade
-          let studentGrade: StudentGrade = find(grades.studentGrades, {id: submission.studentId}) as StudentGrade;
+          let studentGrade: StudentGrade = find(grades.grades, {id: submission.studentId}) as StudentGrade;
           if (isNil(studentGrade)) {
             studentGrade = {
-              submissionType: SubmissionType.STUDENT,
+              submissionType: GradesSubmissionType.STUDENT,
               displayId : submission.studentId,
               id : submission.studentId,
               firstName : submission.studentName,
@@ -527,7 +544,7 @@ function writeGrades(outputDirectory: string, submissions: Submission[], assignm
               lateSubmission: null,
               submissionDate: null
             };
-            grades.studentGrades.push(studentGrade);
+            grades.grades.push(studentGrade);
           }
           studentGrade.grade = submission.mark;
         });

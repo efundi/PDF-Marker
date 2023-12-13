@@ -3,15 +3,15 @@ export interface GradesHeader {
  gradeType: string;
 }
 
-export enum SubmissionType {
+export enum GradesSubmissionType {
   STUDENT ,
   GROUP
 }
 
 export interface GradesCSV<T extends Grade> {
   header: GradesHeader;
-  submissionType: SubmissionType;
-  studentGrades: T[];
+  submissionType: GradesSubmissionType;
+  grades: T[];
 }
 
 /**
@@ -20,7 +20,7 @@ export interface GradesCSV<T extends Grade> {
  */
 interface Grade {
   id: string;
-  submissionType : SubmissionType;
+  submissionType : GradesSubmissionType;
   grade: number;
   submissionDate: string;
   lateSubmission: string;
@@ -40,5 +40,4 @@ export interface StudentGrade extends Grade{
  */
 export interface GroupGrade extends Grade{
   name: string;
-  users: string[];
 }
