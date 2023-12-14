@@ -31,9 +31,8 @@ import JSZip, {JSZipObject} from 'jszip';
 import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspaceTreeNode';
 import {
-  getAssignmentSettingsFor,
+  getAssignmentSettingsFor, readGradesFromFile,
   readGradesFromZipFile,
-  readStudentGradesFromFile,
   writeAssignmentSettingsAt,
   writeAssignmentSettingsFor
 } from './assignment.handler';
@@ -571,15 +570,15 @@ function extractAssignmentZipFile(
   })
     .then(() => {
       // Now that the workspace is extracted, read the grades file to sync to the submissions
-      return readStudentGradesFromFile(backupDirPath + sep + GRADES_FILE)
+      return readGradesFromFile(backupDirPath + sep + GRADES_FILE)
         .then((grades) => {
-          forEach(grades.grades, (studentGrade) => {
-            const submission = find(submissions, {studentId: studentGrade.id});
+          forEach(grades.grades, (gradeItem) => {
+            const submission = find(submissions, {studentId: gradeItem.id});
             if (isNil(submission)) {
-              LOG.warn(`Found student ID in grades.csv which is not in the assignment submissions list "${studentGrade.id}"`);
+              LOG.warn(`Found student/group ID in grades.csv which is not in the assignment submissions list "${gradeItem.id}"`);
             } else {
-              submission.mark = studentGrade.grade;
-              submission.lmsStatusText = studentGrade.lateSubmission;
+              submission.mark = gradeItem.grade;
+              submission.lmsStatusText = gradeItem.lateSubmission;
             }
           });
         });

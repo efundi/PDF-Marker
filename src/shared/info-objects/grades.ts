@@ -40,4 +40,5 @@ export interface StudentGrade extends Grade{
  */
 export interface GroupGrade extends Grade{
   name: string;
+  users: string[]
 }

@@ -75,9 +75,11 @@ function upgradeAssignmentDirectory(assignmentFolder: string, version: number): 
     return Promise.resolve();
   }
 
-  let promise: Promise<any>;
+  let promise: Promise<any> = Promise.resolve()
   let currentVersion = version;
   if (isNil(currentVersion)) {
+    LOG.log(`Upgrading assignments to v1 at: ${assignmentFolder}`)
+    currentVersion = 1;
     const backupDir = assignmentFolder +  sep + ASSIGNMENT_BACKUP_DIR;
     promise = mkdir(backupDir)
       .then(() => {
@@ -106,11 +108,21 @@ function upgradeAssignmentDirectory(assignmentFolder: string, version: number): 
             }
           });
 
-          return Promise.all(promises);
+          return Promise.all(promises)
         });
       });
+  }
 
-    currentVersion = 1;
+
+  if (currentVersion < 2){
+    // Nothing to migrate for v2, only new enum values was added
+  }
+
+
+  if (currentVersion < 3){
+    // promise = promise.then(() => {
+    //   // Do migrations
+    // });
   }
 
   return promise.then(() => {
@@ -127,6 +139,7 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
   if (assignmentSettings.version !== AssignmentSettingsVersion) {
 
     if (!assignmentSettings.hasOwnProperty('version')) {
+      LOG.info(`Upgrading assignment settings to v1 at ${assignmentFolder}`);
       const isCreated: boolean = (migrationSettings as any).isCreated;
       delete (migrationSettings as any).isCreated;
       // This is the first upgrade, set all the new fields
@@ -219,19 +232,22 @@ function upgradeAssignmentSettings(assignmentFolder: string, assignmentSettings:
 
     }
 
-    /*
+
        if (assignmentSettings.version === 1) {
          // Convert to from v 1 to version 2
-         migrationSettings = assignmentSettingsV2;
-         promise = promise.then(() => writeAssignmentSettingsAt(migrationSettings, assignmentFolder));
+         promise = promise.then((settings) => {
+           LOG.info(`Upgrading assignment settings to v2 at ${assignmentFolder}`);
+           settings.version = 2
+           return writeAssignmentSettingsAt(settings, assignmentFolder)
+         });
        }
-
-       if (assignmentSettings.version === 2) {
-         // Convert to from v 2 to version 3
-         migrationSettings = assignmentSettingsV3;
-         promise = promise.then(() => writeAssignmentSettingsAt(migrationSettings, assignmentFolder));
-       }
-     */
+    /*
+          if (assignmentSettings.version === 2) {
+            // Convert to from v 2 to version 3
+            migrationSettings = assignmentSettingsV3;
+            promise = promise.then(() => writeAssignmentSettingsAt(migrationSettings, assignmentFolder));
+          }
+        */
   } else {
     LOG.debug('Assignment settings already in correct version');
   }

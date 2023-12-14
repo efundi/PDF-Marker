@@ -1,7 +1,11 @@
 import {IRubric} from './rubric.class';
 import {DEFAULT_COLOR} from '@shared/constants/constants';
 
-export const AssignmentSettingsVersion = 1;
+/**
+ * Current Assignment Settings version.
+ * Increment each time the structure, enums, etc changes
+ */
+export const AssignmentSettingsVersion = 2;
 
 /**
  * Format in which the assignment was imported/created

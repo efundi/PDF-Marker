@@ -4,7 +4,7 @@ import {getConfig} from './config.handler';
 import {checkAccess, isFolder, isJson} from '../utils';
 import {INVALID_STUDENT_FOLDER, WORKSPACE_DIR} from '../constants';
 import {basename, extname, join, sep} from 'path';
-import {json2csvAsync} from 'json-2-csv';
+import {json2csv} from 'json-2-csv';
 import {mkdir, readFile, rm, stat, writeFile} from 'fs/promises';
 import {cloneDeep, filter, find, findIndex, forEach, isNil, map, reduce, remove} from 'lodash';
 import {IpcMainInvokeEvent} from 'electron';
@@ -424,6 +424,7 @@ function processGradesFile(data: any[]): GradesCSV<StudentGrade|GroupGrade>{
         id: data[index].field2,
         name: data[index].field1,
         grade: data[index].field4 === '' ? null : +data[index].field4,
+        users: data[index].field3 === '' ? [] : data[index].field3.split(";"),
         submissionDate: data[index].field5,
         lateSubmission: data[index].field6,
       } as GroupGrade);
@@ -445,7 +446,15 @@ function processGradesFile(data: any[]): GradesCSV<StudentGrade|GroupGrade>{
 }
 
 export function readStudentGradesFromFile(sourceFile: string): Promise<GradesCSV<StudentGrade>> {
-  return readGradesFromFile(sourceFile)
+  return readGradesCsvFromFile(sourceFile)
+      .then((data) => processGradesFile(data),
+        () => {
+    return null;
+  });
+}
+
+export function readGradesFromFile(sourceFile: string): Promise<GradesCSV<StudentGrade|GroupGrade>> {
+  return readGradesCsvFromFile(sourceFile)
       .then((data) => processGradesFile(data),
         () => {
     return null;
@@ -460,16 +469,17 @@ export function readGradesFromZipFile(zipFile: JSZipObject): Promise<any[]> {
       .fromString(data.toString())
   });
 }
-export function readGradesFromFile(sourceFile: string): Promise<any[]> {
-  return stat(sourceFile).then(() => {
-    return csvtojson({noheader: true, trim: false})
-      .fromFile(sourceFile)
+function readGradesCsvFromFile(sourceFile: string): Promise<any[]> {
+  return stat(sourceFile)
+    .then(() =>  {
+      return csvtojson({noheader: true, trim: false})
+    .fromFile(sourceFile)
   }, () => {
     return null;
   });
 }
 
-function writeGradesCsv(outputFile: string, grades: GradesCSV<StudentGrade>): Promise<any> {
+function writeGradesCsv(outputFile: string, grades: GradesCSV<StudentGrade|GroupGrade>): Promise<any> {
   const gradesJSON = [];
   gradesJSON.push({
     field1: grades.header.assignmentName,
@@ -478,31 +488,61 @@ function writeGradesCsv(outputFile: string, grades: GradesCSV<StudentGrade>): Pr
   gradesJSON.push({
     field1: ''
   });
-  gradesJSON.push({
-    field1: 'Display ID',
-    field2: 'ID',
-    field3: 'Last Name',
-    field4: 'First Name',
-    field5: 'grade',
-    field6: 'Submission date',
-    field7: 'Late submission'
-  });
-  forEach(grades.grades, (studentGrade) => {
-    gradesJSON.push({
-      field1: studentGrade.displayId,
-      field2: studentGrade.id,
-      field3: studentGrade.lastName,
-      field4: studentGrade.firstName,
-      field5: studentGrade.grade,
-      field6: studentGrade.submissionDate,
-      field7: studentGrade.lastName,
-    });
-  });
 
-  return json2csvAsync(gradesJSON, {
+  if (grades.submissionType === GradesSubmissionType.STUDENT){
+    gradesJSON.push({
+      field1: 'Display ID',
+      field2: 'ID',
+      field3: 'Last Name',
+      field4: 'First Name',
+      field5: 'grade',
+      field6: 'Submission date',
+      field7: 'Late submission'
+    });
+
+    forEach(grades.grades as StudentGrade[], (studentGrade) => {
+      gradesJSON.push({
+        field1: studentGrade.displayId,
+        field2: studentGrade.id,
+        field3: studentGrade.lastName,
+        field4: studentGrade.firstName,
+        field5: studentGrade.grade,
+        field6: studentGrade.submissionDate,
+        field7: studentGrade.lateSubmission,
+      });
+    });
+  } else {
+    gradesJSON.push({
+      field1: 'Group',
+      field2: 'ID',
+      field3: 'Users',
+      field4: 'grade',
+      field5: 'Submission date',
+      field6: 'Late submission'
+    });
+
+    forEach(grades.grades as GroupGrade[], (studentGrade) => {
+      gradesJSON.push({
+        field1: studentGrade.name,
+        field2: studentGrade.id,
+        field3: studentGrade.users.join(";"),
+        field5: studentGrade.grade,
+        field6: studentGrade.submissionDate,
+        field7: studentGrade.lateSubmission,
+      });
+    });
+  }
+
+  return Promise.resolve(json2csv(gradesJSON, {
+    delimiter:{
+      field: ",",
+      eol: '\n',
+      wrap: "\'"
+    },
     emptyFieldValue: '',
-    prependHeader: false
-  })
+    prependHeader: false,
+
+  }))
     .then(csv => {
       return writeFile(outputFile, csv);
     }, (error) => {
@@ -511,16 +551,16 @@ function writeGradesCsv(outputFile: string, grades: GradesCSV<StudentGrade>): Pr
     });
 }
 
-function writeGrades(outputDirectory: string, submissions: Submission[], assignmentName: string): Promise<any> {
+function writeGrades(outputDirectory: string, assignmentSettings: AssignmentSettingsInfo, assignmentName: string): Promise<any> {
   return stat(outputDirectory + sep + GRADES_FILE)
     .then(_ => true, _ => false)
     .then((exists) => {
-      let promise: Promise<GradesCSV<StudentGrade>>;
+      let promise: Promise<GradesCSV<StudentGrade|GroupGrade>>;
       if (exists) {
-        promise = readStudentGradesFromFile(outputDirectory + sep + GRADES_FILE);
+        promise = readGradesFromFile(outputDirectory + sep + GRADES_FILE);
       } else {
         promise = Promise.resolve({
-          submissionType: GradesSubmissionType.STUDENT,
+          submissionType: assignmentSettings.sourceFormat == SourceFormat.SAKAI_GROUP ? GradesSubmissionType.GROUP : GradesSubmissionType.STUDENT,
           grades: [],
           header: {
             gradeType: 'SCORE_GRADE_TYPE',
@@ -529,13 +569,12 @@ function writeGrades(outputDirectory: string, submissions: Submission[], assignm
         });
       }
       return promise.then((grades) => {
-
-        forEach(submissions, (submission) => {
+        forEach(assignmentSettings.submissions, (submission) => {
           // Find existing student grade
-          let studentGrade: StudentGrade = find(grades.grades, {id: submission.studentId}) as StudentGrade;
+          let studentGrade = find(grades.grades, {id: submission.studentId}) as StudentGrade | GroupGrade;
           if (isNil(studentGrade)) {
             studentGrade = {
-              submissionType: GradesSubmissionType.STUDENT,
+              submissionType: grades.submissionType,
               displayId : submission.studentId,
               id : submission.studentId,
               firstName : submission.studentName,
@@ -637,7 +676,7 @@ export function finalizeAssignment(
             }
           );
         })
-        .then(() => writeGrades(exportTempDirectory, assignmentSettings.submissions, assignmentName))
+        .then(() => writeGrades(exportTempDirectory, assignmentSettings, assignmentName))
         .then(() => zipDir(tempDirectory, zipFilePath))
         .then((outputPath) => {
           return rm(tempDirectory, {recursive: true}).then(() => outputPath);
