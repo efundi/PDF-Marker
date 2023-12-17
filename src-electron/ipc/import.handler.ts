@@ -2,7 +2,7 @@ import {createWriteStream, existsSync, mkdirSync} from 'fs';
 import * as glob from 'glob';
 import {basename, dirname, extname, sep} from 'path';
 import {
-  AssignmentSettingsInfo,
+  AssignmentSettingsInfo, AssignmentSettingsVersion,
   AssignmentState,
   DEFAULT_ASSIGNMENT_SETTINGS,
   DistributionFormat,
@@ -58,6 +58,9 @@ import {emptyDir} from 'fs-extra';
 
 const logger = require('electron-log');
 const LOG = logger.scope('ImportHandler');
+
+const IMPORT_ASSIGNMENT_SETTINGS_OUTDATED = "Assignment exported from an outdated and incompatible application version.";
+const IMPORT_ASSIGNMENT_SETTINGS_FUTUREDATED = "Assignment exported from an newer and incompatible application version.";
 /**
  * Returns a list of existing folders in the workspace
  * @param workspace
@@ -139,7 +142,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
 
 
         const assignmentDirectory = basename(newFolder);
-        let rubricIndex;
+        let rubricIndex: number;
         let settings: AssignmentSettingsInfo;
         // Default settings for the new assignment
         if (req.distributionFormat !== DistributionFormat.DISTRIBUTED) {
@@ -292,6 +295,13 @@ function validateZipAssignmentFile(zip: JSZip): Promise<AssignmentImportValidate
       const settingsFileZip: JSZipObject = zip.files[assignmentName + '/' + SETTING_FILE];
       // If the zip contains a settings file, we must check if it is for this marker
       return extractAssignmentSettings(settingsFileZip).then((zipAssignmentSettings) => {
+
+        if (zipAssignmentSettings.version < AssignmentSettingsVersion) {
+          return Promise.reject(IMPORT_ASSIGNMENT_SETTINGS_OUTDATED);
+        }
+        if (zipAssignmentSettings.version > AssignmentSettingsVersion) {
+          return Promise.reject(IMPORT_ASSIGNMENT_SETTINGS_FUTUREDATED);
+        }
         if (zipAssignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
           return Promise.reject('Assignment is not in the expected distribution type.');
         }
@@ -731,6 +741,12 @@ export function validateLectureImport(event: IpcMainInvokeEvent, importInfo: Lec
       }
       return extractAssignmentSettings(settingsFileZip).then((zipAssignmentSettings) => {
 
+        if (zipAssignmentSettings.version < AssignmentSettingsVersion) {
+          return Promise.reject(IMPORT_ASSIGNMENT_SETTINGS_OUTDATED);
+        }
+        if (zipAssignmentSettings.version > AssignmentSettingsVersion) {
+          return Promise.reject(IMPORT_ASSIGNMENT_SETTINGS_FUTUREDATED);
+        }
         if (zipAssignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
           return Promise.reject('Assignment is not in the expected distribution type.');
         }
