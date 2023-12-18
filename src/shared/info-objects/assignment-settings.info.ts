@@ -26,9 +26,9 @@ export enum SourceFormat {
 
 export const SourceFormatDescriptions = {
   [SourceFormat.MANUAL]: "Manually created assignment",
-  [SourceFormat.SAKAI] : "Sakai student submissions",
-  [SourceFormat.SAKAI_GROUP] : "Sakai group submissions",
-  [SourceFormat.GENERIC] : "Generic submissions",
+  [SourceFormat.SAKAI] : "Sakai Single student submissions format",
+  [SourceFormat.SAKAI_GROUP] : "Sakai Group submissions format",
+  [SourceFormat.GENERIC] : "Generic format",
 }
 
 export function getSourceFormatDescription(sourceFormat: SourceFormat): string {
