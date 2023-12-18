@@ -60,7 +60,7 @@ const logger = require('electron-log');
 const LOG = logger.scope('ImportHandler');
 
 const IMPORT_ASSIGNMENT_SETTINGS_OUTDATED = "Assignment exported from an outdated and incompatible application version.";
-const IMPORT_ASSIGNMENT_SETTINGS_FUTUREDATED = "Assignment exported from an newer and incompatible application version.";
+const IMPORT_ASSIGNMENT_SETTINGS_FUTUREDATED = "Assignment exported from a newer and incompatible application version.";
 /**
  * Returns a list of existing folders in the workspace
  * @param workspace
