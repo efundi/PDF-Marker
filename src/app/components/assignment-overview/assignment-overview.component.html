@@ -139,7 +139,7 @@
     </ng-container>
 
     <ng-container matColumnDef="fullName">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header="fullName"> Student Name </th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="fullName"> Name </th>
       <td mat-cell *matCellDef="let element" >
         <div
           class="pdf-marker-assignment-overview-student-name"
@@ -147,7 +147,11 @@
           [class.no-submission]="element.state === SubmissionState.NO_SUBMISSION"
           (click)="onSelectedPdf(element)">{{element.fullName}}
         </div>
-        <div class="pdf-marker-assignment-overview-student-number">{{element.studentNumber}}</div>
+        <div
+          *ngIf="assignmentSettings?.sourceFormat !== SourceFormat.SAKAI_GROUP"
+          class="pdf-marker-assignment-overview-student-number">
+          {{element.studentNumber}}
+        </div>
       </td>
     </ng-container>
 

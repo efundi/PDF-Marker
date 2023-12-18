@@ -6,7 +6,7 @@ import {MarkInfo} from "@shared/info-objects/mark.info";
  */
 export const SubmissionInfoVersion = 1;
 
-export enum SubmissionType {
+export enum SubmissionMarkType {
  MARK = 'MARK',
  RUBRIC = 'RUBRIC'
 }
@@ -16,7 +16,7 @@ export interface PageSettings {
 }
 
 export class SubmissionInfo {
-  type: SubmissionType;
+  type: SubmissionMarkType;
   version = SubmissionInfoVersion;
   pageSettings: PageSettings[] = [];
   marks: number[] | MarkInfo[][] = [];
@@ -27,7 +27,7 @@ export class SubmissionInfo {
 }
 
 export class RubricSubmissionInfo extends SubmissionInfo {
-  type = SubmissionType.RUBRIC;
+  type = SubmissionMarkType.RUBRIC;
   marks: number[] = [];
 
   constructor(version: number = SubmissionInfoVersion) {
@@ -36,7 +36,7 @@ export class RubricSubmissionInfo extends SubmissionInfo {
 }
 
 export class MarkingSubmissionInfo extends SubmissionInfo {
-  type = SubmissionType.MARK;
+  type = SubmissionMarkType.MARK;
   marks: MarkInfo[][] = [];
 
   constructor(version: number = SubmissionInfoVersion) {

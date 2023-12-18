@@ -1,12 +1,38 @@
 import {IRubric} from './rubric.class';
 import {DEFAULT_COLOR} from '@shared/constants/constants';
 
-export const AssignmentSettingsVersion = 1;
+/**
+ * Current Assignment Settings version.
+ * Increment each time the structure, enums, etc changes
+ */
+export const AssignmentSettingsVersion = 2;
 
+/**
+ * Format in which the assignment was imported/created
+ */
 export enum SourceFormat {
+  /** Manually created assignment by uploading PDFs */
   MANUAL = 'MANUAL',
+
+  /** Sakai Student submissions assignment */
   SAKAI = 'SAKAI',
+
+  /** Sakai Group submission assignment */
+  SAKAI_GROUP = 'SAKAI_GROUP',
+
+  /** Generic zip file containing student submissions */
   GENERIC = 'GENERIC',
+}
+
+export const SourceFormatDescriptions = {
+  [SourceFormat.MANUAL]: "Manually created assignment",
+  [SourceFormat.SAKAI] : "Sakai Single student submissions format",
+  [SourceFormat.SAKAI_GROUP] : "Sakai Group submissions format",
+  [SourceFormat.GENERIC] : "Generic format",
+}
+
+export function getSourceFormatDescription(sourceFormat: SourceFormat): string {
+  return SourceFormatDescriptions[sourceFormat];
 }
 
 /**
@@ -94,7 +120,8 @@ export enum SubmissionState {
   NOT_MARKED = 'NOT_MARKED',
 
   /**
-   * An assignment with empty submissions, does not make sense to zip them for marking or allocate them. Also can’t mark them so the states will not update to 'Marked'.
+   * An assignment with empty submissions, does not make sense to zip them for marking or allocate them.
+   * Also can’t mark them so the states will not update to 'Marked'.
    * text: 'No submission'
    */
   NO_SUBMISSION = 'NO_SUBMISSION',

@@ -9,10 +9,10 @@ import {SelectedSubmission} from '../../info-objects/selected-submission';
 import {SettingsService} from '../../services/settings.service';
 import {SubmissionNavigationService} from '../../services/submission-navigation.service';
 import {
-  AssignmentSettingsInfo,
-  DistributionFormat,
-  Submission,
-  SubmissionState
+    AssignmentSettingsInfo,
+    DistributionFormat, SourceFormat,
+    Submission,
+    SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {SubmissionInfo} from '@shared/info-objects/submission.info';
@@ -69,7 +69,7 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
    */
   menuItems: SubmissionItem[] = [];
 
-  private assignmentSettings: AssignmentSettingsInfo;
+  assignmentSettings: AssignmentSettingsInfo;
 
   /**
    * Subscription listening for the active submission
@@ -232,8 +232,19 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
         return null;
       }
 
+      let fullName = "";
+      if (!isNil(submission.studentSurname)){
+        fullName = submission.studentSurname;
+
+        if(!isNil(submission.studentName)){
+          fullName += ", "
+        }
+      }
+      if (!isNil(submission.studentName)){
+        fullName += submission.studentName;
+      }
       return {
-        studentFullName: submission.studentSurname + (isNil(submission.studentName) ? '' : ', ' + submission.studentName),
+        studentFullName: fullName,
         studentId: submission.studentId,
         pdfFile: submissionFile
       };
@@ -290,4 +301,5 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
     this.appService.createDialog(PreviewMarksComponent, config);
   }
 
+    protected readonly SourceFormat = SourceFormat;
 }

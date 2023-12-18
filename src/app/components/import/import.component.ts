@@ -15,10 +15,11 @@ import {forkJoin, Observable, Subscription, tap, throwError} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 import {DEFAULT_WORKSPACE} from '@shared/constants/constants';
 import {isNil} from 'lodash';
-import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
+import {AssignmentImportValidateResultInfo} from '@shared/info-objects/assignment-import-validate-result.info';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {Router} from '@angular/router';
 import {PdfmUtilsService} from '../../services/pdfm-utils.service';
+import {DistributionFormat, getSourceFormatDescription} from "@shared/info-objects/assignment-settings.info";
 
 @Component({
   selector: 'pdf-marker-import',
@@ -32,7 +33,6 @@ export class ImportComponent implements OnInit, OnDestroy {
   isFileLoaded = false;
 
   importForm: FormGroup<{
-    assignmentType: FormControl<string>,
     assignmentZipFileText: FormControl<string>,
     assignmentName: FormControl<string>,
     workspaceFolder: FormControl<string>,
@@ -50,11 +50,12 @@ export class ImportComponent implements OnInit, OnDestroy {
   selected: string;
 
   private actualFilePath: string;
-  assignmentTypes = [
-    {'name': 'Assignment'},
-    {'name': 'Generic'}];
-  ZipFileType = ZipFileType;
-  assignmentValidateResultInfo: AssignmentValidateResultInfo;
+  assignmentValidateResultInfo: AssignmentImportValidateResultInfo;
+
+  /**
+   * Description of the source type that is imported
+   */
+  sourceFormatDescription = '';
 
   private static getAssignmentNameFromFilename(filename: string): string {
     return filename.replace(/\.[^/.]+$/, '');
@@ -118,17 +119,11 @@ export class ImportComponent implements OnInit, OnDestroy {
 
   private initForm() {
     this.importForm = this.fb.group({
-      assignmentType: [this.assignmentTypes[0].name],
       assignmentZipFileText: [null as string],
       assignmentName: [null as string],
       workspaceFolder: [null as string, Validators.required],
       rubric: ['']
     });
-
-    this.formSubscriptions.push(this.importForm.controls.assignmentType.valueChanges.subscribe((type) => {
-        this.validateZipFile(this.actualFilePath, type);
-      })
-    );
 
   }
 
@@ -157,11 +152,11 @@ export class ImportComponent implements OnInit, OnDestroy {
       assignmentZipFileText: (appSelectedPathInfo) ? appSelectedPathInfo.basename : '',
       assignmentName: appSelectedPathInfo ? ImportComponent.getAssignmentNameFromFilename(appSelectedPathInfo.fileName) : ''
     });
-    this.validateZipFile(this.actualFilePath, this.importForm.value.assignmentType);
+    this.validateZipFile(this.actualFilePath);
   }
 
-  private validateZipFile(file: string, type: string): void {
-    if (isNil(file) || isNil(type)) {
+  private validateZipFile(file: string): void {
+    if (isNil(file)) {
       // Can't validate without these
       this.assignmentValidateResultInfo = null;
       return;
@@ -169,10 +164,11 @@ export class ImportComponent implements OnInit, OnDestroy {
 
     this.busyService.start();
     this.alertService.clear();
-    this.importService.validateZipFile(file, type).subscribe({
+    this.importService.validateZipFile(file).subscribe({
       next: (assignmentValidateResultInfo) => {
         this.assignmentValidateResultInfo = assignmentValidateResultInfo;
-        if (assignmentValidateResultInfo.zipFileType === ZipFileType.MARKER_IMPORT) {
+        this.sourceFormatDescription = getSourceFormatDescription(assignmentValidateResultInfo.sourceFormat)
+        if (assignmentValidateResultInfo.distributionFormat === DistributionFormat.DISTRIBUTED) {
           this.importForm.controls.rubric.disable();
         } else {
           this.importForm.controls.rubric.enable();
@@ -219,7 +215,8 @@ export class ImportComponent implements OnInit, OnDestroy {
       workspace: formValue.workspaceFolder,
       rubricName: formValue.rubric === '' ? null : formValue.rubric,
       assignmentName: formValue.assignmentName,
-      zipFileType: this.assignmentValidateResultInfo.zipFileType
+      sourceFormat: this.assignmentValidateResultInfo.sourceFormat,
+      distributionFormat: this.assignmentValidateResultInfo.distributionFormat
     };
     this.busyService.start();
     this.importService.importAssignmentFile(importData).subscribe({

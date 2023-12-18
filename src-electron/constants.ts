@@ -24,9 +24,9 @@ export const INVALID_STUDENT_FOLDER = 'Invalid student folder';
 export const COULD_NOT_READ_COMMENT_LIST = 'Could not read list of comments!';
 
 export const HIGHLIGHT_HEIGHT = 20;
-export const STUDENT_DIRECTORY_ID_REGEX = /.*\((.+)\)/;
-export const STUDENT_DIRECTORY_REGEX = /(.*), (.*)\((.+)\)/;
-export const STUDENT_DIRECTORY_NO_NAME_REGEX = /(.*),\((.+)\)/;
+export const GROUP_DIRECTORY_REGEX = /(.+) \((.+)\)/;
+export const STUDENT_DIRECTORY_REGEX = /(.+), (.+)\((.+)\)/;
+export const STUDENT_DIRECTORY_NO_NAME_REGEX = /(.+),\((.+)\)/;
 
 // export const SPECIAL_CHARS = /[`!@#$%^&*+=\[\]{};':"|<>?~]/;
 export const SPECIAL_CHARS = /[`*\[\]':"\\|<>?]/;

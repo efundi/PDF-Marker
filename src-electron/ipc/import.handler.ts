@@ -2,7 +2,7 @@ import {createWriteStream, existsSync, mkdirSync} from 'fs';
 import * as glob from 'glob';
 import {basename, dirname, extname, sep} from 'path';
 import {
-  AssignmentSettingsInfo,
+  AssignmentSettingsInfo, AssignmentSettingsVersion,
   AssignmentState,
   DEFAULT_ASSIGNMENT_SETTINGS,
   DistributionFormat,
@@ -17,9 +17,12 @@ import {mkdir, readFile, stat, writeFile} from 'fs/promises';
 import {getRubrics, markRubricInUse} from './rubric.handler';
 import {
   EXTRACTED_ZIP_BUT_FAILED_TO_WRITE_TO_RUBRIC,
-  NOT_PROVIDED_RUBRIC, SPECIAL_CHARS,
+  GROUP_DIRECTORY_REGEX,
+  NOT_PROVIDED_RUBRIC,
+  SPECIAL_CHARS,
   STUDENT_DIRECTORY_NO_NAME_REGEX,
-  STUDENT_DIRECTORY_REGEX, WHITESPACE_CHARS
+  STUDENT_DIRECTORY_REGEX,
+  WHITESPACE_CHARS
 } from '../constants';
 import {IRubric} from '@shared/info-objects/rubric.class';
 import {deleteFolderRecursive, isFolder, isNullOrUndefinedOrEmpty, stream2buffer} from '../utils';
@@ -28,8 +31,8 @@ import JSZip, {JSZipObject} from 'jszip';
 import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspaceTreeNode';
 import {
-  getAssignmentSettingsFor,
-  readGradesCsv,
+  getAssignmentSettingsFor, readGradesFromFile,
+  readGradesFromZipFile,
   writeAssignmentSettingsAt,
   writeAssignmentSettingsFor
 } from './assignment.handler';
@@ -37,20 +40,27 @@ import {getConfig} from './config.handler';
 import {
   ASSIGNMENT_BACKUP_DIR,
   ASSIGNMENT_ROOT_FILES,
-  FEEDBACK_FOLDER, FEEDBACK_ZIP_DIR_REGEX,
+  FEEDBACK_FOLDER,
+  FEEDBACK_ZIP_DIR_REGEX,
   FEEDBACK_ZIP_ENTRY_REGEX,
   GRADES_FILE,
   MARK_FILE,
   SETTING_FILE,
-  SUBMISSION_FOLDER, SUBMISSION_ZIP_DIR_REGEX,
-  SUBMISSION_ZIP_ENTRY_REGEX, SUPPORTED_SUBMISSION_EXTENSIONS,
+  SUBMISSION_FOLDER,
+  SUBMISSION_ZIP_DIR_REGEX,
+  SUBMISSION_ZIP_ENTRY_REGEX,
+  SUPPORTED_SUBMISSION_EXTENSIONS,
   uuidv4
 } from '@shared/constants/constants';
-import {AssignmentValidateResultInfo, ZipFileType} from '@shared/info-objects/assignment-validate-result.info';
+import {AssignmentImportValidateResultInfo,} from '@shared/info-objects/assignment-import-validate-result.info';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 import {emptyDir} from 'fs-extra';
+
 const logger = require('electron-log');
 const LOG = logger.scope('ImportHandler');
+
+const IMPORT_ASSIGNMENT_SETTINGS_OUTDATED = "Assignment exported from an outdated and incompatible application version.";
+const IMPORT_ASSIGNMENT_SETTINGS_FUTUREDATED = "Assignment exported from an newer and incompatible application version.";
 /**
  * Returns a list of existing folders in the workspace
  * @param workspace
@@ -76,7 +86,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
     return Promise.reject('No file selected!');
   }
   let rubricName;
-  if (!isNil(req.rubricName) && req.zipFileType !== ZipFileType.MARKER_IMPORT) {
+  if (!isNil(req.rubricName) && req.distributionFormat !== DistributionFormat.DISTRIBUTED) {
     // If it is not a marker import, and a rubric is required, the rubric name must be provide
     if (isNil(req.rubricName)) {
       return Promise.reject(NOT_PROVIDED_RUBRIC);
@@ -132,29 +142,27 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
 
 
         const assignmentDirectory = basename(newFolder);
-        let rubricIndex;
+        let rubricIndex: number;
         let settings: AssignmentSettingsInfo;
         // Default settings for the new assignment
-        if (req.zipFileType !== ZipFileType.MARKER_IMPORT) {
+        if (req.distributionFormat !== DistributionFormat.DISTRIBUTED) {
           settings = cloneDeep(DEFAULT_ASSIGNMENT_SETTINGS);
           rubricIndex = rubrics.findIndex(r => r.name === rubricName);
           settings.rubric =  rubrics[rubricIndex] || null;
           settings.assignmentName = req.assignmentName;
           settings.sourceId = uuidv4();
+          settings.sourceFormat = req.sourceFormat;
         }
         return getWorkingDirectoryAbsolutePath(req.workspace).then((workingDirectory) => {
 
           let promise: Promise<any>;
-          if (req.zipFileType === ZipFileType.GENERIC_IMPORT) {
-            settings.sourceFormat = SourceFormat.GENERIC;
+          if (req.sourceFormat === SourceFormat.GENERIC) {
             promise = extractGenericImport(zipObject, workingDirectory + sep, newFolder, renameOld)
               .then((submissions) => {
                 settings.submissions = submissions;
                 return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
               });
-
-          } else if (req.zipFileType === ZipFileType.ASSIGNMENT_IMPORT) {
-            settings.sourceFormat = SourceFormat.SAKAI;
+          } else if (req.sourceFormat === SourceFormat.SAKAI || req.sourceFormat === SourceFormat.SAKAI_GROUP) {
             promise = extractAssignmentZipFile(zipObject, workingDirectory + sep, newFolder, renameOld).then((submissions) => {
               settings.submissions = submissions;
               return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
@@ -219,12 +227,43 @@ export function getZipEntries(event: IpcMainInvokeEvent, file: string): Promise<
 }
 
 
-export function validateZipFile(event: IpcMainInvokeEvent, file: string, format: string): Promise<AssignmentValidateResultInfo> {
-  if (format === 'Assignment') {
-    return validateZipAssignmentFile(file);
-  } else {
-    return validateGenericZip(file);
+/**
+ * Validate the zip file and detect the format.
+ * @param event
+ * @param file
+ */
+export function validateZipFile(event: IpcMainInvokeEvent, file: string): Promise<AssignmentImportValidateResultInfo> {
+  // Validate in the order of most likelyness
+  // 1) Sakai Student / Group
+  // 2) Lecture Import
+  // 3) Generic import
+  return readZipFile(file).then((zip) => {
+    const format = detectZipFormat(zip);
+    if(format === "assignment"){
+      return validateZipAssignmentFile(zip);
+    } else {
+      return validateGenericZip(zip);
+    }
+  });
+}
+
+function detectZipFormat(zip: JSZip): "assignment" | "generic"{
+  const filePaths = Object.keys(zip.files);
+  const assignmentName = filePaths[0].split('/')[0];
+
+  // If there is a grades.csv file, it is a sakai or sakai group file
+  if (zip.files[assignmentName + '/' + GRADES_FILE]){
+    return "assignment"
   }
+
+  // If there is a settings.json file, it is a marker import
+  if (zip.files[assignmentName + '/' + SETTING_FILE]){
+    return "assignment"
+  }
+
+  // Else it could be generic
+
+  return "generic";
 }
 
 function readZipFile(file: string): Promise<JSZip> {
@@ -233,107 +272,141 @@ function readZipFile(file: string): Promise<JSZip> {
     .catch(() => Promise.reject('Error trying to decipher zip file format validity!'));
 }
 
-function validateZipAssignmentFile(file: string): Promise<AssignmentValidateResultInfo> {
-  return readZipFile(file).then((zip) => {
-    const filePaths = Object.keys(zip.files);
-    const assignmentName = filePaths[0].split('/')[0];
+function validateZipAssignmentFile(zip: JSZip): Promise<AssignmentImportValidateResultInfo> {
+  const filePaths = Object.keys(zip.files);
+  const assignmentName = filePaths[0].split('/')[0];
 
-    if (assignmentName.match(SPECIAL_CHARS) || hasWhiteSpace(assignmentName)) {
-      // Check that the Assignment Name does not have special chars or whitespaces
-      return Promise.reject(`File is corrupt, contains special chars or whitespaces that are not allowed.`);
+  if (assignmentName.match(SPECIAL_CHARS) || hasWhiteSpace(assignmentName)) {
+    // Check that the Assignment Name does not have special chars or whitespaces
+    return Promise.reject(`File is corrupt, contains special chars or whitespaces that are not allowed.`);
+  }
+
+  for (const filePath of filePaths) {
+    const path = filePath.split('/');
+
+    // Check if the path has any special chars or whitespaces that are not allowed
+    if (path[0] !== undefined && (path[0].match(SPECIAL_CHARS) || hasWhiteSpace(path[0]))) {
+      // Check that the second path does not have special chars or whitespaces
+      return Promise.reject(`Path contains special chars or whitespaces that are not allowed. ${filePath}`);
     }
+  }
 
-    for (const filePath of filePaths) {
-      const path = filePath.split('/');
+  if (zip.files[assignmentName + '/' + SETTING_FILE]) {
+    const settingsFileZip: JSZipObject = zip.files[assignmentName + '/' + SETTING_FILE];
+    // If the zip contains a settings file, we must check if it is for this marker
+    return extractAssignmentSettings(settingsFileZip).then((zipAssignmentSettings) => {
 
-      // Check if the path has any special chars or whitespaces that are not allowed
-      if (path[0] !== undefined && (path[0].match(SPECIAL_CHARS) || hasWhiteSpace(path[0]))) {
-        // Check that the second path does not have special chars or whitespaces
-        return Promise.reject(`Path contains special chars or whitespaces that are not allowed. ${filePath}`);
+      if (zipAssignmentSettings.version < AssignmentSettingsVersion) {
+        return Promise.reject(IMPORT_ASSIGNMENT_SETTINGS_OUTDATED);
       }
-    }
-
-    if (zip.files[assignmentName + '/' + SETTING_FILE]) {
-      const settingsFileZip: JSZipObject = zip.files[assignmentName + '/' + SETTING_FILE];
-      // If the zip contains a settings file, we must check if it is for this marker
-      return extractAssignmentSettings(settingsFileZip).then((zipAssignmentSettings) => {
-        if (zipAssignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
-          return Promise.reject('Assignment is not in the expected distribution type.');
+      if (zipAssignmentSettings.version > AssignmentSettingsVersion) {
+        return Promise.reject(IMPORT_ASSIGNMENT_SETTINGS_FUTUREDATED);
+      }
+      if (zipAssignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
+        return Promise.reject('Assignment is not in the expected distribution format.');
+      }
+      if (zipAssignmentSettings.state !== AssignmentState.NOT_STARTED) {
+        return Promise.reject('Assignment is not in the expected state.');
+      }
+      return getConfig().then((config) => {
+        const user = config.user;
+        if (isNullOrUndefinedOrEmpty(user.email)) {
+          return Promise.reject('Please configure your email before attempting to import for marking.');
         }
-        if (zipAssignmentSettings.state !== AssignmentState.NOT_STARTED) {
-          return Promise.reject('Assignment is not in the expected state.');
+
+        // Check that all the submissions are for this marker
+        const allSubmissionMatch = every(zipAssignmentSettings.submissions, (submission) => {
+          return submission.allocation && submission.allocation.email === user.email;
+        });
+
+        if (!allSubmissionMatch) {
+          return Promise.reject('This assignment has not been assigned to you for marking. Please contact ' +
+            zipAssignmentSettings.owner.email);
         }
-        return getConfig().then((config) => {
-          const user = config.user;
-          if (isNullOrUndefinedOrEmpty(user.email)) {
-            return Promise.reject('Please configure your email before attempting to import for marking.');
-          }
 
-          // Check that all the submissions are for this marker
-          const allSubmissionMatch = every(zipAssignmentSettings.submissions, (submission) => {
-            return submission.allocation && submission.allocation.email === user.email;
-          });
-
-          if (!allSubmissionMatch) {
-            return Promise.reject('This assignment has not been assigned to you for marking. Please contact ' +
-              zipAssignmentSettings.owner.email);
-          }
-
-          return validatePdfmWorkspaceZip(zip, zipAssignmentSettings).then(() => {
-            return {
-              zipFileType: ZipFileType.MARKER_IMPORT,
-              hasRubric: !isNil(zipAssignmentSettings.rubric)
-            };
-          });
+        return validatePdfmWorkspaceZip(zip, zipAssignmentSettings).then(() => {
+          return {
+            sourceFormat: zipAssignmentSettings.sourceFormat ,
+            hasRubric: !isNil(zipAssignmentSettings.rubric),
+            valid: true,
+            distributionFormat: DistributionFormat.DISTRIBUTED
+          } as AssignmentImportValidateResultInfo;
         });
       });
-    } else {
+    });
+  } else {
 
-      for (const filePath of filePaths) {
-        const path = filePath.split('/');
-        if (path[1] !== undefined && ASSIGNMENT_ROOT_FILES.indexOf(path[1]) !== -1) {
-          return {
-            zipFileType: ZipFileType.ASSIGNMENT_IMPORT,
-            hasRubric: false
-          };
-        }
-      }
-
-      // Could not find at least on sakai file
-      return Promise.reject('Invalid zip format. Please select a file exported from Sakai');
-    }
-  });
-}
-
-function validateGenericZip(file: string): Promise<AssignmentValidateResultInfo> {
-  return readZipFile(file).then((zip) => {
-    const filePaths = Object.keys(zip.files).sort();
+    var isSakai = false;
     for (const filePath of filePaths) {
       const path = filePath.split('/');
-
-      // Check if the path has any special chars or whitespaces that are not allowed
-      if (path[0] !== undefined && (path[0] .match(SPECIAL_CHARS) || hasWhiteSpace(path[0]))) {
-        // Check that the second path does not have special chars or whitespaces
-        return Promise.reject(`Path contains special chars or whitespaces that are not allowed. ${filePath}`);
-      }
-
-      // Check if it is a sakai file
       if (path[1] !== undefined && ASSIGNMENT_ROOT_FILES.indexOf(path[1]) !== -1) {
-        return Promise.reject('Invalid zip format. Please select a file in the generic import format');
-      }
-
-      if (path.length > 2) {
-        // Too many nested directories
-        return Promise.reject('Invalid zip format. Please select a file in the generic import format');
+        isSakai = true;
+        break;
       }
     }
 
-    // Check if the file is a directory
-    return {
-      zipFileType: ZipFileType.GENERIC_IMPORT,
-      hasRubric: false
-    };
+
+    if (isSakai){
+      // Now that we know it is Sakai, check if it is a group or student assignment by reading the grades.csv
+      const gradesZipFile: JSZipObject = zip.files[assignmentName + '/' + GRADES_FILE]
+      if (gradesZipFile) {
+        ``
+        return readGradesFromZipFile(gradesZipFile).then(data => {
+          // If row 3 field 1 is "Group" it is a group assignment
+          const isGroup = data[2].field1 == "Group";
+          return {
+            sourceFormat: isGroup ? SourceFormat.SAKAI_GROUP : SourceFormat.SAKAI,
+            hasRubric: false,
+            valid: true,
+            distributionFormat: DistributionFormat.STANDALONE
+          } as AssignmentImportValidateResultInfo;
+        })
+      } else {
+        return Promise.reject('Invalid zip format, grades.csv file missing. Please select a file exported from Sakai');
+      }
+    }
+
+    // Could not find at least on sakai file
+    return Promise.reject('Invalid zip format. Please select a file exported from Sakai');
+  }
+}
+
+function validateGenericZip(zip: JSZip): Promise<AssignmentImportValidateResultInfo> {
+  // Check if the file is a directory
+  let promise = Promise.resolve({
+      sourceFormat: SourceFormat.GENERIC,
+      hasRubric: false,
+      distributionFormat: DistributionFormat.STANDALONE,
+      valid: true
+    } as AssignmentImportValidateResultInfo
+  );
+
+  let rootDirectory = null;
+  forEach(zip.files, (file: JSZipObject) => {
+    const path = file.name.split('/');
+    // Check if the path has any special chars or whitespaces that are not allowed
+    if (path[0] !== undefined && (path[0].match(SPECIAL_CHARS) || hasWhiteSpace(path[0]))) {
+      // Check that the second path does not have special chars or whitespaces
+      promise = Promise.reject(`Path contains special chars or whitespaces that are not allowed.`);
+      return false; // Stop looping
+    }
+
+    // Generic zips have one root directory containing the submissions
+    if (isNil(rootDirectory)){
+      rootDirectory = path[0];
+    } else if (rootDirectory !== path[0]){
+      promise = Promise.reject('Invalid zip format. Please select a file in an accepted import format.');
+      return false; // Stop looping
+    }
+
+    if (path.length > 2) {
+      // Too many nested directories
+      promise = Promise.reject('Invalid zip format. Please select a file in an accepted import format.');
+      return false; // Stop looping
+    }
   });
+
+  return promise;
 }
 
 
@@ -389,6 +462,38 @@ function extractGenericImport(
     .then(() => submissions);
 }
 
+interface StudentDetail{
+  studentId?: string
+  studentName?:  string
+  studentSurname?: string
+}
+function matchStudentDetail(studentDirectory: string): StudentDetail {
+  let matches = STUDENT_DIRECTORY_REGEX.exec(studentDirectory);
+  if (matches !== null) {
+    return {
+      studentId : matches[3],
+      studentName :  matches[2],
+      studentSurname : matches[1]
+    }
+  }
+
+  matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(studentDirectory);
+  if (matches !== null) {
+    return {
+      studentId : matches[2],
+      studentSurname : matches[1]
+    }
+  }
+
+  matches = GROUP_DIRECTORY_REGEX.exec(studentDirectory);
+  if (matches !== null) {
+    return {
+      studentId : matches[2],
+      studentName :  matches[1]
+    }
+  }
+}
+
 function extractAssignmentZipFile(
   zipObject: JSZip,
   destination: string,
@@ -417,33 +522,17 @@ function extractAssignmentZipFile(
           }
 
           const studentDirectory = match[1];
-          let studentId;
-          let studentName;
-          let studentSurname;
-
-          let matches = STUDENT_DIRECTORY_REGEX.exec(studentDirectory);
-          if (matches !== null) {
-            studentId = matches[3];
-            studentName =  matches[2];
-            studentSurname = matches[1];
-          } else {
-            matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(studentDirectory);
-            if (matches !== null) {
-              studentId = matches[2];
-              studentSurname =  matches[1];
-            }
-          }
-
-          const submission = find(submissions, {studentId: studentId});
+          const detail = matchStudentDetail(studentDirectory);
+          const submission = find(submissions, {studentId: detail.studentId});
           if (isNil(submission)) {
             submissions.push({
               mark: null,
               allocation: null,
               directoryName: studentDirectory,
               state: SubmissionState.NO_SUBMISSION,
-              studentId,
-              studentName,
-              studentSurname
+              studentId: detail.studentId,
+              studentName: detail.studentName,
+              studentSurname: detail.studentSurname
             });
           }
         }
@@ -456,33 +545,17 @@ function extractAssignmentZipFile(
         if (match) {
 
           const studentDirectory = match[1];
-          let studentId;
-          let studentName;
-          let studentSurname;
-
-          let matches = STUDENT_DIRECTORY_REGEX.exec(studentDirectory);
-          if (matches !== null) {
-            studentId = matches[3];
-            studentName =  matches[2];
-            studentSurname = matches[1];
-          } else {
-            matches = STUDENT_DIRECTORY_NO_NAME_REGEX.exec(studentDirectory);
-            if (matches !== null) {
-              studentId = matches[2];
-              studentSurname =  matches[1];
-            }
-          }
-
-          const submission = find(submissions, {studentId: studentId});
+          const detail = matchStudentDetail(studentDirectory);
+          const submission = find(submissions, {studentId: detail.studentId});
           if (isNil(submission)) {
             submissions.push({
               mark: null,
               allocation: null,
               directoryName: studentDirectory,
               state: SubmissionState.NEW,
-              studentId,
-              studentName,
-              studentSurname
+              studentId: detail.studentId,
+              studentName: detail.studentName,
+              studentSurname: detail.studentSurname
             });
           } else {
             submission.state = SubmissionState.NEW;
@@ -513,15 +586,15 @@ function extractAssignmentZipFile(
   })
     .then(() => {
       // Now that the workspace is extracted, read the grades file to sync to the submissions
-      return readGradesCsv(backupDirPath + sep + GRADES_FILE)
+      return readGradesFromFile(backupDirPath + sep + GRADES_FILE)
         .then((grades) => {
-          forEach(grades.studentGrades, (studentGrade) => {
-            const submission = find(submissions, {studentId: studentGrade.id});
+          forEach(grades.grades, (gradeItem) => {
+            const submission = find(submissions, {studentId: gradeItem.id});
             if (isNil(submission)) {
-              LOG.warn(`Found student ID in grades.csv which is not in the assignment submissions list "${studentGrade.id}"`);
+              LOG.warn(`Found student/group ID in grades.csv which is not in the assignment submissions list "${gradeItem.id}"`);
             } else {
-              submission.mark = studentGrade.grade;
-              submission.lmsStatusText = studentGrade.lateSubmission;
+              submission.mark = gradeItem.grade;
+              submission.lmsStatusText = gradeItem.lateSubmission;
             }
           });
         });
@@ -570,9 +643,18 @@ function extractFile(zipFile: JSZipObject, filepath: string): Promise<any> {
 
 function extractAssignmentSettings(zipFile: JSZipObject): Promise<AssignmentSettingsInfo> {
   return zipFile.async('nodebuffer').then((data) => {
-   return JSON.parse(data.toString());
+    return JSON.parse(data.toString());
   });
 }
+
+
+
+// function extractAssignmentGrades(zipFile: JSZipObject): Promise<AssignmentSettingsInfo> {
+//   return zipFile.async('nodebuffer').then((data) => {
+//     readStudentGradesFromFile()
+//     return JSON.parse(data.toString());
+//   });
+// }
 
 export function lectureImport(event: IpcMainInvokeEvent, importInfo: LectureImportInfo): Promise<AssignmentSettingsInfo> {
   return readFile(importInfo.filename)
@@ -665,8 +747,14 @@ export function validateLectureImport(event: IpcMainInvokeEvent, importInfo: Lec
       }
       return extractAssignmentSettings(settingsFileZip).then((zipAssignmentSettings) => {
 
+        if (zipAssignmentSettings.version < AssignmentSettingsVersion) {
+          return Promise.reject(IMPORT_ASSIGNMENT_SETTINGS_OUTDATED);
+        }
+        if (zipAssignmentSettings.version > AssignmentSettingsVersion) {
+          return Promise.reject(IMPORT_ASSIGNMENT_SETTINGS_FUTUREDATED);
+        }
         if (zipAssignmentSettings.distributionFormat !== DistributionFormat.DISTRIBUTED) {
-          return Promise.reject('Assignment is not in the expected distribution type.');
+          return Promise.reject('Assignment is not in the expected distribution format.');
         }
         if (zipAssignmentSettings.state !== AssignmentState.SENT_FOR_REVIEW) {
           return Promise.reject('Assignment is not in the expected state.');

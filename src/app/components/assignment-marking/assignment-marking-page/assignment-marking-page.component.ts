@@ -26,7 +26,7 @@ import {MarkTypeHighlightComponent} from '../mark-type-highlight/mark-type-highl
 import {PageViewport} from 'pdfjs-dist/types/web/interfaces';
 import {ScrollVisibilityDirective} from '../../../directives/scroll-visibility.directive';
 import {BusyService} from '../../../services/busy.service';
-import {PageSettings, SubmissionType} from '@shared/info-objects/submission.info';
+import {PageSettings, SubmissionMarkType} from '@shared/info-objects/submission.info';
 import {
   ConfirmationDialogComponent
 } from '../../confirmation-dialog/confirmation-dialog.component';
@@ -492,7 +492,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
    */
   private promptMarksRemove(): Promise<boolean> {
 
-    if (this.assignmentMarkingComponent.submissionInfo.type === SubmissionType.RUBRIC) {
+    if (this.assignmentMarkingComponent.submissionInfo.type === SubmissionMarkType.RUBRIC) {
       return Promise.resolve(true);
     }
 

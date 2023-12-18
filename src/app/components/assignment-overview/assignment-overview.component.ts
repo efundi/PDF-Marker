@@ -97,7 +97,6 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   assignmentsLength;
   selection = new SelectionModel<AssignmentDetails>(true, []);
 
-
   @ViewChild(MatPaginator, {static: true})
   paginator: MatPaginator;
 
@@ -160,18 +159,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       );
   }
 
-  ngOnInit() {
-    this.busyService.start();
-    forkJoin([
-      this.loadRubrics(),
-      this.loadSettings()
-    ]).subscribe({
-      complete: () => {
-        this.busyService.stop();
-      },
-      error: () => this.busyService.stop()
-    });
-
+  private subscribeToRoute(){
     this.subscription = this.activatedRoute.params.subscribe({
       next: (params) => {
 
@@ -184,6 +172,22 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         this.appService.openSnackBar(false, 'Unable to read selected assignment');
       }
     });
+  }
+
+  ngOnInit() {
+    this.busyService.start();
+    forkJoin([
+      this.loadRubrics(),
+      this.loadSettings()
+    ]).subscribe({
+      complete: () => {
+        this.busyService.stop();
+        this.subscribeToRoute();
+      },
+      error: () => this.busyService.stop()
+    });
+
+
   }
 
   private refresh(): void {
@@ -237,7 +241,17 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       filter(this.workspaceAssignment.children, {type: TreeNodeType.SUBMISSION}).forEach((workspaceSubmission: StudentSubmissionTreeNode) => {
 
         const submission: Submission = find(this.assignmentSettings.submissions, {directoryName: workspaceSubmission.name});
-        const fullName = workspaceSubmission.studentSurname + (isNil(workspaceSubmission.studentName) ? '' : ', ' + workspaceSubmission.studentName);
+        let fullName = "";
+        if (!isNil(workspaceSubmission.studentSurname)){
+          fullName = workspaceSubmission.studentSurname;
+
+          if(!isNil(workspaceSubmission.studentName)){
+            fullName += ", "
+          }
+        }
+        if (!isNil(workspaceSubmission.studentName)){
+          fullName += workspaceSubmission.studentName;
+        }
         let markerName: string;
         if (submission.allocation) {
 

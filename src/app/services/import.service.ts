@@ -4,7 +4,7 @@ import {fromIpcResponse} from './ipc.utils';
 import {ImportIpcService} from '@shared/ipc/import.ipc-service';
 import {map, mergeMap, Observable} from 'rxjs';
 import {TreeNode} from '@shared/info-objects/workspaceTreeNode';
-import {AssignmentValidateResultInfo} from '@shared/info-objects/assignment-validate-result.info';
+import {AssignmentImportValidateResultInfo} from '@shared/info-objects/assignment-import-validate-result.info';
 import {LectureImportInfo} from '@shared/info-objects/lecture-import.info';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {WorkspaceService} from './workspace.service';
@@ -32,8 +32,8 @@ export class ImportService {
       );
   }
 
-  validateZipFile(filePath: string, format: string): Observable<AssignmentValidateResultInfo> {
-    return fromIpcResponse(this.importService.validateZipFile(filePath, format));
+  validateZipFile(filePath: string): Observable<AssignmentImportValidateResultInfo> {
+    return fromIpcResponse(this.importService.validateZipFile(filePath));
   }
 
   getZipEntries(filePath: string): Observable<TreeNode[]> {

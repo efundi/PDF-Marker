@@ -22,7 +22,7 @@ import {
   MarkingSubmissionInfo,
   RubricSubmissionInfo,
   SubmissionInfo,
-  SubmissionType
+  SubmissionMarkType
 } from '../../src/shared/info-objects/submission.info';
 import {annotatePdfFile} from '../pdf/marking-annotations';
 import {annotatePdfRubric} from '../pdf/rubric-annotations';
@@ -139,7 +139,7 @@ function annotatePdf(sourceSubmissionFile: string, assignmentSettings: Assignmen
   const studentFolder = dirname(dirname(sourceSubmissionFile));
   return loadMarksAt(studentFolder).then((submissionInfo: SubmissionInfo) => {
     if (submissionInfo.marks.length > 0) {
-      if (submissionInfo.type === SubmissionType.MARK) {
+      if (submissionInfo.type === SubmissionMarkType.MARK) {
         return annotatePdfFile(sourceSubmissionFile, submissionInfo as MarkingSubmissionInfo);
       } else {
         return annotatePdfRubric(sourceSubmissionFile, submissionInfo as RubricSubmissionInfo, assignmentSettings.rubric);

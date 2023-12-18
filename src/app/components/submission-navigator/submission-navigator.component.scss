@@ -55,6 +55,15 @@ button.mat-menu-item{
     height: 1rem;
   }
 
+  &.no-id {
+    .student-name {
+      height: auto;
+    }
+    .student-id {
+      display: none;
+    }
+  }
+
   .student-id{
     color: #555555;
   }

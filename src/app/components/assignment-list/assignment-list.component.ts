@@ -3,11 +3,9 @@ import {AssignmentService} from '../../services/assignment.service';
 import {Subscription} from 'rxjs';
 import {
   findTreeNodes,
-  StudentSubmissionTreeNode,
   TreeNode,
   TreeNodeType,
   WorkspaceTreeNode,
-  AssignmentTreeNode,
   WorkspaceFileTreeNode
 } from '@shared/info-objects/workspaceTreeNode';
 import {FlatTreeControl} from '@angular/cdk/tree';
@@ -19,7 +17,6 @@ import {PdfmUtilsService} from '../../services/pdfm-utils.service';
 import {GRADES_FILE, PDFM_FILES_FILTER} from '@shared/constants/constants';
 import {SettingsService} from '../../services/settings.service';
 import {SettingInfo} from '@shared/info-objects/setting.info';
-import {calculateOpenInMarking} from '../../utils/utils';
 import {WorkspaceService} from '../../services/workspace.service';
 import {SubmissionNavigationService} from '../../services/submission-navigation.service';
 
@@ -71,12 +68,7 @@ function buildTreeNodes(workspaces: WorkspaceTreeNode[]): DisplayTreeNode[] {
   const treeNodes: DisplayTreeNode[] = [];
   treeId = 0;
   workspaces.forEach(workspace => {
-    // if (workspace.name === DEFAULT_WORKSPACE) {
-    //   // Default workspace items are placed at the root
-    //   treeNodes.push(...workspace.children.map(c => setParent(c, null)));
-    // } else {
     treeNodes.push(setParent(workspace, null));
-    // }
   });
   return treeNodes;
 }

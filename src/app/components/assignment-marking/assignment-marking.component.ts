@@ -31,7 +31,7 @@ import {
   MarkingSubmissionInfo,
   PageSettings,
   SubmissionInfo,
-  SubmissionType
+  SubmissionMarkType
 } from '@shared/info-objects/submission.info';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {SettingsService} from '../../services/settings.service';
@@ -208,9 +208,9 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
 
     if (isNil(submissionInfo.type)) {
       if (isNil(this.assignmentSettings.rubric)) {
-        submissionInfo.type = SubmissionType.MARK;
+        submissionInfo.type = SubmissionMarkType.MARK;
       } else {
-        submissionInfo.type = SubmissionType.RUBRIC;
+        submissionInfo.type = SubmissionMarkType.RUBRIC;
       }
     }
 
