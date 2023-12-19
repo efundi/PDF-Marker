@@ -2,7 +2,9 @@
 <form [formGroup]="importForm">
   <h1 class="mt-3"><mat-icon color="primary" class="mat-icon-36">archive</mat-icon>&nbsp;Import from a zip file</h1>
   <mat-divider></mat-divider>
-  <div class="pdf-spacer"></div>
+  <div class="text-muted small my-3">
+    Import an Assignment from Sakai LMS of type Group Assignment or Single student Submissions.
+  Alternatively, select a generic zip file in the accepted format.</div>
 
   <div class="pdf-marker-file-upload-wrapper">
     <button type="button" mat-raised-button (click)="selectFile()">Browse</button>
