@@ -2,7 +2,8 @@ import {createWriteStream, existsSync, mkdirSync} from 'fs';
 import * as glob from 'glob';
 import {basename, dirname, extname, sep} from 'path';
 import {
-  AssignmentSettingsInfo, AssignmentSettingsVersion,
+  AssignmentSettingsInfo,
+  AssignmentSettingsVersion,
   AssignmentState,
   DEFAULT_ASSIGNMENT_SETTINGS,
   DistributionFormat,
@@ -31,7 +32,8 @@ import JSZip, {JSZipObject} from 'jszip';
 import {getAssignmentDirectoryAbsolutePath, getWorkingDirectoryAbsolutePath} from './workspace.handler';
 import {findTreeNode, TreeNode, TreeNodeType} from '@shared/info-objects/workspaceTreeNode';
 import {
-  getAssignmentSettingsFor, readGradesFromFile,
+  getAssignmentSettingsFor,
+  readGradesFromFile,
   readGradesFromZipFile,
   writeAssignmentSettingsAt,
   writeAssignmentSettingsFor
@@ -156,7 +158,10 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
         return getWorkingDirectoryAbsolutePath(req.workspace).then((workingDirectory) => {
 
           let promise: Promise<any>;
-          if (req.sourceFormat === SourceFormat.GENERIC) {
+          if(req.distributionFormat === DistributionFormat.DISTRIBUTED){
+            promise = extractMarkerZip(zipObject, workingDirectory + sep, newFolder, renameOld);
+          }
+          else if (req.sourceFormat === SourceFormat.GENERIC) {
             promise = extractGenericImport(zipObject, workingDirectory + sep, newFolder, renameOld)
               .then((submissions) => {
                 settings.submissions = submissions;
@@ -167,10 +172,7 @@ export function importZip(event: IpcMainInvokeEvent,  req: ImportInfo): Promise<
               settings.submissions = submissions;
               return writeAssignmentSettingsFor(settings, req.workspace, assignmentDirectoryName);
             });
-          } else {
-            promise = extractMarkerZip(zipObject, workingDirectory + sep, newFolder, renameOld);
           }
-
 
           return promise.then(() => {
             if (!isNil(rubricIndex) && rubricIndex >= 0) {

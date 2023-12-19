@@ -526,9 +526,9 @@ function writeGradesCsv(outputFile: string, grades: GradesCSV<StudentGrade|Group
         field1: studentGrade.name,
         field2: studentGrade.id,
         field3: studentGrade.users.join(";"),
-        field5: studentGrade.grade,
-        field6: studentGrade.submissionDate,
-        field7: studentGrade.lateSubmission,
+        field4: studentGrade.grade,
+        field5: studentGrade.submissionDate,
+        field6: studentGrade.lateSubmission,
       });
     });
   }
@@ -593,7 +593,7 @@ function writeGrades(outputDirectory: string, assignmentSettings: AssignmentSett
 }
 
 
-function finalizeSubmissions(workspaceFolder, assignmentName): Promise<string> {
+function finalizeSubmissions(workspaceFolder: string, assignmentName: string): Promise<string> {
   return Promise.all([
     getAssignmentDirectoryAbsolutePath(workspaceFolder, assignmentName),
     getAssignmentSettingsFor(workspaceFolder, assignmentName)
