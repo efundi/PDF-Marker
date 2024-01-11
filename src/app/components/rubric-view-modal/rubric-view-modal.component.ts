@@ -77,7 +77,7 @@ export class RubricViewModalComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
 
-    this.formSubscription = this.rubricForm.controls.rubricName.valueChanges.subscribe(rubricName => this.onRubricChange(rubricName));
+    this.formSubscription = this.rubricForm.controls['rubricName'].valueChanges.subscribe(rubricName => this.onRubricChange(rubricName));
 
     if (this.canEdit) {
 
@@ -132,7 +132,7 @@ export class RubricViewModalComponent implements OnInit, OnDestroy {
       this.assignmentName,
       this.rubricForm.value.rubricName)
       .subscribe({
-        next: (rubric: IRubric) => {
+        next: () => {
           this.appService.openSnackBar(true, 'Successfully updated rubric');
           this.busyService.stop();
           this.dialogRef.close();

@@ -15,7 +15,7 @@
     </mat-tree-node>
     <!-- This is the tree node template for expandable nodes -->
     <mat-tree-node *matTreeNodeDef="let node; when: hasChild" [matTreeNodePadding]="node.level" matTreeNodePaddingIndent="25">
-      <div class="directory"
+      <div class="directory d-flex align-items-center"
            style="cursor:pointer;"
            (click)="onNodeClicked($event, node)"
            (dblclick)="treeControl.toggle(node)">

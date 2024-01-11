@@ -179,9 +179,9 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
     this.appService.createDialog(ConfirmationDialogComponent, config, resolve);
 
-    return promise.then((remove) => {
+    promise.then((remove) => {
       if (!remove) {
-        return Promise.reject();
+        return;
       }
       this.workspaceService.deleteWorkspaceAssignments(this.workspaceName, assignmentNames)
         .subscribe({
@@ -195,7 +195,7 @@ export class AssignmentWorkspaceManageModalComponent implements OnInit {
 
             this.appService.openSnackBar(true, 'Successfully deleted selected assignments');
           },
-          error: (reason) => {
+          error: () => {
             this.appService.openSnackBar(false, 'Failed to delete assignments');
           }
         })

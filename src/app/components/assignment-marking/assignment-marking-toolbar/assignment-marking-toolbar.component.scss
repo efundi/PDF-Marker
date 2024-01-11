@@ -1,4 +1,4 @@
-@import '/src/scss/variables';
+@import 'variables';
 
 mat-toolbar {
   padding-left: 0;
@@ -8,6 +8,9 @@ mat-toolbar {
   button {
     border: 1px solid #d3d3d3;
     margin-right: 6px;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
   }
 
 
@@ -25,7 +28,7 @@ mat-toolbar {
     width: auto;
     padding: 4px;
     border: 2px solid #6F6F6F;
-    line-height: normal;
+    line-height: 22px;
   }
 
   .rotate-buttons {
@@ -33,7 +36,7 @@ mat-toolbar {
     width: auto;
     padding: 4px;
     border: 2px solid #6F6F6F;
-    line-height: normal;
+    line-height: 22px;
 
     &.rotate-clockwise {
       margin-left: 0.5rem;
@@ -127,12 +130,15 @@ mat-toolbar {
 }
 
 .zoom-select {
-  /* margin-top: auto; */
   margin-bottom: -0.4rem;
   display: block;
   margin-left: 1rem;
-  width: 4rem;
+  width: 6rem;
 
+  ::ng-deep .mdc-text-field--no-label:not(.mdc-text-field--outlined):not(.mdc-text-field--textarea) .mat-mdc-form-field-infix {
+    padding-top: 25px;
+    padding-bottom: 0px;
+  }
 }
 
 

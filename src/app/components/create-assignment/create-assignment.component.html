@@ -87,7 +87,7 @@
           <button
             type="button"
             matTooltip="Add"
-            mat-button mat-icon-button
+            mat-icon-button
             class="pdf-marker-create-assignment-add"
             [disabled]="studentIndex <  submissions.controls.length - 1"
             [class.text-muted]="studentIndex <  submissions.controls.length - 1"
@@ -98,7 +98,6 @@
           </button>
           <button type="button"
                   matTooltip="Remove"
-                  mat-button
                   mat-icon-button
                   class="pdf-marker-create-assignment-remove"
                   (click)="onStudentInfoRemove(studentIndex)">

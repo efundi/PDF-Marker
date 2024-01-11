@@ -1,7 +1,6 @@
 import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators} from '@angular/forms';
-import {AppService} from '../../../services/app.service';
 import {IComment} from '@shared/info-objects/comment.class';
 import {CommentService} from '../../../services/comment.service';
 import {MatSelectChange} from '@angular/material/select';
@@ -28,8 +27,7 @@ export class MarkingCommentModalComponent implements OnInit, OnDestroy {
     'Comment Only'
   ];
 
-  constructor(private appService: AppService,
-              private dialogRef: MatDialogRef<MarkingCommentModalComponent>,
+  constructor(private dialogRef: MatDialogRef<MarkingCommentModalComponent>,
               @Inject(MAT_DIALOG_DATA) private config,
               private fb: UntypedFormBuilder,
               private commentService: CommentService) {
@@ -74,7 +72,7 @@ export class MarkingCommentModalComponent implements OnInit, OnDestroy {
       markingComment: new UntypedFormControl(null),
     });
 
-    this.formSubscription = this.commentForm.controls.commentType.valueChanges.subscribe((commentType) => {
+    this.formSubscription = this.commentForm.controls['commentType'].valueChanges.subscribe((commentType) => {
       this.toggleTotalMark(commentType === 'Assess');
     });
   }
@@ -92,7 +90,7 @@ export class MarkingCommentModalComponent implements OnInit, OnDestroy {
     this.commentForm.updateValueAndValidity();
   }
 
-  onCancel($event: MouseEvent) {
+  onCancel() {
     if (this.commentForm.valid) {
       this.dialogRef.close(null);
     } else {
@@ -101,7 +99,7 @@ export class MarkingCommentModalComponent implements OnInit, OnDestroy {
     }
   }
 
-  onSubmit($event: MouseEvent) {
+  onSubmit() {
     if (this.commentForm.valid) {
       const formValue = this.commentForm.value;
       const markingCommentObj = {
@@ -115,17 +113,18 @@ export class MarkingCommentModalComponent implements OnInit, OnDestroy {
   }
 
   appendGenericComment($event: MatSelectChange) {
-    const commentText = this.commentForm.controls.markingComment.value;
+    const commentText = this.commentForm.controls['markingComment'].value;
     const textToInsert = $event.value;
     if (commentText && commentText.length > 0) {
-      this.commentForm.controls.markingComment.patchValue([commentText.slice(0, this.commentCaretPos), textToInsert, commentText.slice(this.commentCaretPos)].join(''));
+      this.commentForm.controls['markingComment'].patchValue([commentText.slice(0, this.commentCaretPos), textToInsert, commentText.slice(this.commentCaretPos)].join(''));
     } else {
-      this.commentForm.controls.markingComment.patchValue(textToInsert);
+      this.commentForm.controls['markingComment'].patchValue(textToInsert);
     }
     $event.value = '';
     // Clear droplist
-    this.commentForm.controls.genericComment.setValue('');
-    this.commentForm.controls.genericComment.setErrors(null);
+    // Clear droplist
+    this.commentForm.controls['genericComment'].setValue('');
+    this.commentForm.controls['genericComment'].setErrors(null);
 
   }
 

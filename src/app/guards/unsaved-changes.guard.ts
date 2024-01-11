@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, CanDeactivate, RouterStateSnapshot, UrlTree} from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
 import {Observable} from 'rxjs';
 import {CreateAssignmentComponent} from '../components/create-assignment/create-assignment.component';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
@@ -8,7 +8,7 @@ import {ConfirmationDialogComponent} from '../components/confirmation-dialog/con
 @Injectable({
   providedIn: 'root'
 })
-export class UnsavedChangesGuard implements CanDeactivate<CreateAssignmentComponent> {
+export class UnsavedChangesGuard  {
   constructor(private dialog: MatDialog) {
   }
   canDeactivate(

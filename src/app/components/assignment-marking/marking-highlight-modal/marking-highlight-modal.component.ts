@@ -63,7 +63,7 @@ export class MarkingHighlightModalComponent implements OnInit {
     });
   }
 
-  onCancel($event: MouseEvent) {
+  onCancel() {
     if (this.commentForm.valid) {
       this.dialogRef.close(null);
     } else {
@@ -72,7 +72,7 @@ export class MarkingHighlightModalComponent implements OnInit {
     }
   }
 
-  onSubmit($event: MouseEvent) {
+  onSubmit() {
     if (this.commentForm.valid) {
       const formValue = this.commentForm.value;
       const markingCommentObj = {
@@ -86,21 +86,21 @@ export class MarkingHighlightModalComponent implements OnInit {
   }
 
   appendGenericComment($event: MatSelectChange) {
-    const commentText = this.commentForm.controls.markingComment.value;
+    const commentText = this.commentForm.controls['markingComment'].value;
     const textToInsert = $event.value;
     if (commentText && commentText.length > 0) {
-      this.commentForm.controls.markingComment.patchValue([commentText.slice(0, this.commentCaretPos), textToInsert, commentText.slice(this.commentCaretPos)].join(''));
+      this.commentForm.controls['markingComment'].patchValue([commentText.slice(0, this.commentCaretPos), textToInsert, commentText.slice(this.commentCaretPos)].join(''));
     } else {
-      this.commentForm.controls.markingComment.patchValue(textToInsert);
+      this.commentForm.controls['markingComment'].patchValue(textToInsert);
     }
     $event.value = '';
     // Clear droplist
-    this.commentForm.controls.genericComment.setValue('');
-    this.commentForm.controls.genericComment.setErrors(null);
+    this.commentForm.controls['genericComment'].setValue('');
+    this.commentForm.controls['genericComment'].setErrors(null);
 
   }
 
-  trackCommentCaretPosition(oField, $event) {
+  trackCommentCaretPosition(oField) {
     if (oField.selectionStart || oField.selectionStart === 0) {
       this.commentCaretPos = oField.selectionStart;
     }

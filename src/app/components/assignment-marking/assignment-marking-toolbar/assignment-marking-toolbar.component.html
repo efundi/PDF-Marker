@@ -8,18 +8,16 @@
       [matTooltip]="iconData.toolTip"
       [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
       (click)="onIconClick(iconData, $event)"
-      mat-button
       mat-icon-button>
       <mat-icon [class.pdf-icon-disabled]="!editEnabled">{{ iconData.icon }}</mat-icon>
     </button>
     <button
       color="primary"
       [disabled]="!editEnabled"
-      *ngIf="iconData.icon === 'halfTick' && iconData.icon !== 'brush'"
+      *ngIf="iconData.icon === 'halfTick'"
       [matTooltip]="iconData.toolTip"
       [class.pdf-marker-icons-selected]="(selecetedIcon) ? (iconData.icon === selecetedIcon.icon):false"
       (click)="onIconClick(iconData, $event)"
-      mat-button
       mat-icon-button>
       <mat-icon class="pdf-marker-icons-svg-class"
                 [svgIcon]="iconData.icon"
@@ -35,7 +33,6 @@
         [matTooltip]="iconData.toolTip"
         (click)="onIconClick(iconData, $event)"
         [style.border-color]="highlightToolColor"
-        mat-button
         mat-icon-button>
         <mat-icon
           [style.color]="highlightToolColor"
@@ -61,7 +58,6 @@
   <button
     color="primary"
     matTooltip="Prev"
-    mat-button
     mat-icon-button
     [disabled]="currentPage === 1"
     [class.pdf-marker-icons-pdf-nav-buttons-disabled]="currentPage === 1"
@@ -72,7 +68,6 @@
   <button
     color="primary"
     matTooltip="Next"
-    mat-button
     mat-icon-button
     [disabled]="currentPage === pages"
     [class.pdf-marker-icons-pdf-nav-buttons-disabled]="currentPage === pages"
@@ -105,7 +100,6 @@
   <button
     [disabled]="!editEnabled"
     matTooltip="Rotate Clockwise"
-    mat-button
     mat-icon-button
     (click)="onControl($event, 'rotate-cw')"
     class="rotate-buttons rotate-clockwise">
@@ -114,7 +108,6 @@
   <button
     [disabled]="!editEnabled"
     matTooltip="Rotate Counter-Clockwise"
-    mat-button
     mat-icon-button
     (click)="onControl($event, 'rotate-ccw')"
     class="rotate-buttons rotate-cclockwise">
@@ -131,14 +124,12 @@
     <button
       color="primary"
       matTooltip="Display PDF Only"
-      mat-button
       mat-icon-button
       (click)="onControl($event, 'showPDF')">
       <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-expand-left"></mat-icon></button>
     <button
       color="primary"
       matTooltip="Shared View"
-      mat-button
       mat-icon-button
       (click)="onControl($event, 'showBoth')">
       <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-default"></mat-icon>
@@ -146,7 +137,6 @@
     <button
       color="primary"
       matTooltip="Display Rubric Only"
-      mat-button
       mat-icon-button
       (click)="onControl($event, 'showRubric')">
       <mat-icon [class.pdf-icon-disabled]="!containsRubric" svgIcon="layout-expand-right"></mat-icon>
@@ -159,7 +149,6 @@
       #picker="ngxColorPicker"
       [style.border-color]="editEnabled ? selectedColour : 'rgba(0,0,0,.26)'"
       class="pdf-marker-assignment-marking-settings-color-pallette"
-      mat-button
       mat-icon-button
       [cpAlphaChannel] ="'disabled'"
       [cpOutputFormat]="'hex'"
@@ -182,7 +171,6 @@
     [disabled]="!editEnabled"
     color="primary"
     matTooltip="Clear All"
-    mat-button
     mat-icon-button
     (click)="onControl($event, 'clearAll')">
     <mat-icon>delete_sweep</mat-icon>

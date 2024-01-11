@@ -122,7 +122,7 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
       zoom: [1.00, Validators.required],
     });
 
-    this.zoomFormSubscription = this.iconForm.controls.zoom.valueChanges.subscribe((value) => {
+    this.zoomFormSubscription = this.iconForm.controls['zoom'].valueChanges.subscribe((value) => {
 
       this.assignmentMarkingSessionService.zoom = value;
 
@@ -160,12 +160,12 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
   }
 
   onPageNumberChange() {
-    const number = parseInt(this.iconForm.controls.pageNumber.value, 10);
+    const number = parseInt(this.iconForm.controls['pageNumber'].value, 10);
     if (!isNaN(number) && (number >= 1 && number <= this.pages)) {
       this.currentPage = number;
       this.currentPageChange.emit(this.currentPage);
     } else {
-      this.iconForm.controls.pageNumber.setValue((this.currentPage) ? this.currentPage.toString() : '1');
+      this.iconForm.controls['pageNumber'].setValue((this.currentPage) ? this.currentPage.toString() : '1');
     }
   }
 
@@ -191,10 +191,10 @@ export class AssignmentMarkingToolbarComponent implements OnInit, OnChanges, OnD
 
   ngOnChanges(changes: SimpleChanges) {
     if (this.iconForm) {
-      this.iconForm.controls.pageNumber.setValue(this.currentPage.toString());
+      this.iconForm.controls['pageNumber'].setValue(this.currentPage.toString());
     }
     if (changes.hasOwnProperty('containsRubric')) {
-      if (changes.containsRubric.currentValue) {
+      if (changes['containsRubric'].currentValue) {
         this.highlightToolColor = 'rgba(0,0,0,.26)';
       }
     }

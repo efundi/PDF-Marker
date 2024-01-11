@@ -1,4 +1,4 @@
-@import '/src/scss/mixins';
+@use 'mixins';
 
 .pdfm-markers-panel,
 .pdfm-groups-panel {
@@ -14,7 +14,7 @@
 
 .pdfm-groups-panel .groups-list-container{
   max-height: calc(100vh - 261px);
-  @include scrollbar();
+  @include mixins.scrollbar();
 }
 
 .pdfm-markers-panel {
@@ -27,7 +27,7 @@
     margin-right: 32px;
 
     max-height: calc(100vh - 261px);
-    @include scrollbar();
+    @include mixins.scrollbar();
 
 
   }

@@ -13,3 +13,5 @@ directories:
 
 files:
   - "!.angular"
+  - "!.idea"
+  - "!release"

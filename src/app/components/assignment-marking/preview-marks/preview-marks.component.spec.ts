@@ -1,8 +1,8 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PreviewMarksComponent } from './finalise-marking.component';
+import { PreviewMarksComponent } from './preview-marks.component';
 
-describe('FinaliseMarkingComponent', () => {
+describe('PreviewMarksComponent', () => {
   let component: PreviewMarksComponent;
   let fixture: ComponentFixture<PreviewMarksComponent>;
 

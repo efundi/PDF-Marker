@@ -72,7 +72,7 @@ export class AppService {
     if (!dialogConfig.disableClose) {
       dialogConfig.disableClose = false;
     }
-    dialogConfig.autoFocus = true;
+    dialogConfig.autoFocus = 'dialog';
 
     const dialog = this.dialog.open(component, dialogConfig);
     if (typeof callback === 'function') {

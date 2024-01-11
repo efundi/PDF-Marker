@@ -308,7 +308,7 @@ export class GroupsTabComponent implements OnInit, OnDestroy {
     groupItem.editing = false;
   }
 
-  updateGroupKeypress($event: KeyboardEvent, index: number, groupItem: GroupItem) {
+  updateGroupKeypress($event: Event, index: number, groupItem: GroupItem) {
     $event.stopImmediatePropagation();
     this.updateGroup(index, groupItem);
   }

@@ -6,6 +6,7 @@ import {AppService} from '../../../services/app.service';
 import {BusyService} from '../../../services/busy.service';
 import {EventBus, LinkTarget, PDFLinkService} from 'pdfjs-dist/web/pdf_viewer';
 import {PageViewport} from 'pdfjs-dist';
+import {isNil} from "lodash";
 
 const eventBus = new EventBus();
 
@@ -62,6 +63,9 @@ export class PdfViewerPageComponent implements OnDestroy, AfterViewInit {
    */
   @ViewChild('annotationLayer', {static: true})
   private annotationLayer: ElementRef<HTMLDivElement>;
+
+
+  private pdfAnnotationLayer: AnnotationLayer;
 
   /**
    * Reference to the page wrapper
@@ -135,7 +139,7 @@ export class PdfViewerPageComponent implements OnDestroy, AfterViewInit {
 
   renderPage(): Promise<any> {
     if (this.renderState !== 'WAITING') {
-      return;
+      return Promise.resolve();
     }
     this.renderState = 'RENDERING';
     const ctx = this.pdfCanvas.nativeElement.getContext('2d');
@@ -145,8 +149,18 @@ export class PdfViewerPageComponent implements OnDestroy, AfterViewInit {
       while (this.annotationLayer.nativeElement.firstChild) {
         this.annotationLayer.nativeElement.removeChild(this.annotationLayer.nativeElement.lastChild);
       }
+      if (isNil(this.pdfAnnotationLayer)){
+        this.pdfAnnotationLayer = new AnnotationLayer({
+          accessibilityManager: undefined,
+          annotationCanvasMap: undefined,
+          div: this.annotationLayer.nativeElement,
+          l10n: undefined,
+          page: this.page,
+          viewport: undefined
+        });
+      }
 
-      AnnotationLayer.render({
+      this.pdfAnnotationLayer.render({
         viewport: this.viewport.clone({ dontFlip: true }),
         div: this.annotationLayer.nativeElement,
         annotations: annotationData,

@@ -41,9 +41,9 @@ export class ScrollSpyDirective implements OnDestroy, OnChanges {
         this.unlisten = null;
       }
 
-      if (!isNil(changes.scrollTarget.currentValue)) {
+      if (!isNil(changes['scrollTarget'].currentValue)) {
         // Scrolling happens on the mat-sidenav-content component
-        const container = document.querySelector(changes.scrollTarget.currentValue);
+        const container = document.querySelector(changes['scrollTarget'].currentValue);
         this.unlisten = this.renderer.listen(container, 'scroll', (e) => {
           this.onScroll(e);
         });

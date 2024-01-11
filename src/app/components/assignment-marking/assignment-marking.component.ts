@@ -5,7 +5,6 @@ import {
   OnDestroy,
   OnInit,
   QueryList,
-  Renderer2,
   ViewChild,
   ViewChildren,
 } from '@angular/core';
@@ -13,15 +12,13 @@ import {AssignmentService} from '../../services/assignment.service';
 import {filter, from, mergeMap, Observable, Subscription, tap, throwError} from 'rxjs';
 import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
 import {AppService} from '../../services/app.service';
-import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
+import {MatDialogConfig} from '@angular/material/dialog';
 import {AssignmentSettingsInfo} from '@shared/info-objects/assignment-settings.info';
 import {getDocument, GlobalWorkerOptions, PDFDocumentProxy} from 'pdfjs-dist';
 import {cloneDeep, find, isNil, times} from 'lodash';
 import {MarkInfo} from '@shared/info-objects/mark.info';
 import {catchError, map} from 'rxjs/operators';
-import {
-  ConfirmationDialogComponent
-} from '../confirmation-dialog/confirmation-dialog.component';
+import {ConfirmationDialogComponent} from '../confirmation-dialog/confirmation-dialog.component';
 import {AssignmentMarkingSessionService, ZoomChangeEvent} from './assignment-marking-session.service';
 import {AssignmentMarkingPageComponent} from './assignment-marking-page/assignment-marking-page.component';
 import {IRubric} from '@shared/info-objects/rubric.class';
@@ -55,12 +52,9 @@ GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
 export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private settings: SettingInfo;
 
-  constructor(private renderer: Renderer2,
-              private assignmentService: AssignmentService,
+  constructor(private assignmentService: AssignmentService,
               private busyService: BusyService,
               private settingsService: SettingsService,
-              private el: ElementRef,
-              private dialog: MatDialog,
               private activatedRoute: ActivatedRoute,
               private router: Router,
               private appService: AppService,
@@ -88,7 +82,6 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
   private workspaceName: string;
   private assignmentName: string;
   private pdf: string;
-
 
   /**
    * Reference to the assignment marking pages
@@ -354,7 +347,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
           this.busyService.stop();
           this.submissionInfo = originalSubmissionInfo;
           this.appService.openSnackBar(false, 'Unable to save');
-          return throwError(error);
+          return throwError(() => error);
         })
       );
   }
@@ -460,6 +453,7 @@ export class AssignmentMarkingComponent implements OnInit, OnDestroy {
     this.paramsSubscription.unsubscribe();
     this.colorChangeSubscription.unsubscribe();
     this.routeSubscription.unsubscribe();
+    this.zoomChangeSubscription.unsubscribe();
     if (this.pdfDocument) {
       this.pdfDocument.cleanup().then(() => {
         return this.pdfDocument.destroy();

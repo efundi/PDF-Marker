@@ -120,7 +120,7 @@ export class SettingsComponent implements OnInit {
 
     this.libreOfficeSubscription = this.settingsForm.get('libreOfficePath').valueChanges.subscribe({
       next: (path) => {
-        if (this.settingsForm.get('libreOfficePath').errors?.pattern) {
+        if (this.settingsForm.get('libreOfficePath').errors?.['pattern']) {
           this.libreOfficeError = 'Select Libre Office executable (soffice or libreoffice).';
         } else if (isNil(path)) {
           this.libreOfficeError = 'Libre Office path is not configured. You will not be able to convert documents to PDF.';

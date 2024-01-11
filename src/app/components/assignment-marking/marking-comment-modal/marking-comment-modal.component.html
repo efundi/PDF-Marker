@@ -34,7 +34,7 @@
       </mat-radio-group>
     </div>
 
-    <div *ngIf="commentForm.controls.totalMark">
+    <div *ngIf="commentForm.controls['totalMark']">
       <mat-form-field>
         <mat-label>Mark:</mat-label>
         <input
@@ -77,6 +77,6 @@
 </mat-dialog-content>
 
 <mat-dialog-actions>
-  <button type="button" mat-raised-button color="primary" (click)="onSubmit($event)">Save</button>&nbsp;&nbsp;
-  <button type="button" mat-button color="accent" (click)="onCancel($event)">Cancel</button>
+  <button type="button" mat-raised-button color="primary" (click)="onSubmit()">Save</button>&nbsp;&nbsp;
+  <button type="button" mat-button color="accent" (click)="onCancel()">Cancel</button>
 </mat-dialog-actions>

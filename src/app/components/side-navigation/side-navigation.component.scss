@@ -1,4 +1,5 @@
-@import '/src/scss/mixins';
+@use 'mixins';
+
 
 mat-toolbar {
   background: transparent;
@@ -10,7 +11,7 @@ mat-toolbar {
   height: calc(100vh - 130px);
   //max-width: 375px;
   overflow: auto;
-  @include scrollbar();
+  @include mixins.scrollbar();
 }
 
 @keyframes spin-animation {

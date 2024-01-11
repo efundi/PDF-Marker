@@ -309,7 +309,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
     if (isNil(element.pdfFile)) {
       return;
     }
-    this.submissionNavigationService.openSubmission(element.pdfFile).subscribe();;
+    this.submissionNavigationService.openSubmission(element.pdfFile).subscribe();
   }
 
   onFinalizeAndExport(event) {

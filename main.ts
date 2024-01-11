@@ -62,7 +62,13 @@ import {runSettingsMigration} from './src-electron/migration/settings.migration'
 import {migrateAssignmentSettings} from './src-electron/migration/assignment.migration';
 import {migrateMarks} from './src-electron/migration/marks.migration';
 import { join, resolve} from 'path';
-import {generateGenericZip, generateAssignment, markAll, markSome} from './src-electron/ipc/generate.handler';
+import {
+  generateGenericZip,
+  generateAssignment,
+  markAll,
+  markSome,
+  generateGroups
+} from './src-electron/ipc/generate.handler';
 import {convertToPdf, libreOfficeFind, libreOfficeVersion} from './src-electron/ipc/convert.handler';
 // tslint:disable-next-line:one-variable-per-declaration
 let mainWindow, serve;
@@ -277,6 +283,7 @@ function launchBrowser(){
       ipcMain.handle('generate:generateAssignment', generateAssignment);
       ipcMain.handle('generate:markSome', markSome);
       ipcMain.handle('generate:markAll', markAll);
+      ipcMain.handle('generate:generateGroups', generateGroups);
 
 
       // Convert API

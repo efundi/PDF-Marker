@@ -58,9 +58,9 @@ export class ScrollVisibilityDirective implements OnInit, OnDestroy, OnChanges {
         this.unlisten = null;
       }
 
-      if (!isNil(changes.scrollTarget.currentValue)) {
+      if (!isNil(changes['scrollTarget'].currentValue)) {
         // Scrolling happens on the mat-sidenav-content component
-        this.container = document.querySelector(changes.scrollTarget.currentValue);
+        this.container = document.querySelector(changes['scrollTarget'].currentValue);
         this.unlisten = this.renderer.listen(this.container, 'scroll', () => {
           this.checkVisibility();
         });

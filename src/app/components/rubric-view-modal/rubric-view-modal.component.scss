@@ -3,15 +3,13 @@ table {
 }
 
 .pdf-marker-rubric-container {
-  .mat-form-field {
+  .mat-mdc-form-field {
     flex: 1;
     flex-grow: unset;
   }
 }
 
-.mat-dialog-title {
+.mat-mdc-dialog-title {
   display: flex;
   align-items: center;
-  background: #fff;
-  margin-bottom: 0;
 }

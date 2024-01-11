@@ -12,7 +12,7 @@ export class SnackBarComponent  {
   message: string;
 
   constructor(@Inject(MAT_SNACK_BAR_DATA) public data: any) {
-    if (!!data) {
+    if (data) {
       this.isSuccessful = (data.isSuccessful) ? data.isSuccessful : false;
       this.message = (data.message) ? data.message : undefined;
       this.isShow = true;
