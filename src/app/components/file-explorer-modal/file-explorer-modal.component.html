@@ -1,8 +1,7 @@
-<div mat-dialog-title>
-    <h2 class="mt-2">{{ filename }}</h2>
-    <span class="pdf-marker-fill-space"></span>
-    <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
-</div>
+<h1  mat-dialog-title>{{ filename }}
+  <span class="pdf-marker-fill-space"></span>
+  <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
+</h1>
 <mat-dialog-content style="min-height: 400px; min-width: 500px">
   <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
     <!-- This is the tree node template for leaf nodes -->
@@ -34,12 +33,3 @@
     </mat-tree-node>
   </mat-tree>
 </mat-dialog-content>
-
-<!--<div class="pdf-modal-container">-->
-<!--  <h3>{{ filename }}</h3>-->
-<!--  <span class="pdf-marker-fill-space"></span>-->
-<!--  <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>-->
-<!--</div>-->
-<!--<div class="tree-container">-->
-
-<!--</div>-->

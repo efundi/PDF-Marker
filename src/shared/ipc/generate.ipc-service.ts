@@ -3,4 +3,5 @@ export interface GenerateIpcService {
   generateAssignment(studentCount: number, assignmentName: string, sourceFilePath: string, rubricName?: string): Promise<void>;
   markSome(assignmentName: string, workspaceName: string): Promise<void>;
   markAll(assignmentName: string, workspaceName: string): Promise<void>;
+  generateGroups(): Promise<void>;
 }

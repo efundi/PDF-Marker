@@ -15,7 +15,7 @@
 
   <ng-container *ngIf="!assignmentMarkingComponent.rubric">
     <ng-container
-      *ngFor="let mark of marks; let i = index">
+      *ngFor="let mark of _marks; let i = index">
 
       <pdf-marker-mark-type-highlight
         *ngIf="mark.iconType === IconTypeEnum.HIGHLIGHT"

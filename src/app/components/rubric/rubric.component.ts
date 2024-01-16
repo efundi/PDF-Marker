@@ -16,7 +16,7 @@ export class RubricComponent implements OnInit, OnChanges {
   rubric: IRubric;
 
   @Input()
-  private rubricSelections;
+  rubricSelections;
 
   maxScore = 0;
 

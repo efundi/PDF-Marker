@@ -1,8 +1,8 @@
-<div mat-dialog-title>
-  <h2 class="mt-3">Manage Workspace</h2>
+<h1 mat-dialog-title>
+Manage Workspace
   <span class="pdf-marker-fill-space"></span>
   <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
-</div>
+</h1>
 <mat-dialog-content>
   <form [formGroup]="manageForm">
     <div class="pdf-spacer"></div>
@@ -29,9 +29,9 @@
     <div class="pdf-spacer"></div>
     <mat-label class="pdf-marker-form-labels">Move selected assignments to&nbsp;</mat-label>
 
-    <div class="customFlexContainer flexGrow3">
+    <div class="customFlexContainer mb-2">
       <div>
-        <mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
           <mat-label>Select Workspace</mat-label>
           <mat-select formControlName="newWorkspaceFolder">
             <mat-option *ngFor="let workspace of workspaceNameList" [value]="workspace">{{workspace}}</mat-option>
@@ -39,13 +39,13 @@
         </mat-form-field>
       </div>
 
-      <div class="button-right-margin">
+      <div>
         <button
           [disabled]="selected.selectedOptions.selected.length === 0 || !manageForm.controls.newWorkspaceFolder.value"
           type="button"
           color="primary"
           matSuffix
-          mat-icon-button
+          mat-button
           matTooltip="Move"
           (click)="onMove()">
           Move&nbsp;<mat-icon [class.pdf-icon-disabled]="selected.selectedOptions.selected.length === 0 || !manageForm.controls.newWorkspaceFolder.value" >content_copy</mat-icon>

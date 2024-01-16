@@ -72,7 +72,11 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
    * Markers for this page
    */
   @Input()
-  marks: MarkInfo[] = [];
+  set marks(marks: MarkInfo[] | number){
+    this._marks = marks as MarkInfo[]
+  }
+
+  _marks: MarkInfo[] = [];
   /**
    * Markers for this page
    */
@@ -91,6 +95,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
    */
   @ViewChild('annotationLayer', {static: true})
   private annotationLayer: ElementRef<HTMLDivElement>;
+  private pdfAnnotationLayer: AnnotationLayer;
 
   /**
    * Reference to the page wrapper
@@ -221,7 +226,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
           mark.totalMark = formData.totalMark;
           mark.sectionLabel = formData.sectionLabel;
           mark.comment = formData.markingComment;
-          const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
+          const updatedMarks: MarkInfo[] = cloneDeep(this._marks);
           updatedMarks.push(mark);
           this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe();
         }
@@ -264,7 +269,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
 
   renderPage(): Promise<any> {
     if (this.renderState !== 'WAITING') {
-      return;
+      return Promise.resolve();
     }
     this.renderState = 'RENDERING';
     const ctx = this.pdfCanvas.nativeElement.getContext('2d');
@@ -275,7 +280,18 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
         this.annotationLayer.nativeElement.removeChild(this.annotationLayer.nativeElement.lastChild);
       }
 
-      AnnotationLayer.render({
+      if (isNil(this.pdfAnnotationLayer)){
+        this.pdfAnnotationLayer = new AnnotationLayer({
+          accessibilityManager: undefined,
+          annotationCanvasMap: undefined,
+          div: this.annotationLayer.nativeElement,
+          l10n: undefined,
+          page: this.page,
+          viewport: this.viewport.clone({ dontFlip: true }),
+        })
+      }
+
+      this.pdfAnnotationLayer.render({
         viewport: this.viewport.clone({ dontFlip: true }),
         div: this.annotationLayer.nativeElement,
         annotations: annotationData,
@@ -405,7 +421,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       comment: null
     };
 
-    const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
+    const updatedMarks: MarkInfo[] = cloneDeep(this._marks);
     updatedMarks.push(mark);
     this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe({
       complete: () => {
@@ -417,7 +433,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   private createMarkIcon(event: MouseEvent) {
     const mark = this.createIconMark(event);
     if (mark.iconType !== IconTypeEnum.NUMBER) {
-      const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
+      const updatedMarks: MarkInfo[] = cloneDeep(this._marks);
       updatedMarks.push(mark);
       this.assignmentMarkingComponent.savePageMarks(this.pageIndex, updatedMarks).subscribe();
     }
@@ -441,7 +457,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
   }
 
   onMarkChanged(index: number, mark: MarkInfo): Observable<any> {
-    const updatedMarks: MarkInfo[] = cloneDeep(this.marks);
+    const updatedMarks: MarkInfo[] = cloneDeep(this._marks);
     if (isNil(mark)) {
       updatedMarks.splice(index, 1);
     } else {
@@ -496,7 +512,7 @@ export class AssignmentMarkingPageComponent implements OnInit, AfterViewInit, On
       return Promise.resolve(true);
     }
 
-    if (this.marks.length === 0) {
+    if (this._marks.length === 0) {
       return Promise.resolve(true);
     }
 

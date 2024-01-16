@@ -1,4 +1,4 @@
-.mat-dialog-title {
+.mat-mdc-dialog-title {
   display: flex;
   align-items: center;
   background: #fff;
@@ -11,12 +11,4 @@
   justify-content: space-between;
   position: relative;
   height: inherit;
-}
-
-.button-right-margin {
-  margin-right: 30px;
-}
-
-.flexGrow3 {
-  flex-grow: 3;
 }

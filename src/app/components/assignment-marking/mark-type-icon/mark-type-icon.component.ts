@@ -169,7 +169,7 @@ export class MarkTypeIconComponent implements OnInit {
   }
 
   onTotalMarkChange() {
-    const number = parseFloat(this.iconForm.controls.totalMark.value);
+    const number = parseFloat(this.iconForm.controls['totalMark'].value);
     if (!isNaN(number)) {
       const updatedMark: MarkInfo = cloneDeep(this.mark);
       updatedMark.totalMark = number;
@@ -216,7 +216,7 @@ export class MarkTypeIconComponent implements OnInit {
         updateMark.comment = formData.markingComment;
 
         if (this.iconForm) {
-          this.iconForm.controls.totalMark.setValue(this.mark.totalMark);
+          this.iconForm.controls['totalMark'].setValue(this.mark.totalMark);
         }
 
         this.assignmentMarkingPageComponent.onMarkChanged(this.index, updateMark).subscribe(() => {

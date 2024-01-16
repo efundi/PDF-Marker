@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanDeactivate, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { Observable } from 'rxjs';
 import {SettingsComponent} from '../components/settings/settings.component';
 import {MatDialog, MatDialogConfig} from '@angular/material/dialog';
@@ -8,7 +8,7 @@ import {ConfirmationDialogComponent} from '../components/confirmation-dialog/con
 @Injectable({
   providedIn: 'root'
 })
-export class UnsavedSettingsChangesGuard implements CanDeactivate<SettingsComponent> {
+export class UnsavedSettingsChangesGuard  {
   constructor(private dialog: MatDialog) {
   }
   canDeactivate(

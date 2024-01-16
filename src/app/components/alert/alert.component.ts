@@ -44,7 +44,7 @@ export class AlertComponent implements OnInit, OnDestroy {
 
   cssClass(alert: AlertInfo) {
     if (!alert) {
-      return;
+      return undefined;
     }
 
     // return css class based on alert type

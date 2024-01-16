@@ -91,17 +91,17 @@ export class RubricImportComponent implements OnInit, AfterViewInit {
       .subscribe({
         next: (selectedRubric) => {
           this.selectedRubric = selectedRubric;
-          this.fc.rubricFile.setErrors(null);
-          this.fc.rubricFileText.setValue(selectedRubric.selectedPath);
-          this.fc.rubricName.setValue(selectedRubric.rubric.name);
+          this.fc['rubricFile'].setErrors(null);
+          this.fc['rubricFileText'].setValue(selectedRubric.selectedPath);
+          this.fc['rubricName'].setValue(selectedRubric.rubric.name);
           this.busyService.stop();
         }, error: (error) => {
           this.selectedRubric = null;
           this.busyService.stop();
           if (error) {
             this.alertService.error(error);
-            this.fc.rubricFile.setErrors({file: true});
-            this.fc.rubricName.setValue(null);
+            this.fc['rubricFile'].setErrors({file: true});
+            this.fc['rubricName'].setValue(null);
           }
         }
       });
@@ -213,7 +213,7 @@ export class RubricImportComponent implements OnInit, AfterViewInit {
 
     const rubric: IRubric = {
       ...this.selectedRubric.rubric,
-      name: this.fc.rubricName.value
+      name: this.fc['rubricName'].value
     };
     this.busyService.start();
     this.rubricService.uploadRubric(rubric).subscribe({

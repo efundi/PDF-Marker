@@ -7,7 +7,6 @@ import {
   OnDestroy,
   OnInit,
   Output,
-  SimpleChanges
 } from '@angular/core';
 import {UntypedFormBuilder, UntypedFormGroup, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
@@ -81,7 +80,7 @@ export class PdfViewerToolbarComponent implements OnInit, OnChanges, OnDestroy {
       zoom: [1.00, Validators.required],
     });
 
-    this.zoomFormSubscription = this.iconForm.controls.zoom.valueChanges.subscribe((value) => {
+    this.zoomFormSubscription = this.iconForm.controls['zoom'].valueChanges.subscribe((value) => {
       this.settingChange.emit({
         zoom: {
           previous: this.iconForm.value.zoom,
@@ -93,12 +92,12 @@ export class PdfViewerToolbarComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   onPageNumberChange() {
-    const number = parseInt(this.iconForm.controls.pageNumber.value, 10);
+    const number = parseInt(this.iconForm.controls['pageNumber'].value, 10);
     if (!isNaN(number) && (number >= 1 && number <= this.pages)) {
       this.currentPage = number;
       this.currentPageChange.emit(this.currentPage);
     } else {
-      this.iconForm.controls.pageNumber.setValue((this.currentPage) ? this.currentPage.toString() : '1');
+      this.iconForm.controls['pageNumber'].setValue((this.currentPage) ? this.currentPage.toString() : '1');
     }
   }
 
@@ -117,9 +116,9 @@ export class PdfViewerToolbarComponent implements OnInit, OnChanges, OnDestroy {
       }
     }
   }
-  ngOnChanges(changes: SimpleChanges) {
+  ngOnChanges() {
     if (this.iconForm) {
-      this.iconForm.controls.pageNumber.setValue(this.currentPage.toString());
+      this.iconForm.controls['pageNumber'].setValue(this.currentPage.toString());
     }
   }
 

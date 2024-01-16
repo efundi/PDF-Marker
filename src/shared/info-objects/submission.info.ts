@@ -27,8 +27,8 @@ export class SubmissionInfo {
 }
 
 export class RubricSubmissionInfo extends SubmissionInfo {
-  type = SubmissionMarkType.RUBRIC;
-  marks: number[] = [];
+  override type = SubmissionMarkType.RUBRIC;
+  override marks: number[] = [];
 
   constructor(version: number = SubmissionInfoVersion) {
     super(version);
@@ -36,8 +36,8 @@ export class RubricSubmissionInfo extends SubmissionInfo {
 }
 
 export class MarkingSubmissionInfo extends SubmissionInfo {
-  type = SubmissionMarkType.MARK;
-  marks: MarkInfo[][] = [];
+  override type = SubmissionMarkType.MARK;
+  override marks: MarkInfo[][] = [];
 
   constructor(version: number = SubmissionInfoVersion) {
     super(version);

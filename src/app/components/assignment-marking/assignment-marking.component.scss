@@ -1,4 +1,4 @@
-@import '/src/scss/mixins';
+@use 'mixins';
 
 .pdf-marker-assignment-marking-controls {
   height: 65px;
@@ -34,11 +34,11 @@
   }
 
   .pages-wrapper{
-    @include scrollbar();
+    @include mixins.scrollbar();
   }
 
   .rubric-wrapper {
-    @include scrollbar(--pdf-marker-secondary);
+    @include mixins.scrollbar(--pdf-marker-secondary);
   }
 
   .pages-wrapper {

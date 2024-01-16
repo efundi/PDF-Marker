@@ -12,6 +12,7 @@
   <ng-container *ngFor="let tmenu of toolbarMenu">
     <!--<a [routerLink]="[tmenu.href]" mat-button matTooltip="{{ tmenu.toolTip }}"><mat-icon>{{ tmenu.icon }}</mat-icon></a>-->
     <a color="primary"
+       class="my-2"
        [routerLink]="[tmenu.href]"
        *ngIf="tmenu.title !== settings"
        mat-button
@@ -21,6 +22,7 @@
       <mat-icon class="menu-item">{{ tmenu.icon }}</mat-icon>
     </a>
     <button
+      class="my-2"
       style="width: 100%"
       color="primary"
       type="button"

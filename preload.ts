@@ -104,6 +104,8 @@ contextBridge.exposeInMainWorld('generateApi', {
     .then((result) => console.log(result), (error) => console.error(error)),
   markAll: (assignmentName: string, workspaceName: string) => ipcRenderer.invoke('generate:markAll', assignmentName, workspaceName)
     .then((result) => console.log(result), (error) => console.error(error)),
+  generateGroups: () => ipcRenderer.invoke('generate:generateGroups')
+    .then((result) => console.log(result), (error) => console.error(error)),
 } as GenerateIpcService);
 
 

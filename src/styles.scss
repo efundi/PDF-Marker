@@ -1,7 +1,17 @@
 @use '@angular/material' as mat;
-
+// $material-design-icons-font-path: 'node_modules/@material-design-icons/';
+$material-design-icons-font-path: '@material-design-icons/font/';
 @import '@material-design-icons/font';
 @import 'scss/mixins';
+// TODO(v15): As of v15 mat.legacy-core no longer includes default typography styles.
+//  The following line adds:
+//    1. Default typography styles for all components
+//    2. Styles for typography hierarchy classes (e.g. .mat-headline-1)
+//  If you specify typography styles for the components you use elsewhere, you should delete this line.
+//  If you don't need the default component typographies but still want the hierarchy styles,
+//  you can delete this line and instead use:
+//    `@include mat.legacy-typography-hierarchy(mat.define-typography-config());`
+@include mat.all-component-typographies();
 @include mat.core();
 
 @import "scss/variables";
@@ -54,14 +64,14 @@ html, body {
   --pdf-marker-secondary: #{$pdf-marker-secondary};
 }
 
-.mat-dialog-container {
+.mat-mdc-dialog-container {
   padding-top: 0 !important;
 }
 
 body {
 
   .mat-drawer-content,
-  .mat-dialog-container{
+  .mat-mdc-dialog-container{
     @include scrollbar();
   }
 }
@@ -105,11 +115,15 @@ body {
 }
 
 
-.mat-menu-panel,
-.mat-dialog-content {
+.mat-mdc-menu-panel,
+.mat-mdc-dialog-content {
   @include scrollbar();
 }
 
+.mat-mdc-dialog-title .mat-mdc-icon-button{
+  /* Move close button to the right corner */
+  margin-right: -24px;
+}
 .mat-expansion-panel-header {
   height: auto !important;
   display: unset !important;
@@ -143,11 +157,11 @@ pdf-marker-file-explorer-modal {
 }
 
 
-.mat-paginator-container {
+.mat-mdc-paginator-container {
   justify-content: flex-start !important;
 }
 
-.mat-dialog-container {
+.mat-mdc-dialog-container {
   /*background: #F5F5F5 !important;*/
 }
 
@@ -165,11 +179,11 @@ pdf-marker-rubric-criteria {
 }
 
 /** Place the progress bar over other elements to avoid the page jumping */
-.mat-progress-bar{
+.mat-mdc-progress-bar{
   position: absolute !important;
   z-index: 1000;
 }
-.mat-header-cell{
+.mat-mdc-header-cell{
   font-size: 14px;
 }
 
@@ -301,7 +315,7 @@ pdf-marker-rubric-criteria {
 }
 
 /** Loading indicator while pages are rendering */
-.waiting .mat-progress-spinner circle, .mat-spinner circle{
+.waiting .mat-mdc-progress-spinner circle, .mat-mdc-progress-spinner circle{
   stroke: var(--pdf-marker-secondary);
 }
 
@@ -312,7 +326,7 @@ pdf-marker-rubric-criteria {
     margin-left: 16px;
   }
   &.menuOpen .submission-navigator-wrapper{
-    margin-left: 258px;
+    margin-left: 255px;
   }
 }
 .cursor-not-allowed     { cursor: not-allowed; }
@@ -320,7 +334,7 @@ pdf-marker-rubric-criteria {
 .cursor-grab     { cursor: grab; }
 .cursor-grabbing     { cursor: grabbing; }
 
-.mat-stroked-button.mat-primary{
+.mat-mdc-outlined-button.mat-primary{
   border-color: var(--pdf-marker-primary);
 }
 
@@ -329,6 +343,11 @@ pdf-marker-rubric-criteria {
   height: 36px;
   font-size: 36px;
   line-height: unset;
+}
+
+
+.mat-mdc-menu-item .mat-icon-no-color{
+  --mat-menu-item-icon-color: #0000008a;
 }
 
 @import 'scss/compatibility';
