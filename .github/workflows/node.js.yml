@@ -24,5 +24,5 @@ jobs:
           Expand-Archive .\temp\gtk.zip -DestinationPath C:\GTK
           Invoke-WebRequest https://versaweb.dl.sourceforge.net/project/libjpeg-turbo/2.1.5.1/libjpeg-turbo-2.1.5.1-vc64.exe -OutFile .\temp\libjpeg-turbo.exe
           .\temp\libjpeg-turbo.exe /S
-      - run: npm install
+      - run: npm ci
       - run: npm run deploy
