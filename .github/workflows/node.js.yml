@@ -17,12 +17,13 @@ jobs:
         with:
           node-version: 18.x
           cache: 'npm'
-      - name: Install build dependencies
-        run: |
-          New-Item -Name temp -ItemType Directory
-          Invoke-WebRequest https://ftp.gnome.org/pub/GNOME/binaries/win64/gtk+/2.22/gtk+-bundle_2.22.1-20101229_win64.zip -OutFile .\temp\gtk.zip
-          Expand-Archive .\temp\gtk.zip -DestinationPath C:\GTK
-          Invoke-WebRequest https://versaweb.dl.sourceforge.net/project/libjpeg-turbo/2.1.5.1/libjpeg-turbo-2.1.5.1-vc64.exe -OutFile .\temp\libjpeg-turbo.exe
-          .\temp\libjpeg-turbo.exe /S
+      - name: Install Dependencies
+          run: |
+            Invoke-WebRequest "https://ftp-osl.osuosl.org/pub/gnome/binaries/win64/gtk+/2.22/gtk+-bundle_2.22.1-20101229_win64.zip" -OutFile "gtk.zip"
+            Expand-Archive gtk.zip -DestinationPath "C:\GTK"
+            Invoke-WebRequest "https://downloads.sourceforge.net/project/libjpeg-turbo/2.0.4/libjpeg-turbo-2.0.4-vc64.exe" -OutFile "libjpeg.exe" -UserAgent NativeHost
+            .\libjpeg.exe /S
+            npm install -g node-gyp@8
+            npm prefix -g | % {npm config set node_gyp "$_\node_modules\node-gyp\bin\node-gyp.js"}
       - run: npm ci
       - run: npm run deploy

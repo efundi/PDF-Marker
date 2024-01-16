@@ -22,7 +22,7 @@
     "electron": "ng build --base-href ./ && electron .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "npm rebuild canvas --build-from-source && electron-builder install-app-deps",
     "start": "npm-run-all -p ng:serve electron:serve",
     "debug": "npm-run-all -p ng:serve electron:debug",
     "build": "npm run build:dev",
