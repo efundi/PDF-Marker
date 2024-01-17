@@ -64,9 +64,6 @@ export class PdfViewerPageComponent implements OnDestroy, AfterViewInit {
   @ViewChild('annotationLayer', {static: true})
   private annotationLayer: ElementRef<HTMLDivElement>;
 
-
-  private pdfAnnotationLayer: AnnotationLayer;
-
   /**
    * Reference to the page wrapper
    * @private
@@ -149,18 +146,8 @@ export class PdfViewerPageComponent implements OnDestroy, AfterViewInit {
       while (this.annotationLayer.nativeElement.firstChild) {
         this.annotationLayer.nativeElement.removeChild(this.annotationLayer.nativeElement.lastChild);
       }
-      if (isNil(this.pdfAnnotationLayer)){
-        this.pdfAnnotationLayer = new AnnotationLayer({
-          accessibilityManager: undefined,
-          annotationCanvasMap: undefined,
-          div: this.annotationLayer.nativeElement,
-          l10n: undefined,
-          page: this.page,
-          viewport: undefined
-        });
-      }
 
-      this.pdfAnnotationLayer.render({
+      AnnotationLayer.render({
         viewport: this.viewport.clone({ dontFlip: true }),
         div: this.annotationLayer.nativeElement,
         annotations: annotationData,
