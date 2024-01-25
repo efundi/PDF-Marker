@@ -1,8 +1,7 @@
-<div mat-dialog-title class="mt-3">
-  <h2>Import from marker</h2>
+<h1 mat-dialog-title>Import from marker
   <span class="pdf-marker-fill-space"></span>
   <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
-</div>
+</h1>
 <mat-dialog-content>
   <p class="text-black-50 small">Select the marker whose work you want to import</p>
 <form [formGroup]="formGroup" class="d-flex flex-column">
@@ -37,5 +36,5 @@
     type="submit"
     mat-button
     mat-raised-button
-    (click)="submit()">Submit</button>&nbsp;&nbsp;&nbsp;
+    (click)="submit()">Submit</button>
 </div>

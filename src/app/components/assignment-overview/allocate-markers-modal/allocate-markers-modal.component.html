@@ -1,8 +1,7 @@
-<div mat-dialog-title class="mt-3">
-  <h2>Allocate Makers</h2>
+<h1 mat-dialog-title>Allocate Makers
   <span class="pdf-marker-fill-space"></span>
   <button type="button" mat-icon-button matTooltip="Close" (click)="onClose()"><mat-icon>close</mat-icon></button>
-</div>
+</h1>
 <mat-dialog-content>
     <p class="text-black-50 small">Auto allocate a group of markers to mark this assignment.</p>
   <div class="mb-3">
@@ -55,18 +54,18 @@
       <div class="col-sm-10 d-flex align-self-end" *ngIf="zipFileCount">
         <span id="zip-file-count" class="text-black-50 small">{{ zipFileCount }} zip files will be downloaded to your chosen directory.</span>
       </div>
-      <div mat-dialog-actions class="col justify-content-end">
-        <button
-          [disabled]="formGroup.invalid"
-          color="primary"
-          type="submit"
-          mat-button
-          mat-raised-button
-          (click)="submit()">Submit</button>&nbsp;&nbsp;&nbsp;
-      </div>
     </div>
 
   </form>
 
 </mat-dialog-content>
 
+<div mat-dialog-actions class="justify-content-end">
+  <button
+    [disabled]="formGroup.invalid"
+    color="primary"
+    type="submit"
+    mat-button
+    mat-raised-button
+    (click)="submit()">Submit</button>
+</div>
