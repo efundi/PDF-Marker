@@ -868,9 +868,14 @@ function validatePdfmWorkspaceZip(
       return Promise.reject(`Student directory contains special chars or whitespaces that are not allowed. ${zipFilePath}`);
     }
 
+
+
     if (!(zipFilePathParts[1].match(STUDENT_DIRECTORY_REGEX) || zipFilePath[1].match(STUDENT_DIRECTORY_NO_NAME_REGEX))) {
-      // Check that the second path is a student submission path
-      return Promise.reject(`Zip contains directories that are not submissions. ${zipFilePath}`);
+
+      if (zipFilePath[1].match(GROUP_DIRECTORY_REGEX)){
+        // Check that the second path is a student submission path
+        return Promise.reject(`Zip contains directories that are not submissions. ${zipFilePath}`);
+      }
     }
 
     if (indexOf(zipSubmissionDirectoryNames, zipFilePathParts[1]) < 0) {
