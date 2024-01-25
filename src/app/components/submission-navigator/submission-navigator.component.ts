@@ -183,7 +183,13 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
         this.marker = 'Me';
       } else {
         const marker = find(this.settings.markers, {email: this.assignmentSubmission.allocation.email});
-        this.marker = marker.name;
+        if (isNil(marker)){
+          console.error("Assignment's marker \"" + this.assignmentSubmission.allocation.email + "\" is not in your settings!")
+          // This will only happen when you mess up your application settings
+          this.marker = "Unknown"
+        } else {
+          this.marker = marker.name;
+        }
       }
     }
   }
