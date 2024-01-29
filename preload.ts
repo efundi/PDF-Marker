@@ -93,6 +93,7 @@ contextBridge.exposeInMainWorld('applicationApi', {
   getFile: (fileFilter: OpenFileInfo) => ipcRenderer.invoke('app:getFile', fileFilter),
   saveFile: (fileFilter: SaveFileInfo) => ipcRenderer.invoke('app:saveFile', fileFilter),
   openExternalLink: (link: any) => ipcRenderer.invoke('app:openExternalLink', link),
+  debug: () =>  ipcRenderer.send('app:debug'),
 } as ApplicationIpcService);
 
 contextBridge.exposeInMainWorld('generateApi', {
