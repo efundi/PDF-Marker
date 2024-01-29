@@ -39,3 +39,6 @@ Else, you can setup a debugging run configuration as shown below which will also
 ![](images/debug-ij-2.png)
 
 _Make sure to add the source directory_
+
+### Debug log level
+In the browser console, run the following `window.debug()`. The browser and backend will now print debug logging.
