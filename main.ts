@@ -269,6 +269,10 @@ function launchBrowser(){
       ipcMain.handle('app:getFolder', toIpcResponse(getFolder));
       ipcMain.handle('app:getFile', toIpcResponse(getFile));
       ipcMain.handle('app:openExternalLink', toIpcResponse(openExternalLink));
+      ipcMain.on('app:debug', () => {
+        logger.transports.file.level = 'debug';
+        logger.transports.console.level = 'debug';
+      });
 
 
       // Update API

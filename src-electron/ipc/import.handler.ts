@@ -801,13 +801,16 @@ export function validateLectureImport(event: IpcMainInvokeEvent, importInfo: Lec
               studentId: submission.studentId,
               directoryName: submission.directoryName,
               studentName: submission.studentName,
-              studentSurname: submission.studentSurname
             });
-            // If it's null then the fields do not match the original submission
-            return !isNil(mainSubmission);
+            if (isNil(mainSubmission)) {
+              return false
+            }
+            // Lodash doesn't search well for fields that can be undefined
+            // Instead lets check it ourselves
+            return mainSubmission.studentSurname === submission.studentSurname;
           });
           if (!allSubmissionsMatch) {
-            return Promise.reject('Some of the submissions details does not match the assignment\s submissions\' details.');
+            return Promise.reject('Some of the submissions details does not match the assignment submissions\' details.');
           }
 
           // Check that the assignment is still allocated to the user

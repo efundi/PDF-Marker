@@ -5,7 +5,10 @@ import {SettingsService} from '../../services/settings.service';
 import {BusyService} from '../../services/busy.service';
 import {AppService} from '../../services/app.service';
 import {Observable, ReplaySubject} from 'rxjs';
+import {createLogger, Logger} from "../../utils/logging";
 
+
+const LOG: Logger = createLogger("MarkersManageComponent")
 @Component({
   selector: 'pdf-marker-markers-manage',
   templateUrl: './markers-manage.component.html',
@@ -44,6 +47,7 @@ export class MarkersManageComponent implements OnInit {
   private loadMarkers(): void {
     this.settingsService.getConfigurations().subscribe({
       next: (settings) => {
+        LOG.debug('Loaded settings', settings)
         this.originalSettings = settings;
         this.settingsReplaySubject.next(settings);
         this.busyService.stop();
@@ -57,9 +61,11 @@ export class MarkersManageComponent implements OnInit {
 
   saveSettings(updatedSettings: SettingInfo, successMessage = 'Settings updated'): Observable<SettingInfo> {
     this.busyService.start();
+    LOG.debug("Saving settings", updatedSettings)
     return new Observable<any>((subscriber) => {
       this.settingsService.saveConfigurations(updatedSettings).subscribe({
         next: (settings) => {
+          LOG.debug("Saved settings", settings)
           this.originalSettings = settings;
 
           this.busyService.stop();

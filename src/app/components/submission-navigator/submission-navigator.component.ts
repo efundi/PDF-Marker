@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {filter, find, findIndex, forEach, isNil} from 'lodash';
+import { find, findIndex, forEach, isNil} from 'lodash';
 import {StudentSubmissionTreeNode, TreeNodeType, WorkspaceFileTreeNode} from '@shared/info-objects/workspaceTreeNode';
 import {RoutesEnum} from '../../utils/routes.enum';
 import {AssignmentService} from '../../services/assignment.service';
@@ -20,12 +20,15 @@ import {MarkInfo} from '@shared/info-objects/mark.info';
 import {MatDialogConfig} from '@angular/material/dialog';
 import {PreviewMarksComponent} from '../assignment-marking/preview-marks/preview-marks.component';
 import {AppService} from '../../services/app.service';
+import {createLogger, Logger} from "../../utils/logging";
 
 export interface SubmissionItem {
   studentFullName: string;
   studentId: string;
   pdfFile: WorkspaceFileTreeNode;
 }
+
+const LOG: Logger = createLogger("SubmissionNavigatorComponent")
 
 @Component({
   selector: 'pdf-marker-submission-navigator',
@@ -93,6 +96,7 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.submissionChangeSubscription = this.assignmentService.submissionUpdated.subscribe((submissionUpdateEvent) => {
+      LOG.debug("Submission update event", submissionUpdateEvent)
       if (isNil(this.selectedSubmission)) {
         return; // This only happens in dev mode when the page reloads
       }
@@ -105,10 +109,12 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
     });
 
     this.settingsService.getConfigurations().subscribe((settings) => {
+      LOG.debug('Loaded settings', settings)
       this.settings = settings;
 
       this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.pipe(
         mergeMap(selectedSubmission => {
+          LOG.log('Select Submission Changed', selectedSubmission)
           this.selectedSubmission = selectedSubmission;
           if (isNil(selectedSubmission)) {
             this.workspaceName = null;
@@ -184,7 +190,7 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
       } else {
         const marker = find(this.settings.markers, {email: this.assignmentSubmission.allocation.email});
         if (isNil(marker)){
-          console.error("Assignment's marker \"" + this.assignmentSubmission.allocation.email + "\" is not in your settings!")
+          LOG.error("Assignment's marker \"" + this.assignmentSubmission.allocation.email + "\" is not in your settings!")
           // This will only happen when you mess up your application settings
           this.marker = "Unknown"
         } else {
@@ -197,7 +203,10 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
   private loadAssignmentSettings(): Observable <AssignmentSettingsInfo> {
     return this.assignmentService.getAssignmentSettings(this.workspaceName, this.assignmentName)
       .pipe(
-        tap((assignmentSettingsInfo) => this.assignmentSettings = assignmentSettingsInfo)
+        tap((assignmentSettingsInfo) => {
+          LOG.debug("Loaded assignment settings", assignmentSettingsInfo)
+          this.assignmentSettings = assignmentSettingsInfo
+        })
       );
   }
 
