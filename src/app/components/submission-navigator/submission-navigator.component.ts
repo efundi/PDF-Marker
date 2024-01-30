@@ -9,10 +9,10 @@ import {SelectedSubmission} from '../../info-objects/selected-submission';
 import {SettingsService} from '../../services/settings.service';
 import {SubmissionNavigationService} from '../../services/submission-navigation.service';
 import {
-    AssignmentSettingsInfo,
-    DistributionFormat, SourceFormat,
-    Submission,
-    SubmissionState
+  AssignmentSettingsInfo,
+  DistributionFormat, SourceFormat,
+  Submission,
+  SubmissionState
 } from '@shared/info-objects/assignment-settings.info';
 import {SettingInfo} from '@shared/info-objects/setting.info';
 import {SubmissionInfo} from '@shared/info-objects/submission.info';
@@ -108,41 +108,50 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.settingsService.getConfigurations().subscribe((settings) => {
-      LOG.debug('Loaded settings', settings)
-      this.settings = settings;
 
-      this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.pipe(
-        mergeMap(selectedSubmission => {
-          LOG.log('Select Submission Changed', selectedSubmission)
-          this.selectedSubmission = selectedSubmission;
-          if (isNil(selectedSubmission)) {
-            this.workspaceName = null;
-            this.assignmentName = null;
-            this.menuItems = [];
-            this.marker = null;
-            return of(null);
-          } else {
-            this.workspaceName = selectedSubmission.workspace.name;
-            this.assignmentName = selectedSubmission.assignment.name;
-            return this.loadAssignmentSettings().pipe(
-              tap(() => {
-                const studentDirectory = selectedSubmission.pdfFile.parent.parent.name;
-                this.assignmentSubmission = find(this.assignmentSettings.submissions, {directoryName: studentDirectory});
-              }),
-              tap(() => this.generateDataFromModel()),
-              mergeMap(() => this.getMarks()),
-              tap(() => this.recalculateMark()),
-              tap(() => this.loadMarker())
-            );
-          }
-        })
-      ).subscribe(() => {
 
-      });
+    this.assignmentSubscription = this.assignmentService.selectedSubmissionChanged.pipe(
+      mergeMap(selectedSubmission => {
+        LOG.log('Select Submission Changed', selectedSubmission)
+        this.selectedSubmission = selectedSubmission;
+        if (isNil(selectedSubmission)) {
+          this.workspaceName = null;
+          this.assignmentName = null;
+          this.menuItems = [];
+          this.marker = null;
+          return of(null);
+        } else {
+          this.workspaceName = selectedSubmission.workspace.name;
+          this.assignmentName = selectedSubmission.assignment.name;
+          return this.loadAssignmentSettings().pipe(
+            tap(() => {
+              const studentDirectory = selectedSubmission.pdfFile.parent.parent.name;
+              this.assignmentSubmission = find(this.assignmentSettings.submissions, {directoryName: studentDirectory});
+            }),
+            tap(() => this.generateDataFromModel()),
+            mergeMap(() => this.getMarks()),
+            mergeMap(() => this.loadSettings()),
+            tap(() => this.recalculateMark()),
+            tap(() => this.loadMarker())
+          );
+        }
+      })
+    ).subscribe({
+      next: () => {
+        LOG.debug("Done loading new submission")
+      },
+      error: (err) => {
+        LOG.error("Error loading new submission", err)
+      }
     });
+  }
 
-
+  private loadSettings(): Observable<SettingInfo> {
+    return this.settingsService.getConfigurations().pipe(
+      tap((settings) => {
+        this.settings = settings;
+      })
+    );
   }
 
   private recalculateMark() {
@@ -316,5 +325,5 @@ export class SubmissionNavigatorComponent implements OnInit, OnDestroy {
     this.appService.createDialog(PreviewMarksComponent, config);
   }
 
-    protected readonly SourceFormat = SourceFormat;
+  protected readonly SourceFormat = SourceFormat;
 }
