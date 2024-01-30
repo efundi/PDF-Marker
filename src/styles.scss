@@ -350,5 +350,9 @@ pdf-marker-rubric-criteria {
   --mat-menu-item-icon-color: #0000008a;
 }
 
+ .mat-toolbar .mat-mdc-button-base.mat-mdc-button-base.mat-unthemed {
+   --mdc-text-button-label-text-color: #ffffff !important;
+   --mdc-outlined-button-label-text-color: #ffffff !important;;
+ }
 @import 'scss/compatibility';
 
