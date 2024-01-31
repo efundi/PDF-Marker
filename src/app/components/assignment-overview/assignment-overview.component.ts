@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
 import {AssignmentService} from '../../services/assignment.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {forkJoin, mergeMap, Observable, Subscription, tap, of} from 'rxjs';
+import {forkJoin, mergeMap, Observable, of, Subscription, tap} from 'rxjs';
 import {AppService} from '../../services/app.service';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatTableDataSource} from '@angular/material/table';
@@ -35,9 +35,9 @@ import {BusyService} from '../../services/busy.service';
 import {MatSort, MatSortable} from '@angular/material/sort';
 import {cloneDeep, every, filter, find, forEach, isEmpty, isNil, map, some, sortBy, uniq} from 'lodash';
 import {
+  AssignmentTreeNode,
   StudentSubmissionTreeNode,
   TreeNodeType,
-  AssignmentTreeNode,
   WorkspaceFileTreeNode
 } from '@shared/info-objects/workspaceTreeNode';
 import {DEFAULT_WORKSPACE, MARK_FILE} from '@shared/constants/constants';
@@ -46,7 +46,8 @@ import {DateTime} from 'luxon';
 import {
   calculateCanModerateSubmission,
   calculateCanReAllocateSubmission,
-  checkPermissions, DEFAULT_PERMISSIONS,
+  checkPermissions,
+  DEFAULT_PERMISSIONS,
   Permissions
 } from '../../utils/utils';
 import {ImportMarkerModalComponent} from './import-marker-modal/import-marker-modal.component';
@@ -115,7 +116,7 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   isSettings: boolean;
   rubrics: IRubricName[] = [];
 
-  private workspaceName: string;
+  workspaceName: string;
   assignmentName: string;
   permissions: Permissions = DEFAULT_PERMISSIONS();
 
@@ -919,5 +920,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
         this.busyService.stop();
       }
     });
+  }
+
+  openWorkspaceOverview(): void {
+    this.router.navigate([RoutesEnum.ASSIGNMENT_WORKSPACE_OVERVIEW, this.workspaceName]);
   }
 }
