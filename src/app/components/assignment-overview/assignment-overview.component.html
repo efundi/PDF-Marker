@@ -1,6 +1,6 @@
 <ng-container>
   <pdf-marker-alert></pdf-marker-alert>
-<!--  <code>{{permissions | json}}</code>-->
+  <!--  <code>{{permissions | json}}</code>-->
   <div class="pdf-marker-assignment-overview-assignment-header">
     <div class="pdf-marker-assignment-overview-icon">
       <mat-icon color="primary">description</mat-icon>
@@ -14,93 +14,100 @@
         <span class="badge text-bg-success" *ngIf="assignmentSettings?.state === AssignmentState.SENT_FOR_REVIEW">Sent for Review</span>
       </div>
     </div>
-    <div class="pdf-marker-assignment-overview-buttons">
-      <button
-        color="primary"
-        *ngIf="assignmentSettings?.sourceFormat === SourceFormat.MANUAL"
-        [disabled]="!permissions.canManageSubmissions"
-        mat-icon-button
-        matTooltip="Manage Submissions"
-        (click)="manageStudents()">
-        <mat-icon [class.pdf-icon-disabled]="assignmentSettings?.sourceFormat !== SourceFormat.MANUAL">person</mat-icon>
-      </button>
-      <button
-        color="primary"
-        *ngIf="assignmentSettings?.rubric"
-        mat-icon-button
-        matTooltip="Manage Rubric"
-        (click)="viewRubric()">
-        <mat-icon [class.pdf-icon-disabled]="!assignmentSettings?.rubric">apps</mat-icon>
-      </button>
-      <button
-        *ngIf="permissions.showAllocate"
-        [disabled]="!permissions.canAllocate"
-        color="primary"
-        mat-icon-button
-        matTooltip="Allocate Markers"
-        (click)="allocateMarkers()">
-        <mat-icon>workspaces</mat-icon>
-      </button>
-      <button
-        *ngIf="permissions.showReAllocate"
-        [disabled]="!permissions.canReAllocate || !selection.hasValue()"
-        color="primary"
-        mat-icon-button
-        matTooltip="Reallocate Markers"
-        (click)="reallocateMarkers()">
-        <mat-icon>workspaces</mat-icon>
-      </button>
+    <div class="d-flex flex-column position-relative">
+      <div class="d-flex justify-content-end">
+        <button mat-button color="primary" [attr.aria-label]="'Go back to ' + workspaceName" (click)="openWorkspaceOverview()">
+          <mat-icon>chevron_left</mat-icon> <span>{{workspaceName}}</span>
+        </button>
+      </div>
+      <div class="pdf-marker-assignment-overview-buttons">
+        <button
+          color="primary"
+          *ngIf="assignmentSettings?.sourceFormat === SourceFormat.MANUAL"
+          [disabled]="!permissions.canManageSubmissions"
+          mat-icon-button
+          matTooltip="Manage Submissions"
+          (click)="manageStudents()">
+          <mat-icon [class.pdf-icon-disabled]="assignmentSettings?.sourceFormat !== SourceFormat.MANUAL">person</mat-icon>
+        </button>
+        <button
+          color="primary"
+          *ngIf="assignmentSettings?.rubric"
+          mat-icon-button
+          matTooltip="Manage Rubric"
+          (click)="viewRubric()">
+          <mat-icon [class.pdf-icon-disabled]="!assignmentSettings?.rubric">apps</mat-icon>
+        </button>
+        <button
+          *ngIf="permissions.showAllocate"
+          [disabled]="!permissions.canAllocate"
+          color="primary"
+          mat-icon-button
+          matTooltip="Allocate Markers"
+          (click)="allocateMarkers()">
+          <mat-icon>workspaces</mat-icon>
+        </button>
+        <button
+          *ngIf="permissions.showReAllocate"
+          [disabled]="!permissions.canReAllocate || !selection.hasValue()"
+          color="primary"
+          mat-icon-button
+          matTooltip="Reallocate Markers"
+          (click)="reallocateMarkers()">
+          <mat-icon>workspaces</mat-icon>
+        </button>
 
-      <button
-        *ngIf="permissions.showImport"
-        [disabled]="!permissions.canImport"
-        color="primary"
-        mat-icon-button
-        matTooltip="Import from Marker"
-        (click)="importMarkerFile()">
-        <mat-icon>upload_file</mat-icon>
-      </button>
-      <button
-        *ngIf="!permissions.canExportReview"
-        color="primary"
-        [disabled]="!isSettings || !permissions.canFinalize"
-        mat-icon-button
-        matTooltip="Finalise and Export Assignment"
-        (click)="onFinalizeAndExport($event)">
-        <mat-icon >archive</mat-icon>
-      </button>
-      <button
-        *ngIf="(permissions.showSendForModeration && !permissions.canVerifyModeration) || (permissions.showSendForModeration && selection.hasValue())"
-        [disabled]="!permissions.canSendForModeration || !selection.hasValue()"
-        color="primary"
-        mat-icon-button
-        matTooltip="Send for moderation"
-        (click)="exportForModeration()">
-        <mat-icon>verified</mat-icon>
-      </button>
-      <button
-        *ngIf="permissions.canVerifyModeration && !selection.hasValue()"
-        color="primary"
-        mat-icon-button
-        matTooltip="Verify moderation"
-        (click)="verifyModeration()">
-        <mat-icon>verified</mat-icon>
-      </button>
-      <span
-        *ngIf="permissions.showModerationVerified                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "
-        class="text-success ms-2"
-        matTooltip="Moderation Verified">
+        <button
+          *ngIf="permissions.showImport"
+          [disabled]="!permissions.canImport"
+          color="primary"
+          mat-icon-button
+          matTooltip="Import from Marker"
+          (click)="importMarkerFile()">
+          <mat-icon>upload_file</mat-icon>
+        </button>
+        <button
+          *ngIf="!permissions.canExportReview"
+          color="primary"
+          [disabled]="!isSettings || !permissions.canFinalize"
+          mat-icon-button
+          matTooltip="Finalise and Export Assignment"
+          (click)="onFinalizeAndExport($event)">
+          <mat-icon >archive</mat-icon>
+        </button>
+        <button
+          *ngIf="(permissions.showSendForModeration && !permissions.canVerifyModeration) || (permissions.showSendForModeration && selection.hasValue())"
+          [disabled]="!permissions.canSendForModeration || !selection.hasValue()"
+          color="primary"
+          mat-icon-button
+          matTooltip="Send for moderation"
+          (click)="exportForModeration()">
+          <mat-icon>verified</mat-icon>
+        </button>
+        <button
+          *ngIf="permissions.canVerifyModeration && !selection.hasValue()"
+          color="primary"
+          mat-icon-button
+          matTooltip="Verify moderation"
+          (click)="verifyModeration()">
+          <mat-icon>verified</mat-icon>
+        </button>
+        <span
+          *ngIf="permissions.showModerationVerified                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "
+          class="text-success ms-2"
+          matTooltip="Moderation Verified">
         <mat-icon >verified</mat-icon>
       </span>
-      <button
-        *ngIf="permissions.canExportReview                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "
-        color="primary"
-        [disabled]="!isSettings"
-        mat-icon-button
-        matTooltip="Export for review"
-        (click)="onExportForReview($event)">
-        <mat-icon >archive</mat-icon>
-      </button>
+        <button
+          *ngIf="permissions.canExportReview                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "
+          color="primary"
+          [disabled]="!isSettings"
+          mat-icon-button
+          matTooltip="Export for review"
+          (click)="onExportForReview($event)">
+          <mat-icon >archive</mat-icon>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -210,9 +217,9 @@
       <th mat-header-cell *matHeaderCellDef  mat-sort-header="lmsStatusText"> On Time </th>
       <td mat-cell *matCellDef="let element" class="fs-6">
         <span class="badge "
-             [class.text-bg-success]="element?.lmsStatusText === 'On time'"
-             [class.text-bg-danger]="element?.lmsStatusText === 'Late'"
-             [class.text-bg-info]="element?.lmsStatusText === 'Unknown'">{{ element.lmsStatusText }}
+              [class.text-bg-success]="element?.lmsStatusText === 'On time'"
+              [class.text-bg-danger]="element?.lmsStatusText === 'Late'"
+              [class.text-bg-info]="element?.lmsStatusText === 'Unknown'">{{ element.lmsStatusText }}
         </span>
       </td>
     </ng-container>
