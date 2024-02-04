@@ -100,3 +100,23 @@ table {
     height: 33px;
   }
 }
+
+.pdf-marker-stat{
+  border: 1px solid #cecece;
+  border-radius: 0.5rem;
+  display: flex;
+  margin-right: 0.75rem;
+  margin-top: 0.25rem;
+  font-size: 14px;
+
+  .progress{
+    border-top-left-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
+    padding: 3px 5px 3px 5px;
+    color: #FFFFFF;
+  }
+
+  .text{
+    padding: 3px 5px 3px 5px;
+  }
+}

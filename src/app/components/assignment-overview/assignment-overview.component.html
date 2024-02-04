@@ -13,8 +13,12 @@
         <span class="badge text-bg-secondary" *ngIf="assignmentSettings?.state === AssignmentState.NOT_STARTED">Not Started</span>
         <span class="badge text-bg-success" *ngIf="assignmentSettings?.state === AssignmentState.SENT_FOR_REVIEW">Sent for Review</span>
       </div>
+      <div class="d-flex flex-row">
+        <div class="pdf-marker-stat"><div class="progress bg-secondary fw-bold">{{ marked }} / {{submissions}}</div><div class="text text-dark">Marked</div></div>
+        <div class="pdf-marker-stat"><div class="progress bg-secondary fw-bold">{{ noSubmission }} / {{submissions}}</div><div class="text text-dark  ">Not submitted</div></div>
+      </div>
     </div>
-    <div class="d-flex flex-column position-relative">
+    <div class="d-flex flex-column position-relative align-items-end">
       <div class="d-flex justify-content-end">
         <button mat-button color="primary" [attr.aria-label]="'Go back to ' + workspaceName" (click)="openWorkspaceOverview()">
           <mat-icon>chevron_left</mat-icon> <span>{{workspaceName}}</span>

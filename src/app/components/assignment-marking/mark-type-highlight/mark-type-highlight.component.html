@@ -1,7 +1,7 @@
 <div
   class="pdf-marker-mark-type-highlight-container"
   [class.disabled]="!editEnabled"
-  [class.pallet-open]="menuTrigger.menuOpen">
+  [class.pallet-open]="editEnabled && menuTrigger.menuOpen">
   <div class="comment-indicator" *ngIf="mark.sectionLabel">
     <mat-icon
     class="icon-edit"

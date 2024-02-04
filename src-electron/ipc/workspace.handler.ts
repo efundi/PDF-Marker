@@ -315,7 +315,7 @@ export function deleteWorkspaceAssignments(
   const promises: Promise<any>[] = assignmentNames.map((assignmentName) => {
     const assignmentPath = workspacePath + sep + assignmentName
     LOG.debug("Deleting assignment at: " + assignmentPath);
-    return rm(assignmentPath, {recursive: true})
+    return shell.trashItem(assignmentPath)
       .then(
         noop,
         () => Promise.reject('Failed to remove assignment.'),

@@ -33,7 +33,7 @@ import {IRubric, IRubricName} from '@shared/info-objects/rubric.class';
 import {RubricService} from '../../services/rubric.service';
 import {BusyService} from '../../services/busy.service';
 import {MatSort, MatSortable} from '@angular/material/sort';
-import {cloneDeep, every, filter, find, forEach, isEmpty, isNil, map, some, sortBy, uniq} from 'lodash';
+import {cloneDeep, every, filter, find, forEach, isEmpty, isNil, map, reduce, some, sortBy, uniq} from 'lodash';
 import {
   AssignmentTreeNode,
   StudentSubmissionTreeNode,
@@ -119,6 +119,9 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
   workspaceName: string;
   assignmentName: string;
   permissions: Permissions = DEFAULT_PERMISSIONS();
+  submissions = 0;
+  marked = 0
+  noSubmission = 0
 
   constructor(private assignmentService: AssignmentService,
               private workspaceService: WorkspaceService,
@@ -213,6 +216,8 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       .pipe(
         tap((assignmentSettings: AssignmentSettingsInfo) => {
           this.assignmentSettings = assignmentSettings;
+          this.submissions = this.assignmentSettings.submissions.length;
+          this.noSubmission = filter(this.assignmentSettings.submissions, {state: SubmissionState.NO_SUBMISSION}).length;
         })
       );
   }
@@ -222,6 +227,12 @@ export class AssignmentOverviewComponent implements OnInit, OnDestroy, AfterView
       .pipe(
         tap((workspaceAssignment) => {
           this.workspaceAssignment = workspaceAssignment;
+          const assignmentFiles = workspaceAssignment.children.filter(c => c.type === TreeNodeType.SUBMISSION);
+          this.marked = reduce(assignmentFiles, (sum, value) => {
+            // There will only be 1 or zero mark files
+            const marked =  value.children.filter(c => c.type === TreeNodeType.FILE && c.name === MARK_FILE).length;
+            return sum + marked;
+          }, 0);
         })
       );
   }

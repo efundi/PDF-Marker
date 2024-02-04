@@ -63,7 +63,9 @@ export class MarkTypeHighlightComponent implements OnInit, AfterViewInit, OnDest
 
   ngAfterViewInit() {
     this.menuOpenSubscription = this.menuTrigger.menuOpened.subscribe(() => {
-      this.renderer.setStyle(this.elementRef.nativeElement, 'z-index', '5');
+      if (this.editEnabled) {
+        this.renderer.setStyle(this.elementRef.nativeElement, 'z-index', '5');
+      }
     });
     this.menuClosedSubscription = this.menuTrigger.menuClosed.subscribe(() => {
       this.renderer.removeStyle(this.elementRef.nativeElement, 'z-index');
