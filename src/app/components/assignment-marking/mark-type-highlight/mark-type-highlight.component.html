@@ -5,7 +5,7 @@
   <div class="comment-indicator" *ngIf="mark.sectionLabel">
     <mat-icon
     class="icon-edit"
-    matTooltip="Add/Edit Comment"
+    [matTooltip]="editEnabled ? 'Add/Edit Comment' : null"
     (click)="onEdit($event)">
       comment
   </mat-icon>
@@ -16,7 +16,7 @@
     <div class="tool-container">
       <mat-icon
         class="icon-edit"
-        matTooltip="Add/Edit Comment"
+        [matTooltip]="editEnabled ? 'Add/Edit Comment' : null"
         (click)="onEdit($event)">
         comment
       </mat-icon>

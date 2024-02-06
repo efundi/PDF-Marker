@@ -135,6 +135,9 @@ export class MarkTypeHighlightComponent implements OnInit, AfterViewInit, OnDest
    */
   onEdit(event: MouseEvent) {
     event.stopPropagation();
+    if (!this.editEnabled){
+      return
+    }
 
     const config = new MatDialogConfig();
     config.width = '400px';
