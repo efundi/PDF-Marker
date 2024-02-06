@@ -14,8 +14,8 @@
         <span class="badge text-bg-success" *ngIf="assignmentSettings?.state === AssignmentState.SENT_FOR_REVIEW">Sent for Review</span>
       </div>
       <div class="d-flex flex-row">
-        <div class="pdf-marker-stat"><div class="progress bg-secondary fw-bold">{{ marked }} / {{submissions}}</div><div class="text text-dark">Marked</div></div>
-        <div class="pdf-marker-stat"><div class="progress bg-secondary fw-bold">{{ noSubmission }} / {{submissions}}</div><div class="text text-dark  ">Not submitted</div></div>
+        <div class="pdf-marker-stat"><div class="progress bg-primary fw-bold">{{ marked }} / {{submissions}}</div><div class="text">Marked</div></div>
+        <div class="pdf-marker-stat"><div class="progress bg-primary fw-bold">{{ noSubmission }}</div><div class="text">Not submitted</div></div>
       </div>
     </div>
     <div class="d-flex flex-column position-relative align-items-end">
@@ -103,9 +103,7 @@
         <mat-icon >verified</mat-icon>
       </span>
         <button
-          *ngIf="permissions.canExportReview                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "
           color="primary"
-          [disabled]="!isSettings"
           mat-icon-button
           matTooltip="Export for review"
           (click)="onExportForReview($event)">
