@@ -103,7 +103,9 @@
         <mat-icon >verified</mat-icon>
       </span>
         <button
+          *ngIf="permissions.canExportReview                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  "
           color="primary"
+          [disabled]="!isSettings"
           mat-icon-button
           matTooltip="Export for review"
           (click)="onExportForReview($event)">
