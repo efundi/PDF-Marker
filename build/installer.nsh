@@ -45,7 +45,7 @@ FunctionEnd
 
   ${If} $LibreInstallCheckbox_State == ${BST_CHECKED}
     # C:\Users\USERNAME\AppData\Local\Temp
-    NScurl::http get "https://downloadarchive.documentfoundation.org/libreoffice/old/24.2.3.2/win/x86_64/LibreOffice_24.2.3.2_Win_x86-64.msi" "$TEMP\LibreOffice_7.6.2_Win_x86-64.msi" /POPUP /INSIST /Zone.Identifier /END
+    NScurl::http get "https://downloadarchive.documentfoundation.org/libreoffice/old/24.2.3.2/win/x86_64/LibreOffice_24.2.3.2_Win_x86-64.msi" "$TEMP\LibreOffice_24.2.3.2_Win_x86-64.msi" /POPUP /INSIST /Zone.Identifier /END
     Pop $0
     ExecWait '"msiexec" /i "$TEMP\LibreOffice_24.2.3.2_Win_x86-64.msi" /passive'
   ${EndIf}
