@@ -26,7 +26,7 @@ Function nsDialogsPage
 	Pop $Label
 
   ; Create a checkbox to optionally install libre office
-	${NSD_CreateCheckbox} 0 25u 100% 8u "Download and Install Libre Office 7.6"
+	${NSD_CreateCheckbox} 0 25u 100% 8u "Download and Install Libre Office 24.2"
   Pop $LibreInstallCheckbox
 
   ; Reset the checkbox state incase user went back to this page
@@ -45,9 +45,9 @@ FunctionEnd
 
   ${If} $LibreInstallCheckbox_State == ${BST_CHECKED}
     # C:\Users\USERNAME\AppData\Local\Temp
-    NScurl::http get "https://download.documentfoundation.org/libreoffice/stable/7.6.2/win/x86_64/LibreOffice_7.6.2_Win_x86-64.msi" "$TEMP\LibreOffice_7.6.2_Win_x86-64.msi" /POPUP /INSIST /Zone.Identifier /END
+    NScurl::http get "https://downloadarchive.documentfoundation.org/libreoffice/old/24.2.3.2/win/x86_64/LibreOffice_24.2.3.2_Win_x86-64.msi" "$TEMP\LibreOffice_7.6.2_Win_x86-64.msi" /POPUP /INSIST /Zone.Identifier /END
     Pop $0
-    ExecWait '"msiexec" /i "$TEMP\LibreOffice_7.6.2_Win_x86-64.msi" /passive'
+    ExecWait '"msiexec" /i "$TEMP\LibreOffice_24.2.3.2_Win_x86-64.msi" /passive'
   ${EndIf}
 
 

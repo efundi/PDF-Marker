@@ -80,7 +80,7 @@ function upgradeAssignmentDirectory(assignmentFolder: string, version: number): 
     return Promise.resolve();
   }
 
-  let promise: Promise<any>;
+  let promise: Promise<any> = Promise.resolve();
   let currentVersion = version;
   if (isNil(currentVersion)) {
     const backupDir = assignmentFolder +  sep + ASSIGNMENT_BACKUP_DIR;
