@@ -75,7 +75,7 @@ function upgradeAssignmentDirectory(assignmentFolder: string, version: number): 
     return Promise.resolve();
   }
 
-  let promise: Promise<any> = Promise.resolve()
+  let promise: Promise<any> = Promise.resolve();
   let currentVersion = version;
   if (isNil(currentVersion)) {
     LOG.log(`Upgrading assignments to v1 at: ${assignmentFolder}`)

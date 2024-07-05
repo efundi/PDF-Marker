@@ -204,7 +204,7 @@ function extractVersion(vString: string): string{
   if (isNil(vString)) {
     return null;
   } else {
-    return vString.trim().match(/(\d\.\d(\.\d)*)/)[0];
+    return vString.trim().match(/(\d+\.\d+(\.\d)*)/)[0];
   }
 }
 
