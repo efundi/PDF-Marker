@@ -176,7 +176,7 @@ function finalizeSubmissionTask(finalizeSubmissionTaskDetails: FinalizeSubmissio
         }
         parentPort.postMessage('Done');
       }, (error) => {
-        throw new Error('Error annotating marks to PDF ' + fileName + ' [' + error.message + ']');
+        throw new Error('Error annotating marks to PDF ' + finalizeSubmissionTaskDetails.pdfPath + ' [' + error.message + ']');
       });
 }
 
