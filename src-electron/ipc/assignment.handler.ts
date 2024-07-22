@@ -469,6 +469,7 @@ export function readGradesFromZipFile(zipFile: JSZipObject): Promise<any[]> {
       .fromString(data.toString())
   });
 }
+
 function readGradesCsvFromFile(sourceFile: string): Promise<any[]> {
   return stat(sourceFile)
     .then(() =>  {
