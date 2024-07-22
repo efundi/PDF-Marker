@@ -349,13 +349,26 @@ function validateZipAssignmentFile(zip: JSZip): Promise<AssignmentImportValidate
 
 
     if (isSakai){
+
       // Now that we know it is Sakai, check if it is a group or student assignment by reading the grades.csv
       const gradesZipFile: JSZipObject = zip.files[assignmentName + '/' + GRADES_FILE]
       if (gradesZipFile) {
-        ``
         return readGradesFromZipFile(gradesZipFile).then(data => {
           // If row 3 field 1 is "Group" it is a group assignment
           const isGroup = data[2].field1 == "Group";
+
+
+          // Check that the CSV was read properly
+          if (!validateGradesData(data, isGroup)){
+            return Promise.reject("Invalid format of grades.csv detected.")
+          }
+
+          // Check that there aren't multiple submissions
+          const duplicatesError = hasDuplicateSakaiSubmissions(filePaths, isGroup)
+          if (duplicatesError) {
+            return Promise.reject(duplicatesError)
+          }
+
           return {
             sourceFormat: isGroup ? SourceFormat.SAKAI_GROUP : SourceFormat.SAKAI,
             hasRubric: false,
@@ -371,6 +384,57 @@ function validateZipAssignmentFile(zip: JSZip): Promise<AssignmentImportValidate
     // Could not find at least on sakai file
     return Promise.reject('Invalid zip format. Please select a file exported from Sakai');
   }
+}
+
+/**
+ * Validates if the CSV data was read in properly
+ * @param data
+ */
+function validateGradesData(data: any[], isGroup: boolean): boolean {
+  if (isGroup) {
+    return /^Group$/i.test(data[2].field1) &&
+      /^ID$/i.test(data[2].field2) &&
+      /^Users$/i.test(data[2].field3) &&
+      /^grade$/i.test(data[2].field4) &&
+      /^Submission date$/i.test(data[2].field5) &&
+      /^Late submission$/i.test(data[2].field6)
+  } else {
+    return /^Display ID$/i.test(data[2].field1) &&
+      /^ID$/i.test(data[2].field2) &&
+      /^Last Name$/i.test(data[2].field3) &&
+      /^First Name$/i.test(data[2].field4) &&
+      /^grade$/i.test(data[2].field5) &&
+      /^Submission date$/i.test(data[2].field6) &&
+      /^Late submission$/i.test(data[2].field7)
+  }
+}
+
+/**
+ * Check that a submission only has one submission file. PDFm does not (currently) support more than one
+ * file per submission.
+ * @param filePaths List of paths in the zip files
+ * @param isGroup Flag if this import is for a group
+ */
+function hasDuplicateSakaiSubmissions(filePaths: string[], isGroup: boolean): string | undefined{
+  const studentSubmissions: string[] = []
+  for (const filePath of filePaths) {
+    const match = filePath.match(SUBMISSION_ZIP_ENTRY_REGEX);
+    if (match) {
+
+
+      const studentDirectory = basename(match[1]);
+      const detail = matchStudentDetail(studentDirectory);
+      if (studentSubmissions.indexOf(detail.studentId) >= 0){
+        if (isGroup){
+          return `Submission for group ${detail.studentName} has more than one file`
+        } else {
+          return `Submission for student ${studentDirectory} has more than one file`
+        }
+      }
+      studentSubmissions.push(detail.studentId)
+    }
+  }
+  return undefined;
 }
 
 function validateGenericZip(zip: JSZip): Promise<AssignmentImportValidateResultInfo> {
