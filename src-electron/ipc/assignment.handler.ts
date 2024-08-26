@@ -50,7 +50,7 @@ import {JSZipObject} from "jszip";
 const pool = WorkerPool.getInstance();
 
 const csvtojson = require('csvtojson');
-
+const CSV_DELIMITERS = [",", ";"];
 
 
 export function saveMarks(
@@ -465,7 +465,7 @@ export function readGradesFromFile(sourceFile: string): Promise<GradesCSV<Studen
 
 export function readGradesFromZipFile(zipFile: JSZipObject): Promise<any[]> {
   return zipFile.async('nodebuffer').then((data) => {
-    return csvtojson({noheader: true, trim: false})
+    return csvtojson({noheader: true, trim: false, delimiter: CSV_DELIMITERS})
       .fromString(data.toString())
   });
 }
@@ -473,7 +473,7 @@ export function readGradesFromZipFile(zipFile: JSZipObject): Promise<any[]> {
 function readGradesCsvFromFile(sourceFile: string): Promise<any[]> {
   return stat(sourceFile)
     .then(() =>  {
-      return csvtojson({noheader: true, trim: false, delimiter: [",", ";"]})
+      return csvtojson({noheader: true, trim: false, delimiter: CSV_DELIMITERS})
     .fromFile(sourceFile)
   }, () => {
     return null;
